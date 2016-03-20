@@ -7,6 +7,7 @@ package filemanagerLogic;
 
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Vector;
 
 /**
@@ -26,6 +27,12 @@ public class LocationInRoot {
             }
         }
     }
+    public LocationInRoot(String filePath){
+        coordinates = new Vector<>();
+        String[] fileArray = filePath.split("\\"+File.separatorChar);
+        coordinates.addAll(Arrays.asList(fileArray));
+    }
+    
     public LocationInRoot(LocationInRoot loc){
         this.coordinates = (Vector<String>) loc.coordinates.clone();
     }
@@ -60,9 +67,9 @@ public class LocationInRoot {
     public String toString(){
         String str ="";
         for(String s:this.coordinates){
-            str+=s+" ; ";
+            str+=s+",";
         }
-        return str;
+        return "<"+str+">";
     }
     
     //SOME COMENT

@@ -24,7 +24,6 @@ public class ExtFolder extends ExtFile{
 
     
     private boolean populated;
-    private boolean isRoot;
     public LinkedHashMap <String,ExtFile> files;
     
     public Collection<ExtFile> getFilesCollection(){
@@ -67,7 +66,6 @@ public class ExtFolder extends ExtFile{
         //this.folders = new LinkedHashMap<>();
         this.files = new LinkedHashMap<>();
         this.populated = false;
-        this.isRoot = false;
         super.setDefaultValues();
     }
     public ExtFolder(String src){

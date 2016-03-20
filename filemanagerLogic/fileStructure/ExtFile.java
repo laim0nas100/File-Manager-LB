@@ -27,7 +27,15 @@ import static filemanagerGUI.FileManagerLB.FolderForDevices;
 public class ExtFile extends FileAbs implements Movable {
     protected String relativePath;
     protected Path destination;
-    
+    protected boolean isRoot;
+
+    public boolean isIsRoot() {
+        return isRoot;
+    }
+
+    public void setIsRoot(boolean isRoot) {
+        this.isRoot = isRoot;
+    }
     
 
     
@@ -39,6 +47,7 @@ public class ExtFile extends FileAbs implements Movable {
         this.relativePath = "";
         this.destination = Paths.get(""); 
         this.name = new SimpleStringProperty(this.getName());
+        this.isRoot = false;
     }   
     public ExtFile(File file){
         super(file.getAbsolutePath());

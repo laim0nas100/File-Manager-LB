@@ -36,12 +36,16 @@ public class FileManagerLB extends Application {
     public void start(Stage primaryStage) {
         //rootDirectory = new ExtFolder("/mnt/ExtraSpace/Test1/");
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
-        ExtFolder folder = new ExtFolder("/mnt/ExtraSpace/");
-        folder.setIsRoot(true);
-        FolderForDevices.files.put(folder.getName(),folder);
-                
-        FolderForDevices.populateFolder();
-        ViewManager.getInstance().newWindow(folder,folder);
+        FolderForDevices.setIsRoot(true);
+        FolderForDevices.setPopulated(true);
+        ExtFolder folder1 = new ExtFolder("E:\\");
+        folder1.name.set("E:\\");
+        ExtFolder folder2 = new ExtFolder("C:\\");
+        folder2.name.set("C:\\");
+        FolderForDevices.files.put("C:", folder2);
+        FolderForDevices.files.put("E:",folder1);
+        FolderForDevices.name.set("DEVICES");
+        ViewManager.getInstance().newWindow(FolderForDevices, folder1);
         
         
     }

@@ -6,47 +6,31 @@
 package filemanagerGUI;
 
 //import filemanagerLogic.ExtFolder;
-import com.sun.glass.ui.Window;
-import static filemanagerGUI.FileManagerLB.ARTIFICIAL_ROOT_NAME;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.ManagingClass;
 import filemanagerLogic.TaskFactory;
-import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.ResourceBundle;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeView;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.shape.Box;
 import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderStroke;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
-import java.io.File;
 
 /**
  * FXML Controller class
@@ -80,13 +64,15 @@ public class MainController extends BaseController{
     private int currentView;
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        System.out.println("Initilization from Controller <"+FolderForDevices.getAbsolutePath()+">");
-        
-        
-        
-        
+        //System.out.println("Initilization from Controller <"+FolderForDevices.getAbsolutePath()+">");
     }
- 
+    public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+        MC = new ManagingClass(root);
+        this.title = title;
+        this.changeToNewDir(currentDir);
+        
+        //this.updateCurrentView();
+    }
     public void closeWindow(){ 
         System.out.println("Closing internally " + title);
         ViewManager.getInstance().closeWindow(title); 
@@ -169,7 +155,11 @@ public class MainController extends BaseController{
         flowView.setVisible(true);
     }
     public void updateCurrentView(){
-        currentDirText.setText(MC.currentDir.getAbsolutePath());
+        if(MC.currentDir.isRoot()){
+            currentDirText.setText("MOUNT POINT");
+        }else{
+            currentDirText.setText(MC.currentDir.getAbsolutePath());
+        }
         MC.currentDir.update();
         switch(currentView){
             case(0):{
@@ -186,23 +176,11 @@ public class MainController extends BaseController{
         ViewManager.getInstance().closeAllWindows();
     }
     public void createNewWindow(){
-        ViewManager.getInstance().newWindow(MC.rootDirectory,MC.currentDir);
+        ViewManager.getInstance().newWindow(FolderForDevices,MC.currentDir);
     }
     public void test(){
-        
-       
-        try {
-            LocationInRoot location = new LocationInRoot(FolderForDevices,new ExtFile("E:\\Test1\\TheEdenProject"));
-            ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
-
-            System.out.println("DONE");
-            System.out.println(folder.getAbsolutePath());
-            folder.populateRecursive();
-            ExtTask task = TaskFactory.getInstance().copyFiles(MC.prepareForCopy(folder.getListRecursive(),MC.rootDirectory.files.get("Dest")));
-            System.out.println(task.getState());
-            ViewManager.getInstance().newProgressDialog(task); 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        for(ExtFile file:MC.currentDir.getFilesCollection()){
+            System.out.println(file.getAbsolutePath());
         }
     }
     public void changeToNewDir(ExtFolder dir){
@@ -216,8 +194,8 @@ public class MainController extends BaseController{
             updateCurrentView();
         }else if(Files.isDirectory(Paths.get(possibleDir))){
             try {
-                LocationInRoot location = new LocationInRoot(MC.rootDirectory,new ExtFile(possibleDir));
-                ExtFolder folder = (ExtFolder) MC.getFileByLocation(MC.rootDirectory, location);
+                LocationInRoot location = new LocationInRoot(possibleDir);
+                ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
                 changeToNewDir(folder);
             } catch (Exception ex) {
                 updateCurrentView();
@@ -242,11 +220,5 @@ public class MainController extends BaseController{
         updateCurrentView();
     }
     
-    public void setUp(String title,ExtFolder root,ExtFolder currentDir){
-        MC = new ManagingClass(root);
-        this.title = title;
-        this.changeToNewDir(currentDir);
-        
-        //this.updateCurrentView();
-    }
+ 
 }
