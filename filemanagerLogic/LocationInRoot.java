@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.util.Vector;
 

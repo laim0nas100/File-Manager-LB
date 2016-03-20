@@ -6,6 +6,8 @@
 package filemanagerLogic;
 
 //import static filemanagerGUI.FileManagerLB.rootDirectory;
+import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerGUI.ViewManager;
 import java.io.File;
 import java.nio.file.Files;

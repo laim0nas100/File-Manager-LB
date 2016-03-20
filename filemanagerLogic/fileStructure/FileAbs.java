@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package filemanagerLogic;
+package filemanagerLogic.fileStructure;
 
 import java.io.File;
 import javafx.beans.property.StringProperty;
@@ -15,7 +15,7 @@ import javafx.beans.property.StringProperty;
 public abstract class FileAbs extends File {
     
     protected boolean operationSuccessfull;
-    protected StringProperty name;
+    public StringProperty name;
     
     
     public FileAbs(String string) {

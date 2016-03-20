@@ -5,7 +5,7 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.ExtFolder;
+import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ManagingClass;
 import filemanagerLogic.TaskFactory;
 import java.io.File;

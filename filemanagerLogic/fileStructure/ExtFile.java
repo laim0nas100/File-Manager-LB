@@ -3,9 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package filemanagerLogic;
+package filemanagerLogic.fileStructure;
 
 
+import filemanagerLogic.DesktopApi;
+import filemanagerLogic.Movable;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;

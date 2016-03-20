@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import filemanagerLogic.fileStructure.ExtFile;
 import java.nio.file.Path;
 
 /**

@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import filemanagerLogic.fileStructure.ExtFile;
 import java.nio.file.Files;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;

@@ -7,8 +7,8 @@ package filemanagerGUI;
 
 
 import filemanagerGUI.dialog.ProgressDialogController;
-import filemanagerLogic.ExtFile;
-import filemanagerLogic.ExtFolder;
+import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import java.io.IOException;
