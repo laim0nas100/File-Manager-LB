@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Vector;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,20 +23,41 @@ import javafx.collections.ObservableList;
  */
 public class ManagingClass {
     
-    private String testDir = "/home/lemmin/test2/";
-    private Vector<ExtFolder> folderCache;
+    
+    private Vector<LocationInRoot> folderCache;
+    private int cacheIndex;
     public ExtFolder currentDir;
-    public static ExtFolder rootDirectory;
+    public ExtFolder rootDirectory;
     
     public ManagingClass(ExtFolder root){
         rootDirectory = root;
         changeDirTo(rootDirectory);
+        folderCache = new Vector<>();
+        cacheIndex = 0;
+        try {
+            LocationInRoot loc = new LocationInRoot(rootDirectory,rootDirectory);
+            folderCache.add(loc);
+        } catch (Exception ex) {
+            //ex.printStackTrace();
+        }
     }
     public void changeDirTo(ExtFolder file){
         currentDir = file;
         currentDir.update();
-        if(!currentDir.isPopulated()){
-            currentDir.populateFolder();
+        addCacheNode(file);
+        
+        
+    }
+    public void changeToForward(){
+        if(cacheIndex+1<folderCache.size()){
+            currentDir = (ExtFolder) this.getFileByLocation(rootDirectory, folderCache.get(++cacheIndex));
+            currentDir.update();
+        }
+    }
+        public void changeToPrevious(){
+        if(cacheIndex-1>=0){
+            currentDir = (ExtFolder) this.getFileByLocation(rootDirectory, folderCache.get(--cacheIndex));
+            currentDir.update();
         }
     }
     public void changeToParent(){
@@ -99,6 +121,19 @@ public class ManagingClass {
     
     
     //LocationInRoot Specifics
+    private void addCacheNode(ExtFolder folder){
+        try {
+            int i =cacheIndex+1;
+            while(i<folderCache.size()){
+                folderCache.remove(i++);
+            }
+            folderCache.add(new LocationInRoot(rootDirectory,folder));
+            cacheIndex=folderCache.size()-1;        
+        } catch (Exception ex) {
+            //ex.printStackTrace();
+        }
+    }
+    
     public ExtFile getFileByLocation(ExtFolder root,LocationInRoot location){
         if(location.length()==0){
             return root;
@@ -109,7 +144,7 @@ public class ManagingClass {
     private ExtFolder getFolderByLocationRec(ExtFolder root, int i, LocationInRoot location){
         if(i<location.coordinates.size()){
             if(!root.isPopulated()){
-                root.populateFolder();
+                root.update();
             }
             return getFolderByLocationRec((ExtFolder) root.files.get(location.coordinates.get(i)),i+1,location);
         }else{
@@ -147,7 +182,6 @@ public class ManagingClass {
         }
         folder.files.put(location.at(i),file);
     }
-    
     
     
     

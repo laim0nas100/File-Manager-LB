@@ -24,7 +24,7 @@ public class ExtFolder extends ExtFile{
 
     
     private boolean populated;
-    private boolean needsUpdate;
+    private boolean isRoot;
     public LinkedHashMap <String,ExtFile> files;
     
     public Collection<ExtFile> getFilesCollection(){
@@ -57,9 +57,7 @@ public class ExtFolder extends ExtFile{
             this.populateFolder();
             this.populated = true;
         }
-        if(this.needsUpdate){
-            this.updateRecursive();
-        }
+
         Collection<ExtFile> values = this.files.values();
         return values.toArray(new ExtFile[0]);
     }
@@ -69,7 +67,7 @@ public class ExtFolder extends ExtFile{
         //this.folders = new LinkedHashMap<>();
         this.files = new LinkedHashMap<>();
         this.populated = false;
-        this.needsUpdate = false;
+        this.isRoot = false;
         super.setDefaultValues();
     }
     public ExtFolder(String src){
@@ -92,10 +90,8 @@ public class ExtFolder extends ExtFile{
                     }else if(Files.isSymbolicLink(f.toPath())){
                         file = new ExtLink(f.getAbsolutePath());
                     }
-                    if(!files.containsKey(f.getName())){
-                        files.put(file.getName(), file);
-                        //System.out.println("Add:"+file.getName());
-                    } 
+                    files.put(file.getName(), file);
+
                 }
             }
             this.populated = true;
@@ -168,12 +164,12 @@ public class ExtFolder extends ExtFile{
     public ExtFolder getTrueForm(){
         return this;
     }
-    public boolean needsUpdate() {
-        return needsUpdate;
+    public boolean isRoot() {
+        return isRoot;
     }
 
-    public void setNeedsUpdate(boolean needsUpdate) {
-        this.needsUpdate = needsUpdate;
+    public void setIsRoot(boolean isRoot) {
+        this.isRoot = isRoot;
     }
     
     public boolean isPopulated(){

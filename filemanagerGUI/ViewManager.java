@@ -8,6 +8,7 @@ package filemanagerGUI;
 
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerLogic.ExtFile;
+import filemanagerLogic.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import java.io.IOException;
@@ -47,10 +48,10 @@ public class ViewManager {
     public static ViewManager getInstance(){
         return INSTANCE;
     }
-    private int findSmallestAvailable(HashMap<String,Stage> map){
+    private int findSmallestAvailable(HashMap<String,Stage> map,String title){
         int i =1;
         while(true){
-            if(map.containsKey(WINDOW_TITLE + i)){
+            if(map.containsKey(title + i)){
                 i++;
             }else{
                 return i;
@@ -59,13 +60,27 @@ public class ViewManager {
     }
     
     // WINDOW ACTIONS
-    public void newWindow(){
+    public void newWindow(ExtFolder rootFolder,ExtFolder currentFolder){
         try {
-            int index = findSmallestAvailable(windows);
+            int index = findSmallestAvailable(windows,WINDOW_TITLE);
             
-            Stage stage = buildNewWindowStage(WINDOW_TITLE,index);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("mainComponents.fxml"));
+            Parent root = loader.load();
+            MainController controller = loader.<MainController>getController();
+            
+            Stage stage = new Stage();
+            stage.setTitle(WINDOW_TITLE+index);
+            stage.setScene(new Scene(root));
+            stage.setOnCloseRequest((WindowEvent we) -> {
+                controller.closeWindow();
+            });
             windows.put(stage.getTitle(),stage);
-            windows.get(stage.getTitle()).show();
+            stage.show();
+            controller.setUp(stage.getTitle(),rootFolder,currentFolder);
+            
+            //controller.changeToNewDir(currentFolder);
+            
+            
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -84,30 +99,12 @@ public class ViewManager {
             closeWindow(s);
         }
     }
-    private Stage buildNewWindowStage(String title,int id) throws IOException{
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("mainComponents.fxml"));
-        Parent root = loader.load();
-        
-        Stage stage = new Stage();
-        stage.setTitle(title+id);
-        stage.setScene(new Scene(root));
-        stage.setOnCloseRequest((WindowEvent we) -> {
-            System.out.println("Closing by request");
-            this.closeWindow(stage.getTitle());
-        });
-        
-        MainController controller = loader.<MainController>getController();
-        controller.title = stage.getTitle();
-        
-        return stage;
-    }
-    
-    
+ 
     //PROGRESS DIALOG ACTIONS
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
         try {
-            int index = findSmallestAvailable(progressDialogs);
+            int index = findSmallestAvailable(progressDialogs,PROGRESS_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/ProgressDialog.fxml"));
            
             Parent root = loader.load();  

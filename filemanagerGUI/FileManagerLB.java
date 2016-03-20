@@ -30,14 +30,18 @@ import javafx.stage.WindowEvent;
  */
 public class FileManagerLB extends Application {
     //public static HashMap<Integer,Stage> windows;
-    
-    public static ExtFolder rootDirectory;
+    public static final String ARTIFICIAL_ROOT_NAME = "Devices";
+    public static ExtFolder FolderForDevices;
     @Override
     public void start(Stage primaryStage) {
         //rootDirectory = new ExtFolder("/mnt/ExtraSpace/Test1/");
-        rootDirectory = new ExtFolder("E:\\");
-        rootDirectory.populateFolder();
-        ViewManager.getInstance().newWindow();
+        FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
+        ExtFolder folder = new ExtFolder("/mnt/ExtraSpace/");
+        folder.setIsRoot(true);
+        FolderForDevices.files.put(folder.getName(),folder);
+                
+        FolderForDevices.populateFolder();
+        ViewManager.getInstance().newWindow(folder,folder);
         
         
     }

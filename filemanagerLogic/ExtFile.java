@@ -6,7 +6,6 @@
 package filemanagerLogic;
 
 
-import static filemanagerGUI.FileManagerLB.rootDirectory;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.nio.file.Paths;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
+import static filemanagerGUI.FileManagerLB.FolderForDevices;
 
 /**
  *

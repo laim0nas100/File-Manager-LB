@@ -7,7 +7,7 @@ package filemanagerGUI;
 
 //import filemanagerLogic.ExtFolder;
 import com.sun.glass.ui.Window;
-import static filemanagerGUI.FileManagerLB.rootDirectory;
+import static filemanagerGUI.FileManagerLB.ARTIFICIAL_ROOT_NAME;
 import filemanagerLogic.ExtFile;
 import filemanagerLogic.ExtFolder;
 import filemanagerLogic.ExtTask;
@@ -45,6 +45,8 @@ import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderStroke;
+import static filemanagerGUI.FileManagerLB.FolderForDevices;
+import java.io.File;
 
 /**
  * FXML Controller class
@@ -55,7 +57,6 @@ public class MainController extends BaseController{
     /**
      * Initializes the controller class.
      */
-    public String title;
     private ManagingClass MC;
     
     
@@ -79,40 +80,18 @@ public class MainController extends BaseController{
     private int currentView;
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        System.out.println("Initilization from Controller <"+FolderForDevices.getAbsolutePath()+">");
         
-        System.out.println("Initilization from Controller <"+rootDirectory.getAbsolutePath()+">");
-        MC = new ManagingClass(rootDirectory);
         
         
         
     }
+ 
     public void closeWindow(){ 
-        
         System.out.println("Closing internally " + title);
-        ViewManager.getInstance().closeWindow(title);
-       
+        ViewManager.getInstance().closeWindow(title); 
     }
-    /*
-    private TreeTableView makeTreeTableView(ExtFolder folder){
-        TreeTableView view = new TreeTableView();
-        final TreeItem<ExtFile> rootElement = new TreeItem<>(folder);
-        rootElement.setExpanded(false);
-        folder.
-        
-        Collection<ExtFile> list = folder.getFilesCollection();
-        for(ExtFile file:list){
-            TreeItem<String> element = new TreeItem<>(file.getName());
-            rootElement.getChildren().add(element);
-        }
-        TreeTableColumn<String, String> column = new TreeTableColumn<>("Column");
-        column.setCellValueFactory(new Callback<CellDataFeatures<String, String>, ObservableValue<String>>() {
-        @Override public ObservableValue<String> call(CellDataFeatures<String, String> p) {
-        return new ReadOnlyStringWrapper(p.getValue().getValue());
-        }
-        });
-        return view;
-    }
-        */
+
     public void setTableView(){
         currentView = 0;
         TableColumn<ExtFile, String> nameCol = new TableColumn<>("Files");
@@ -207,14 +186,14 @@ public class MainController extends BaseController{
         ViewManager.getInstance().closeAllWindows();
     }
     public void createNewWindow(){
-        ViewManager.getInstance().newWindow();
+        ViewManager.getInstance().newWindow(MC.rootDirectory,MC.currentDir);
     }
     public void test(){
         
        
         try {
-            LocationInRoot location = new LocationInRoot(rootDirectory,new ExtFile("E:\\Test1\\TheEdenProject"));
-            ExtFolder folder = (ExtFolder) MC.getFileByLocation(rootDirectory, location);
+            LocationInRoot location = new LocationInRoot(FolderForDevices,new ExtFile("E:\\Test1\\TheEdenProject"));
+            ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
 
             System.out.println("DONE");
             System.out.println(folder.getAbsolutePath());
@@ -225,10 +204,6 @@ public class MainController extends BaseController{
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-    public void setTreeListView(){
-    
-        //ViewManager.getInstance().setTreeTableView(title,treeTableView);
     }
     public void changeToNewDir(ExtFolder dir){
        MC.changeDirTo(dir);
@@ -241,8 +216,8 @@ public class MainController extends BaseController{
             updateCurrentView();
         }else if(Files.isDirectory(Paths.get(possibleDir))){
             try {
-                LocationInRoot location = new LocationInRoot(rootDirectory,new ExtFile(possibleDir));
-                ExtFolder folder = (ExtFolder) MC.getFileByLocation(rootDirectory, location);
+                LocationInRoot location = new LocationInRoot(MC.rootDirectory,new ExtFile(possibleDir));
+                ExtFolder folder = (ExtFolder) MC.getFileByLocation(MC.rootDirectory, location);
                 changeToNewDir(folder);
             } catch (Exception ex) {
                 updateCurrentView();
@@ -258,14 +233,20 @@ public class MainController extends BaseController{
         updateCurrentView();
     }
     public void changeToPrevious(){
-        
+        MC.changeToPrevious();
         updateCurrentView();
         
     }
     public void changeToForward(){
-        
+        MC.changeToForward();
         updateCurrentView();
     }
     
-    
+    public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+        MC = new ManagingClass(root);
+        this.title = title;
+        this.changeToNewDir(currentDir);
+        
+        //this.updateCurrentView();
+    }
 }
