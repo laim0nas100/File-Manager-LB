@@ -29,51 +29,66 @@ public class ManagingClass {
     private Vector<LocationInRoot> folderCache;
     private int cacheIndex;
     public ExtFolder currentDir;
-    public ExtFolder rootDirectory;
-    
+    public static ExtFolder root;
     public ManagingClass(ExtFolder root){
-        rootDirectory = root;
-        changeDirTo(rootDirectory);
+        this.root = root;
         folderCache = new Vector<>();
         cacheIndex = 0;
-        try {
-            LocationInRoot loc = new LocationInRoot(rootDirectory,rootDirectory);
-            folderCache.add(loc);
-        } catch (Exception ex) {
-            //ex.printStackTrace();
-        }
     }
     public void changeDirTo(ExtFolder file){
-        currentDir = file;
-        currentDir.update();
-        addCacheNode(file);
+            if(file.isRoot()){
+                currentDir = root;
+                //currentDir.update();
+            }else{
+                file.update();
+                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+               
+                if(!existByLocation(root,location)){
+                    System.out.println(root.files.keySet());
+                    System.out.println("Put "+file.getAbsolutePath()+"to:"+location.toString());
+                    putByLocation(root, location, file);
+                }else{
+                    System.out.println("Location "+location.toString()+" Exists");
+                }
+                currentDir = file;
+            }
+
+        
+        addCacheNode(currentDir);
         
         
     }
     public void changeToForward(){
+       
         if(cacheIndex+1<folderCache.size()){
-            currentDir = (ExtFolder) this.getFileByLocation(rootDirectory, folderCache.get(++cacheIndex));
+            currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(++cacheIndex));
             currentDir.update();
-        }
+        } 
+        System.out.println(cacheIndex+" : "+folderCache);
     }
-        public void changeToPrevious(){
+    public void changeToPrevious(){
+        
         if(cacheIndex-1>=0){
-            currentDir = (ExtFolder) this.getFileByLocation(rootDirectory, folderCache.get(--cacheIndex));
+            currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(--cacheIndex));
             currentDir.update();
         }
+        System.out.println(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
-        if(!currentDir.getAbsolutePath().equals(rootDirectory.getAbsolutePath())){
-            
+        if(!currentDir.isRoot()){
             try {
-                LocationInRoot location;
-                location = new LocationInRoot(rootDirectory,currentDir).getParentLocation(); System.out.println("< "+location.toString()+" >");
-                ExtFolder folder = (ExtFolder) getFileByLocation(rootDirectory, location);
+                LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());
+//                System.out.println("Absolute Path:"+currentDir.getAbsolutePath());
+//                System.out.println("CurrentLocation:"+location.toString());
+                location = location.getParentLocation();
+//                System.out.println("ParentLocation:"+location.toString()+" >");
+                ExtFolder folder = (ExtFolder) getFileByLocation(root, location);
+//                System.out.println("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
             } catch (Exception ex) {
                 ex.printStackTrace();
-            }
-           
+            } 
+            
         }
     }
     public ObservableList<ExtFile> getCurrentContents(){
@@ -83,11 +98,11 @@ public class ManagingClass {
     }
     public ObservableList<ExtFile> getAllContents(){
         ObservableList<ExtFile> list = FXCollections.observableArrayList();
-        list.addAll(rootDirectory.getListRecursive());
+        list.addAll(root.getListRecursive());
         return list;  
     }
     public void printAllContents(){
-        for(ExtFile file:this.rootDirectory.getListRecursive()){
+        for(ExtFile file:root.getListRecursive()){
             System.out.println(file.getAbsolutePath());
         }
     }
@@ -95,10 +110,10 @@ public class ManagingClass {
     
     //RENAME
     public boolean renameTo(ExtFile fileToRename, String newName){
-        return renameTo(rootDirectory,fileToRename,newName);
+        return renameTo(root,fileToRename,newName);
     }
     public boolean renameByRegex(ExtFile fileToRename, String regex, String replacement){
-       return renameByRegex(rootDirectory,fileToRename,regex,replacement);
+       return renameByRegex(root,fileToRename,regex,replacement);
     }
     public boolean renameTo(ExtFolder root,ExtFile fileToRename,String newName){
         ExtFile newPath = new ExtFile(fileToRename.getParentFile().getPath() + File.separator + newName);
@@ -124,34 +139,34 @@ public class ManagingClass {
     
     //LocationInRoot Specifics
     private void addCacheNode(ExtFolder folder){
-        try {
-            int i =cacheIndex+1;
-            while(i<folderCache.size()){
-                folderCache.remove(i++);
+        int i =++cacheIndex;
+        while(i<folderCache.size()){
+            folderCache.remove(i);
+            i++;
+        }
+        if(folder.isRoot()){
+            folderCache.add(new LocationInRoot(folder.name.get()).getParentLocation());
+        }else{
+            try {
+                
+                folderCache.add(new LocationInRoot(folder.getAbsolutePath()));
+                cacheIndex=folderCache.size()-1;        
+            } catch (Exception ex) {
+                //ex.printStackTrace();
             }
-            folderCache.add(new LocationInRoot(rootDirectory,folder));
-            cacheIndex=folderCache.size()-1;        
-        } catch (Exception ex) {
-            //ex.printStackTrace();
         }
     }
     
     public ExtFile getFileByLocation(ExtFolder root,LocationInRoot location){
-        if(location.length()==0){
-            return root;
+
+        int i=0;
+        ExtFolder folder = root;
+        //System.out.println("Request:"+location.toString());
+        while(i<location.length()){
+           folder = (ExtFolder) folder.files.get(location.at(i++));
+           //System.out.print(folder.getAbsolutePath());
         }
-        int i =0;
-        return getFolderByLocationRec((ExtFolder) root.files.get(location.coordinates.get(i)),i+1,location);
-    }
-    private ExtFolder getFolderByLocationRec(ExtFolder root, int i, LocationInRoot location){
-        if(i<location.coordinates.size()){
-            if(!root.isPopulated()){
-                root.update();
-            }
-            return getFolderByLocationRec((ExtFolder) root.files.get(location.coordinates.get(i)),i+1,location);
-        }else{
-            return root;
-        }
+        return folder;
     }
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
@@ -178,11 +193,24 @@ public class ManagingClass {
     
     public void putByLocation(ExtFolder root,LocationInRoot location, ExtFile file){
         int i =0;
-        ExtFolder folder = (ExtFolder) root.files.get(location.coordinates.get(i++));
-        for(;i<location.length()-1;i++){
-            folder = (ExtFolder) folder.files.get(location.at(i));
+        ExtFolder folder = (ExtFolder) root.files.get(location.at(i));
+        i++;
+        while(i<location.length()-1){
+            folder = (ExtFolder) folder.files.get(location.at(i++));
         }
-        folder.files.put(location.at(i),file);
+        folder.files.put(location.getName(),file);
+    }
+    public boolean existByLocation(ExtFolder root,LocationInRoot location){
+        int i =0;
+        ExtFolder folder = root;
+        while(i<location.length()){
+            if(folder.files.containsKey(location.at(i))){
+                folder = (ExtFolder) folder.files.get(location.at(i++));
+            }else{
+                return false;
+            }
+        }
+        return true;
     }
     
     
