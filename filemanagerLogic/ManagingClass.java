@@ -53,7 +53,7 @@ public class ManagingClass {
                 currentDir = file;
             }
 
-        
+        System.out.println(cacheIndex+" : "+folderCache);
         addCacheNode(currentDir);
         
         
@@ -139,29 +139,27 @@ public class ManagingClass {
     
     //LocationInRoot Specifics
     private void addCacheNode(ExtFolder folder){
-        int i =++cacheIndex;
-        while(i<folderCache.size()){
-            folderCache.remove(i);
-            i++;
+        if(!folderCache.isEmpty()){
+            Vector<LocationInRoot> saveList = new Vector<>();
+            for(int i=0; i<cacheIndex+1; i++){
+                saveList.add(folderCache.get(i));
+            }
+            folderCache.clear();
+            folderCache.addAll(saveList);
         }
         if(folder.isRoot()){
             folderCache.add(new LocationInRoot(folder.name.get()).getParentLocation());
-        }else{
-            try {
-                
-                folderCache.add(new LocationInRoot(folder.getAbsolutePath()));
-                cacheIndex=folderCache.size()-1;        
-            } catch (Exception ex) {
-                //ex.printStackTrace();
-            }
+        }else{            
+            folderCache.add(new LocationInRoot(folder.getAbsolutePath()));
         }
+        cacheIndex = folderCache.size()-1;
     }
     
     public ExtFile getFileByLocation(ExtFolder root,LocationInRoot location){
 
         int i=0;
         ExtFolder folder = root;
-        //System.out.println("Request:"+location.toString());
+        System.out.println("Request:"+location.toString());
         while(i<location.length()){
            folder = (ExtFolder) folder.files.get(location.at(i++));
            //System.out.print(folder.getAbsolutePath());

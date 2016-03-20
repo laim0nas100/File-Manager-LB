@@ -189,21 +189,21 @@ public class MainController extends BaseController{
     }
     
     public void openCustomDir(){
-        String possibleDir = currentDirText.getText();
-        if(possibleDir.equals(MC.currentDir.getAbsolutePath())){
-            updateCurrentView();
-        }else if(Files.isDirectory(Paths.get(possibleDir))){
-            try {
-                LocationInRoot location = new LocationInRoot(possibleDir);
-                ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
-                changeToNewDir(folder);
-            } catch (Exception ex) {
+        try{
+            String possibleDir = currentDirText.getText();
+            if(possibleDir.equals(MC.currentDir.getAbsolutePath())){
                 updateCurrentView();
+            }else if(Files.isDirectory(Paths.get(possibleDir))){
+                    LocationInRoot location = new LocationInRoot(possibleDir);
+                    ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
+                    changeToNewDir(folder);
+
+
             }
-            
-        }else{
-            updateCurrentView();
-        }
+        } catch (Exception ex) {}
+               
+        
+        updateCurrentView();
     }
     
     public void changeToParent(){

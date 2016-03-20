@@ -6,7 +6,7 @@
 package filemanagerLogic.fileStructure;
 
 
-import filemanagerLogic.DesktopApi;
+import utility.DesktopApi;
 import filemanagerLogic.Movable;
 import java.awt.Desktop;
 import java.io.File;

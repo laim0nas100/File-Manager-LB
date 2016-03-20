@@ -10,6 +10,8 @@ import filemanagerLogic.ManagingClass;
 import filemanagerLogic.TaskFactory;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -40,9 +42,10 @@ public class FileManagerLB extends Application {
         FolderForDevices.setPopulated(true);
         ExtFolder folder1 = new ExtFolder("E:\\");
         folder1.name.set("E:\\");
-        ExtFolder folder2 = new ExtFolder("C:\\");
-        folder2.name.set("C:\\");
-        FolderForDevices.files.put("C:", folder2);
+        this.mountDevice("C:"+File.separator);
+//        ExtFolder folder2 = new ExtFolder("C:\\");
+//        folder2.name.set("C:\\");
+//        FolderForDevices.files.put("C:", folder2);
         FolderForDevices.files.put("E:",folder1);
         FolderForDevices.name.set("DEVICES");
         ViewManager.getInstance().newWindow(FolderForDevices, folder1);
@@ -57,5 +60,21 @@ public class FileManagerLB extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+    public boolean mountDevice(String name){
+        boolean result = false;
+        if(Files.isDirectory(Paths.get(name))){
+            ExtFolder device = new ExtFolder(name);
+            int nameCount = device.toPath().getNameCount();
+            if(nameCount == 0){
+                result = true;
+                String newName = name.substring(0, name.lastIndexOf(File.separator));
+                device.name.set(name);
+                FolderForDevices.files.put(newName, device);
+            }
+        }
+        return result;
+    }
+    
+    
     
 }
