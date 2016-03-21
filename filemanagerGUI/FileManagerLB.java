@@ -25,6 +25,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import utility.Log;
 
 /**
  *
@@ -36,19 +37,15 @@ public class FileManagerLB extends Application {
     public static ExtFolder FolderForDevices;
     @Override
     public void start(Stage primaryStage) {
+        //Log.changeStream('f', new File("E:\\log.txt"));
         //rootDirectory = new ExtFolder("/mnt/ExtraSpace/Test1/");
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setIsRoot(true);
         FolderForDevices.setPopulated(true);
-        ExtFolder folder1 = new ExtFolder("E:\\");
-        folder1.name.set("E:\\");
-        this.mountDevice("C:"+File.separator);
-//        ExtFolder folder2 = new ExtFolder("C:\\");
-//        folder2.name.set("C:\\");
-//        FolderForDevices.files.put("C:", folder2);
-        FolderForDevices.files.put("E:",folder1);
+        this.mountDevice("E:\\");
+        this.mountDevice("C:\\");
         FolderForDevices.name.set("DEVICES");
-        ViewManager.getInstance().newWindow(FolderForDevices, folder1);
+        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
         
         
     }

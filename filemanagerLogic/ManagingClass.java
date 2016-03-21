@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Vector;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import utility.Log;
 
 /**
  *
@@ -44,16 +45,16 @@ public class ManagingClass {
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                
                 if(!existByLocation(root,location)){
-                    System.out.println(root.files.keySet());
-                    System.out.println("Put "+file.getAbsolutePath()+"to:"+location.toString());
+                    Log.writeln(root.files.keySet());
+                    Log.writeln("Put "+file.getAbsolutePath()+"to:"+location.toString());
                     putByLocation(root, location, file);
                 }else{
-                    System.out.println("Location "+location.toString()+" Exists");
+                    Log.writeln("Location "+location.toString()+" Exists");
                 }
                 currentDir = file;
             }
 
-        System.out.println(cacheIndex+" : "+folderCache);
+        Log.writeln(cacheIndex+" : "+folderCache);
         addCacheNode(currentDir);
         
         
@@ -64,7 +65,7 @@ public class ManagingClass {
             currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(++cacheIndex));
             currentDir.update();
         } 
-        System.out.println(cacheIndex+" : "+folderCache);
+        Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToPrevious(){
         
@@ -72,18 +73,18 @@ public class ManagingClass {
             currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(--cacheIndex));
             currentDir.update();
         }
-        System.out.println(cacheIndex+" : "+folderCache);
+        Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
         if(!currentDir.isRoot()){
             try {
                 LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());
-//                System.out.println("Absolute Path:"+currentDir.getAbsolutePath());
-//                System.out.println("CurrentLocation:"+location.toString());
+//                Log.writeln("Absolute Path:"+currentDir.getAbsolutePath());
+//                Log.writeln("CurrentLocation:"+location.toString());
                 location = location.getParentLocation();
-//                System.out.println("ParentLocation:"+location.toString()+" >");
+//                Log.writeln("ParentLocation:"+location.toString()+" >");
                 ExtFolder folder = (ExtFolder) getFileByLocation(root, location);
-//                System.out.println("Parent path:"+folder.getAbsolutePath());
+//                Log.writeln("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -103,7 +104,7 @@ public class ManagingClass {
     }
     public void printAllContents(){
         for(ExtFile file:root.getListRecursive()){
-            System.out.println(file.getAbsolutePath());
+            Log.writeln(file.getAbsolutePath());
         }
     }
     
@@ -159,7 +160,7 @@ public class ManagingClass {
 
         int i=0;
         ExtFolder folder = root;
-        System.out.println("Request:"+location.toString());
+        Log.writeln("Request:"+location.toString());
         while(i<location.length()){
            folder = (ExtFolder) folder.files.get(location.at(i++));
            //System.out.print(folder.getAbsolutePath());
@@ -230,7 +231,7 @@ public class ManagingClass {
         ExtFile[] array = new ExtFile[list.size()];
         array = list.toArray(array);
         for (ExtFile array1 : array) {
-            //System.out.println(array1.getAbsolutePath());
+            //Log.writeln(array1.getAbsolutePath());
             array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
         }
         return array;
@@ -252,7 +253,7 @@ public class ManagingClass {
         ExtFile[] array = new ExtFile[list.size()];
         array = list.toArray(array);
         for (ExtFile array1 : array) {
-            //System.out.println(array1.getAbsolutePath());
+            //Log.writeln(array1.getAbsolutePath());
             array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
         }
         return array;
