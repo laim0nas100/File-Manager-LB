@@ -8,6 +8,7 @@ package filemanagerLogic;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -29,8 +30,22 @@ public class LocationInRoot {
     }
     public LocationInRoot(String filePath){
         coordinates = new Vector<>();
-        String[] fileArray = filePath.split("\\"+File.separatorChar);
-        coordinates.addAll(Arrays.asList(fileArray));
+        
+            String[] fileArray = filePath.split("\\"+File.separatorChar);
+            List<String> asList = Arrays.asList(fileArray);
+            Vector<String> list = new Vector<>();
+            list.addAll(asList);
+            for(int i=list.size()-1; i>=0; i--){
+                if(list.get(i).isEmpty()){
+                   list.remove(i);
+                }
+            }
+            //Unix specific
+            if(filePath.startsWith("/")){
+                list.add(0,"/");
+            }
+            coordinates.addAll(list);
+        
     }
     
     public LocationInRoot(LocationInRoot loc){

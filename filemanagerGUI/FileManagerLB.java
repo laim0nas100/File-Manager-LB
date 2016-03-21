@@ -35,6 +35,7 @@ public class FileManagerLB extends Application {
     //public static HashMap<Integer,Stage> windows;
     public static final String ARTIFICIAL_ROOT_NAME = "Devices";
     public static ExtFolder FolderForDevices;
+
     @Override
     public void start(Stage primaryStage) {
         //Log.changeStream('f', new File("E:\\log.txt"));
@@ -42,8 +43,11 @@ public class FileManagerLB extends Application {
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setIsRoot(true);
         FolderForDevices.setPopulated(true);
-        this.mountDevice("E:\\");
-        this.mountDevice("C:\\");
+        
+        //mountDevice("E:\\");
+        //mountDevice("C:\\");
+       
+        mountDevice("/");
         FolderForDevices.name.set("DEVICES");
         ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
         
@@ -57,16 +61,26 @@ public class FileManagerLB extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-    public boolean mountDevice(String name){
+    public static boolean mountDevice(String name){
         boolean result = false;
         if(Files.isDirectory(Paths.get(name))){
             ExtFolder device = new ExtFolder(name);
             int nameCount = device.toPath().getNameCount();
+            Log.write("Is direcory");
             if(nameCount == 0){
                 result = true;
-                String newName = name.substring(0, name.lastIndexOf(File.separator));
-                device.name.set(name);
+                String newName = name;
+                //System is Windows
+                if(!name.equals("/")){
+                    newName = name.substring(0, name.lastIndexOf(File.separator));
+                }
+                
+                Log.writeln("newName="+newName);
+                device.name.set(newName);
                 FolderForDevices.files.put(newName, device);
+                device.populateFolder();
+                Log.writeln("Mounted successfully");
+                //Log.write(FolderForDevices.files.keySet());
             }
         }
         return result;

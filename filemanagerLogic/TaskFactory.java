@@ -7,6 +7,12 @@ package filemanagerLogic;
 
 import filemanagerLogic.fileStructure.ExtFile;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collection;
+import javafx.collections.ModifiableObservableListBase;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -17,6 +23,8 @@ import javafx.concurrent.Task;
 
 //
 public class TaskFactory {
+    public static ObservableList<ExtFile> selectedList;
+
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
         return instance;

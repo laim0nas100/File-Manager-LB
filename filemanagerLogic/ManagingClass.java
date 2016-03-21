@@ -45,8 +45,8 @@ public class ManagingClass {
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                
                 if(!existByLocation(root,location)){
-                    Log.writeln(root.files.keySet());
-                    Log.writeln("Put "+file.getAbsolutePath()+"to:"+location.toString());
+                    //Log.writeln(root.files.keySet());
+                    Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
                     putByLocation(root, location, file);
                 }else{
                     Log.writeln("Location "+location.toString()+" Exists");
@@ -192,8 +192,7 @@ public class ManagingClass {
     
     public void putByLocation(ExtFolder root,LocationInRoot location, ExtFile file){
         int i =0;
-        ExtFolder folder = (ExtFolder) root.files.get(location.at(i));
-        i++;
+        ExtFolder folder = root;
         while(i<location.length()-1){
             folder = (ExtFolder) folder.files.get(location.at(i++));
         }
