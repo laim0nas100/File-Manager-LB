@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import utility.Log;
 
 /**
  *
@@ -86,7 +87,7 @@ public class ExtFolder extends ExtFile{
             }
             this.populated = true;
         }catch(Exception e){
-            e.printStackTrace();
+            Log.writeln(e.getMessage());
         }
     }
     public void populateRecursive(){

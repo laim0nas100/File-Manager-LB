@@ -44,10 +44,10 @@ public class FileManagerLB extends Application {
         FolderForDevices.setIsRoot(true);
         FolderForDevices.setPopulated(true);
         
-        //mountDevice("E:\\");
-        //mountDevice("C:\\");
-       
         mountDevice("E:\\");
+        mountDevice("C:\\");
+       
+        //mountDevice("/");
         FolderForDevices.name.set("DEVICES");
         ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
         

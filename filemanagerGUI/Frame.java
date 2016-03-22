@@ -26,5 +26,8 @@ public class Frame {
     public void setStage(Stage stage){
         this.stage = stage;
     }
+    public String getTitle(){
+        return this.stage.getTitle();
+    }
     
 }

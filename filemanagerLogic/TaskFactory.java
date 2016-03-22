@@ -10,6 +10,7 @@ import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,7 +148,7 @@ public class TaskFactory {
             }
             
         }
-        list.sort(cmpAsc);
+        list.sort(cmpDesc);
         Log.writeln("List after computing");
         for(ExtFile file:list){
             Log.writeln(file.getAbsolutePath());
@@ -229,10 +230,13 @@ public class TaskFactory {
                     try{
                         if(list[index1].getIdentity().equals("folder")){
                             leftFolders.add(list[index1]);
+                            Files.createDirectory(list[index1].getDestination());
+                            Log.writeln("Added to flders:"+list[index1].getAbsolutePath());
+                        }else{
+                            Files.move(list[index1].toPath(),list[index1].getDestination());
+                            list[index1].setOperationSuccessfull(true);
+                            System.out.println("OK:"+list[index1].getAbsolutePath());
                         }
-                        Files.move(list[index1].toPath(),list[index1].getDestination());
-                        list[index1].setOperationSuccessfull(true);
-                        System.out.println("OK:"+list[index1].getAbsolutePath());
                     }catch(Exception e){
                         list[index1].setOperationSuccessfull(false);
                         System.out.println("Error:"+list[index1].getAbsolutePath()+" "+e.getLocalizedMessage());
@@ -242,9 +246,12 @@ public class TaskFactory {
                 }
                 updateMessage("Deleting leftover folders");
                 int i=0;
-                for(;i<leftFolders.size()-1;i++){
+                Log.writeln("Folders size: "+leftFolders.size());
+                leftFolders.sort(cmpDesc);
+                for(;i<leftFolders.size();i++){
                     try{
-                    Files.delete(leftFolders.get(i).toPath());
+                        Log.writeln("Deleting "+leftFolders.get(i));
+                        Files.delete(leftFolders.get(i).toPath());
                     }catch(Exception x){
                         
                     }

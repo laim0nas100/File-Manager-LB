@@ -42,13 +42,13 @@ public class ViewManager {
         this.progressDialogs = new HashMap<>();
         this.windows = new HashMap<>();
     };
-    public HashMap<String,Stage> messageBoxes;
-    public HashMap<String,Stage> progressDialogs;
-    public HashMap<String,Stage> windows;
+    public HashMap<String,Frame> messageBoxes;
+    public HashMap<String,Frame> progressDialogs;
+    public HashMap<String,Frame> windows;
     public static ViewManager getInstance(){
         return INSTANCE;
     }
-    private int findSmallestAvailable(HashMap<String,Stage> map,String title){
+    private int findSmallestAvailable(HashMap<String,Frame> map,String title){
         int i =1;
         while(true){
             if(map.containsKey(title + i)){
@@ -67,19 +67,18 @@ public class ViewManager {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("mainComponents.fxml"));
             Parent root = loader.load();
             MainController controller = loader.<MainController>getController();
-            
+            Frame frame = new Frame();
             Stage stage = new Stage();
             stage.setTitle(WINDOW_TITLE+index);
             stage.setScene(new Scene(root));
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.closeWindow();
             });
-            windows.put(stage.getTitle(),stage);
+            frame.setController(controller);
+            frame.setStage(stage);
+            windows.put(frame.getTitle(),frame);
             stage.show();
             controller.setUp(stage.getTitle(),rootFolder,currentFolder);
-            
-            //controller.changeToNewDir(currentFolder);
-            
             
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -87,7 +86,7 @@ public class ViewManager {
         
     }
     public void closeWindow(String title){
-        windows.get(title).close();
+        windows.get(title).getStage().close();
         windows.remove(title);
         if(windows.size()==0){
             System.exit(0);
@@ -99,7 +98,13 @@ public class ViewManager {
             closeWindow(s);
         }
     }
-
+    public void updateAllWindows(){
+        String[] keys = windows.keySet().toArray(new String[0]);
+        for(String s:keys){
+            MainController controller = (MainController) windows.get(s).getController();
+            controller.updateCurrentView();
+        }
+    }
     //PROGRESS DIALOG ACTIONS
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
@@ -107,7 +112,8 @@ public class ViewManager {
             int index = findSmallestAvailable(progressDialogs,PROGRESS_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/ProgressDialog.fxml"));
            
-            Parent root = loader.load();  
+            Parent root = loader.load();
+            Frame frame = new Frame();
             Stage stage = new Stage();
             stage.setTitle(PROGRESS_TITLE+index);
             stage.setScene(new Scene(root));
@@ -122,27 +128,31 @@ public class ViewManager {
                 controller.exit();
             });  
             controller.setUp(stage.getTitle(), task);
-            progressDialogs.put(stage.getTitle(),stage);          
+            frame.setController(controller);
+            frame.setStage(stage);
+            progressDialogs.put(frame.getTitle(),frame);          
         } catch (IOException ex) {
             ex.printStackTrace();
         }
         
     }
     public void closeProgressDialog(String title){
-        progressDialogs.get(title).close();
+        progressDialogs.get(title).getStage().close();
         progressDialogs.remove(title);
     }
+    
+    
     
     //CUSTOM VIEWS
     
     public void setTableView(String title,TableView tableView){
-        Scene scene = windows.get(title).getScene();
+        Scene scene = windows.get(title).getStage().getScene();
         AnchorPane left = (AnchorPane) scene.lookup("#left");
         left.getChildren().clear();
         left.getChildren().add(tableView);
     }
     public void setFlowView(String title,ScrollPane flowViewScroll,FlowPane flowView){
-        Scene scene = windows.get(title).getScene();
+        Scene scene = windows.get(title).getStage().getScene();
         AnchorPane left = (AnchorPane) scene.lookup("#left");
         left.getChildren().clear();
         left.getChildren().add(flowView);
