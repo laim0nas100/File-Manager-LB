@@ -92,7 +92,8 @@ public class ExtFile extends FileAbs implements Movable {
     }
     @Override
     public void setRelativePath(ExtFile dest){
-        this.relativePath = this.getAbsolutePath().replace(dest.getAbsolutePath(), "");
+        String path = dest.getName()+File.separator+this.getAbsolutePath().replace(dest.getAbsolutePath(), "");
+        this.relativePath = path;
     }
     
 

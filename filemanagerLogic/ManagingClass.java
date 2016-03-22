@@ -44,10 +44,10 @@ public class ManagingClass {
                 file.update();
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                
-                if(!existByLocation(root,location)){
+                if(!LocationAPI.getInstance().existByLocation(root,location)){
                     //Log.writeln(root.files.keySet());
                     Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
-                    putByLocation(root, location, file);
+                    LocationAPI.getInstance().putByLocation(root, location, file);
                 }else{
                     Log.writeln("Location "+location.toString()+" Exists");
                 }
@@ -62,7 +62,7 @@ public class ManagingClass {
     public void changeToForward(){
        
         if(cacheIndex+1<folderCache.size()){
-            currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(++cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, folderCache.get(++cacheIndex));
             currentDir.update();
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -70,7 +70,7 @@ public class ManagingClass {
     public void changeToPrevious(){
         
         if(cacheIndex-1>=0){
-            currentDir = (ExtFolder) this.getFileByLocation(root, folderCache.get(--cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, folderCache.get(--cacheIndex));
             currentDir.update();
         }
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -83,7 +83,7 @@ public class ManagingClass {
 //                Log.writeln("CurrentLocation:"+location.toString());
                 location = location.getParentLocation();
 //                Log.writeln("ParentLocation:"+location.toString()+" >");
-                ExtFolder folder = (ExtFolder) getFileByLocation(root, location);
+                ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, location);
 //                Log.writeln("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
             } catch (Exception ex) {
@@ -156,107 +156,28 @@ public class ManagingClass {
         cacheIndex = folderCache.size()-1;
     }
     
-    public ExtFile getFileByLocation(ExtFolder root,LocationInRoot location){
-
-        int i=0;
-        ExtFolder folder = root;
-        Log.writeln("Request:"+location.toString());
-        while(i<location.length()){
-           folder = (ExtFolder) folder.files.get(location.at(i++));
-           //System.out.print(folder.getAbsolutePath());
-        }
-        return folder;
-    }
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
-        ExtFile file = getFileByLocation(root,oldLoc);
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(root,oldLoc);
         if(file.getIdentity().equals("file")){
             ExtFile newFile = new ExtFile(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
-            this.removeByLocation(root, oldLoc);
-            this.putByLocation(root, newLoc, newFile);
+            LocationAPI.getInstance().removeByLocation(root, oldLoc);
+            LocationAPI.getInstance().putByLocation(root, newLoc, newFile);
         }else if(file.getIdentity().equals("folder")){
             ExtFolder newFile = new ExtFolder(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
             newFile.populateRecursive();
-            this.removeByLocation(root, oldLoc);
-            this.putByLocation(root, newLoc, newFile);
+            LocationAPI.getInstance().removeByLocation(root, oldLoc);
+            LocationAPI.getInstance().putByLocation(root, newLoc, newFile);
         }
     }
-    public void removeByLocation(ExtFolder root,LocationInRoot location){
-        int i =0;
-        ExtFolder folder = (ExtFolder) root.files.get(location.coordinates.get(i++));
-        for(;i<location.length()-1;i++){
-            folder = (ExtFolder) folder.files.get(location.at(i));
-        }
-        folder.files.remove(location.at(i));
-    }
-    
-    public void putByLocation(ExtFolder root,LocationInRoot location, ExtFile file){
-        int i =0;
-        ExtFolder folder = root;
-        while(i<location.length()-1){
-            folder = (ExtFolder) folder.files.get(location.at(i++));
-        }
-        folder.files.put(location.getName(),file);
-    }
-    public boolean existByLocation(ExtFolder root,LocationInRoot location){
-        int i =0;
-        ExtFolder folder = root;
-        while(i<location.length()){
-            if(folder.files.containsKey(location.at(i))){
-                folder = (ExtFolder) folder.files.get(location.at(i++));
-            }else{
-                return false;
-            }
-        }
-        return true;
-    }
     
     
     
-    // File actions
-    private static final Comparator<ExtFile> cmpDesc = (ExtFile f1, ExtFile f2) -> {
-        return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
-    };
-    private static final Comparator<ExtFile> cmpAsc = (ExtFile f1, ExtFile f2) -> {
-        return f2.getAbsolutePath().compareTo(f1.getAbsolutePath());
-    };  
+
     
     
     
-    public ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){ 
-        Vector<ExtFile> list = new Vector<>();
-        list.addAll(fileList);
-        list.sort(cmpDesc);
-        ExtFile[] array = new ExtFile[list.size()];
-        array = list.toArray(array);
-        for (ExtFile array1 : array) {
-            //Log.writeln(array1.getAbsolutePath());
-            array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-        }
-        return array;
-        
-    }
     
-    public ExtFile[] prepareForDelete(Collection<ExtFile> fileList){
-       Vector<ExtFile> list = new Vector<>();
-       list.addAll(fileList);
-       list.sort(cmpAsc);
-       ExtFile[] array = new ExtFile[0];
-       array = list.toArray(array);
-       return array; 
-    }
-    public ExtFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
-       Vector<ExtFile> list = new Vector<>();
-        list.addAll(fileList);
-        list.sort(cmpAsc);
-        ExtFile[] array = new ExtFile[list.size()];
-        array = list.toArray(array);
-        for (ExtFile array1 : array) {
-            //Log.writeln(array1.getAbsolutePath());
-            array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-        }
-        return array;
-    }
     
     
     

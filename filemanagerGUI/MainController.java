@@ -31,6 +31,7 @@ import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
+import filemanagerLogic.LocationAPI;
 import static filemanagerLogic.TaskFactory.selectedList;
 import java.util.Vector;
 import javafx.beans.property.ReadOnlyListWrapper;
@@ -199,9 +200,12 @@ public class MainController extends BaseController{
         ViewManager.getInstance().newWindow(FolderForDevices,MC.currentDir);
     }
     public void test(){
-        for(ExtFile file:selectedList){
-            System.out.println(file.getAbsolutePath());
+        Log.writeln("Selected list:");
+        for(ExtFile file:TaskFactory.selectedList){
+            Log.writeln(file.getAbsolutePath());
         }
+        ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.selectedList,MC.currentDir);
+        ViewManager.getInstance().newProgressDialog(task);
     }
     public void changeToNewDir(ExtFolder dir){
        MC.changeDirTo(dir);
@@ -215,7 +219,7 @@ public class MainController extends BaseController{
                 updateCurrentView();
             }else if(Files.isDirectory(Paths.get(possibleDir))){
                     LocationInRoot location = new LocationInRoot(possibleDir);
-                    ExtFolder folder = (ExtFolder) MC.getFileByLocation(FolderForDevices, location);
+                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
                     changeToNewDir(folder);
 
 

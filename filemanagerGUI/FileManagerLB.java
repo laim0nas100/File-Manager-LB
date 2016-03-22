@@ -47,7 +47,7 @@ public class FileManagerLB extends Application {
         //mountDevice("E:\\");
         //mountDevice("C:\\");
        
-        mountDevice("/");
+        mountDevice("E:\\");
         FolderForDevices.name.set("DEVICES");
         ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
         
@@ -70,15 +70,15 @@ public class FileManagerLB extends Application {
             if(nameCount == 0){
                 result = true;
                 String newName = name;
-                //System is Windows
-                if(!name.equals("/")){
+                //Only 1 slash, make directory the slash
+                if(!name.equals(File.separator)){
                     newName = name.substring(0, name.lastIndexOf(File.separator));
                 }
                 
-                Log.writeln("newName="+newName);
+                Log.writeln("newName= "+newName);
                 device.name.set(newName);
                 FolderForDevices.files.put(newName, device);
-                device.populateFolder();
+                device.update();
                 Log.writeln("Mounted successfully");
                 //Log.write(FolderForDevices.files.keySet());
             }

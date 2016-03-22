@@ -41,8 +41,8 @@ public class LocationInRoot {
                 }
             }
             //Unix specific
-            if(filePath.startsWith("/")){
-                list.add(0,"/");
+            if(filePath.startsWith(File.separator)){
+                list.add(0,File.separator);
             }
             coordinates.addAll(list);
         
@@ -86,7 +86,5 @@ public class LocationInRoot {
         }
         return "<"+str+">";
     }
-    
-    //SOME COMENT
     
 }

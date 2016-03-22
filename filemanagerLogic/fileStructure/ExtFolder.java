@@ -31,15 +31,7 @@ public class ExtFolder extends ExtFile{
     }
 
 
-    /*
-    public Collection<ExtFile> getFilesCollectionRecursive(){
-    ArrayList<ExtFile> list = new ArrayList<>();
-    for(int i=0; i<files.size(); i++){
-    ArrayList<ExtFile> list1 = (ArrayList<ExtFile>) files.values();
-    if
-    }
-    }
-     */    
+ 
     
 
     @Override
@@ -126,12 +118,9 @@ public class ExtFolder extends ExtFile{
     }
     private void getRootList(Collection<ExtFile> list,ExtFolder folder,ExtFolder root){
         if(!folder.populated){
-            folder.updateRecursive();
+            folder.populateRecursive();
         }
-        for(ExtFile file:folder.getFilesCollection()){
-            file.setRelativePath(root);
-            list.add(file);
-        }
+        list.addAll(folder.getFilesCollection());
         for(ExtFolder fold:folder.getFoldersFromFiles()){
             getRootList(list,fold,root);
         }

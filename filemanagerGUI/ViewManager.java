@@ -99,7 +99,7 @@ public class ViewManager {
             closeWindow(s);
         }
     }
- 
+
     //PROGRESS DIALOG ACTIONS
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
