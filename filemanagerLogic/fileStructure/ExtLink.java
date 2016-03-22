@@ -7,7 +7,7 @@ package filemanagerLogic.fileStructure;
 
 import java.io.File;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *

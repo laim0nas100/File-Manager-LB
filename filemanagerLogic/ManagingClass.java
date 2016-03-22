@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
@@ -27,17 +27,17 @@ import utility.Log;
 public class ManagingClass {
     
     
-    private Vector<LocationInRoot> folderCache;
+    private ArrayList<LocationInRoot> folderCache;
     private int cacheIndex;
     public ExtFolder currentDir;
     public static ExtFolder root;
     public ManagingClass(ExtFolder root){
         this.root = root;
-        folderCache = new Vector<>();
+        folderCache = new ArrayList<>();
         cacheIndex = 0;
     }
     public void changeDirTo(ExtFolder file){
-            if(file.isRoot()){
+            if(file.isAbsoluteRoot()){
                 currentDir = root;
                 //currentDir.update();
             }else{
@@ -76,7 +76,7 @@ public class ManagingClass {
         Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
-        if(!currentDir.isRoot()){
+        if(!currentDir.isAbsoluteRoot()){
             try {
                 LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());
 //                Log.writeln("Absolute Path:"+currentDir.getAbsolutePath());
@@ -141,15 +141,15 @@ public class ManagingClass {
     //LocationInRoot Specifics
     private void addCacheNode(ExtFolder folder){
         if(!folderCache.isEmpty()){
-            Vector<LocationInRoot> saveList = new Vector<>();
+            ArrayList<LocationInRoot> saveList = new ArrayList<>();
             for(int i=0; i<cacheIndex+1; i++){
                 saveList.add(folderCache.get(i));
             }
             folderCache.clear();
             folderCache.addAll(saveList);
         }
-        if(folder.isRoot()){
-            folderCache.add(new LocationInRoot(folder.name.get()).getParentLocation());
+        if(folder.isAbsoluteRoot()){
+            folderCache.add(new LocationInRoot(""));
         }else{            
             folderCache.add(new LocationInRoot(folder.getAbsolutePath()));
         }

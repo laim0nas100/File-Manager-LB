@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Vector;
+import java.util.ArrayList;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -52,14 +52,14 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        Vector<ExtFile> list = new Vector<>();
+        ArrayList<ExtFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
             ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
-                Vector<ExtFile> subList = new Vector<>();
+                ArrayList<ExtFile> subList = new ArrayList<>();
                 subList.addAll(folder.getListRecursive());
                 for(ExtFile subFile:subList){
                     subFile.setRelativePath(folder);
@@ -94,14 +94,14 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        Vector<ExtFile> list = new Vector<>();
+        ArrayList<ExtFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
             ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
-                Vector<ExtFile> subList = new Vector<>();
+                ArrayList<ExtFile> subList = new ArrayList<>();
                 subList.addAll(folder.getListRecursive());
                 list.addAll(subList);
                 list.add(folder);
@@ -127,14 +127,14 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        Vector<ExtFile> list = new Vector<>();
+        ArrayList<ExtFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
             ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
-                Vector<ExtFile> subList = new Vector<>();
+                ArrayList<ExtFile> subList = new ArrayList<>();
                 subList.addAll(folder.getListRecursive());
                 for(ExtFile subFile:subList){
                     subFile.setRelativePath(folder);
@@ -207,7 +207,7 @@ public class TaskFactory {
     public ExtTask moveFiles(Collection<ExtFile> fileList, ExtFile dest){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
-                Vector<ExtFile> leftFolders = new Vector<>();
+                ArrayList<ExtFile> leftFolders = new ArrayList<>();
                 String str = "";
                 updateMessage("Populating list for move");
                 ExtFile[] list = prepareForMove(fileList,dest);

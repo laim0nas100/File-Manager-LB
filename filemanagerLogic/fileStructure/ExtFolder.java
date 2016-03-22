@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import utility.Log;
 
 /**
@@ -151,20 +149,11 @@ public class ExtFolder extends ExtFile{
     @Override
     public ExtFolder getTrueForm(){
         return this;
-    }
-    public boolean isRoot() {
-        return isRoot;
-    }
-
-    public void setIsRoot(boolean isRoot) {
-        this.isRoot = isRoot;
-    }
-    
+    } 
     public boolean isPopulated(){
         return populated;
         
     }
-
     public void setPopulated(boolean populated) {
         this.populated = populated;
     }

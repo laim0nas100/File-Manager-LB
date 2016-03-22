@@ -33,7 +33,7 @@ import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.LocationAPI;
 import static filemanagerLogic.TaskFactory.selectedList;
-import java.util.Vector;
+import java.util.ArrayList;
 import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.scene.input.KeyEvent;
 import utility.Log;
@@ -65,6 +65,8 @@ public class MainController extends BaseController{
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
     @FXML public ContextMenu contextMenu;
+        
+    public ContextMenu actionContextMenu;
     
     private ObservableList columns;
     
@@ -76,6 +78,13 @@ public class MainController extends BaseController{
         MC = new ManagingClass(root);
         this.title = title;
         this.changeToNewDir(currentDir);
+        
+        actionContextMenu = new ContextMenu();
+        //actionContextMenu.getItems().set
+    }
+    
+    public void reMount(){
+        FileManagerLB.remount();
     }
     public void closeWindow(){ 
         System.out.println("Closing internally " + title);
@@ -176,7 +185,7 @@ public class MainController extends BaseController{
         flowView.setVisible(true);
     }
     public void updateCurrentView(){
-        if(MC.currentDir.isRoot()){
+        if(MC.currentDir.isAbsoluteRoot()){
             currentDirText.setText("MOUNT POINT");
         }else{
             currentDirText.setText(MC.currentDir.getAbsolutePath());

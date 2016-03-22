@@ -9,16 +9,16 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
-    public Vector<String> coordinates;
+    public ArrayList<String> coordinates;
     public LocationInRoot(ExtFolder root,File file) throws Exception{
-        coordinates = new Vector<>();
+        coordinates = new ArrayList<>();
         coordinates.clear();
         while((!file.getAbsolutePath().equals(root.getAbsolutePath()))){
             coordinates.add(0,file.getName());
@@ -29,11 +29,11 @@ public class LocationInRoot {
         }
     }
     public LocationInRoot(String filePath){
-        coordinates = new Vector<>();
+        coordinates = new ArrayList<>();
         
             String[] fileArray = filePath.split("\\"+File.separatorChar);
             List<String> asList = Arrays.asList(fileArray);
-            Vector<String> list = new Vector<>();
+            ArrayList<String> list = new ArrayList<>();
             list.addAll(asList);
             for(int i=list.size()-1; i>=0; i--){
                 if(list.get(i).isEmpty()){
@@ -49,10 +49,10 @@ public class LocationInRoot {
     }
     
     public LocationInRoot(LocationInRoot loc){
-        this.coordinates = (Vector<String>) loc.coordinates.clone();
+        this.coordinates = (ArrayList<String>) loc.coordinates.clone();
     }
-    private LocationInRoot(Vector<String> coord){
-        coordinates = new Vector<>();
+    private LocationInRoot(ArrayList<String> coord){
+        coordinates = new ArrayList<>();
         coordinates.addAll(coord);
         
     }
@@ -73,7 +73,7 @@ public class LocationInRoot {
         return this.coordinates.get(i);
     }
     public LocationInRoot getParentLocation(){
-        Vector<String> list = new Vector<>();
+        ArrayList<String> list = new ArrayList<>();
         list.addAll(this.coordinates);
         list.remove(this.length()-1);
         return new LocationInRoot(list);

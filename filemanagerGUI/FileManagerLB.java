@@ -6,25 +6,11 @@
 package filemanagerGUI;
 
 import filemanagerLogic.fileStructure.ExtFolder;
-import filemanagerLogic.ManagingClass;
-import filemanagerLogic.TaskFactory;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuBar;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import utility.Log;
 
 /**
@@ -32,37 +18,34 @@ import utility.Log;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    //public static HashMap<Integer,Stage> windows;
     public static final String ARTIFICIAL_ROOT_NAME = "Devices";
     public static ExtFolder FolderForDevices;
 
     @Override
     public void start(Stage primaryStage) {
-        //Log.changeStream('f', new File("E:\\log.txt"));
-        //rootDirectory = new ExtFolder("/mnt/ExtraSpace/Test1/");
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setIsRoot(true);
         FolderForDevices.setPopulated(true);
-        
-        mountDevice("E:\\");
-        mountDevice("C:\\");
-       
-        //mountDevice("/");
+        FolderForDevices.setIsAbsoluteRoot(true);
+        remount();
         FolderForDevices.name.set("DEVICES");
-        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
-        
-        
-    }
-    
-    
+        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);  
+    } 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         launch(args);
     }
+    public static void remount(){
+        File[] roots = File.listRoots();
+        for(int i = 0; i < roots.length ; i++){
+            System.out.println("Root["+i+"]:" + roots[i]);
+            mountDevice(roots[i].getAbsolutePath());
+        }
+    }
     public static boolean mountDevice(String name){
-        boolean result = false;
+        boolean result = false;   
         if(Files.isDirectory(Paths.get(name))){
             ExtFolder device = new ExtFolder(name);
             int nameCount = device.toPath().getNameCount();
@@ -74,18 +57,15 @@ public class FileManagerLB extends Application {
                 if(!name.equals(File.separator)){
                     newName = name.substring(0, name.lastIndexOf(File.separator));
                 }
-                
                 Log.writeln("newName= "+newName);
                 device.name.set(newName);
+                device.setIsRoot(true);
                 FolderForDevices.files.put(newName, device);
                 device.update();
                 Log.writeln("Mounted successfully");
-                //Log.write(FolderForDevices.files.keySet());
             }
         }
         return result;
     }
-    
-    
-    
+
 }

@@ -20,7 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
+<BorderPane xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -35,6 +35,7 @@
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
+                        <MenuItem mnemonicParsing="false" text="Unspecified Action" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">

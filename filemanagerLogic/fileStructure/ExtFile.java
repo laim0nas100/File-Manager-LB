@@ -28,8 +28,16 @@ public class ExtFile extends FileAbs implements Movable {
     protected String relativePath;
     protected Path destination;
     protected boolean isRoot;
+    protected boolean isAbsoluteRoot;
 
-    public boolean isIsRoot() {
+    public boolean isAbsoluteRoot() {
+        return isAbsoluteRoot;
+    }
+
+    public void setIsAbsoluteRoot(boolean isAbsoluteRoot) {
+        this.isAbsoluteRoot = isAbsoluteRoot;
+    }
+    public boolean isRoot() {
         return isRoot;
     }
 
@@ -48,6 +56,7 @@ public class ExtFile extends FileAbs implements Movable {
         this.destination = Paths.get(""); 
         this.name = new SimpleStringProperty(this.getName());
         this.isRoot = false;
+        this.isAbsoluteRoot = false;
     }   
     public ExtFile(File file){
         super(file.getAbsolutePath());

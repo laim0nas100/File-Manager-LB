@@ -7,22 +7,16 @@ package filemanagerGUI;
 
 
 import filemanagerGUI.dialog.ProgressDialogController;
-import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
-import filemanagerLogic.TaskFactory;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
-import javafx.concurrent.Task;
 
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;

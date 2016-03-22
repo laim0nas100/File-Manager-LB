@@ -53,14 +53,17 @@ public class LocationAPI {
     }
 
     public ExtFile getFileByLocation(ExtFolder root, LocationInRoot location) {
-        try{
-        int i = 0;
-        ExtFolder folder = root;
-        Log.writeln("Request:" + location.toString());
-        while (i < location.length()-1) {
-            folder = (ExtFolder) folder.files.get(location.at(i++));
-            Log.writeln(folder.getAbsolutePath());
+        if(location.length()==0){
+            return root;
         }
+        try{
+            int i = 0;
+            ExtFolder folder = root;
+            Log.writeln("Request:" + location.toString());
+            while (i < location.length()-1) {
+                folder = (ExtFolder) folder.files.get(location.at(i++));
+                Log.writeln(folder.getAbsolutePath());
+            }
         
         return folder.files.get(location.at(i));
         }catch(Exception x){

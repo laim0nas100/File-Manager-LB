@@ -5,7 +5,7 @@
  */
 package utility;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
@@ -13,11 +13,11 @@ import java.util.Vector;
  * Text Manager for managing logs or messages for input by line
  */
 public class TextMan {
-    private Vector<String> textLines;
+    private ArrayList<String> textLines;
     public TextMan(){
-        textLines = new Vector<String>();
+        textLines = new ArrayList<String>();
     }
-    public TextMan(Vector<String> list){
+    public TextMan(ArrayList<String> list){
         this.textLines = list;
     }
     public void addLn(String...strings){
@@ -33,7 +33,7 @@ public class TextMan {
                 int index = textLines.size()-1;
                 String line = textLines.get(index);
                 line += s;
-                textLines.setElementAt(line, index);
+                textLines.set(index,line);
             }
             
         }
@@ -45,7 +45,7 @@ public class TextMan {
         }
         return bigString;
     }
-    public Vector<String> getList(){
+    public ArrayList<String> getList(){
         return this.textLines;
     }
 }
