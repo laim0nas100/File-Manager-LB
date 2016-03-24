@@ -5,12 +5,16 @@
  */
 package filemanagerLogic.fileStructure;
 
+import filemanagerGUI.FileManagerLB;
+import static filemanagerGUI.FileManagerLB.rootSet;
+import filemanagerLogic.LocationAPI;
+import filemanagerLogic.LocationInRoot;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import utility.Log;
 
 /**
@@ -23,39 +27,21 @@ public class ExtFolder extends ExtFile{
 
     
     private boolean populated;
-    public LinkedHashMap <String,ExtFile> files;
+    public ConcurrentHashMap <String,ExtFile> files;
     
     public Collection<ExtFile> getFilesCollection(){
         return this.files.values();
     }
 
 
- 
-    
-
-    @Override
-    public boolean doOnOpen() {
-        return true;
-    }
     @Override
     public String getIdentity(){
         return "folder";
     }
     
-    public ExtFile[] getFilesArray(){
-        if(!this.populated){
-            this.populateFolder();
-            this.populated = true;
-        }
-
-        Collection<ExtFile> values = this.files.values();
-        return values.toArray(new ExtFile[0]);
-    }
-    
     @Override
     protected void setDefaultValues(){
-        //this.folders = new LinkedHashMap<>();
-        this.files = new LinkedHashMap<>();
+        this.files = new ConcurrentHashMap<>();
         this.populated = false;
         super.setDefaultValues();
     }
@@ -73,14 +59,16 @@ public class ExtFolder extends ExtFile{
         try{
             if(null != this.list()){
                 for(File f:this.listFiles()){
-                    ExtFile file = new ExtFile(f.getAbsolutePath());
-                    if(f.isDirectory()){
-                        file = new ExtFolder(f);             
-                    }else if(Files.isSymbolicLink(f.toPath())){
-                        file = new ExtLink(f.getAbsolutePath());
+                    if(!this.files.containsKey(f.getName())){//NEW LINE
+                        ExtFile file = new ExtFile(f.getAbsolutePath());
+                        if(f.isDirectory()){
+                            file = new ExtFolder(f);             
+                        }else if(Files.isSymbolicLink(f.toPath())){
+                            file = new ExtLink(f.getAbsolutePath());
+                        }
+                        LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+                        LocationAPI.getInstance().putByLocation(location, file);
                     }
-                    files.put(file.getName(), file);
-
                 }
             }
             this.populated = true;
@@ -111,7 +99,7 @@ public class ExtFolder extends ExtFile{
         return folders;   
     }
     public Collection<ExtFile> getListRecursive(){
-        Collection<ExtFile> list = new Vector<>();
+        ArrayList<ExtFile> list = new ArrayList<>();
         getRootList(list,this,this);
         return list; 
     }
@@ -124,23 +112,27 @@ public class ExtFolder extends ExtFile{
             getRootList(list,fold,root);
         }
     }
-    public void updateRecursive(){
-        for(ExtFile file:this.getListRecursive()){
-            if(!file.exists()){
-                this.files.remove(file.getName());
-            }
-        }
-        this.populateRecursive();
-    }
     public void update(){
-        for(ExtFile file:this.getFilesCollection()){
-            if(!file.exists()){
-                this.files.remove(file.getName());
+        if(this.isAbsoluteRoot){
+            FileManagerLB.remount();
+        }else if(this.isPopulated()){
+            Log.writeln("Update:"+this.getAbsolutePath());
+            
+            for(ExtFile file:this.getFilesCollection()){
+                if(!Files.exists(file.toPath())){
+                    Log.writeln(file+" dont exist");
+                    LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+                    LocationAPI.getInstance().removeByLocation(location);
+                }
             }
+            this.populateFolder();
         }
-        this.populateFolder();
+        
     }
-    
+    public boolean isRoot(){
+        String path = this.getAbsolutePath();
+        return rootSet.contains(path);
+    }
     
     
     //GETTERS & SETTERS

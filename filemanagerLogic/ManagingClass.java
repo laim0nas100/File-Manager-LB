@@ -6,11 +6,14 @@
 package filemanagerLogic;
 
 //import static filemanagerGUI.FileManagerLB.rootDirectory;
+import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerGUI.ViewManager;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
@@ -27,27 +30,35 @@ import utility.Log;
 public class ManagingClass {
     
     
-    private ArrayList<LocationInRoot> folderCache;
+    private final ArrayList<LocationInRoot> folderCache;
+    private ArrayList<ExtFile> currentContents;
     private int cacheIndex;
     public ExtFolder currentDir;
-    public static ExtFolder root;
     public ManagingClass(ExtFolder root){
-        this.root = root;
         folderCache = new ArrayList<>();
         cacheIndex = 0;
     }
     public void changeDirTo(ExtFolder file){
+        Log.writeln("Change dir to: "+file.getAbsolutePath());
             if(file.isAbsoluteRoot()){
-                currentDir = root;
+                currentDir = FolderForDevices;
                 //currentDir.update();
+            }else if(file.isRoot()){
+                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+                currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
+                currentDir.update();
             }else{
-                file.update();
+                if(file.isPopulated()){
+                    file.update();
+                }else{
+                    file.populateFolder();
+                }
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                
-                if(!LocationAPI.getInstance().existByLocation(root,location)){
+                if(!LocationAPI.getInstance().existByLocation(location)){
                     //Log.writeln(root.files.keySet());
                     Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
-                    LocationAPI.getInstance().putByLocation(root, location, file);
+                    LocationAPI.getInstance().putByLocation(location, file);
                 }else{
                     Log.writeln("Location "+location.toString()+" Exists");
                 }
@@ -62,7 +73,7 @@ public class ManagingClass {
     public void changeToForward(){
        
         if(cacheIndex+1<folderCache.size()){
-            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, folderCache.get(++cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(folderCache.get(++cacheIndex));
             currentDir.update();
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -70,7 +81,7 @@ public class ManagingClass {
     public void changeToPrevious(){
         
         if(cacheIndex-1>=0){
-            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, folderCache.get(--cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(folderCache.get(--cacheIndex));
             currentDir.update();
         }
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -83,7 +94,7 @@ public class ManagingClass {
 //                Log.writeln("CurrentLocation:"+location.toString());
                 location = location.getParentLocation();
 //                Log.writeln("ParentLocation:"+location.toString()+" >");
-                ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(root, location);
+                ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
 //                Log.writeln("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
             } catch (Exception ex) {
@@ -99,11 +110,11 @@ public class ManagingClass {
     }
     public ObservableList<ExtFile> getAllContents(){
         ObservableList<ExtFile> list = FXCollections.observableArrayList();
-        list.addAll(root.getListRecursive());
+        list.addAll(FolderForDevices.getListRecursive());
         return list;  
     }
     public void printAllContents(){
-        for(ExtFile file:root.getListRecursive()){
+        for(ExtFile file:FolderForDevices.getListRecursive()){
             Log.writeln(file.getAbsolutePath());
         }
     }
@@ -111,10 +122,10 @@ public class ManagingClass {
     
     //RENAME
     public boolean renameTo(ExtFile fileToRename, String newName){
-        return renameTo(root,fileToRename,newName);
+        return renameTo(FolderForDevices,fileToRename,newName);
     }
     public boolean renameByRegex(ExtFile fileToRename, String regex, String replacement){
-       return renameByRegex(root,fileToRename,regex,replacement);
+       return renameByRegex(FolderForDevices,fileToRename,regex,replacement);
     }
     public boolean renameTo(ExtFolder root,ExtFile fileToRename,String newName){
         ExtFile newPath = new ExtFile(fileToRename.getParentFile().getPath() + File.separator + newName);
@@ -123,7 +134,7 @@ public class ManagingClass {
             LocationInRoot newLoc = new LocationInRoot(oldLoc);
             newLoc.setName(newName);
             Files.move(fileToRename.toPath(), newPath.toPath());
-            fileToRename.name.set(newName);
+            fileToRename.propertyName.set(newName);
             this.renameRootKeys(root, newLoc, oldLoc);
         }catch(Exception e){
                 return false;
@@ -158,17 +169,30 @@ public class ManagingClass {
     
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
-        ExtFile file = LocationAPI.getInstance().getFileByLocation(root,oldLoc);
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(oldLoc);
         if(file.getIdentity().equals("file")){
             ExtFile newFile = new ExtFile(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
-            LocationAPI.getInstance().removeByLocation(root, oldLoc);
-            LocationAPI.getInstance().putByLocation(root, newLoc, newFile);
+            LocationAPI.getInstance().removeByLocation(oldLoc);
+            LocationAPI.getInstance().putByLocation(newLoc, newFile);
         }else if(file.getIdentity().equals("folder")){
             ExtFolder newFile = new ExtFolder(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
             newFile.populateRecursive();
-            LocationAPI.getInstance().removeByLocation(root, oldLoc);
-            LocationAPI.getInstance().putByLocation(root, newLoc, newFile);
+            LocationAPI.getInstance().removeByLocation(oldLoc);
+            LocationAPI.getInstance().putByLocation(newLoc, newFile);
         }
+    }
+    
+    public void createNewFolder() throws IOException{
+        String path = this.currentDir.getAbsolutePath();
+        String newName = "New Folder";
+        while(currentDir.files.containsKey(newName)){
+            newName= "New "+newName; 
+        }
+        path +=File.separator+newName;
+        Files.createDirectory(Paths.get(path));
+        ExtFolder folder = new ExtFolder(path);
+        LocationInRoot location = new LocationInRoot(path);
+        LocationAPI.getInstance().putByLocation(location, folder);
     }
     
     

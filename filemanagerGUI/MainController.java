@@ -13,14 +13,10 @@ import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.ManagingClass;
 import filemanagerLogic.TaskFactory;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.ResourceBundle;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.TreeTableView;
@@ -32,10 +28,15 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.LocationAPI;
-import static filemanagerLogic.TaskFactory.selectedList;
+import filemanagerLogic.fileStructure.ExtLink;
 import java.util.ArrayList;
+import java.util.HashMap;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyListWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.input.KeyEvent;
+import utility.DesktopApi;
 import utility.Log;
 
 /**
@@ -56,31 +57,37 @@ public class MainController extends BaseController{
     @FXML public AnchorPane left;
     @FXML public FlowPane flowView;
     @FXML public ScrollPane flowViewScroll;
+    
+    
     @FXML public TableView tableView;
-    //@FXML public Label sampleLabel;
+    private ArrayList< TableColumn<ExtFile, String>> columns;
+    private ObservableList<ExtFile> selectedList = FXCollections.observableArrayList();
+    
+    
     
     @FXML public TextField currentDirText;
     @FXML public Button buttonPrev;
     @FXML public Button buttonParent;
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
-    @FXML public ContextMenu contextMenu;
+
         
-    public ContextMenu actionContextMenu;
+    private ContextMenu contextMenu;
+    private MenuItem[] contextMenuItems;
     
-    private ObservableList columns;
     
     private int currentView;
     
     
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
-        selectedList = new ReadOnlyListWrapper<>();
+        contextMenuItems = new MenuItem[10];
+        contextMenu = new ContextMenu();
+        loadDefaults();
+        
         MC = new ManagingClass(root);
         this.title = title;
-        this.changeToNewDir(currentDir);
+        this.changeToDir(currentDir);
         
-        actionContextMenu = new ContextMenu();
-        //actionContextMenu.getItems().set
     }
     
     public void reMount(){
@@ -93,71 +100,15 @@ public class MainController extends BaseController{
 
     public void setTableView(){
         currentView = 0;
-        TableColumn<ExtFile, String> nameCol = new TableColumn<>("Files");
-        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
-                return cellData.getValue().getPropertyName();
-            }
-        });
-        
         tableView.setItems(MC.getCurrentContents());
-        tableView.getColumns().setAll(nameCol);
-        tableView.setOnMousePressed((MouseEvent event) -> {
-            if(!tableView.getSelectionModel().isEmpty()){
-                if(event.isPrimaryButtonDown()){
-                    if(event.getClickCount() >1){   
-
-                            ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                            if(file.getIdentity().equals("folder")){
-                                changeToNewDir((ExtFolder) file);
-                                updateCurrentView();
-                            }else if(file.getIdentity().equals("file")){
-                                try {
-                                    file.doOnOpen();
-                                } catch (IOException ex) {
-                                    //TODO error handling
-                                }                    
-                            }
-                        
-                    }else{
-                        selectedList = tableView.getSelectionModel().getSelectedItems();
-                    }
-                }
-            }
-        });
-        tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tableView.setOnKeyPressed((KeyEvent keyEvent)->{
-            if(keyEvent.isControlDown()){
-                 if(!tableView.getSelectionModel().isEmpty()){
-                        selectedList = tableView.getSelectionModel().getSelectedItems();
-                    }
-            }
-        });
-        
-        tableView.setOnContextMenuRequested((eh)->{
-            if(!tableView.getSelectionModel().isEmpty()){
-                //Single item options
-                if(selectedList.size()==1){
-                    ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                    if(file.getIdentity().equals("folder")){
-                        Log.write("Found folder",file.getAbsolutePath());
-                    }else if(file.getIdentity().equals("file")){
-                        try {
-                            file.doOnOpen();
-                        } catch (IOException ex) {
-                            //TODO error handling
-                        }                    
-                    }
-                //Multiple item options
-                }else{
-                }
-           }
-        });
+        tableView.getSortOrder().add(columns.get(0));
+        tableView.getColumns().setAll(columns);
+       
         
         
         
-        ViewManager.getInstance().setTableView(title, tableView);
+        
+        //ViewManager.getInstance().setTableView(title, tableView);
         tableView.setVisible(true);
     }
     public void setFlowView(){
@@ -169,7 +120,7 @@ public class MainController extends BaseController{
             Node node = new Button(name);
             node.setOnMouseReleased((MouseEvent event) ->{
                 if(file.getIdentity().equals("folder")){
-                    changeToNewDir((ExtFolder) file);
+                    changeToDir((ExtFolder) file);
                 }
             
             });
@@ -210,13 +161,13 @@ public class MainController extends BaseController{
     }
     public void test(){
         Log.writeln("Selected list:");
-        for(ExtFile file:TaskFactory.selectedList){
+        for(ExtFile file:TaskFactory.markedList){
             Log.writeln(file.getAbsolutePath());
         }
-        ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.selectedList,MC.currentDir);
-        ViewManager.getInstance().newProgressDialog(task);
+        //ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.selectedList,MC.currentDir);
+        //ViewManager.getInstance().newProgressDialog(task);
     }
-    public void changeToNewDir(ExtFolder dir){
+    public void changeToDir(ExtFolder dir){
        MC.changeDirTo(dir);
        updateCurrentView();
     }
@@ -228,15 +179,12 @@ public class MainController extends BaseController{
                 updateCurrentView();
             }else if(Files.isDirectory(Paths.get(possibleDir))){
                     LocationInRoot location = new LocationInRoot(possibleDir);
-                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
-                    changeToNewDir(folder);
+                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
+                    changeToDir(folder);
 
 
             }
         } catch (Exception ex) {}
-               
-        
-        updateCurrentView();
     }
     
     public void changeToParent(){
@@ -251,6 +199,144 @@ public class MainController extends BaseController{
     public void changeToForward(){
         MC.changeToForward();
         updateCurrentView();
+    }
+    
+    private void loadDefaults(){
+        //TABLE VIEW SETUP
+        
+        columns = new ArrayList<>();
+        
+        TableColumn<ExtFile, String> nameCol = new TableColumn<>("Files");
+        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+                return cellData.getValue().getPropertyName();
+            }
+        });
+        nameCol.setSortType(TableColumn.SortType.ASCENDING);
+        columns.add(nameCol);
+        
+        
+        //ContextMenu
+        contextMenuItems[0] = new MenuItem();
+        contextMenuItems[0].setText("Create New Folder");
+        contextMenuItems[0].setOnAction((event)->{
+            Log.writeln("Create new folder");
+            try {
+                MC.createNewFolder();
+                this.updateCurrentView();
+                
+            } catch (IOException ex) {
+               //TODO error handling
+            }
+        });
+        
+        contextMenuItems[1] = new MenuItem();
+        contextMenuItems[1].setText("Rename");
+        contextMenuItems[1].setOnAction((event)->{
+            Log.writeln("Invoke rename dialog");
+            //Invoke text input dialog
+        });
+        
+        contextMenuItems[2] = new MenuItem();
+        contextMenuItems[2].setText("Delete");
+        contextMenuItems[2].setOnAction((event)->{
+            Log.writeln("Deleting");
+            ViewManager.getInstance().newProgressDialog(TaskFactory.getInstance().deleteFiles(selectedList));
+        });
+        
+        contextMenuItems[3] = new MenuItem();
+        contextMenuItems[3].setText("Copy Here");
+        contextMenuItems[3].setOnAction((event)->{
+            Log.writeln("Copy Marked");
+            ViewManager.getInstance().newProgressDialog(TaskFactory.getInstance().copyFiles(TaskFactory.markedList,MC.currentDir));
+        });
+        contextMenuItems[4] = new MenuItem();
+        contextMenuItems[4].setText("Move Here");
+        contextMenuItems[4].setOnAction((e)->{
+            Log.writeln("Move Marked");
+            ViewManager.getInstance().newProgressDialog(TaskFactory.getInstance().moveFiles(TaskFactory.markedList,MC.currentDir));
+        
+        });
+        contextMenuItems[5] = new MenuItem();
+        contextMenuItems[5].setText("Create new file");
+        contextMenuItems[5].setOnAction((e)->{
+            Log.writeln("Create new file");
+            //Invoke text input dialog
+        });
+        contextMenuItems[6] = new MenuItem();
+        contextMenuItems[6].setText("Add to marked");
+        contextMenuItems[6].setOnAction((e)->{
+            TaskFactory.markedList.addAll(selectedList);
+        });
+        contextMenuItems[7] = new MenuItem();
+        contextMenuItems[7].setText("Clean marked list");
+        contextMenuItems[7].setOnAction((e)->{
+            TaskFactory.markedList.clear();
+        });
+        
+        Menu submenuCreate = new Menu();
+        submenuCreate.setText("Create...");
+        submenuCreate.getItems().addAll(contextMenuItems[0],contextMenuItems[5]);
+        
+        
+        Menu submenuMarked = new Menu();
+        submenuMarked.setText("Marked...");
+        submenuMarked.getItems().addAll(contextMenuItems[3],contextMenuItems[4],contextMenuItems[6],contextMenuItems[7]);
+        
+        contextMenu.getItems().add(0, submenuCreate);
+        contextMenu.getItems().add(1, contextMenuItems[1]);
+        contextMenu.getItems().add(2, contextMenuItems[2]);
+        contextMenu.getItems().add(submenuMarked);
+        
+        
+        
+        tableView.setContextMenu(contextMenu);
+        //TABLE VIEW ACTIONS
+        tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        tableView.setOnMousePressed((MouseEvent event) -> {
+            if(!tableView.getSelectionModel().isEmpty()){
+                if(event.isPrimaryButtonDown()){
+                    if(event.getClickCount() >1){   
+                            ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+                            if(file.getIdentity().equals("folder")){
+                                changeToDir((ExtFolder) file);
+                            }else {
+                                
+                                try{
+                                    if(file.getIdentity().equals("link")){
+                                        ExtLink link = (ExtLink) file.getTrueForm();
+                                        LocationInRoot location = new LocationInRoot(link.getTargetDir());        
+                                            if(link.isPointsToDirectory()){
+                                                changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
+                                            }else{
+                                                DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
+                                            }
+                                    }else if(file.getIdentity().equals("file")){
+                                            DesktopApi.open(file);
+                                    }
+                                }catch(Exception x){
+                                  //TODO error handling  
+                                }
+                            }
+                        
+                    }else{
+                        selectedList = tableView.getSelectionModel().getSelectedItems();
+                    }
+                } 
+            }
+        });
+       
+        /*
+        tableView.setOnKeyPressed((KeyEvent keyEvent)->{
+            if(keyEvent.isControlDown()){
+                 if(!tableView.getSelectionModel().isEmpty()){
+                        selectedList = tableView.getSelectionModel().getSelectedItems();
+                    }
+            }
+        });
+        */
+        
     }
     
  

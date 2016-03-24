@@ -15,7 +15,7 @@ import javafx.beans.property.StringProperty;
 public abstract class FileAbs extends File {
     
     protected boolean operationSuccessfull;
-    public StringProperty name;
+    public StringProperty propertyName;
     
     
     public FileAbs(String string) {
@@ -29,6 +29,6 @@ public abstract class FileAbs extends File {
         this.operationSuccessfull = operationSuccessfull;
     }
     public StringProperty getPropertyName(){
-        return name;
+        return propertyName;
     }
 }

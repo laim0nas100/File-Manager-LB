@@ -8,16 +8,11 @@ package filemanagerLogic.fileStructure;
 
 import utility.DesktopApi;
 import filemanagerLogic.Movable;
-import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.scene.Node;
-import static filemanagerGUI.FileManagerLB.FolderForDevices;
 
 /**
  *
@@ -27,7 +22,6 @@ import static filemanagerGUI.FileManagerLB.FolderForDevices;
 public class ExtFile extends FileAbs implements Movable {
     protected String relativePath;
     protected Path destination;
-    protected boolean isRoot;
     protected boolean isAbsoluteRoot;
 
     public boolean isAbsoluteRoot() {
@@ -37,25 +31,16 @@ public class ExtFile extends FileAbs implements Movable {
     public void setIsAbsoluteRoot(boolean isAbsoluteRoot) {
         this.isAbsoluteRoot = isAbsoluteRoot;
     }
-    public boolean isRoot() {
-        return isRoot;
-    }
 
-    public void setIsRoot(boolean isRoot) {
-        this.isRoot = isRoot;
-    }
     
 
     
     
-    public boolean doOnOpen() throws IOException{
-        return DesktopApi.open(this);
-    }
      protected void setDefaultValues(){         
         this.relativePath = "";
         this.destination = Paths.get(""); 
-        this.name = new SimpleStringProperty(this.getName());
-        this.isRoot = false;
+        this.propertyName = new SimpleStringProperty(this.getName());
+        
         this.isAbsoluteRoot = false;
     }   
     public ExtFile(File file){

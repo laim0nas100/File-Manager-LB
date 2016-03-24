@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ArrayList;
+import javafx.beans.binding.ListBinding;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -31,8 +34,7 @@ import utility.Log;
 
 //
 public class TaskFactory {
-    public static ObservableList<ExtFile> selectedList;
-
+    public static ObservableList<ExtFile> markedList = FXCollections.observableArrayList();
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
         return instance;
@@ -56,7 +58,7 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
+            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
                 ArrayList<ExtFile> subList = new ArrayList<>();
@@ -98,7 +100,7 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
+            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
                 ArrayList<ExtFile> subList = new ArrayList<>();
@@ -110,7 +112,7 @@ public class TaskFactory {
             }
             
         }
-        list.sort(cmpDesc);
+        list.sort(cmpAsc);
         Log.writeln("List after computing");
         for(ExtFile file:list){
             Log.writeln(file.getAbsolutePath());
@@ -131,7 +133,7 @@ public class TaskFactory {
         for(ExtFile file:fileList){
             
             LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(FolderForDevices, location);
+            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
             if(newFile.getIdentity().equals("folder")){
                 ExtFolder folder = (ExtFolder) newFile;
                 ArrayList<ExtFile> subList = new ArrayList<>();
