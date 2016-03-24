@@ -10,6 +10,7 @@
 
 <VBox fx:id="base" alignment="CENTER" maxHeight="250.0" maxWidth="1.7976931348623157E308" minHeight="190.0" minWidth="400.0" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.ProgressDialogController">
    <children>
+      <Label fx:id="taskDescription" text="Label" />
       <HBox alignment="CENTER_LEFT" prefHeight="79.0" prefWidth="451.0" VBox.vgrow="ALWAYS">
          <children>
             <Label fx:id="text" alignment="CENTER" text="Computing task" HBox.hgrow="ALWAYS">

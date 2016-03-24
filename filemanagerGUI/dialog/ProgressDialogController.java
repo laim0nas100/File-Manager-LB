@@ -36,6 +36,7 @@ public class ProgressDialogController extends BaseController {
     @FXML public ProgressBar bar;
     @FXML public ProgressIndicator indicator;
     @FXML public Label text;
+    @FXML public Label taskDescription;
     private ExtTask task;
     public void setUp(String title,ExtTask newTask){
         this.title = title;
@@ -46,6 +47,7 @@ public class ProgressDialogController extends BaseController {
         okButton.disableProperty().bind(cancelButton.disableProperty().not());
         pauseButton.disableProperty().bind(cancelButton.disabledProperty());
         text.textProperty().bind(task.messageProperty());
+        taskDescription.setText(task.getTaskDescription());
         Thread t = new Thread(this.task);
         t.setDaemon(true);
         t.start();
@@ -56,8 +58,9 @@ public class ProgressDialogController extends BaseController {
         exit();
     }
     public void exit(){
-        ViewManager.getInstance().updateAllWindows();
+        
         ViewManager.getInstance().closeProgressDialog(this.title);
+        ViewManager.getInstance().updateAllWindows();
     }
     public void pauseTask(){
         if(task.isPaused()&&task.isRunning()){

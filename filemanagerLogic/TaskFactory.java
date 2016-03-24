@@ -201,9 +201,9 @@ public class TaskFactory {
                     //updateMessage(str);
                     
                 }
+                updateMessage("FINISHED");
                 return null;
             }
-            
         };
     }
     public ExtTask moveFiles(Collection<ExtFile> fileList, ExtFile dest){
@@ -260,6 +260,7 @@ public class TaskFactory {
                     updateProgress(index1+i+2, list.length+leftFolders.size());
                 }
                 updateProgress(index1+i+2, list.length+leftFolders.size());
+                updateMessage("FINISHED");
                 return null;
             }
             
@@ -295,6 +296,7 @@ public class TaskFactory {
                     updateProgress(i+1, list.length);
                     //updateMessage(str);
                 }
+                updateMessage("FINISHED");
                 return null;
             }
         };

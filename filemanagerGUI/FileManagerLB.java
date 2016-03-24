@@ -10,8 +10,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import utility.Log;

@@ -36,6 +36,7 @@ public class ViewManager {
         this.progressDialogs = new HashMap<>();
         this.windows = new HashMap<>();
     };
+    public HashMap<String,Frame> textInputDialogs;
     public HashMap<String,Frame> messageBoxes;
     public HashMap<String,Frame> progressDialogs;
     public HashMap<String,Frame> windows;
@@ -134,7 +135,7 @@ public class ViewManager {
         progressDialogs.get(title).getStage().close();
         progressDialogs.remove(title);
     }
-    
+    //Text Input Dialogs
     
     
     //CUSTOM VIEWS
