@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import javafx.beans.property.SimpleDoubleProperty;
 import utility.Log;
 
 /**
@@ -40,10 +41,11 @@ public class ExtFolder extends ExtFile{
     }
     
     @Override
-    protected void setDefaultValues(){
+    protected final void setDefaultValues(){
         this.files = new ConcurrentHashMap<>();
         this.populated = false;
         super.setDefaultValues();
+        this.propertySize.set("");
     }
     public ExtFolder(String src){
         super(src);
@@ -53,6 +55,7 @@ public class ExtFolder extends ExtFile{
     public ExtFolder(File src){
         super(src.getAbsolutePath());
         setDefaultValues();
+        
     }
     
     public void populateFolder(){

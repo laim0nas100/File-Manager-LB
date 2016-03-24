@@ -110,8 +110,9 @@ public class MainController extends BaseController{
     public void setTableView(){
         currentView = 0;
         tableView.setItems(MC.getCurrentContents());
-        tableView.getSortOrder().add(columns.get(0));
         tableView.getColumns().setAll(columns);
+        tableView.getSortOrder().add(columns.get(0));
+        
        
         
         
@@ -225,16 +226,32 @@ public class MainController extends BaseController{
         
         
         
-        TableColumn<ExtFile, String> nameCol = new TableColumn<>("Files");
+        TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
-                return cellData.getValue().getPropertyName();
+                return cellData.getValue().propertyName;
             }
         });
         nameCol.setSortType(TableColumn.SortType.ASCENDING);
-        columns.add(nameCol);
         
+        TableColumn<ExtFile, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+                return cellData.getValue().propertyType;
+            }
+        });
+        TableColumn<ExtFile, String> sizeCol = new TableColumn<>("Size ("+FileManagerLB.DataSize.sizename+")");
+        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+                return cellData.getValue().propertySize;
+            }
+        });
+        columns.add(nameCol);
+        columns.add(typeCol);
+        columns.add(sizeCol);
         
         //ContextMenu
         contextMenuItems[0] = new MenuItem("Create New Folder");
@@ -280,10 +297,15 @@ public class MainController extends BaseController{
             ViewManager.getInstance().newProgressDialog(task);
         
         });
-        contextMenuItems[5] = new MenuItem("Create new file");
+        contextMenuItems[5] = new MenuItem("Create New File");
         contextMenuItems[5].setOnAction((eh)->{
             Log.writeln("Create new file");
-            //Invoke text input dialog
+            try {
+                MC.createNewFile();
+                MainController.this.updateCurrentView();
+            }catch (IOException ex) {
+                //TODO error handling
+            }
         });
         contextMenuItems[6] = new MenuItem("Add to marked");
         contextMenuItems[6].setOnAction((eh)->{

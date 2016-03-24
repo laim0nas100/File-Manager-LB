@@ -6,12 +6,15 @@
 package filemanagerLogic.fileStructure;
 
 
+import filemanagerGUI.FileManagerLB;
 import utility.DesktopApi;
 import filemanagerLogic.Movable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 /**
@@ -40,7 +43,9 @@ public class ExtFile extends FileAbs implements Movable {
         this.relativePath = "";
         this.destination = Paths.get(""); 
         this.propertyName = new SimpleStringProperty(this.getName());
-        
+        this.propertyType = new SimpleStringProperty(this.getIdentity());
+        String s = Double.toString((double)this.length()/FileManagerLB.DataSize.size);
+        this.propertySize = new SimpleStringProperty(s.substring(0, Math.min(s.length()-1,10)));
         this.isAbsoluteRoot = false;
     }   
     public ExtFile(File file){

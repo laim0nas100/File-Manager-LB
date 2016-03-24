@@ -19,11 +19,29 @@ import utility.Log;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
+    public static enum DATA_SIZE{
+        
+        B  (1,"B"),
+        KB (1024,"KB"),
+        Mb (1024*1024/8,"Kb"),
+        MB (1024*1024,"MB"),
+        Gb (1024*1024*1024/8,"Gb"),
+        GB (1024*1024*1024,"GB");
+        public final long size;
+        public final String sizename;
+        DATA_SIZE(long size,String s){
+            this.size = size;
+            this.sizename = s;
+        }
+    }
+    
     public static final String ARTIFICIAL_ROOT_NAME = "Devices";
     public static ExtFolder FolderForDevices;
     public static HashSet<String> rootSet;
+    public static DATA_SIZE DataSize;
     @Override
     public void start(Stage primaryStage) {
+        DataSize = DATA_SIZE.KB;
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setPopulated(true);
         FolderForDevices.setIsAbsoluteRoot(true);

@@ -6,6 +6,8 @@
 package filemanagerLogic.fileStructure;
 
 import java.io.File;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.StringProperty;
 
 /**
@@ -16,8 +18,8 @@ public abstract class FileAbs extends File {
     
     protected boolean operationSuccessfull;
     public StringProperty propertyName;
-    
-    
+    public StringProperty propertyType;
+    public StringProperty propertySize;
     public FileAbs(String string) {
         super(string);
     }
@@ -27,8 +29,5 @@ public abstract class FileAbs extends File {
 
     public void setOperationSuccessfull(boolean operationSuccessfull) {
         this.operationSuccessfull = operationSuccessfull;
-    }
-    public StringProperty getPropertyName(){
-        return propertyName;
     }
 }

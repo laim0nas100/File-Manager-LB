@@ -150,6 +150,18 @@ public class ManagingClass {
         LocationInRoot location = new LocationInRoot(path);
         LocationAPI.getInstance().putByLocation(location, folder);
     }
+    public void createNewFile() throws IOException{
+        String path = this.currentDir.getAbsolutePath();
+        String newName = "New File";
+        while(currentDir.files.containsKey(newName)){
+            newName= "New "+newName; 
+        }
+        path +=File.separator+newName;
+        Files.createFile(Paths.get(path));
+        ExtFile file = new ExtFile(path);
+        LocationInRoot location = new LocationInRoot(path);
+        LocationAPI.getInstance().putByLocation(location, file);
+    }
     
     
     
