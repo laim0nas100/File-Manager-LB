@@ -28,6 +28,5 @@ public class Frame {
     }
     public String getTitle(){
         return this.stage.getTitle();
-    }
-    
+    } 
 }
