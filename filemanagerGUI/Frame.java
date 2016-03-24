@@ -14,6 +14,12 @@ import javafx.stage.Stage;
 public class Frame {
     private Stage stage;
     private BaseController controller;
+
+    public Frame(Stage stage, BaseController controller) {
+        this.stage = stage;
+        this.controller = controller;
+    }
+    
     public BaseController getController(){
         return this.controller;
     }

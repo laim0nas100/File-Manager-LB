@@ -23,4 +23,7 @@ public class BaseController implements Initializable{
     public void setUp(String title){
        this.title = title;
     }
+    public void exit(){
+        
+    }
 }

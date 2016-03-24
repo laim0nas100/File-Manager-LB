@@ -36,6 +36,8 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import utility.DesktopApi;
@@ -73,6 +75,7 @@ public class MainController extends BaseController{
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
 
+    @FXML public Label loadingStatus;
         
     private ContextMenu tableContextMenu;
     private ContextMenu listContextMenu;
@@ -86,7 +89,7 @@ public class MainController extends BaseController{
         contextMenuItems = new MenuItem[10];
         tableContextMenu = new ContextMenu();
         listContextMenu = new ContextMenu();
-        
+        columns = new ArrayList<>();
         
         MC = new ManagingClass(root);
         this.title = title;
@@ -98,7 +101,8 @@ public class MainController extends BaseController{
     public void reMount(){
         FileManagerLB.remount();
     }
-    public void closeWindow(){ 
+    @Override
+    public void exit(){ 
         System.out.println("Closing internally " + title);
         ViewManager.getInstance().closeWindow(title); 
     }
@@ -141,22 +145,27 @@ public class MainController extends BaseController{
         flowView.setVisible(true);
     }
     public void updateCurrentView(){
-        if(MC.currentDir.isAbsoluteRoot()){
-            currentDirText.setText("MOUNT POINT");
-        }else{
-            currentDirText.setText(MC.currentDir.getAbsolutePath());
-        }
-        MC.currentDir.update();
-        switch(currentView){
-            case(0):{
-                setTableView();
-                break;
+        loadingStatus.setText("LOADING");
+        Platform.runLater(()->{
+            if(MC.currentDir.isAbsoluteRoot()){
+                currentDirText.setText("MOUNT POINT");
+            }else{
+                currentDirText.setText(MC.currentDir.getAbsolutePath());
             }
-            case(1):{
-                setFlowView();
-                break;
+            MC.currentDir.update();
+            switch(currentView){
+                case(0):{
+                    setTableView();
+                    break;
+                }
+                case(1):{
+                    setFlowView();
+                    break;
+                }
             }
-        }
+            loadingStatus.setText("LOADED");
+        });
+        
     }
     public void closeAllWindows(){
         ViewManager.getInstance().closeAllWindows();
@@ -214,7 +223,7 @@ public class MainController extends BaseController{
     private void loadDefaults(){
         //TABLE VIEW SETUP
         
-        columns = new ArrayList<>();
+        
         
         TableColumn<ExtFile, String> nameCol = new TableColumn<>("Files");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
@@ -229,25 +238,27 @@ public class MainController extends BaseController{
         
         //ContextMenu
         contextMenuItems[0] = new MenuItem("Create New Folder");
-        contextMenuItems[0].setOnAction((event)->{
+        contextMenuItems[0].setOnAction((eh) -> {
             Log.writeln("Create new folder");
             try {
                 MC.createNewFolder();
-                this.updateCurrentView();
-                
-            } catch (IOException ex) {
-               //TODO error handling
+                MainController.this.updateCurrentView();
+            }catch (IOException ex) {
+                //TODO error handling
             }
         });
         
         contextMenuItems[1] = new MenuItem("Rename");
-        contextMenuItems[1].setOnAction((event)->{
+        contextMenuItems[1].setOnAction((eh)->{
             Log.writeln("Invoke rename dialog");
+            ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
+            ExtFile fileCopy = new ExtFile(path.getAbsolutePath());
+            ViewManager.getInstance().newTextInputDialog(tableView.getItems(),fileCopy);
             //Invoke text input dialog
         });
         
         contextMenuItems[2] = new MenuItem("Delete");
-        contextMenuItems[2].setOnAction((event)->{
+        contextMenuItems[2].setOnAction((eh)->{
             Log.writeln("Deleting");
             ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
             task.setTaskDescription("Delete selected files");
@@ -255,14 +266,14 @@ public class MainController extends BaseController{
         });
         
         contextMenuItems[3] = new MenuItem("Copy Here");
-        contextMenuItems[3].setOnAction((event)->{
+        contextMenuItems[3].setOnAction((eh)->{
             Log.writeln("Copy Marked");
             ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.markedList,MC.currentDir);
             task.setTaskDescription("Copy marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
         contextMenuItems[4] = new MenuItem("Move Here");
-        contextMenuItems[4].setOnAction((e)->{
+        contextMenuItems[4].setOnAction((eh)->{
             Log.writeln("Move Marked");
             ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.markedList,MC.currentDir);
             task.setTaskDescription("Move marked files");
@@ -270,12 +281,12 @@ public class MainController extends BaseController{
         
         });
         contextMenuItems[5] = new MenuItem("Create new file");
-        contextMenuItems[5].setOnAction((e)->{
+        contextMenuItems[5].setOnAction((eh)->{
             Log.writeln("Create new file");
             //Invoke text input dialog
         });
         contextMenuItems[6] = new MenuItem("Add to marked");
-        contextMenuItems[6].setOnAction((e)->{
+        contextMenuItems[6].setOnAction((eh)->{
             for(ExtFile file:selectedList){
                 if(!TaskFactory.markedList.contains(file)){
                     TaskFactory.markedList.add(file);
@@ -300,30 +311,13 @@ public class MainController extends BaseController{
             ViewManager.getInstance().newProgressDialog(task);
             
         });
-        
-        Menu submenuCreate = new Menu();
-        submenuCreate.setText("Create...");
+        Menu submenuMarked = new Menu("Marked...");
+        Menu submenuCreate = new Menu("Create...");
         submenuCreate.getItems().addAll(
                 contextMenuItems[0],
                 contextMenuItems[5]
         );
-        
-        
-        Menu submenuMarked = new Menu("Marked...");
-        submenuMarked.getItems().addAll(
-                contextMenuItems[3],
-                contextMenuItems[4],
-                contextMenuItems[6],
-                contextMenuItems[9]
-        );
-        
-        tableContextMenu.getItems().addAll(
-                submenuCreate,
-                contextMenuItems[1],
-                contextMenuItems[2],
-                submenuMarked
-        );
-        
+
         listContextMenu.getItems().addAll(
                 contextMenuItems[7],
                 contextMenuItems[8]
@@ -334,6 +328,58 @@ public class MainController extends BaseController{
         //TABLE VIEW ACTIONS
         
         tableView.setContextMenu(tableContextMenu);
+        tableView.setOnMouseClicked(eh->{
+            if(!MC.currentDir.isAbsoluteRoot()){
+                int itemCount = tableView.getSelectionModel().getSelectedItems().size();
+                int markedSize = TaskFactory.markedList.size();
+                if(markedSize==0 && itemCount >=1){
+                    submenuMarked.getItems().setAll(
+                                contextMenuItems[6]         //Add to marked
+                                //contextMenuItems[3],      //Copy
+                                //contextMenuItems[4],      //Move
+                                //contextMenuItems[9]       //Delete marked
+                            );
+                }else if(markedSize>0 && itemCount >=1){
+                    submenuMarked.getItems().setAll(
+                            contextMenuItems[6],      //Add to marked
+                            contextMenuItems[3],      //Copy
+                            contextMenuItems[4],      //Move
+                            contextMenuItems[9]       //Delete marked
+                        );
+                }else if(markedSize>0 && itemCount ==0){
+                    submenuMarked.getItems().setAll(
+                                //contextMenuItems[6]         //Add to marked
+                                contextMenuItems[3],      //Copy
+                                contextMenuItems[4],      //Move
+                                contextMenuItems[9]       //Delete marked
+                            );
+                }
+                if(itemCount==1){
+                    tableContextMenu.getItems().setAll(
+                        submenuCreate,
+                        contextMenuItems[1],    //Rename dialog
+                        contextMenuItems[2]     //Delete dialog
+                    );
+                    tableContextMenu.getItems().add(submenuMarked);
+                }else if(itemCount >1){
+                    tableContextMenu.getItems().setAll(
+                        submenuCreate,
+                        //contextMenuItems[1],  //Rename dialog
+                        contextMenuItems[2]     //Delete dialog
+                    );
+                    tableContextMenu.getItems().add(submenuMarked);
+                }else{
+
+                  tableContextMenu.getItems().setAll(
+                        submenuCreate
+                        //contextMenuItems[1],      //Rename dialog
+                        //contextMenuItems[2]     //Delete dialog
+                    );    
+                }
+                
+                
+            }
+        });
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tableView.setOnMousePressed((MouseEvent event) -> {
             //listView.getSelectionModel().clearSelection();
@@ -368,6 +414,10 @@ public class MainController extends BaseController{
                 } 
             }
         });
+        
+        
+        
+        
         listView.setOnMouseClicked((MouseEvent eh) ->{
             if(listView.getSelectionModel().getSelectedItem()!= null){
                 if(TaskFactory.markedList.size()>0){
@@ -376,7 +426,7 @@ public class MainController extends BaseController{
             }
         });
         listView.setItems(TaskFactory.markedList);
-        this.getStage().getScene().setOnMouseClicked(eh->{
+        getStage().getScene().setOnMouseClicked(eh->{
             listView.getSelectionModel().clearSelection();
             tableView.getSelectionModel().clearSelection();
         });

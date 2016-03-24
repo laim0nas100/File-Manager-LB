@@ -9,6 +9,7 @@ import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,7 @@ import utility.Log;
 
 //
 public class TaskFactory {
+    public static ExtFile itemToRename;
     public static ObservableList<ExtFile> markedList = FXCollections.observableArrayList();
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
@@ -48,6 +50,53 @@ public class TaskFactory {
         return f2.getAbsolutePath().compareTo(f1.getAbsolutePath());
     };  
     
+    //RENAME
+    public void renameTo(String fileToRename, String newName) throws IOException{
+        LocationInRoot location  = new LocationInRoot(fileToRename);
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(location);
+        Path newPath = Paths.get(file.getParent()+File.separator+newName);
+        Files.move(file.toPath(), newPath);
+    }
+    public boolean renameByRegex(ExtFile fileToRename, String regex, String replacement){
+       return renameByRegex(FolderForDevices,fileToRename,regex,replacement);
+    }
+    public boolean renameTo(ExtFolder root,ExtFile fileToRename,String newName){
+        ExtFile newPath = new ExtFile(fileToRename.getParentFile().getPath() + File.separator + newName);
+        try{
+            LocationInRoot oldLoc = new LocationInRoot(root,fileToRename);
+            LocationInRoot newLoc = new LocationInRoot(oldLoc);
+            newLoc.setName(newName);
+            Files.move(fileToRename.toPath(), newPath.toPath());
+            fileToRename.propertyName.set(newName);
+            this.renameRootKeys(root, newLoc, oldLoc);
+        }catch(Exception e){
+                return false;
+            }
+        return true;
+    }
+    
+    public boolean renameByRegex(ExtFolder root,ExtFile fileToRename, String regex,String replacement){
+        String name = fileToRename.getName();
+        name = name.replaceAll(regex, replacement);
+        return renameTo(root,fileToRename,name);
+    }
+    public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
+        
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(oldLoc);
+        if(file.getIdentity().equals("file")){
+            ExtFile newFile = new ExtFile(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
+            LocationAPI.getInstance().removeByLocation(oldLoc);
+            LocationAPI.getInstance().putByLocation(newLoc, newFile);
+        }else if(file.getIdentity().equals("folder")){
+            ExtFolder newFile = new ExtFolder(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
+            newFile.populateRecursive();
+            LocationAPI.getInstance().removeByLocation(oldLoc);
+            LocationAPI.getInstance().putByLocation(newLoc, newFile);
+        }
+    }
+    
+    
+//PREPARE FOR TASKS
     public ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
         Log.writeln("List recieved in task");
         
@@ -88,8 +137,7 @@ public class TaskFactory {
         }
         return array;
         
-    }
-    
+    }   
     public ExtFile[] prepareForDelete(Collection<ExtFile> fileList){
     Log.writeln("List recieved in task");
         
@@ -121,8 +169,7 @@ public class TaskFactory {
         array = list.toArray(array);
         return array;
         
-    }
-    
+    } 
     public ExtFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
        Log.writeln("List recieved in task");
         
@@ -166,8 +213,8 @@ public class TaskFactory {
     
     }
     
-    public ExtTask copyFiles(Collection<ExtFile> fileList, ExtFile dest){
-        
+//TASKS    
+    public ExtTask copyFiles(Collection<ExtFile> fileList, ExtFile dest){  
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 String str = "";

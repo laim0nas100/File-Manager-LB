@@ -2,21 +2,18 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
@@ -28,7 +25,7 @@
               <menus>
                 <Menu mnemonicParsing="false" text="File">
                   <items>
-                    <MenuItem mnemonicParsing="false" onAction="#closeWindow" text="Close" />
+                    <MenuItem mnemonicParsing="false" onAction="#exit" text="Close" />
                         <MenuItem mnemonicParsing="false" onAction="#closeAllWindows" text="Close All" />
                   </items>
                 </Menu>
@@ -40,6 +37,7 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
                   <items>
+                        <MenuItem mnemonicParsing="false" onAction="#setFlowView" text="Flow View" visible="false" />
                         <MenuItem mnemonicParsing="false" onAction="#setTableView" text="Table View" visible="false" />
                     <MenuItem mnemonicParsing="false" text="About" />
                         <MenuItem disable="true" mnemonicParsing="false" onAction="#test" text="TEST" />
@@ -96,42 +94,32 @@
         <items>
             <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
                <children>
-                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                </children>
             </AnchorPane>
-          <AnchorPane>
+          <AnchorPane prefWidth="360.0">
                <children>
-                  <ListView fx:id="listView" prefHeight="400.0" prefWidth="324.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <ListView fx:id="listView" prefHeight="400.0" prefWidth="300.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                </children></AnchorPane>
         </items>
       </SplitPane>
    </center>
    <left>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Text" wrappingWidth="45.13671875" BorderPane.alignment="CENTER" />
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Links..." wrappingWidth="66.13671875" BorderPane.alignment="CENTER" />
    </left>
    <bottom>
-      <GridPane BorderPane.alignment="CENTER">
-        <columnConstraints>
-          <ColumnConstraints hgrow="SOMETIMES" />
-          <ColumnConstraints hgrow="SOMETIMES" />
-        </columnConstraints>
-        <rowConstraints>
-          <RowConstraints valignment="CENTER" vgrow="NEVER" />
-        </rowConstraints>
+      <HBox alignment="CENTER">
          <children>
-            <VBox alignment="CENTER" GridPane.columnIndex="1">
+            <VBox alignment="CENTER">
                <children>
-                  <ProgressBar prefHeight="20.0" prefWidth="166.0" progress="0.0" VBox.vgrow="NEVER">
-                     <padding>
-                        <Insets bottom="5.0" top="5.0" />
-                     </padding></ProgressBar>
+                  <Label fx:id="loadingStatus" alignment="CENTER" text="STATUS" />
                </children>
             </VBox>
          </children>
-      </GridPane>
+      </HBox>
    </bottom>
    <right>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Text" wrappingWidth="45.13671875" BorderPane.alignment="CENTER" />
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="FILE PROPERTIES" wrappingWidth="69.13671875" BorderPane.alignment="CENTER" />
    </right>
 </BorderPane>
