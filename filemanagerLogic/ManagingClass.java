@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ArrayList;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
@@ -64,10 +65,9 @@ public class ManagingClass {
                 }
                 currentDir = file;
             }
-
+        
         Log.writeln(cacheIndex+" : "+folderCache);
         addCacheNode(currentDir);
-        
         
     }
     public void changeToForward(){

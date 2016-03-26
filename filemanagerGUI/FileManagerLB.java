@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import utility.Log;
 

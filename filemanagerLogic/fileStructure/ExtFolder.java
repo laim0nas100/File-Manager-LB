@@ -45,7 +45,7 @@ public class ExtFolder extends ExtFile{
         this.files = new ConcurrentHashMap<>();
         this.populated = false;
         super.setDefaultValues();
-        this.propertySize.set("");
+        this.propertySize.setValue(null);
     }
     public ExtFolder(String src){
         super(src);
@@ -82,14 +82,15 @@ public class ExtFolder extends ExtFile{
     public void populateRecursive(){
         populateRecursiveInner(this);
     }
-    private ExtFolder populateRecursiveInner(ExtFolder fold){
-        fold.populateFolder();
+    private void populateRecursiveInner(ExtFolder fold){
+        fold.update();
+        Log.writeln("Iteration "+fold.getAbsolutePath());
         for(ExtFolder folder:fold.getFoldersFromFiles()){
             folder.populateRecursiveInner(folder);
             fold.files.replace(folder.getName(), folder);  
         }
         this.populated = true;
-        return fold;
+        
     };
     public Collection<ExtFolder> getFoldersFromFiles(){
         ArrayList<ExtFolder> folders = new ArrayList<>();
@@ -128,6 +129,8 @@ public class ExtFolder extends ExtFile{
                     LocationAPI.getInstance().removeByLocation(location);
                 }
             }
+            this.populateFolder();
+        }else{
             this.populateFolder();
         }
         

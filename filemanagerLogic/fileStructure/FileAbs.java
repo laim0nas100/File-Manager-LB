@@ -19,7 +19,7 @@ public abstract class FileAbs extends File {
     protected boolean operationSuccessfull;
     public StringProperty propertyName;
     public StringProperty propertyType;
-    public StringProperty propertySize;
+    public LongProperty propertySize;
     public FileAbs(String string) {
         super(string);
     }

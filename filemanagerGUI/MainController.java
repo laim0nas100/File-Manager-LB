@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyListWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -246,7 +247,11 @@ public class MainController extends BaseController{
         sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
-                return cellData.getValue().propertySize;
+                if(cellData.getValue().getIdentity().equals("folder")){
+                    return new SimpleStringProperty("");
+                }else{
+                    return cellData.getValue().propertySize.divide(FileManagerLB.DataSize.size).asString();
+                }
             }
         });
         columns.add(nameCol);

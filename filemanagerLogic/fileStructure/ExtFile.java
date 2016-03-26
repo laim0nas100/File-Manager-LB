@@ -44,8 +44,7 @@ public class ExtFile extends FileAbs implements Movable {
         this.destination = Paths.get(""); 
         this.propertyName = new SimpleStringProperty(this.getName());
         this.propertyType = new SimpleStringProperty(this.getIdentity());
-        String s = Double.toString((double)this.length()/FileManagerLB.DataSize.size);
-        this.propertySize = new SimpleStringProperty(s.substring(0, Math.min(s.length()-1,10)));
+        this.propertySize = new SimpleLongProperty(this.length());
         this.isAbsoluteRoot = false;
     }   
     public ExtFile(File file){
