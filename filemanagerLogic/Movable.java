@@ -10,7 +10,8 @@ import java.nio.file.Path;
 
 /**
  *
- * @author lemmin
+ * @author Laimonas Beniušis
+ * Interface with mandatory commands to use Files class
  */
 public interface Movable {
     public Path getDestination();

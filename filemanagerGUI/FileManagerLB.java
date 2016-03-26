@@ -5,6 +5,8 @@
  */
 package filemanagerGUI;
 
+import filemanagerLogic.ExtTask;
+import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
@@ -48,7 +50,8 @@ public class FileManagerLB extends Application {
         FolderForDevices.setIsAbsoluteRoot(true);
         remount();
         FolderForDevices.propertyName.set("DEVICES");
-        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);  
+        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
+       
     } 
     /**
      * @param args the command line arguments
@@ -83,7 +86,6 @@ public class FileManagerLB extends Application {
                 //device.setIsRoot(true);
                 FolderForDevices.files.putIfAbsent(newName, device);
                 rootSet.add(device.getAbsolutePath());
-                
                 device.populateFolder();
                 Log.writeln("Mounted successfully");
             }

@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- *
+ * Location Mapping Class
+ * Use in LocationAPI
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {

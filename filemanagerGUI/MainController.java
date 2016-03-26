@@ -186,9 +186,9 @@ public class MainController extends BaseController{
     }
     public void changeToDir(ExtFolder dir){
        MC.changeDirTo(dir);
+       new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,3)).start();
        updateCurrentView();
     }
-    
     public void openCustomDir(){
         try{
             String possibleDir = currentDirText.getText();
@@ -196,14 +196,16 @@ public class MainController extends BaseController{
                 updateCurrentView();
             }else if(Files.isDirectory(Paths.get(possibleDir))){
                     LocationInRoot location = new LocationInRoot(possibleDir);
-                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
-                    changeToDir(folder);
-
-
+                    if(!LocationAPI.getInstance().existByLocation(location)){
+                    
+                        ExtFolder folder = new ExtFolder(possibleDir);
+                        Log.writeln("put by Location Recursive: "+location);
+                        LocationAPI.getInstance().putByLocationRecursive(location, folder);
+                    }
+                    changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
             }
         } catch (Exception ex) {}
-    }
-    
+    }    
     public void changeToParent(){
         MC.changeToParent();
         updateCurrentView();
@@ -387,23 +389,20 @@ public class MainController extends BaseController{
                         contextMenuItems[1],    //Rename dialog
                         contextMenuItems[2]     //Delete dialog
                     );
-                    tableContextMenu.getItems().add(submenuMarked);
                 }else if(itemCount >1){
                     tableContextMenu.getItems().setAll(
                         submenuCreate,
                         //contextMenuItems[1],  //Rename dialog
                         contextMenuItems[2]     //Delete dialog
-                    );
-                    tableContextMenu.getItems().add(submenuMarked);
+                    );   
                 }else{
-
                   tableContextMenu.getItems().setAll(
                         submenuCreate
                         //contextMenuItems[1],      //Rename dialog
                         //contextMenuItems[2]     //Delete dialog
                     );    
                 }
-                
+                tableContextMenu.getItems().add(submenuMarked);
                 
             }
         });

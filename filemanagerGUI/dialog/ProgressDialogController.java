@@ -8,18 +8,17 @@ package filemanagerGUI.dialog;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
-import java.net.URL;
-import java.util.ResourceBundle;
-import javafx.concurrent.Task;
+import filemanagerLogic.TaskFactory;
+import java.time.Clock;
+import java.time.Instant;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 /**
  * FXML Controller class
@@ -37,6 +36,22 @@ public class ProgressDialogController extends BaseController {
     @FXML public ProgressIndicator indicator;
     @FXML public Label text;
     @FXML public Label taskDescription;
+    @FXML public Label timeWasted;
+    private Instant started;
+    private Instant stopped;
+    private SimpleLongProperty slp;
+    
+    public void startTimer(){
+        started = TaskFactory.clock.instant();
+    }
+    public void stopTimer(){
+        stopped = TaskFactory.clock.instant();   
+    }
+    public SimpleLongProperty getWorkedTime(){
+        slp = new SimpleLongProperty(Clock.systemUTC().instant().toEpochMilli() - started.toEpochMilli());
+        return slp;
+    }
+    
     private ExtTask task;
     public void setUp(String title,ExtTask newTask){
         this.title = title;
@@ -50,8 +65,11 @@ public class ProgressDialogController extends BaseController {
         taskDescription.setText(task.getTaskDescription());
         Thread t = new Thread(this.task);
         t.setDaemon(true);
+        
         t.start();
-       
+        this.startTimer();
+        timeWasted.textProperty().bind((this.getWorkedTime().asString()));
+        
     }
     public void cancelTask(){
         this.task.cancel();

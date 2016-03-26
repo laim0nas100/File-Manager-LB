@@ -26,7 +26,7 @@ import utility.Log;
 
 /**
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
 public class ManagingClass {
     
@@ -43,37 +43,28 @@ public class ManagingClass {
         Log.writeln("Change dir to: "+file.getAbsolutePath());
             if(file.isAbsoluteRoot()){
                 currentDir = FolderForDevices;
-                //currentDir.update();
-            }else if(file.isRoot()){
-                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-                currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
-                currentDir.update();
-            }else{
-                if(file.isPopulated()){
-                    file.update();
-                }else{
-                    file.populateFolder();
-                }
-                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                
+            }else if(file.isRoot()){
+                currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(
+                        new LocationInRoot(file.getAbsolutePath()));
+            }else{
+                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());      
                 if(!LocationAPI.getInstance().existByLocation(location)){
-                    //Log.writeln(root.files.keySet());
-                    Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
+                    //Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
                     LocationAPI.getInstance().putByLocation(location, file);
-                }else{
-                    Log.writeln("Location "+location.toString()+" Exists");
                 }
                 currentDir = file;
             }
         
-        Log.writeln(cacheIndex+" : "+folderCache);
+        //Log.writeln(cacheIndex+" : "+folderCache);
         addCacheNode(currentDir);
         
     }
     public void changeToForward(){
        
         if(cacheIndex+1<folderCache.size()){
-            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(folderCache.get(++cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance()
+                    .getFileByLocation(folderCache.get(++cacheIndex));
             currentDir.update();
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -81,10 +72,11 @@ public class ManagingClass {
     public void changeToPrevious(){
         
         if(cacheIndex-1>=0){
-            currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(folderCache.get(--cacheIndex));
+            currentDir = (ExtFolder) LocationAPI.getInstance()
+                    .getFileByLocation(folderCache.get(--cacheIndex));
             currentDir.update();
         }
-        Log.writeln(cacheIndex+" : "+folderCache);
+        //Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
         if(!currentDir.isAbsoluteRoot()){
@@ -136,8 +128,6 @@ public class ManagingClass {
         cacheIndex = folderCache.size()-1;
     }
     
-
-    
     public void createNewFolder() throws IOException{
         String path = this.currentDir.getAbsolutePath();
         String newName = "New Folder";
@@ -162,17 +152,4 @@ public class ManagingClass {
         LocationInRoot location = new LocationInRoot(path);
         LocationAPI.getInstance().putByLocation(location, file);
     }
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }

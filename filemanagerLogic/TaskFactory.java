@@ -13,32 +13,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ArrayList;
-import javafx.beans.binding.ListBinding;
-import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 import utility.Log;
 
 /**
- *  Produces background tasks (threads)
+ *  
  * @author Laimonas Beniušis
+ * Produces Tasks (ready to use threads)
  */
 
 //
 public class TaskFactory {
+    public static Clock clock = Clock.systemUTC();
     public static ExtFile itemToRename;
     public static ObservableList<ExtFile> markedList = FXCollections.observableArrayList();
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
+        
         return instance;
     }
     protected TaskFactory(){}
@@ -50,7 +46,7 @@ public class TaskFactory {
         return f2.getAbsolutePath().compareTo(f1.getAbsolutePath());
     };  
     
-    //RENAME
+//RENAME
     public void renameTo(String fileToRename, String newName) throws IOException{
         LocationInRoot location  = new LocationInRoot(fileToRename);
         ExtFile file = LocationAPI.getInstance().getFileByLocation(location);
@@ -94,7 +90,6 @@ public class TaskFactory {
             LocationAPI.getInstance().putByLocation(newLoc, newFile);
         }
     }
-    
     
 //PREPARE FOR TASKS
     public ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
@@ -348,5 +343,37 @@ public class TaskFactory {
             }
         };
     }
+    
+    
+    
+    
+    private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
+        if(level<MAX_DEPTH){
+            LocationInRoot loc = LocationAPI.getInstance().getLocationMapping(folder.getAbsolutePath());
+            if(!LocationAPI.getInstance().existByLocation(loc)){
+                LocationAPI.getInstance().putByLocation(loc, folder);
+            }
+            folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(loc);
+            if(!folder.isPopulated()){
+                folder.populateFolder();
+                Log.writeln("FOlder Iteration "+level+"::"+folder.getAbsolutePath());
+            }
+            
+            for(ExtFolder fold:folder.getFoldersFromFiles()){
+                LocationInRoot location = LocationAPI.getInstance().getLocationMapping(fold.getAbsolutePath());
+                LocationAPI.getInstance().removeByLocation(location);
+                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
 
+            }
+        }
+    }
+    public ExtTask populateRecursiveParallel(ExtFolder folder, final int MAX_DEPTH){
+        return new ExtTask(){
+            @Override protected Void call() throws Exception {
+                int level = 0;
+                populateRecursiveParallelInner(folder,level,MAX_DEPTH);
+            return null;
+            }
+        };
+    }
 }

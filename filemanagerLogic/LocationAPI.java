@@ -20,7 +20,7 @@ public class LocationAPI {
     public static LocationAPI getInstance(){
         return INSTANCE;
     }
-    public LocationInRoot getLocation(String path){
+    public LocationInRoot getLocationMapping(String path){
         LocationInRoot location = new LocationInRoot(path);
         return location;
     }
@@ -52,6 +52,18 @@ public class LocationAPI {
         ExtFolder folder = FolderForDevices;
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.files.get(location.at(i++));
+
+        }
+        folder.files.put(location.getName(), file);
+    }
+    public void putByLocationRecursive(LocationInRoot location, ExtFile file) {
+        int i = 0;
+        ExtFolder folder = FolderForDevices;
+        
+        while (i < location.length() - 1) {
+            folder = (ExtFolder) folder.files.get(location.at(i++));
+            Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
+            folder.update();
         }
         folder.files.put(location.getName(), file);
     }
@@ -63,7 +75,7 @@ public class LocationAPI {
         try{
             int i = 0;
             ExtFolder folder = FolderForDevices;
-            Log.writeln("Request:" + location.toString());
+            //Log.writeln("Request:" + location.toString());
             while (i < location.length()-1) {
                 folder = (ExtFolder) folder.files.get(location.at(i++));
                 //Log.writeln(folder.propertyName.get());

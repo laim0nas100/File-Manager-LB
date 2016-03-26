@@ -5,10 +5,13 @@
  */
 package filemanagerLogic;
 
+import java.time.Clock;
+import java.time.Instant;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 
 /**
- *
+ * Custom Task
  * @author Laimonas Beniušis
  */
 public class ExtTask extends Task<Void> {
@@ -21,11 +24,11 @@ public class ExtTask extends Task<Void> {
     private String taskDescription;
     private long refreshDuration = 500;
     private boolean paused;
-    
-    
+
     public String getTaskDescription() {
         return taskDescription;
     }
+
 
     public void setTaskDescription(String taskDescription) {
         this.taskDescription = taskDescription;

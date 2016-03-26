@@ -10,6 +10,7 @@ import filemanagerGUI.ViewManager;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -31,7 +32,7 @@ public class TextInputDialogController extends BaseController {
     @FXML public Button buttonEnter;
     @FXML public Button buttonCancel;
     
-    private boolean nameIsAvailable;
+    private SimpleBooleanProperty nameIsAvailable = new SimpleBooleanProperty();
     private ExtFile itemToRename;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
     private String possibleName;
@@ -41,7 +42,8 @@ public class TextInputDialogController extends BaseController {
         this.title = title;
         this.itemToRename = itemToRename;
         this.textField.clear();
-        nameIsAvailable = false;
+        nameIsAvailable.set(false);
+        buttonEnter.disableProperty().bind(nameIsAvailable.not());
         for(ExtFile file:currentList){
             listToCheck.add(file.propertyName.get());
         }
@@ -52,16 +54,17 @@ public class TextInputDialogController extends BaseController {
     }
     public void checkNameAvailable(){
         possibleName = textField.getText();
-        if(listToCheck.contains(possibleName)){
-            nameIsAvailable = false;
+        
+        if(listToCheck.contains(possibleName) ||possibleName.length()<2){
+            nameIsAvailable.set(false);
             nameAvailable.setText("Taken");
         }else{
             nameAvailable.setText("Available");
-            nameIsAvailable = true;
+            nameIsAvailable.set(true);
         }
     }
     public void apply(){
-        if(nameIsAvailable){
+        if(nameIsAvailable.get()){
             try {
                 TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),possibleName );
                 ViewManager.getInstance().updateAllWindows();
