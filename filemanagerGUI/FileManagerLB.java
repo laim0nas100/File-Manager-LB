@@ -42,6 +42,7 @@ public class FileManagerLB extends Application {
     public static ExtFolder FolderForDevices;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
+    public static final int DEPTH = 2;
     @Override
     public void start(Stage primaryStage) {
         DataSize = DATA_SIZE.KB;
@@ -86,7 +87,8 @@ public class FileManagerLB extends Application {
                 //device.setIsRoot(true);
                 FolderForDevices.files.putIfAbsent(newName, device);
                 rootSet.add(device.getAbsolutePath());
-                device.populateFolder();
+                //device.populateFolder();
+                new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
                 Log.writeln("Mounted successfully");
             }
         }

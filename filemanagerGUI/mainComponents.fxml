@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -111,11 +110,7 @@
    <bottom>
       <HBox alignment="CENTER">
          <children>
-            <VBox alignment="CENTER">
-               <children>
-                  <Label fx:id="loadingStatus" alignment="CENTER" text="STATUS" />
-               </children>
-            </VBox>
+            <VBox alignment="CENTER" />
          </children>
       </HBox>
    </bottom>

@@ -122,6 +122,7 @@ public class ViewManager {
             stage.setMinWidth(400);
             stage.show();
             stage.toFront();
+            stage.setAlwaysOnTop(true);
             //stage.setResizable(false);
             ProgressDialogController controller = loader.<ProgressDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
@@ -157,6 +158,7 @@ public class ViewManager {
             stage.setMinWidth(500);
             stage.show();
             stage.toFront();
+            stage.setAlwaysOnTop(true);
             TextInputDialogController controller = loader.<TextInputDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();

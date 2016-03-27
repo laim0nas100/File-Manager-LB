@@ -11,14 +11,20 @@ import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import java.time.Clock;
 import java.time.Instant;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.VBox;
+import utility.CustomClock;
 
 /**
  * FXML Controller class
@@ -38,19 +44,9 @@ public class ProgressDialogController extends BaseController {
     @FXML public Label taskDescription;
     @FXML public Label timeWasted;
     private Instant started;
-    private Instant stopped;
-    private SimpleLongProperty slp;
     
-    public void startTimer(){
-        started = TaskFactory.clock.instant();
-    }
-    public void stopTimer(){
-        stopped = TaskFactory.clock.instant();   
-    }
-    public SimpleLongProperty getWorkedTime(){
-        slp = new SimpleLongProperty(Clock.systemUTC().instant().toEpochMilli() - started.toEpochMilli());
-        return slp;
-    }
+ 
+
     
     private ExtTask task;
     public void setUp(String title,ExtTask newTask){
@@ -65,10 +61,12 @@ public class ProgressDialogController extends BaseController {
         taskDescription.setText(task.getTaskDescription());
         Thread t = new Thread(this.task);
         t.setDaemon(true);
-        
+        this.started = CustomClock.getClock().getNow();
         t.start();
-        this.startTimer();
-        timeWasted.textProperty().bind((this.getWorkedTime().asString()));
+        
+        bar.progressProperty().addListener((ObservableValue<? extends Number> ov, Number t1, Number t2) -> {
+            timeWasted.setText(" "+CustomClock.getClock().getSecondsPassedRound(started));
+        });
         
     }
     public void cancelTask(){

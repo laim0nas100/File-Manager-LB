@@ -29,8 +29,8 @@ import utility.Log;
 
 //
 public class TaskFactory {
-    public static Clock clock = Clock.systemUTC();
     public static ExtFile itemToRename;
+    public static ObservableList<ExtFile> dragList = FXCollections.observableArrayList();
     public static ObservableList<ExtFile> markedList = FXCollections.observableArrayList();
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
@@ -356,7 +356,7 @@ public class TaskFactory {
             folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(loc);
             if(!folder.isPopulated()){
                 folder.populateFolder();
-                Log.writeln("FOlder Iteration "+level+"::"+folder.getAbsolutePath());
+                Log.writeln("Folder Iteration "+level+"::"+folder.getAbsolutePath());
             }
             
             for(ExtFolder fold:folder.getFoldersFromFiles()){
