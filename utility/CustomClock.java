@@ -24,7 +24,7 @@ public class CustomClock {
             @Override
             public void run() {
                 Platform.runLater(()->{
-                    timeProperty.set(getSecondsPassedRound()+"");
+                    updateTimeProperty();
                     //Log.writeln("Timer running");
                 });
             }
@@ -37,6 +37,10 @@ public class CustomClock {
     private final Timer timer;
     private final TimerTask timerTask;
     private final Instant timeStartPoint;
+    public boolean paused;
+    private void updateTimeProperty(){
+        timeProperty.set(getSecondsPassedRound()+"");
+    }
     public Instant getNow(){
         return Clock.systemUTC().instant();
     }
@@ -68,6 +72,7 @@ public class CustomClock {
         return (currentTimePoint.getEpochSecond()-timeStartPoint.getEpochSecond());
     }
     public void stopTimer(){
+        this.timeProperty.set("Done in: "+this.getSecondsPassed());
         this.timer.cancel();
     }
 }

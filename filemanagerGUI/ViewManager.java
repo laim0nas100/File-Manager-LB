@@ -13,6 +13,8 @@ import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 
 import javafx.fxml.FXMLLoader;
@@ -34,18 +36,22 @@ public class ViewManager {
     public static final String PROGRESS_DIALOG_TITLE ="Progress Dialog ";
     public static final String TEXT_INPUT_DIALOG_TITLE="Text Input Dialog ";
     public static final String MESSAGE_DIALOG_TITLE="Message Dialog ";
+    public SimpleBooleanProperty autoCloseProgressDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
     
     protected ViewManager(){
+        this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
         this.messageDialog = new HashMap<>();
         this.progressDialogs = new HashMap<>();
         this.windows = new HashMap<>();
         this.textInputDialogs = new HashMap<>();
+
     };
     public HashMap<String,Frame> textInputDialogs;
     public HashMap<String,Frame> messageDialog;
     public HashMap<String,Frame> progressDialogs;
     public HashMap<String,Frame> windows;
+
     public static ViewManager getInstance(){
         return INSTANCE;
     }
@@ -158,7 +164,7 @@ public class ViewManager {
             stage.setMinWidth(500);
             stage.show();
             stage.toFront();
-            stage.setAlwaysOnTop(true);
+            //stage.setAlwaysOnTop(!autoCloseProgressDialogs.get());
             TextInputDialogController controller = loader.<TextInputDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();

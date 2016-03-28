@@ -66,7 +66,7 @@ public class TextInputDialogController extends BaseController {
     public void apply(){
         if(nameIsAvailable.get()){
             try {
-                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),possibleName );
+                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),possibleName);
                 ViewManager.getInstance().updateAllWindows();
                 exit();
             } catch (IOException ex) {

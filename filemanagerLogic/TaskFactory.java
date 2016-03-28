@@ -30,14 +30,19 @@ import utility.Log;
 //
 public class TaskFactory {
     public static ExtFile itemToRename;
-    public static ObservableList<ExtFile> dragList = FXCollections.observableArrayList();
-    public static ObservableList<ExtFile> markedList = FXCollections.observableArrayList();
+    public static ObservableList<ExtFile> dragList;
+    public static ObservableList<ExtFile> markedList;
+    public static ArrayList<ExtFile> actionList;
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
         
         return instance;
     }
-    protected TaskFactory(){}
+    protected TaskFactory(){
+        dragList = FXCollections.observableArrayList();
+        markedList = FXCollections.observableArrayList();
+        actionList = new ArrayList<>();
+    }
         // File actions
     private static final Comparator<ExtFile> cmpDesc = (ExtFile f1, ExtFile f2) -> {
         return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
@@ -121,14 +126,12 @@ public class TaskFactory {
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
-        for(ExtFile file:list){
-            Log.writeln(file.getAbsolutePath());
-        }
+
         ExtFile[] array = new ExtFile[list.size()];
         array = list.toArray(array);
         for (ExtFile array1 : array) {
             array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-            
+            Log.writeln(array1.getAbsolutePath() +" -> "+array1.getDestination());
         }
         return array;
         
@@ -194,14 +197,11 @@ public class TaskFactory {
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
-        for(ExtFile file:list){
-            Log.writeln(file.getAbsolutePath());
-        }
         ExtFile[] array = new ExtFile[list.size()];
         array = list.toArray(array);
         for (ExtFile array1 : array) {
             array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-            
+            Log.writeln(array1.getAbsolutePath() +" -> "+array1.getDestination());
         }
         return array;
         
@@ -358,11 +358,11 @@ public class TaskFactory {
                 folder.populateFolder();
                 Log.writeln("Folder Iteration "+level+"::"+folder.getAbsolutePath());
             }
-            
+            level++;
             for(ExtFolder fold:folder.getFoldersFromFiles()){
                 LocationInRoot location = LocationAPI.getInstance().getLocationMapping(fold.getAbsolutePath());
                 LocationAPI.getInstance().removeByLocation(location);
-                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
+                populateRecursiveParallelInner(fold, level,MAX_DEPTH);
 
             }
         }

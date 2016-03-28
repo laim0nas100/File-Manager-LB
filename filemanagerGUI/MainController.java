@@ -30,6 +30,8 @@ import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
@@ -43,6 +45,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
+import sun.nio.ch.ThreadPool;
 import utility.DesktopApi;
 import utility.Log;
 
@@ -61,7 +64,7 @@ public class MainController extends BaseController{
     @FXML public AnchorPane left;
     @FXML public FlowPane flowView;
     @FXML public ScrollPane flowViewScroll;
-    
+    @FXML public CheckMenuItem autoClose;
     
     @FXML public TableView tableView;
     private ArrayList< TableColumn<ExtFile, String>> columns;
@@ -86,6 +89,7 @@ public class MainController extends BaseController{
     
     
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+        autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         contextMenuItems = new MenuItem[12];
         tableDragContextMenu = new ContextMenu();
         tableContextMenu = new ContextMenu();
@@ -149,6 +153,12 @@ public class MainController extends BaseController{
                 currentDirText.setText(MC.currentDir.getAbsolutePath());
             }
             MC.currentDir.update();
+            Iterator<ExtFile> iterator = TaskFactory.markedList.iterator();
+            while(iterator.hasNext()){
+                if(!Files.exists(iterator.next().toPath())){
+                    iterator.remove();
+                }
+            }
             switch(currentView){
                 case(0):{
                     setTableView();
@@ -330,41 +340,41 @@ public class MainController extends BaseController{
             
         });
         contextMenuItems[10] = new MenuItem("Move here selected");
-        contextMenuItems[10].setOnAction(eh ->{        
-            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.dragList,MC.currentDir);
+        contextMenuItems[10].setOnAction(eh ->{    
+            TaskFactory.actionList.clear();
+            TaskFactory.actionList.addAll(TaskFactory.dragList);
+            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.actionList,MC.currentDir);
             task.setTaskDescription("Move Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
         contextMenuItems[11] = new MenuItem("Copy here selected");
         contextMenuItems[11].setOnAction(eh ->{        
             //Log.writeln("Copy Dragger");
-            
-            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.dragList,MC.currentDir);
+            TaskFactory.actionList.clear();
+            TaskFactory.actionList.addAll(TaskFactory.dragList);
+            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.actionList,MC.currentDir);
             task.setTaskDescription("Copy Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
         Menu submenuMarked = new Menu("Marked...");
         Menu submenuCreate = new Menu("Create...");
-        submenuCreate.getItems().addAll(
+        submenuCreate.getItems().setAll(
                 contextMenuItems[0],
                 contextMenuItems[5]
         );
 
-        listContextMenu.getItems().addAll(
-                contextMenuItems[7],
-                contextMenuItems[8]
-        );
+
         
-        tableDragContextMenu.getItems().addAll(
+        tableDragContextMenu.getItems().setAll(
                 contextMenuItems[10],
                 contextMenuItems[11]
         );
-        
+        tableDragContextMenu.setAutoHide(true);
         
         //TABLE VIEW ACTIONS
         
        
-        
+
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tableView.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -448,32 +458,17 @@ public class MainController extends BaseController{
                     }
                 } 
             }
-        });
-        
-        
-        
-        
-        listView.setOnMouseClicked((MouseEvent eh) ->{
-            if(listView.getSelectionModel().getSelectedItem()!= null){
-                if(TaskFactory.markedList.size()>0){
-                    listContextMenu.show(listView,eh.getScreenX(),eh.getScreenY());
-                }
-            }
-        });
-        listView.setItems(TaskFactory.markedList);
-        getStage().getScene().setOnMouseClicked(eh->{
-            listView.getSelectionModel().clearSelection();
-            tableView.getSelectionModel().clearSelection();
-        });
-        
-        
-        
+        });  
         
         tableView.setOnDragDetected((MouseEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
             // drag was detected, start drag-and-drop gesture
-            TaskFactory.dragList = tableView.getSelectionModel().getSelectedItems();
+            TaskFactory.dragList.clear();
+            TaskFactory.dragList.addAll(selectedList);
             if(!TaskFactory.dragList.isEmpty()){
-                Dragboard db = tableView.startDragAndDrop(TransferMode.ANY);
+                Dragboard db = tableView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
                     content.putString("Ready");
@@ -484,25 +479,106 @@ public class MainController extends BaseController{
         }); //drag
 
         tableView.setOnDragOver((DragEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
             if (event.getDragboard().hasString()){
                 event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                
                 //Log.writeln(event.getDragboard().getString());
             }
             event.consume();
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
+            
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!TaskFactory.dragList.isEmpty()) {           
+            if (!TaskFactory.dragList.isEmpty()) {
+                
                 tableDragContextMenu.show(tableView,event.getScreenX(),event.getScreenY());
-                ViewManager.getInstance().windows.get(title).getStage().requestFocus();
+                tableDragContextMenu.getOwnerNode().requestFocus();
+                tableDragContextMenu.getOwnerWindow().requestFocus();
+                //ViewManager.getInstance().windows.get(title).getStage().requestFocus();
                 success = true;
             }
             event.setDropCompleted(success);
             event.consume();
+        });
+        
+        
+        listView.setItems(TaskFactory.markedList);
+        listView.setContextMenu(listContextMenu);
+        listView.setOnMousePressed((eh) ->{ 
+            if((listView.getSelectionModel().getSelectedItem()!= null)&&(TaskFactory.markedList.size()>0)){
+                    listContextMenu.getItems().setAll(
+                        contextMenuItems[7],
+                        contextMenuItems[8]
+                    );
+            }else{
+               listContextMenu.getItems().clear();
+            }
+        });
+        listView.setOnDragDetected((MouseEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
+            // drag was detected, start drag-and-drop gesture
+            TaskFactory.dragList.clear();
+            TaskFactory.dragList.addAll(listView.getSelectionModel().getSelectedItems());
+            if(!TaskFactory.dragList.isEmpty()){
+                Dragboard db = tableView.startDragAndDrop(TransferMode.ANY);
+                ClipboardContent content = new ClipboardContent();
+                //Log.writeln("Drag detected:"+selected.getAbsolutePath());
+                content.putString("Ready");
+                //content.putString(selected.getAbsolutePath());
+                db.setContent(content);
+                event.consume();
+            }
+        }); //drag
+
+        listView.setOnDragOver((DragEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
+            // data is dragged over the target
+            Dragboard db = event.getDragboard();
+            if (event.getDragboard().hasString()){
+                event.acceptTransferModes(TransferMode.MOVE);
+                
+                //Log.writeln(event.getDragboard().getString());
+            }
+            event.consume();
+        });
+
+        listView.setOnDragDropped((DragEvent event) -> {
+            if(MC.currentDir.isAbsoluteRoot()){
+                return;
+            }
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (!TaskFactory.dragList.isEmpty()) {
+                for(ExtFile f:TaskFactory.dragList){
+                    if(!TaskFactory.markedList.contains(f)){
+                        TaskFactory.markedList.add(f);
+                    }
+                }
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+        
+        
+        
+        getStage().getScene().setOnMouseClicked(eh->{
+            listView.getSelectionModel().clearSelection();
+            tableView.getSelectionModel().clearSelection();
         });
     }
 }

@@ -68,6 +68,9 @@ public class ProgressDialogController extends BaseController {
         t.start();
         task.setOnSucceeded((e)->{
             clock.stopTimer();
+            if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
+                this.exit();
+            }
         });
         
         
