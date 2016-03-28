@@ -43,12 +43,13 @@ public class ProgressDialogController extends BaseController {
     @FXML public Label text;
     @FXML public Label taskDescription;
     @FXML public Label timeWasted;
-    private Instant started;
     
- 
+    protected CustomClock clock;
 
     
     private ExtTask task;
+    
+    
     public void setUp(String title,ExtTask newTask){
         this.title = title;
         this.task = newTask;
@@ -59,14 +60,16 @@ public class ProgressDialogController extends BaseController {
         pauseButton.disableProperty().bind(cancelButton.disabledProperty());
         text.textProperty().bind(task.messageProperty());
         taskDescription.setText(task.getTaskDescription());
-        Thread t = new Thread(this.task);
-        t.setDaemon(true);
-        this.started = CustomClock.getClock().getNow();
-        t.start();
         
-        bar.progressProperty().addListener((ObservableValue<? extends Number> ov, Number t1, Number t2) -> {
-            timeWasted.setText(" "+CustomClock.getClock().getSecondsPassedRound(started));
+        Thread t = new Thread(this.task);
+        clock = new CustomClock();
+        t.setDaemon(true);
+        timeWasted.textProperty().bind(clock.timeProperty);
+        t.start();
+        task.setOnSucceeded((e)->{
+            clock.stopTimer();
         });
+        
         
     }
     public void cancelTask(){

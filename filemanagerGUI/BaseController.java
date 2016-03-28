@@ -7,8 +7,12 @@ package filemanagerGUI;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.Initializable;
 import javafx.stage.Stage;
+import utility.CustomClock;
 
 /**
  *
@@ -17,8 +21,10 @@ import javafx.stage.Stage;
 
 public class BaseController implements Initializable{
     protected String title;
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        
     }
     public void setUp(String title){
        this.title = title;

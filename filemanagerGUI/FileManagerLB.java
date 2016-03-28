@@ -87,8 +87,8 @@ public class FileManagerLB extends Application {
                 //device.setIsRoot(true);
                 FolderForDevices.files.putIfAbsent(newName, device);
                 rootSet.add(device.getAbsolutePath());
-                //device.populateFolder();
-                new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
+                device.populateFolder();
+                //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
                 Log.writeln("Mounted successfully");
             }
         }

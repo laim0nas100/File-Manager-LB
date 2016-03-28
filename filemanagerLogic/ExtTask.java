@@ -7,8 +7,12 @@ package filemanagerLogic;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Timer;
+import java.util.TimerTask;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
+import utility.CustomClock;
 
 /**
  * Custom Task
@@ -24,12 +28,11 @@ public class ExtTask extends Task<Void> {
     private String taskDescription;
     private long refreshDuration = 500;
     private boolean paused;
-
+    
     public String getTaskDescription() {
         return taskDescription;
     }
-
-
+    
     public void setTaskDescription(String taskDescription) {
         this.taskDescription = taskDescription;
     }
