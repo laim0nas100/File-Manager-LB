@@ -5,6 +5,7 @@
  */
 package filemanagerGUI;
 
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
@@ -28,6 +29,9 @@ public class Frame {
     }
     public Stage getStage(){
         return this.stage;
+    }
+    public Scene getScene(){
+        return this.stage.getScene();
     }
     public void setStage(Stage stage){
         this.stage = stage;

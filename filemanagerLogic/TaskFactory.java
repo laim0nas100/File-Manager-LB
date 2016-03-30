@@ -29,10 +29,10 @@ import utility.Log;
 
 //
 public class TaskFactory {
-    public static ExtFile itemToRename;
-    public static ObservableList<ExtFile> dragList;
-    public static ObservableList<ExtFile> markedList;
-    public static ArrayList<ExtFile> actionList;
+    public  ExtFile itemToRename;
+    public  ObservableList<ExtFile> dragList;
+    public  ObservableList<ExtFile> markedList;
+    public  ArrayList<ExtFile> actionList;
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
         
@@ -97,7 +97,11 @@ public class TaskFactory {
     }
     
 //PREPARE FOR TASKS
-    public ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
+    public void prepareActionList(Collection<ExtFile> filelist){
+        this.actionList.clear();
+        this.actionList.addAll(filelist);
+    }
+    private ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
         Log.writeln("List recieved in task");
         
         for(ExtFile file:fileList){
@@ -136,7 +140,7 @@ public class TaskFactory {
         return array;
         
     }   
-    public ExtFile[] prepareForDelete(Collection<ExtFile> fileList){
+    private ExtFile[] prepareForDelete(Collection<ExtFile> fileList){
     Log.writeln("List recieved in task");
         
         for(ExtFile file:fileList){
@@ -168,7 +172,7 @@ public class TaskFactory {
         return array;
         
     } 
-    public ExtFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
+    private ExtFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
        Log.writeln("List recieved in task");
         
         for(ExtFile file:fileList){
