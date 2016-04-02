@@ -74,22 +74,16 @@ public class FileManagerLB extends Application {
         if(Files.isDirectory(Paths.get(name))){
             ExtFolder device = new ExtFolder(name);
             int nameCount = device.toPath().getNameCount();
-            Log.write("Is direcory");
+            //Log.write("Is direcory");
             if(nameCount == 0){
                 result = true;
-                String newName = name;
-                //Only 1 slash, make directory the slash
-                if(!name.equals(File.separator)){
-                    newName = name.substring(0, name.lastIndexOf(File.separator));
-                }
-                Log.writeln("newName= "+newName);
+                String newName = device.toPath().getRoot().toString();
+                //Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
-                //device.setIsRoot(true);
                 FolderForDevices.files.putIfAbsent(newName, device);
-                rootSet.add(device.getAbsolutePath());
-                //device.populateFolder();
-                new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
-                Log.writeln("Mounted successfully");
+                rootSet.add(newName);
+                //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
+                //Log.writeln("Mounted successfully");
             }
         }
         return result;

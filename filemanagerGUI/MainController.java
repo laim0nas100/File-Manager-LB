@@ -101,6 +101,7 @@ public class MainController extends BaseController{
     
     
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+        super.setUp(title);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         contextMenuItems = new MenuItem[13];
         tableDragContextMenu = new ContextMenu();
@@ -111,14 +112,16 @@ public class MainController extends BaseController{
         finder = new Finder("",this.searchView.getItems());
        
         MC = new ManagingClass(root);
-        this.title = title;
+        
         
         
         LOAD(); 
         
         this.changeToDir(currentDir);
     }
-    
+    public void mountDirectory(){
+        ViewManager.getInstance().newMountDirectoryDialog();
+    }
     public void reMount(){
         FileManagerLB.remount();
     }
@@ -296,7 +299,7 @@ public class MainController extends BaseController{
             Log.writeln("Invoke rename dialog");
             ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
             ExtFile fileCopy = new ExtFile(path.getAbsolutePath());
-            ViewManager.getInstance().newTextInputDialog(tableView.getItems(),fileCopy);
+            ViewManager.getInstance().newRenameDialog(tableView.getItems(),fileCopy);
             //Invoke text input dialog
         });
         

@@ -50,6 +50,7 @@ public class LocationAPI {
     public void putByLocation(LocationInRoot location, ExtFile file) {
         int i = 0;
         ExtFolder folder = FolderForDevices;
+        //Log.writeln("Put by location:"+location.toString());
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.files.get(location.at(i++));
 

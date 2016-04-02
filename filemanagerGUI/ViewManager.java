@@ -6,8 +6,9 @@
 package filemanagerGUI;
 
 
+import filemanagerGUI.dialog.MountDirectoryDialogController;
 import filemanagerGUI.dialog.ProgressDialogController;
-import filemanagerGUI.dialog.TextInputDialogController;
+import filemanagerGUI.dialog.RenameDialog;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtFile;
@@ -41,15 +42,11 @@ public class ViewManager {
     
     protected ViewManager(){
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
-        this.messageDialog = new HashMap<>();
-        this.progressDialogs = new HashMap<>();
         this.windows = new HashMap<>();
-        this.textInputDialogs = new HashMap<>();
+        this.dialogs = new HashMap<>();
 
     };
-    public HashMap<String,Frame> textInputDialogs;
-    public HashMap<String,Frame> messageDialog;
-    public HashMap<String,Frame> progressDialogs;
+    public HashMap<String,Frame> dialogs;
     public HashMap<String,Frame> windows;
 
     public static ViewManager getInstance(){
@@ -116,7 +113,7 @@ public class ViewManager {
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
         try {
-            int index = findSmallestAvailable(progressDialogs,PROGRESS_DIALOG_TITLE);
+            int index = findSmallestAvailable(dialogs,PROGRESS_DIALOG_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/ProgressDialog.fxml"));
            
             Parent root = loader.load();
@@ -129,6 +126,7 @@ public class ViewManager {
             stage.show();
             stage.toFront();
             stage.setAlwaysOnTop(true);
+            
             //stage.setResizable(false);
             ProgressDialogController controller = loader.<ProgressDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
@@ -136,24 +134,19 @@ public class ViewManager {
             });  
             controller.setUp(stage.getTitle(), task);
             Frame frame = new Frame(stage,controller);
-            progressDialogs.put(frame.getTitle(),frame);          
+            dialogs.put(frame.getTitle(),frame);          
         } catch (IOException ex) {
             ex.printStackTrace();
         }
         
     }
-    public void closeProgressDialog(String title){
-        progressDialogs.get(title).getStage().close();
-        progressDialogs.remove(title);
-    }
-    
     
 //TEXT INPUT DIALOG ACTIONS
    
-    public void newTextInputDialog(ObservableList<ExtFile> list,ExtFile itemToRename){
+    public void newRenameDialog(ObservableList<ExtFile> list,ExtFile itemToRename){
         try {
-            int index = findSmallestAvailable(textInputDialogs,TEXT_INPUT_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/TextInputDialog.fxml"));
+            int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/RenameDialog.fxml"));
            
             Parent root = loader.load();
             Stage stage = new Stage();
@@ -165,23 +158,51 @@ public class ViewManager {
             stage.show();
             stage.toFront();
             //stage.setAlwaysOnTop(!autoCloseProgressDialogs.get());
-            TextInputDialogController controller = loader.<TextInputDialogController>getController();
+            RenameDialog controller = loader.<RenameDialog>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
-            controller.setUp(stage.getTitle());
             controller.setUp(stage.getTitle(), list,itemToRename);
             Frame frame = new Frame(stage,controller);
-            textInputDialogs.put(frame.getTitle(),frame);          
+            dialogs.put(frame.getTitle(),frame);          
         } catch (IOException ex) {
             ex.printStackTrace();
         }
         
     }
     
-    public void closeTextInputDialog(String title){
-        textInputDialogs.get(title).getStage().close();
-        textInputDialogs.remove(title);
+    public void newMountDirectoryDialog(){
+        try {
+            int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/MountDirectoryDialog.fxml"));
+           
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle(TEXT_INPUT_DIALOG_TITLE+index);
+            stage.setScene(new Scene(root));
+            stage.setMaxHeight(200);
+            stage.setMinHeight(200);
+            stage.setMinWidth(500);
+            stage.show();
+            stage.toFront();
+            //stage.setAlwaysOnTop(!autoCloseProgressDialogs.get());
+            MountDirectoryDialogController controller = loader.<MountDirectoryDialogController>getController();
+            stage.setOnCloseRequest((WindowEvent we) -> {
+                controller.exit();
+            });
+            controller.setUp(stage.getTitle());
+            Frame frame = new Frame(stage,controller);
+            dialogs.put(frame.getTitle(),frame);          
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        
+    }
+    
+    
+    public void closeDialog(String title){
+        dialogs.get(title).getStage().close();
+        dialogs.remove(title);
     }
     
 //CUSTOM VIEWS

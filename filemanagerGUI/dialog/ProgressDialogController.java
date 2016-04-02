@@ -81,7 +81,7 @@ public class ProgressDialogController extends BaseController {
     }
     public void exit(){
         
-        ViewManager.getInstance().closeProgressDialog(this.title);
+        ViewManager.getInstance().closeDialog(this.title);
         ViewManager.getInstance().updateAllWindows();
     }
     public void pauseTask(){

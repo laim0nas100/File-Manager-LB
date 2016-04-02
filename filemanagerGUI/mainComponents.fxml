@@ -13,12 +13,12 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Text?>
 
 <BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
    <top>
@@ -36,6 +36,7 @@
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                         <MenuItem mnemonicParsing="false" onAction="#reMount" text="Remount root" />
+                        <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
@@ -95,43 +96,48 @@
    </top>
    <center>
       <SplitPane dividerPositions="0.5" BorderPane.alignment="CENTER">
-        <items>
-            <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
-               <children>
-                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                  <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children>
-            </AnchorPane>
-            <TabPane>
-               <tabs>
-                  <Tab closable="false" text="Marked List">
-                     <content>
-                        <ListView fx:id="listView" />
-                     </content>
-                  </Tab>
-                  <Tab closable="false" text="Search Tab">
-                    <content>
-                        <VBox>
-                           <children>
-                              <HBox alignment="CENTER_LEFT">
+         <BorderPane.margin>
+            <Insets bottom="15.0" left="25.0" right="15.0" top="5.0" />
+         </BorderPane.margin>
+         <items>
+            <TreeView prefHeight="476.0" prefWidth="459.0" />
+            <SplitPane dividerPositions="0.5">
+              <items>
+                  <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
+                     <children>
+                        <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <TabPane>
+                     <tabs>
+                        <Tab closable="false" text="Marked List">
+                           <content>
+                              <ListView fx:id="listView" />
+                           </content>
+                        </Tab>
+                        <Tab closable="false" text="Search Tab">
+                          <content>
+                              <VBox>
                                  <children>
-                                    <TextField fx:id="searchField" onAction="#search" prefHeight="25.0" prefWidth="350.0" promptText="Search..." />
-                                    <Label fx:id="itemCount" alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="39.0" text="0" />
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <TextField fx:id="searchField" onAction="#search" prefHeight="25.0" prefWidth="350.0" promptText="Search..." />
+                                          <Label fx:id="itemCount" alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="39.0" text="0" />
+                                       </children>
+                                    </HBox>
+                                    <ListView fx:id="searchView" VBox.vgrow="ALWAYS" />
                                  </children>
-                              </HBox>
-                              <ListView fx:id="searchView" VBox.vgrow="ALWAYS" />
-                           </children>
-                        </VBox>
-                    </content>
-                  </Tab>
-               </tabs>
-            </TabPane>
-        </items>
+                              </VBox>
+                          </content>
+                        </Tab>
+                     </tabs>
+                  </TabPane>
+              </items>
+            </SplitPane>
+         </items>
       </SplitPane>
    </center>
-   <left>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Links..." wrappingWidth="66.13671875" BorderPane.alignment="CENTER" />
-   </left>
    <bottom>
       <HBox alignment="CENTER">
          <children>
@@ -139,7 +145,4 @@
          </children>
       </HBox>
    </bottom>
-   <right>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="FILE PROPERTIES" wrappingWidth="69.13671875" BorderPane.alignment="CENTER" />
-   </right>
 </BorderPane>

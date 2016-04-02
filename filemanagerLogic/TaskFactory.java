@@ -58,28 +58,14 @@ public class TaskFactory {
         Path newPath = Paths.get(file.getParent()+File.separator+newName);
         Files.move(file.toPath(), newPath);
     }
-    public boolean renameByRegex(ExtFile fileToRename, String regex, String replacement){
-       return renameByRegex(FolderForDevices,fileToRename,regex,replacement);
-    }
-    public boolean renameTo(ExtFolder root,ExtFile fileToRename,String newName){
-        ExtFile newPath = new ExtFile(fileToRename.getParentFile().getPath() + File.separator + newName);
-        try{
-            LocationInRoot oldLoc = new LocationInRoot(root,fileToRename);
-            LocationInRoot newLoc = new LocationInRoot(oldLoc);
-            newLoc.setName(newName);
-            Files.move(fileToRename.toPath(), newPath.toPath());
-            fileToRename.propertyName.set(newName);
-            this.renameRootKeys(root, newLoc, oldLoc);
-        }catch(Exception e){
-                return false;
-            }
-        return true;
+    public void renameByRegex(ExtFile fileToRename, String regex, String replacement) throws IOException{
+        renameByRegex(FolderForDevices,fileToRename,regex,replacement);
     }
     
-    public boolean renameByRegex(ExtFolder root,ExtFile fileToRename, String regex,String replacement){
+    public void renameByRegex(ExtFolder root,ExtFile fileToRename, String regex,String replacement) throws IOException{
         String name = fileToRename.getName();
         name = name.replaceAll(regex, replacement);
-        return renameTo(root,fileToRename,name);
+        renameTo(fileToRename.getAbsolutePath(),name);
     }
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
