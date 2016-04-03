@@ -23,7 +23,7 @@ import javafx.scene.control.TextField;
 
 
 
-public abstract class TextInputDialogController extends BaseController {
+public abstract class TextInputDialogController extends BaseDialog implements TextInputDialogEssentials {
     @FXML public TextField textField;
     @FXML public Button buttonEnter;
     @FXML public Button buttonCancel;
@@ -37,12 +37,6 @@ public abstract class TextInputDialogController extends BaseController {
         super.setUp(title);
         buttonEnter.disableProperty().bind(nameIsAvailable.not());
     }
-    @Override
-    public void exit(){
-        
-            ViewManager.getInstance().closeDialog(title);
-        
-    }
-    public abstract void apply();
-    public abstract void checkAvailable();
+//    public abstract void apply();
+//    public abstract void checkAvailable();
 }

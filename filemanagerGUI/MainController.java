@@ -26,9 +26,9 @@ import javafx.scene.layout.FlowPane;
 import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import static filemanagerGUI.FileManagerLB.errorLog;
 import static filemanagerGUI.FileManagerLB.links;
+import static filemanagerGUI.FileManagerLB.remount;
 import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
@@ -57,6 +57,7 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import utility.Log;
+import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 
 /**
  * FXML Controller class
@@ -199,7 +200,7 @@ public class MainController extends BaseController{
         ViewManager.getInstance().closeAllWindows();
     }
     public void createNewWindow(){
-        ViewManager.getInstance().newWindow(FolderForDevices,MC.currentDir);
+        ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
     }
     
     public void test(){
@@ -244,7 +245,7 @@ public class MainController extends BaseController{
             }else{
                 Platform.runLater(()-> {
                     try {
-                        for(ExtFile file:FolderForDevices.getFilesCollection()){
+                        for(ExtFile file:ArtificialRoot.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
                         }
                         itemCount.setText(finder.list.size()+"");
@@ -258,7 +259,10 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equals(MC.currentDir.getAbsolutePath())){
+            if(possibleDir.equals("ROOT")){
+                changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot("")));
+                
+            }else if(possibleDir.equals(MC.currentDir.getAbsolutePath())){
                 updateCurrentView();
             }else if(Files.isDirectory(Paths.get(possibleDir))){
                     LocationInRoot location = new LocationInRoot(possibleDir);

@@ -5,10 +5,10 @@
  */
 package filemanagerLogic;
 
-import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import utility.Log;
+import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 
 /**
  *
@@ -25,7 +25,7 @@ public class LocationAPI {
     }
     public boolean existByLocation(LocationInRoot location) {
         int i = 0;
-        ExtFolder folder = FolderForDevices;
+        ExtFolder folder = ArtificialRoot;
         while (i < location.length()) {
             if (folder.files.containsKey(location.at(i))) {
                 folder = (ExtFolder) folder.files.get(location.at(i));
@@ -39,7 +39,7 @@ public class LocationAPI {
 
     public void removeByLocation(LocationInRoot location) {
         int i = 0;
-        ExtFolder folder = FolderForDevices;
+        ExtFolder folder = ArtificialRoot;
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.files.get(location.at(i++));
         }
@@ -48,7 +48,7 @@ public class LocationAPI {
 
     public void putByLocation(LocationInRoot location, ExtFile file) {
         int i = 0;
-        ExtFolder folder = FolderForDevices;
+        ExtFolder folder = ArtificialRoot;
         //Log.writeln("Put by location:"+location.toString());
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.files.get(location.at(i++));
@@ -58,7 +58,7 @@ public class LocationAPI {
     }
     public void putByLocationRecursive(LocationInRoot location, ExtFile file) {
         int i = 0;
-        ExtFolder folder = FolderForDevices;
+        ExtFolder folder = ArtificialRoot;
         
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.files.get(location.at(i++));
@@ -70,11 +70,11 @@ public class LocationAPI {
 
     public ExtFile getFileByLocation(LocationInRoot location) {
         if(location.length()==0){
-            return FolderForDevices;
+            return ArtificialRoot;
         }
         try{
             int i = 0;
-            ExtFolder folder = FolderForDevices;
+            ExtFolder folder = ArtificialRoot;
             //Log.writeln("Request:" + location.toString());
             while (i < location.length()-1) {
                 folder = (ExtFolder) folder.files.get(location.at(i++));

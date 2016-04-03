@@ -44,7 +44,7 @@ public class FileManagerLB extends Application {
     }
     
     public static final String ARTIFICIAL_ROOT_NAME = "Devices";
-    public static ExtFolder FolderForDevices;
+    public static ExtFolder ArtificialRoot;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
     public static ObservableList<FavouriteLink> links;
@@ -55,14 +55,15 @@ public class FileManagerLB extends Application {
         links = FXCollections.observableArrayList();
         errorLog = FXCollections.observableArrayList();
         DataSize = DATA_SIZE.KB;
-        FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
-        FolderForDevices.setPopulated(true);
-        FolderForDevices.setIsAbsoluteRoot(true);
+        ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
+        ArtificialRoot.setPopulated(true);
+        ArtificialRoot.setIsAbsoluteRoot(true);
+        rootSet = new HashSet<>();
         remount();
-        FolderForDevices.propertyName.set("DEVICES");
+        ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
         
-        ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
+        ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
         
     } 
     /**
@@ -72,7 +73,7 @@ public class FileManagerLB extends Application {
         launch(args);
     }
     public static void remount(){
-        rootSet = new HashSet<>();
+        
         File[] roots = File.listRoots();
         for(int i = 0; i < roots.length ; i++){
             System.out.println("Root["+i+"]:" + roots[i].getAbsolutePath());
@@ -93,7 +94,7 @@ public class FileManagerLB extends Application {
                 String newName = device.toPath().getRoot().toString();
                 //Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
-                FolderForDevices.files.putIfAbsent(newName, device);
+                ArtificialRoot.files.putIfAbsent(newName, device);
                 rootSet.add(newName);
                 //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
                 //Log.writeln("Mounted successfully");

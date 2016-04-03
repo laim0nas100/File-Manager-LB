@@ -8,16 +8,6 @@ package filemanagerGUI.dialog;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
-import filemanagerLogic.TaskFactory;
-import java.time.Clock;
-import java.time.Instant;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -31,7 +21,7 @@ import utility.CustomClock;
  *
  * @author lemmin
  */
-public class ProgressDialogController extends BaseController {
+public class ProgressDialogController extends BaseDialog {
 
     @FXML public VBox base;
     
@@ -51,7 +41,7 @@ public class ProgressDialogController extends BaseController {
     
     
     public void setUp(String title,ExtTask newTask){
-        this.title = title;
+        super.setUp(title);
         this.task = newTask;
         bar.progressProperty().bind(task.progressProperty());
         indicator.progressProperty().bind(bar.progressProperty());
@@ -78,11 +68,6 @@ public class ProgressDialogController extends BaseController {
     public void cancelTask(){
         this.task.cancel();
         exit();
-    }
-    public void exit(){
-        
-        ViewManager.getInstance().closeDialog(this.title);
-        ViewManager.getInstance().updateAllWindows();
     }
     public void pauseTask(){
         if(task.isPaused()&&task.isRunning()){

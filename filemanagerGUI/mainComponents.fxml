@@ -136,7 +136,7 @@
                         </VBox>
                     </content>
                   </Tab>
-                  <Tab text="Links">
+                  <Tab closable="false" text="Links">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -145,7 +145,7 @@
                         </AnchorPane>
                     </content>
                   </Tab>
-                  <Tab text="Error Report">
+                  <Tab closable="false" text="Error Report">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>

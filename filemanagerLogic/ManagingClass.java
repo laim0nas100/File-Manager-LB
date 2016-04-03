@@ -6,7 +6,6 @@
 package filemanagerLogic;
 
 //import static filemanagerGUI.FileManagerLB.rootDirectory;
-import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
+import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 
 /**
  *
@@ -36,7 +36,7 @@ public class ManagingClass {
     public void changeDirTo(ExtFolder file){
         Log.writeln("Change dir to: "+file.getAbsolutePath());
             if(file.isAbsoluteRoot()){
-                currentDir = FolderForDevices;
+                currentDir = ArtificialRoot;
                
             }else if(file.isRoot()){
                 currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(
@@ -59,7 +59,7 @@ public class ManagingClass {
         if(cacheIndex+1<folderCache.size()){
             currentDir = (ExtFolder) LocationAPI.getInstance()
                     .getFileByLocation(folderCache.get(++cacheIndex));
-            currentDir.update();
+            //currentDir.update();
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
     }
@@ -68,7 +68,7 @@ public class ManagingClass {
         if(cacheIndex-1>=0){
             currentDir = (ExtFolder) LocationAPI.getInstance()
                     .getFileByLocation(folderCache.get(--cacheIndex));
-            currentDir.update();
+            //currentDir.update();
         }
         //Log.writeln(cacheIndex+" : "+folderCache);
     }
@@ -96,11 +96,11 @@ public class ManagingClass {
     }
     public ObservableList<ExtFile> getAllContents(){
         ObservableList<ExtFile> list = FXCollections.observableArrayList();
-        list.addAll(FolderForDevices.getListRecursive());
+        list.addAll(ArtificialRoot.getListRecursive());
         return list;  
     }
     public void printAllContents(){
-        for(ExtFile file:FolderForDevices.getListRecursive()){
+        for(ExtFile file:ArtificialRoot.getListRecursive()){
             Log.writeln(file.getAbsolutePath());
         }
     }

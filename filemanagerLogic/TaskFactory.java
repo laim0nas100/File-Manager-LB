@@ -6,7 +6,6 @@
 package filemanagerLogic;
 
 import filemanagerGUI.FileManagerLB;
-import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
+import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 
 /**
  *  
@@ -60,7 +60,7 @@ public class TaskFactory {
         Files.move(file.toPath(), newPath);
     }
     public void renameByRegex(ExtFile fileToRename, String regex, String replacement) throws IOException{
-        renameByRegex(FolderForDevices,fileToRename,regex,replacement);
+        renameByRegex(ArtificialRoot,fileToRename,regex,replacement);
     }
     
     public void renameByRegex(ExtFolder root,ExtFile fileToRename, String regex,String replacement) throws IOException{
