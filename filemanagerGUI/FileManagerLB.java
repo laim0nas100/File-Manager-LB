@@ -11,10 +11,14 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.stage.Stage;
+import utility.FavouriteLink;
 import utility.Log;
 
 /**
@@ -42,17 +46,21 @@ public class FileManagerLB extends Application {
     public static ExtFolder FolderForDevices;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
+    public static ObservableList links;
     public static final int DEPTH = 2;
     @Override
     public void start(Stage primaryStage) {
+        links = FXCollections.observableArrayList();
         DataSize = DATA_SIZE.KB;
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setPopulated(true);
         FolderForDevices.setIsAbsoluteRoot(true);
         remount();
         FolderForDevices.propertyName.set("DEVICES");
+        links.add(new FavouriteLink("ROOT",""));
+        
         ViewManager.getInstance().newWindow(FolderForDevices, FolderForDevices);
-       
+        
     } 
     /**
      * @param args the command line arguments

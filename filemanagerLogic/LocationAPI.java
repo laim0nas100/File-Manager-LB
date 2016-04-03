@@ -21,8 +21,7 @@ public class LocationAPI {
         return INSTANCE;
     }
     public LocationInRoot getLocationMapping(String path){
-        LocationInRoot location = new LocationInRoot(path);
-        return location;
+        return new LocationInRoot(path);
     }
     public boolean existByLocation(LocationInRoot location) {
         int i = 0;

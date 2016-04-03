@@ -13,7 +13,6 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
@@ -95,47 +94,48 @@
       </VBox>
    </top>
    <center>
-      <SplitPane dividerPositions="0.5" BorderPane.alignment="CENTER">
-         <BorderPane.margin>
-            <Insets bottom="15.0" left="25.0" right="15.0" top="5.0" />
-         </BorderPane.margin>
-         <items>
-            <TreeView prefHeight="476.0" prefWidth="459.0" />
-            <SplitPane dividerPositions="0.5">
-              <items>
-                  <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
-                     <children>
-                        <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                        <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                     </children>
-                  </AnchorPane>
-                  <TabPane>
-                     <tabs>
-                        <Tab closable="false" text="Marked List">
-                           <content>
-                              <ListView fx:id="listView" />
-                           </content>
-                        </Tab>
-                        <Tab closable="false" text="Search Tab">
-                          <content>
-                              <VBox>
+      <SplitPane dividerPositions="0.5">
+        <items>
+            <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
+               <children>
+                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <TabPane>
+               <tabs>
+                  <Tab closable="false" text="Marked List">
+                     <content>
+                        <ListView fx:id="listView" />
+                     </content>
+                  </Tab>
+                  <Tab closable="false" text="Search Tab">
+                    <content>
+                        <VBox>
+                           <children>
+                              <HBox alignment="CENTER_LEFT">
                                  <children>
-                                    <HBox alignment="CENTER_LEFT">
-                                       <children>
-                                          <TextField fx:id="searchField" onAction="#search" prefHeight="25.0" prefWidth="350.0" promptText="Search..." />
-                                          <Label fx:id="itemCount" alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="39.0" text="0" />
-                                       </children>
-                                    </HBox>
-                                    <ListView fx:id="searchView" VBox.vgrow="ALWAYS" />
+                                    <TextField fx:id="searchField" onAction="#search" prefHeight="25.0" prefWidth="999999.0" promptText="Search..." />
+                                    <Label fx:id="itemCount" alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="46.0" text="0" />
                                  </children>
-                              </VBox>
-                          </content>
-                        </Tab>
-                     </tabs>
-                  </TabPane>
-              </items>
-            </SplitPane>
-         </items>
+                              </HBox>
+                              <ListView fx:id="searchView" VBox.vgrow="ALWAYS" />
+                           </children>
+                        </VBox>
+                    </content>
+                  </Tab>
+                  <Tab text="Links">
+                    <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <ListView fx:id="linkView" layoutX="61.0" layoutY="38.0" prefHeight="425.0" prefWidth="458.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </Tab>
+               </tabs>
+            </TabPane>
+        </items>
       </SplitPane>
    </center>
    <bottom>

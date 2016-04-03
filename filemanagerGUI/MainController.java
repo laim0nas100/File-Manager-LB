@@ -27,6 +27,7 @@ import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
+import static filemanagerGUI.FileManagerLB.links;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
 import java.nio.file.Path;
@@ -50,6 +51,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import utility.DesktopApi;
+import utility.FavouriteLink;
 import utility.Finder;
 import utility.Log;
 
@@ -74,6 +76,8 @@ public class MainController extends BaseController{
     private ObservableList<ExtFile> selectedList = FXCollections.observableArrayList();
     
     @FXML public ListView listView;
+    @FXML public ListView linkView;
+    
     
     @FXML public Label itemCount;
     @FXML public ListView searchView;
@@ -90,6 +94,7 @@ public class MainController extends BaseController{
     private ContextMenu listContextMenu;
     private ContextMenu tableDragContextMenu;
     private ContextMenu searchContextMenu;
+    private ContextMenu linksContextMenu;
     private MenuItem[] contextMenuItems;
     private Menu submenuMarked;
     private Menu submenuCreate;
@@ -103,11 +108,12 @@ public class MainController extends BaseController{
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
         super.setUp(title);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
-        contextMenuItems = new MenuItem[13];
+        contextMenuItems = new MenuItem[14];
         tableDragContextMenu = new ContextMenu();
         tableContextMenu = new ContextMenu();
         listContextMenu = new ContextMenu();
         searchContextMenu = new ContextMenu();
+        linksContextMenu = new ContextMenu();
         columns = new ArrayList<>();
         finder = new Finder("",this.searchView.getItems());
        
@@ -392,14 +398,19 @@ public class MainController extends BaseController{
             }
         });
         
+        contextMenuItems[13] = new MenuItem("Add this directory");
+        contextMenuItems[13].setOnAction(eh ->{
+            String dir = MC.currentDir.getAbsolutePath();
+            FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(),dir);
+            links.add(link);
+            
+        });
         submenuMarked = new Menu("Marked...");
         submenuCreate = new Menu("Create...");
         submenuCreate.getItems().setAll(
                 contextMenuItems[0],
                 contextMenuItems[5]
         );
-
-
         searchContextMenu.getItems().setAll(
                 contextMenuItems[12]
         );
@@ -407,6 +418,7 @@ public class MainController extends BaseController{
                 contextMenuItems[10],
                 contextMenuItems[11]
         );
+        
     }
     private void setUpTableView(){
         //TABLE VIEW SETUP
@@ -643,6 +655,44 @@ public class MainController extends BaseController{
         
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
+        
+        //SOME ITEMS
+        
+        linkView.setContextMenu(linksContextMenu);
+        linkView.setItems(links);
+        linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){
+            @Override
+            public ListCell<FavouriteLink> call(ListView<FavouriteLink> p) {  
+                ListCell<FavouriteLink> cell = new ListCell<FavouriteLink>(){
+                    @Override
+                    protected void updateItem(FavouriteLink t, boolean bln) {
+                        super.updateItem(t, bln);
+                        if (t != null) {
+                            setText(t.propertyName.get());
+                            if(!t.propertyName.get().equals("ROOT")){
+                                setTooltip(t.getToolTip());
+                            }
+                        }
+                    }
+                };
+                
+                return cell;
+            }
+        });
+        linkView.setOnMousePressed((MouseEvent eh) ->{
+            if(!MC.currentDir.isAbsoluteRoot()){
+                linksContextMenu.getItems().setAll(contextMenuItems[13]);
+            }else{
+                linksContextMenu.getItems().clear();
+            }
+            if(eh.isPrimaryButtonDown()){
+                if(eh.getClickCount()>1){
+                    FavouriteLink selectedItem = (FavouriteLink) linkView.getSelectionModel().getSelectedItem();
+                    changeToCustomDir(selectedItem.getDirectory());
+                }
+            }
+        });
+        
     }
     private void LOAD(){
         setUpContextMenus();
