@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import static filemanagerGUI.FileManagerLB.reportError;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Timer;
@@ -50,6 +51,9 @@ public class ExtTask extends Task<Void> {
     }
     public long getRefreshDuration(){
         return this.refreshDuration;
+    }
+    public void report(Exception e){
+        reportError(e);
     }
 
 

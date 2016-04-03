@@ -13,6 +13,7 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
@@ -34,7 +35,6 @@
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
-                        <MenuItem mnemonicParsing="false" onAction="#reMount" text="Remount root" />
                         <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
                   </items>
                 </Menu>
@@ -58,6 +58,9 @@
                      <HBox.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </HBox.margin>
+                     <tooltip>
+                        <Tooltip text="Back in visited history" />
+                     </tooltip>
                   </Button>
                   <Button fx:id="buttonParent" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#changeToParent" text="Parent">
                      <padding>
@@ -66,6 +69,9 @@
                      <HBox.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </HBox.margin>
+                     <tooltip>
+                        <Tooltip text="To parent directory" />
+                     </tooltip>
                   </Button>
                   <Button fx:id="buttonForw" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#changeToForward" text="--&gt;">
                      <HBox.margin>
@@ -74,6 +80,9 @@
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                     <tooltip>
+                        <Tooltip text="Forward in visited history" />
+                     </tooltip>
                   </Button>
                   <Button fx:id="buttonGo" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#openCustomDir" text="GO!">
                      <HBox.margin>
@@ -82,6 +91,9 @@
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                     <tooltip>
+                        <Tooltip text="Refresh current or go to specified" />
+                     </tooltip>
                   </Button>
                   <TextField fx:id="currentDirText" onAction="#openCustomDir" prefWidth="353.0" HBox.hgrow="ALWAYS">
                      <HBox.margin>
@@ -106,7 +118,7 @@
                <tabs>
                   <Tab closable="false" text="Marked List">
                      <content>
-                        <ListView fx:id="listView" />
+                        <ListView fx:id="markedView" />
                      </content>
                   </Tab>
                   <Tab closable="false" text="Search Tab">
@@ -133,9 +145,21 @@
                         </AnchorPane>
                     </content>
                   </Tab>
+                  <Tab text="Error Report">
+                    <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <ListView fx:id="errorView" prefHeight="425.0" prefWidth="458.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </Tab>
                </tabs>
             </TabPane>
         </items>
+         <BorderPane.margin>
+            <Insets bottom="8.0" left="8.0" right="8.0" top="5.0" />
+         </BorderPane.margin>
       </SplitPane>
    </center>
    <bottom>

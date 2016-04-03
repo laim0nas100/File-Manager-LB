@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import filemanagerGUI.FileManagerLB;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -29,7 +30,7 @@ import utility.Log;
 
 //
 public class TaskFactory {
-    public  ExtFile itemToRename;
+    //public  ExtFile itemToRename;
     public  ObservableList<ExtFile> dragList;
     public  ObservableList<ExtFile> markedList;
     public  ArrayList<ExtFile> actionList;
@@ -202,7 +203,7 @@ public class TaskFactory {
     public ExtTask copyFiles(Collection<ExtFile> fileList, ExtFile dest){  
         return new ExtTask(){
             @Override protected Void call() throws Exception {
-                String str = "";
+                String str;
                 updateMessage("Populating list for copy");
                 ExtFile[] list = prepareForCopy(fileList,dest);
                 for(int i=0; i<list.length; i++){
@@ -227,11 +228,9 @@ public class TaskFactory {
                         
                     }catch(Exception e){
                         list[i].setOperationSuccessfull(false);
-                        System.out.println("Error:"+list[i].getAbsolutePath()+" "+e.getLocalizedMessage());
+                        report(e); 
                     }
-                    updateProgress(i+1, list.length);
-                    //updateMessage(str);
-                    
+                    updateProgress(i+1, list.length);                    
                 }
                 updateMessage("FINISHED");
                 return null;
@@ -242,7 +241,7 @@ public class TaskFactory {
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ExtFile> leftFolders = new ArrayList<>();
-                String str = "";
+                String str;
                 updateMessage("Populating list for move");
                 ExtFile[] list = prepareForMove(fileList,dest);
                 int index1 = 0;
@@ -273,10 +272,10 @@ public class TaskFactory {
                         }
                     }catch(Exception e){
                         list[index1].setOperationSuccessfull(false);
-                        System.out.println("Error:"+list[index1].getAbsolutePath()+" "+e.getLocalizedMessage());
+                        report(e); 
+                        
                     }
                     updateProgress(index1+1, list.length+leftFolders.size());
-                    //updateMessage(str);
                 }
                 updateMessage("Deleting leftover folders");
                 int i=0;
@@ -301,7 +300,7 @@ public class TaskFactory {
     public ExtTask deleteFiles(Collection<ExtFile> fileList){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
-                String str = "";
+                String str;
                 updateMessage("Populating list for deletion");
                 ExtFile[] list = prepareForDelete(fileList);
                 for(int i=0; i<list.length; i++){
@@ -323,10 +322,10 @@ public class TaskFactory {
                      
                     }catch(Exception e){
                         list[i].setOperationSuccessfull(false);
-                        System.out.println("Error:"+list[i].getAbsolutePath()+" "+e.getLocalizedMessage());
+                        report(e);
                     }
                     updateProgress(i+1, list.length);
-                    //updateMessage(str);
+
                 }
                 updateMessage("FINISHED");
                 return null;

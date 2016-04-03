@@ -7,6 +7,7 @@ package filemanagerLogic;
 
 //import static filemanagerGUI.FileManagerLB.rootDirectory;
 import static filemanagerGUI.FileManagerLB.FolderForDevices;
+import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -26,7 +27,6 @@ public class ManagingClass {
     
     
     private final ArrayList<LocationInRoot> folderCache;
-    private ArrayList<ExtFile> currentContents;
     private int cacheIndex;
     public ExtFolder currentDir;
     public ManagingClass(ExtFolder root){
@@ -84,7 +84,7 @@ public class ManagingClass {
 //                Log.writeln("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                reportError(ex);
             } 
             
         }
@@ -145,5 +145,11 @@ public class ManagingClass {
         ExtFile file = new ExtFile(path);
         LocationInRoot location = new LocationInRoot(path);
         LocationAPI.getInstance().putByLocation(location, file);
+    }
+    public boolean hasPrev(){
+        return this.cacheIndex!=0;
+    }
+    public boolean hasForward(){
+        return (this.folderCache.size() - (this.cacheIndex+1)>0);
     }
 }

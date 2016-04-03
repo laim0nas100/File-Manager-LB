@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
+import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Log;
 
@@ -46,11 +47,13 @@ public class FileManagerLB extends Application {
     public static ExtFolder FolderForDevices;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
-    public static ObservableList links;
+    public static ObservableList<FavouriteLink> links;
+    public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;
     @Override
     public void start(Stage primaryStage) {
         links = FXCollections.observableArrayList();
+        errorLog = FXCollections.observableArrayList();
         DataSize = DATA_SIZE.KB;
         FolderForDevices = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         FolderForDevices.setPopulated(true);
@@ -78,7 +81,9 @@ public class FileManagerLB extends Application {
     }
     public static boolean mountDevice(String name){
         boolean result = false;
-        
+        if(!new File(name).exists()){
+            return false;
+        }
         if(Files.isDirectory(Paths.get(name))){
             ExtFolder device = new ExtFolder(name);
             int nameCount = device.toPath().getNameCount();
@@ -95,6 +100,10 @@ public class FileManagerLB extends Application {
             }
         }
         return result;
+    }
+    public static void reportError(Exception ex){
+        ErrorReport error = new ErrorReport(ex);
+        errorLog.add(0, error);
     }
 
 }

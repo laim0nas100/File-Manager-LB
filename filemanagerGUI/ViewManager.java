@@ -6,6 +6,7 @@
 package filemanagerGUI;
 
 
+import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.dialog.MountDirectoryDialogController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialog;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -27,6 +29,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import utility.Log;
 
 /**
  *
@@ -81,10 +84,13 @@ public class ViewManager {
             windows.put(frame.getTitle(),frame);
             controller.setUp(stage.getTitle(),rootFolder,currentFolder);
             stage.show();
+            for(Object o:stage.getProperties().values()){
+                Log.writeln(o);
+            }
             
             
         } catch (IOException ex) {
-            ex.printStackTrace();
+            reportError(ex);
         }
         
     }
@@ -135,8 +141,8 @@ public class ViewManager {
             controller.setUp(stage.getTitle(), task);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (Exception ex) {
+           reportError(ex);
         }
         
     }
@@ -165,8 +171,8 @@ public class ViewManager {
             controller.setUp(stage.getTitle(), list,itemToRename);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            reportError(ex);
         }
         
     }
@@ -175,7 +181,6 @@ public class ViewManager {
         try {
             int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/MountDirectoryDialog.fxml"));
-           
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.setTitle(TEXT_INPUT_DIALOG_TITLE+index);
@@ -185,7 +190,6 @@ public class ViewManager {
             stage.setMinWidth(500);
             stage.show();
             stage.toFront();
-            //stage.setAlwaysOnTop(!autoCloseProgressDialogs.get());
             MountDirectoryDialogController controller = loader.<MountDirectoryDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
@@ -193,8 +197,8 @@ public class ViewManager {
             controller.setUp(stage.getTitle());
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            reportError(ex);
         }
         
     }
