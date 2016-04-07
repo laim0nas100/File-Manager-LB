@@ -7,6 +7,7 @@ package filemanagerGUI;
 
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
+import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
@@ -62,7 +63,9 @@ public class FileManagerLB extends Application {
         remount();
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
-        
+        ArtificialRoot.getFoldersFromFiles().stream().forEach((device) -> {
+            new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
+        });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
         
     } 
@@ -75,6 +78,12 @@ public class FileManagerLB extends Application {
     public static void remount(){
         
         File[] roots = File.listRoots();
+        for(ExtFile f:ArtificialRoot.getFilesCollection()){
+            if(!Files.isDirectory(f.toPath())){
+                rootSet.remove(f.propertyName.get());
+                ArtificialRoot.files.remove(f.propertyName.get());
+            }
+        }
         for(int i = 0; i < roots.length ; i++){
             System.out.println("Root["+i+"]:" + roots[i].getAbsolutePath());
             mountDevice(roots[i].getAbsolutePath());
@@ -96,7 +105,6 @@ public class FileManagerLB extends Application {
                 device.propertyName.set(newName);
                 ArtificialRoot.files.putIfAbsent(newName, device);
                 rootSet.add(newName);
-                //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, DEPTH)).start();
                 //Log.writeln("Mounted successfully");
             }
         }

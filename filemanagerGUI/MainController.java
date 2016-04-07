@@ -19,8 +19,6 @@ import java.util.Collection;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.util.Callback;
@@ -28,29 +26,21 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.errorLog;
 import static filemanagerGUI.FileManagerLB.links;
-import static filemanagerGUI.FileManagerLB.remount;
 import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import utility.DesktopApi;
 import utility.ErrorReport;
@@ -79,6 +69,7 @@ public class MainController extends BaseController{
     
     
     
+    @FXML public CheckBox useRegex;
     @FXML public Label itemCount;
     @FXML public ListView searchView;
     @FXML public TextField searchField;
@@ -117,6 +108,7 @@ public class MainController extends BaseController{
        
         
         finder = new Finder("",searchView.getItems());
+        finder.useRegex.bind(useRegex.selectedProperty());
         MC = new ManagingClass(root);
         
         
@@ -227,6 +219,11 @@ public class MainController extends BaseController{
        MC.changeDirTo(dir);
        new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH)).start();
        updateCurrentView();
+    }
+    public void searchTyped(){
+        if(!this.useRegex.isSelected()){
+            search();
+        }
     }
     public void search(){
         String pattern = this.searchField.getText();
@@ -395,11 +392,13 @@ public class MainController extends BaseController{
         });
         contextMenuItems[12] = new MenuItem("Go to");
         contextMenuItems[12].setOnAction((ActionEvent eh) -> {
-            String selectedItem = (String) MainController.this.searchView.getSelectionModel().getSelectedItem();
+            String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
             try{
                 Path path = Paths.get(selectedItem);
                 if(Files.isDirectory(path)){
                     changeToCustomDir(selectedItem);
+                }else{
+                    changeToCustomDir(path.getParent().toString());
                 }
             }catch(Exception ex){
                 reportError(ex);

@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -34,24 +35,25 @@ public class Finder extends SimpleFileVisitor<Path> {
         private String patternStr;
         private boolean noRegex;
         private Pattern pattern;
+        public SimpleBooleanProperty useRegex;
         public Finder(String pattern,ObservableList list) {
             setUp();
             this.list = list; 
-           
+            useRegex = new SimpleBooleanProperty(false);
         }
         public void newTask(String pattern){
             patternStr = pattern.toLowerCase(Locale.ROOT);
+            noRegex = true;
+            
             if(hasRegexChar(pattern)){
                 try{
-
                     this.pattern = Pattern.compile(pattern);
                     noRegex = false;
                 }catch(Exception e){
-                    noRegex = true;
+
                 }
-            }else{
-                noRegex = true;
             }
+            
             if(list==null){
                 list = FXCollections.observableArrayList();
             }

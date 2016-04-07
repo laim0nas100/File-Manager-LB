@@ -5,7 +5,6 @@
  */
 package filemanagerLogic;
 
-import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Clock;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ArrayList;

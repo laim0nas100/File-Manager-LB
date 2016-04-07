@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.CheckMenuItem?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
@@ -121,14 +122,25 @@
                         <ListView fx:id="markedView" />
                      </content>
                   </Tab>
-                  <Tab closable="false" text="Search Tab">
+                  <Tab closable="false" text="Search">
                     <content>
                         <VBox>
                            <children>
                               <HBox alignment="CENTER_LEFT">
                                  <children>
-                                    <TextField fx:id="searchField" onAction="#search" prefHeight="25.0" prefWidth="999999.0" promptText="Search..." />
-                                    <Label fx:id="itemCount" alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="46.0" text="0" />
+                                    <TextField fx:id="searchField" onAction="#search" onKeyTyped="#searchTyped" promptText="Search..." HBox.hgrow="ALWAYS">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin></TextField>
+                                    <CheckBox fx:id="useRegex" mnemonicParsing="false" text="Use regex">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                    <Label fx:id="itemCount" alignment="CENTER" text="0">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin></Label>
                                  </children>
                               </HBox>
                               <ListView fx:id="searchView" VBox.vgrow="ALWAYS" />
