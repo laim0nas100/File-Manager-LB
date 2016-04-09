@@ -8,6 +8,7 @@ package filemanagerGUI.dialog;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -38,16 +39,18 @@ public class ProgressDialogController extends BaseDialog {
 
     
     private ExtTask task;
-    
+    private SimpleBooleanProperty paused;
     
     public void setUp(String title,ExtTask newTask){
         super.setUp(title);
+        paused = new SimpleBooleanProperty(false);
         this.task = newTask;
         bar.progressProperty().bind(task.progressProperty());
         indicator.progressProperty().bind(bar.progressProperty());
         cancelButton.disableProperty().bind(task.runningProperty().not());
         okButton.disableProperty().bind(cancelButton.disableProperty().not());
         pauseButton.disableProperty().bind(cancelButton.disabledProperty());
+        
         text.textProperty().bind(task.messageProperty());
         taskDescription.setText(task.getTaskDescription());
         
@@ -55,6 +58,7 @@ public class ProgressDialogController extends BaseDialog {
         clock = new CustomClock();
         t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
+        clock.paused.bind(paused);
         t.start();
         task.setOnSucceeded((e)->{
             clock.stopTimer();
@@ -72,10 +76,12 @@ public class ProgressDialogController extends BaseDialog {
     public void pauseTask(){
         if(task.isPaused()&&task.isRunning()){
             pauseButton.setText("PAUSE");
+            paused.set(false);
             task.setPaused(false);
         }else if(!task.isPaused()&&task.isRunning()){
             pauseButton.setText("CONTINUE");
             task.setPaused(true);
+            paused.set(true);
         }
     }
     

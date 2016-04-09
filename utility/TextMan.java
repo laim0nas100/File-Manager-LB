@@ -27,7 +27,7 @@ public class TextMan {
     }
     public void add(String...strings){
         for(String s:strings){
-            if(textLines.size()==0){
+            if(textLines.isEmpty()){
                 addLn(s);
             }else{
                 int index = textLines.size()-1;

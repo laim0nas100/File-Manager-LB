@@ -26,7 +26,7 @@ public class Log extends PrintStream{
         super(new FileOutputStream(FileDescriptor.out));
         
     }
-    public static Log getInstance(){
+    public static Log getInstance(){        
         return INSTANCE;
     }
     private static char LogType = 'e';

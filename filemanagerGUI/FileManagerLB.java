@@ -67,7 +67,7 @@ public class FileManagerLB extends Application {
             new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
         });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
-        
+        ViewManager.getInstance().updateAllWindows();
     } 
     /**
      * @param args the command line arguments

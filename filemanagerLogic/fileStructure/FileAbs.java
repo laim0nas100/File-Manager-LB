@@ -8,6 +8,7 @@ package filemanagerLogic.fileStructure;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
+import java.nio.file.Path;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.StringProperty;
@@ -22,6 +23,7 @@ public abstract class FileAbs extends File {
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;
+    
     public FileAbs(String string) {
         super(string);
     }

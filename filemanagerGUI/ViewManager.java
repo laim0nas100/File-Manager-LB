@@ -7,11 +7,13 @@ package filemanagerGUI;
 
 
 import static filemanagerGUI.FileManagerLB.reportError;
+import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.MountDirectoryDialogController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialog;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
+import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ public class ViewManager {
     public static final String PROGRESS_DIALOG_TITLE ="Progress Dialog ";
     public static final String TEXT_INPUT_DIALOG_TITLE="Text Input Dialog ";
     public static final String MESSAGE_DIALOG_TITLE="Message Dialog ";
+    public static final String ADVANCED_RENAME_DIALOG_TITLE="Advanced Rename ";
     public SimpleBooleanProperty autoCloseProgressDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
     
@@ -97,7 +100,7 @@ public class ViewManager {
     public void closeWindow(String title){
         windows.get(title).getStage().close();
         windows.remove(title);
-        if(windows.size()==0){
+        if(windows.isEmpty()){
             System.exit(0);
         }
     }
@@ -176,7 +179,6 @@ public class ViewManager {
         }
         
     }
-    
     public void newMountDirectoryDialog(){
         try {
             int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
@@ -202,7 +204,27 @@ public class ViewManager {
         }
         
     }
-    
+    public void newAdvancedRenameDialog(LocationInRoot location){
+       try {
+            int index = findSmallestAvailable(dialogs,ADVANCED_RENAME_DIALOG_TITLE);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/AdvancedRename.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle(ADVANCED_RENAME_DIALOG_TITLE+index);
+            stage.setScene(new Scene(root));
+            stage.show();
+            stage.toFront();
+            AdvancedRenameController controller = loader.<AdvancedRenameController>getController();
+            stage.setOnCloseRequest((WindowEvent we) -> {
+                controller.exit();
+            });
+            controller.setUp(stage.getTitle(),location);
+            Frame frame = new Frame(stage,controller);
+            dialogs.put(frame.getTitle(),frame);          
+        } catch (Exception ex) {
+            reportError(ex);
+        } 
+    }
     
     public void closeDialog(String title){
         dialogs.get(title).getStage().close();

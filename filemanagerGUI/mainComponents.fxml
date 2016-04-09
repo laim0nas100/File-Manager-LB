@@ -37,6 +37,7 @@
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                         <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
+                        <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRename" text="AdvancedRename" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">

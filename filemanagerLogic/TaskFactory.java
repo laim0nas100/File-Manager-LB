@@ -19,6 +19,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.LinkOption;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import utility.FileNameException;
 
 /**
  *  
@@ -32,17 +42,31 @@ public class TaskFactory {
     public  ObservableList<ExtFile> dragList;
     public  ObservableList<ExtFile> markedList;
     public  ArrayList<ExtFile> actionList;
+    private final HashSet<Character> illegalCharacters;
     private static final TaskFactory instance = new TaskFactory();
     public static TaskFactory getInstance(){
         
         return instance;
     }
     protected TaskFactory(){
+        illegalCharacters = new HashSet<>();
+        Character[] array = new Character[] {
+                '\\',
+                '/',
+                '<',
+                '*',
+                '>',
+                '|',
+                '?',
+                ':',
+                '\"'
+            };
+            illegalCharacters.addAll(Arrays.asList(array));
         dragList = FXCollections.observableArrayList();
         markedList = FXCollections.observableArrayList();
         actionList = new ArrayList<>();
     }
-        // File actions
+        
     private static final Comparator<ExtFile> cmpDesc = (ExtFile f1, ExtFile f2) -> {
         return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
     };
@@ -51,20 +75,18 @@ public class TaskFactory {
     };  
     
 //RENAME
-    public void renameTo(String fileToRename, String newName) throws IOException{
+    public void renameTo(String fileToRename, String newName) throws IOException, FileNameException{
+        for(Character c:newName.toCharArray()){
+            if(illegalCharacters.contains(c)){
+                throw new FileNameException(newName+" contains illegal character "+c);
+            }
+        }
         LocationInRoot location  = new LocationInRoot(fileToRename);
-        ExtFile file = LocationAPI.getInstance().getFileByLocation(location);
+        Path file = LocationAPI.getInstance().getFileByLocation(location).toPath();
+        
         Path newPath = Paths.get(file.getParent()+File.separator+newName);
-        Files.move(file.toPath(), newPath);
-    }
-    public void renameByRegex(ExtFile fileToRename, String regex, String replacement) throws IOException{
-        renameByRegex(ArtificialRoot,fileToRename,regex,replacement);
-    }
-    
-    public void renameByRegex(ExtFolder root,ExtFile fileToRename, String regex,String replacement) throws IOException{
-        String name = fileToRename.getName();
-        name = name.replaceAll(regex, replacement);
-        renameTo(fileToRename.getAbsolutePath(),name);
+        Log.writeln("Rename",file.toString(),newPath.toString());
+        Files.move(file, newPath);
     }
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         

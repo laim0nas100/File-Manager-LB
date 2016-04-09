@@ -83,7 +83,8 @@ public class MainController extends BaseController{
     @FXML public Button buttonParent;
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
-
+    
+    @FXML public MenuItem miAdvancedRename;
         
     private ContextMenu tableContextMenu;
     private ContextMenu markedContextMenu;
@@ -110,9 +111,7 @@ public class MainController extends BaseController{
         finder = new Finder("",searchView.getItems());
         finder.useRegex.bind(useRegex.selectedProperty());
         MC = new ManagingClass(root);
-        
-        
-        
+
         LOAD(); 
         
         changeToDir(currentDir);
@@ -163,6 +162,7 @@ public class MainController extends BaseController{
         this.buttonForw.setDisable(!MC.hasForward());
         this.buttonPrev.setDisable(!MC.hasPrev());
         this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
+        this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
         if(MC.currentDir.isAbsoluteRoot()){
             currentDirText.setText("ROOT");
         }else{
@@ -193,6 +193,12 @@ public class MainController extends BaseController{
     }
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
+    }
+    @FXML
+    public void advancedRename(){
+        if(!MC.currentDir.isAbsoluteRoot()){
+            ViewManager.getInstance().newAdvancedRenameDialog(MC.currentDir.getMapping());
+        }
     }
     
     public void test(){

@@ -27,9 +27,9 @@ public class ErrorReport {
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
         String format = dateFormat.format(date);
         
-        this.errorName = new SimpleStringProperty(format +":"+ getOnlyError(errorCause));
+        this.errorName = new SimpleStringProperty(format +"  :"+ errorCause.getMessage());
         this.details = new Tooltip();
-        details.setText(errorCause.getMessage());
+        details.setText(getOnlyError(errorCause));
     }
 
     public SimpleStringProperty getErrorName() {

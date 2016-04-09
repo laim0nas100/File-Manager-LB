@@ -14,8 +14,5 @@ import java.nio.file.Path;
  * Interface with mandatory commands to use Files class
  */
 public interface Movable {
-    public Path getDestination();
-    public void setDestination(Path path);
-    public String getRelativePath();
-    public void setRelativePath(ExtFile file);
+    
 }

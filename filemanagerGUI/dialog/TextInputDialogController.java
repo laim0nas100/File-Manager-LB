@@ -37,6 +37,4 @@ public abstract class TextInputDialogController extends BaseDialog implements Te
         super.setUp(title);
         buttonEnter.disableProperty().bind(nameIsAvailable.not());
     }
-//    public abstract void apply();
-//    public abstract void checkAvailable();
 }
