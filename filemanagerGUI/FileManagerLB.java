@@ -64,7 +64,7 @@ public class FileManagerLB extends Application {
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
         ArtificialRoot.getFoldersFromFiles().stream().forEach((device) -> {
-            new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
+            //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
         });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
         ViewManager.getInstance().updateAllWindows();
@@ -85,7 +85,7 @@ public class FileManagerLB extends Application {
             }
         }
         for(int i = 0; i < roots.length ; i++){
-            System.out.println("Root["+i+"]:" + roots[i].getAbsolutePath());
+            Log.writeln("Root["+i+"]:" + roots[i].getAbsolutePath());
             mountDevice(roots[i].getAbsolutePath());
         }
     }
@@ -94,7 +94,7 @@ public class FileManagerLB extends Application {
         if(!new File(name).exists()){
             return false;
         }
-        if(Files.isDirectory(Paths.get(name))){
+        if(Files.isDirectory(new File(name).toPath())){
             ExtFolder device = new ExtFolder(name);
             int nameCount = device.toPath().getNameCount();
             //Log.write("Is direcory");

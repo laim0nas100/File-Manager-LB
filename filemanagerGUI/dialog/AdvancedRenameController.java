@@ -54,7 +54,7 @@ private LocationInRoot location;
 public void setUp(String title,LocationInRoot folderLocation){
     super.setUp(title);
     this.location = folderLocation;
-    
+    this.setNumber();
     nameCollection1 = new ArrayList<>();
     nameCollection2 = new ArrayList<>();
     
@@ -118,7 +118,7 @@ public void setNumber(){
     }catch(Exception ex){
         startingNumber = 0;
         this.tfStartingNumber.setText(startingNumber+"");
-        reportError(ex);
+        //reportError(ex);
     }
 }
 public void apply(){

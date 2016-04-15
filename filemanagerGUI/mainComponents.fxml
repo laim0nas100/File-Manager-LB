@@ -37,7 +37,7 @@
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                         <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
-                        <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRename" text="AdvancedRename" />
+                        <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRename" text="Advanced Rename" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
@@ -45,7 +45,7 @@
                         <MenuItem mnemonicParsing="false" onAction="#setFlowView" text="Flow View" visible="false" />
                         <MenuItem mnemonicParsing="false" onAction="#setTableView" text="Table View" visible="false" />
                     <MenuItem mnemonicParsing="false" text="About" />
-                        <MenuItem disable="true" mnemonicParsing="false" onAction="#test" text="TEST" />
+                        <MenuItem disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
                         <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
                   </items>
                 </Menu>

@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import utility.Log;
 
 /**
  * Location Mapping Class
@@ -24,16 +26,21 @@ public class LocationInRoot {
     public LocationInRoot(String filePath){
         coordinates = new ArrayList<>();
         if(!filePath.isEmpty()){
-            Path path = Paths.get(filePath);
+            Path path = new File(filePath).toPath();
             String rootLoc = path.getRoot().toString();
             filePath = path.toString();
             coordinates.add(rootLoc);
             if(!filePath.equals(rootLoc)){
-                filePath = filePath.replace(rootLoc,"");
-                String[] fileArray = filePath.split("\\"+File.separatorChar);
+                
+                filePath = filePath.replaceFirst(Matcher.quoteReplacement(rootLoc),"");
+                //Log.writeln("passed 1",filePath);
+                filePath = filePath.replace(File.separator, "/");
+                //Log.writeln("passed 2",filePath);
+                String[] fileArray = filePath.split("/");
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);
+                
                 for(int i=list.size()-1; i>=0; i--){
                     if(list.get(i).isEmpty()){
                         list.remove(i);

@@ -6,7 +6,6 @@
 package filemanagerLogic.fileStructure;
 
 
-import filemanagerLogic.Movable;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +17,7 @@ import javafx.beans.property.SimpleStringProperty;
  * @author Laimonas Beiušis
  * Extended File for custom actions
  */
-public class ExtFile extends FileAbs implements Movable {
+public class ExtFile extends FileAbs{
     protected String relativePath;
     protected Path destination;
     protected boolean isAbsoluteRoot;

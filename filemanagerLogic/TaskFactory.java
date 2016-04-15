@@ -357,22 +357,22 @@ public class TaskFactory {
     
     
     private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
+       
         if(level<MAX_DEPTH){
-            LocationInRoot loc = LocationAPI.getInstance().getLocationMapping(folder.getAbsolutePath());
+            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsolutePath());
+            LocationInRoot loc = folder.getMapping();
             if(!LocationAPI.getInstance().existByLocation(loc)){
                 LocationAPI.getInstance().putByLocation(loc, folder);
             }
             folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(loc);
             if(!folder.isPopulated()){
-                folder.populateFolder();
-                Log.writeln("Folder Iteration "+level+"::"+folder.getAbsolutePath());
+                folder.populateFolder();  
             }
-            level++;
+            
             for(ExtFolder fold:folder.getFoldersFromFiles()){
                 LocationInRoot location = LocationAPI.getInstance().getLocationMapping(fold.getAbsolutePath());
                 LocationAPI.getInstance().removeByLocation(location);
-                populateRecursiveParallelInner(fold, level,MAX_DEPTH);
-
+                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
             }
         }
     }

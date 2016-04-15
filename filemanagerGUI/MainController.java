@@ -5,7 +5,6 @@
  */
 package filemanagerGUI;
 
-//import filemanagerLogic.ExtFolder;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
@@ -202,11 +201,14 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        Log.writeln("TEST");
+        MC.getCurrentContents().stream().forEach(file ->{
+            Log.writeln(file.getAbsolutePath());
+        });
     }
 
-    public void openCustomDir(){
-        changeToCustomDir(currentDirText.getText());
+    
+    public void openCustomDir() {
+        changeToCustomDir(new ExtFile(currentDirText.getText()).getAbsolutePath());
     }    
     public void changeToParent(){
         MC.changeToParent();
@@ -260,13 +262,32 @@ public class MainController extends BaseController{
        
         }   
     }
+    private void handleOpen(ExtFile file){
+        if(file.getIdentity().equals("folder")){
+            changeToDir((ExtFolder) file);
+        }else {
+                            
+            try{
+                if(file.getIdentity().equals("link")){
+                    ExtLink link = (ExtLink) file.getTrueForm();
+                    LocationInRoot location = new LocationInRoot(link.getTargetDir());
+                    if(link.isPointsToDirectory()){
+                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
+                    }else{
+                        DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
+                    }
+                }else if(file.getIdentity().equals("file")){
+                    DesktopApi.open(file);
+                }
+            }catch(Exception x){
+                //TODO error handling
+            }
+        }
+    }
     private void changeToCustomDir(String possibleDir){
         try{
             if(possibleDir.equals("ROOT")){
                 changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot("")));
-                
-            }else if(possibleDir.equals(MC.currentDir.getAbsolutePath())){
-                updateCurrentView();
             }else if(Files.isDirectory(Paths.get(possibleDir))){
                     LocationInRoot location = new LocationInRoot(possibleDir);
                     if(!LocationAPI.getInstance().existByLocation(location)){
@@ -276,6 +297,8 @@ public class MainController extends BaseController{
                         LocationAPI.getInstance().putByLocationRecursive(location, folder);
                     }
                     changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
+            }else{
+               updateCurrentView(); 
             }
         } catch (Exception ex) {
             reportError(ex);
@@ -430,6 +453,10 @@ public class MainController extends BaseController{
         contextMenuItems[16].setOnAction(eh ->{
             errorLog.clear();
         });
+        contextMenuItems[17] = new MenuItem("Open in new window");
+        contextMenuItems[17].setOnAction(eh ->{
+            ViewManager.getInstance().newWindow(ArtificialRoot, (ExtFolder) tableView.getSelectionModel().getSelectedItem());
+        });
         
         
         
@@ -491,6 +518,7 @@ public class MainController extends BaseController{
         
         tableView.setOnMousePressed((MouseEvent event) -> {
             hideAllContextMenus();
+            tableContextMenu.getItems().clear();
             if (event.isSecondaryButtonDown()) {
                 if (!MC.currentDir.isAbsoluteRoot()) {
                     int itemCount1 = tableView.getSelectionModel().getSelectedItems().size();
@@ -518,19 +546,23 @@ public class MainController extends BaseController{
                         );
                     }
                     if (itemCount1 == 1) {
-                        tableContextMenu.getItems().setAll(
+                        ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+                        if(file.getIdentity().equals("folder")){
+                            tableContextMenu.getItems().add(contextMenuItems[17]);
+                        }
+                        tableContextMenu.getItems().addAll(
                                 submenuCreate,
                                 contextMenuItems[1],    //Rename dialog
                                 contextMenuItems[2]     //Delete dialog
                         );
                     } else if (itemCount1 > 1) {
-                        tableContextMenu.getItems().setAll(
+                        tableContextMenu.getItems().addAll(
                                 submenuCreate,
                                 //contextMenuItems[1],  //Rename dialog
                                 contextMenuItems[2]     //Delete dialog
                         );
                     } else {
-                        tableContextMenu.getItems().setAll(
+                        tableContextMenu.getItems().addAll(
                                 submenuCreate
                                 //contextMenuItems[1],      //Rename dialog
                                 //contextMenuItems[2]     //Delete dialog
@@ -542,27 +574,7 @@ public class MainController extends BaseController{
                 if(!tableView.getSelectionModel().isEmpty()){
                     if(event.getClickCount() >1){
                         ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                        if(file.getIdentity().equals("folder")){
-                            changeToDir((ExtFolder) file);
-                        }else {
-                            
-                            try{
-                                if(file.getIdentity().equals("link")){
-                                    ExtLink link = (ExtLink) file.getTrueForm();
-                                    LocationInRoot location = new LocationInRoot(link.getTargetDir());
-                                    if(link.isPointsToDirectory()){
-                                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
-                                    }else{
-                                        DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
-                                    }
-                                }else if(file.getIdentity().equals("file")){
-                                    DesktopApi.open(file);
-                                }
-                            }catch(Exception x){
-                                //TODO error handling
-                            }
-                        }
-                        
+                        handleOpen(file);
                     }else{
                         selectedList = tableView.getSelectionModel().getSelectedItems();
                     }

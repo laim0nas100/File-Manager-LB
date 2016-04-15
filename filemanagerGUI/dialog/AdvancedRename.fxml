@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane id="AnchorPane" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
+<AnchorPane id="AnchorPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
    <children>
       <VBox alignment="CENTER" prefHeight="651.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -50,7 +50,7 @@
                                           <Insets />
                                        </VBox.margin>
                                     </TextField>
-                                    <Label prefHeight="27.0" prefWidth="90.0" text="Replace With">
+                                    <Label prefHeight="27.0" prefWidth="97.0" text="Replace With">
                                        <padding>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                        </padding>
@@ -130,16 +130,18 @@
             </HBox>
             <SplitPane dividerPositions="0.29797979797979796" prefHeight="400.0" prefWidth="600.0">
               <items>
-                <AnchorPane>
+                  <VBox>
                      <children>
-                        <ListView fx:id="lwCurrentFolder" prefHeight="398.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Label text="Current Contents" />
+                        <ListView fx:id="lwCurrentFolder" prefHeight="398.0" prefWidth="200.0" />
                      </children>
-                  </AnchorPane>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                  </VBox>
+                  <VBox alignment="TOP_RIGHT">
                      <children>
-                        <ListView fx:id="lwFutureFolder" prefHeight="398.0" prefWidth="417.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Label text="Contents After Rename" />
+                        <ListView fx:id="lwFutureFolder" prefHeight="398.0" prefWidth="417.0" />
                      </children>
-                  </AnchorPane>
+                  </VBox>
               </items>
             </SplitPane>
          </children>
