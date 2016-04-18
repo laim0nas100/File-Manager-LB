@@ -28,6 +28,7 @@ import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import javafx.application.Platform;
 import utility.FileNameException;
 
 /**
@@ -104,6 +105,11 @@ public class TaskFactory {
     }
     
 //PREPARE FOR TASKS
+    public void addToMarked(ExtFile file){
+        if(file!=null&&!markedList.contains(file)){
+            markedList.add(file);
+        }
+    }
     public void prepareActionList(Collection<ExtFile> filelist){
         this.actionList.clear();
         this.actionList.addAll(filelist);
@@ -352,9 +358,6 @@ public class TaskFactory {
             }
         };
     }
-    
-    
-    
     
     private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
        

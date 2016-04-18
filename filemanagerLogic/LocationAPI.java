@@ -9,6 +9,11 @@ import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import static filemanagerGUI.FileManagerLB.reportError;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import javafx.application.Platform;
 
 /**
  *
@@ -23,10 +28,31 @@ public class LocationAPI {
     public LocationInRoot getLocationMapping(String path){
         return new LocationInRoot(path);
     }
+    public ExtFile getFileAndPopulate(String path){
+        ExtFile file;
+        LocationInRoot fileLocation = new LocationInRoot(path);
+        if(path.equals("ROOT")||path.isEmpty()){
+                file = (ExtFolder) getFileByLocation(fileLocation);
+        }else {
+            if(new File(path).exists()){
+                if(!existByLocation(fileLocation)){
+                    ExtFolder folder = new ExtFolder(new File(path).getParent());
+                    putByLocationRecursive(folder.getMapping(), folder);
+                    folder.update(); 
+                }
+                file = getFileByLocation(fileLocation);
+            }else{
+                file = null;
+            }
+        }
+        return file;           
+            
+    }
     public boolean existByLocation(LocationInRoot location) {
         int i = 0;
         ExtFolder folder = ArtificialRoot;
-        while (i < location.length()) {
+        //Log.writeln(location.toString());
+        while (i< location.length()-1) {
             if (folder.files.containsKey(location.at(i))) {
                 folder = (ExtFolder) folder.files.get(location.at(i));
                 i++;
@@ -34,7 +60,7 @@ public class LocationAPI {
                 return false;
             }
         }
-        return true;
+        return folder.files.containsKey(location.getName());
     }
 
     public void removeByLocation(LocationInRoot location) {
@@ -83,7 +109,7 @@ public class LocationAPI {
         
         return folder.files.get(location.getName());
         }catch(Exception x){
-            x.printStackTrace();
+            reportError(x);
             return null;
         }
        

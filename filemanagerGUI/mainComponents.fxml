@@ -17,7 +17,6 @@
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -42,8 +41,6 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
                   <items>
-                        <MenuItem mnemonicParsing="false" onAction="#setFlowView" text="Flow View" visible="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#setTableView" text="Table View" visible="false" />
                     <MenuItem mnemonicParsing="false" text="About" />
                         <MenuItem disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
                         <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
@@ -112,8 +109,7 @@
         <items>
             <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
                <children>
-                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                  <FlowPane fx:id="flowView" centerShape="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" rowValignment="TOP" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                </children>
             </AnchorPane>
             <TabPane>

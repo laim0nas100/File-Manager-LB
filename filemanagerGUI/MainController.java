@@ -47,6 +47,8 @@ import utility.FavouriteLink;
 import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import java.io.Console;
+import java.io.File;
 
 /**
  * FXML Controller class
@@ -57,10 +59,9 @@ public class MainController extends BaseController{
     
     
     
-    @FXML public AnchorPane left;
-    @FXML public FlowPane flowView;
-    @FXML public ScrollPane flowViewScroll;
+
     @FXML public CheckMenuItem autoClose;
+    @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
     private ArrayList< TableColumn<ExtFile, String>> columns;
@@ -83,6 +84,8 @@ public class MainController extends BaseController{
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
     
+    
+    
     @FXML public MenuItem miAdvancedRename;
         
     private ContextMenu tableContextMenu;
@@ -94,6 +97,8 @@ public class MainController extends BaseController{
     private MenuItem[] contextMenuItems;
     private Menu submenuMarked;
     private Menu submenuCreate;
+    private Menu submenuSelectSearch;
+    private Menu submenuSelectTable;
     
     private ManagingClass MC;
     private Finder finder;
@@ -107,8 +112,8 @@ public class MainController extends BaseController{
         
        
         
-        finder = new Finder("",searchView.getItems());
-        finder.useRegex.bind(useRegex.selectedProperty());
+        finder = new Finder("",searchView.getItems(),useRegex.selectedProperty());
+        
         MC = new ManagingClass(root);
 
         LOAD(); 
@@ -126,37 +131,13 @@ public class MainController extends BaseController{
 
     public void setTableView(){
         currentView = 0;
-        tableView.setItems(MC.getCurrentContents());
+        tableView.getItems().clear();
+        tableView.getItems().addAll(MC.getCurrentContents());
         tableView.getColumns().setAll(columns);
         tableView.getSortOrder().add(columns.get(0));
         
-        //ViewManager.getInstance().setTableView(title, tableView);
-        tableView.setVisible(true);
     }
-    public void setFlowView(){
-        currentView = 1;
-        Collection<Node> list = new ArrayList<>();
-        for(ExtFile file:MC.getCurrentContents()){
-            String name = file.getName();
-            
-            Node node = new Button(name);
-            node.setOnMouseReleased((MouseEvent event) ->{
-                if(file.getIdentity().equals("folder")){
-                    changeToDir((ExtFolder) file);
-                }
-            
-            });
-            
-            list.add(node);
-            
-            
-        }
-        flowView.getChildren().setAll(list);
 
-        ViewManager.getInstance().setFlowView(title, flowViewScroll,flowView);
-
-        flowView.setVisible(true);
-    }
     public void updateCurrentView(){
         this.buttonForw.setDisable(!MC.hasForward());
         this.buttonPrev.setDisable(!MC.hasPrev());
@@ -174,17 +155,9 @@ public class MainController extends BaseController{
                 iterator.remove();
             }
         }
-
-        switch(currentView){
-            case(0):{
-                setTableView();
-                break;
-            }
-            case(1):{
-                setFlowView();
-                break;
-            }
-        }
+        setTableView();
+        
+        
         
     }
     public void closeAllWindows(){
@@ -193,7 +166,6 @@ public class MainController extends BaseController{
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
     }
-    @FXML
     public void advancedRename(){
         if(!MC.currentDir.isAbsoluteRoot()){
             ViewManager.getInstance().newAdvancedRenameDialog(MC.currentDir.getMapping());
@@ -201,9 +173,9 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        MC.getCurrentContents().stream().forEach(file ->{
-            Log.writeln(file.getAbsolutePath());
-        });
+        Log.writeln("Properties");
+        Log.printProperties(System.getProperties());
+        
     }
 
     
@@ -262,6 +234,15 @@ public class MainController extends BaseController{
        
         }   
     }
+    private void selectInverted(MultipleSelectionModel sm){
+        ObservableList<Integer> selected = sm.getSelectedIndices();
+        ArrayList<Integer> array = new ArrayList<>();
+        array.addAll(selected);
+        sm.selectAll();
+        array.stream().forEach((i)->{
+            sm.clearSelection(i);
+        });
+    }
     private void handleOpen(ExtFile file){
         if(file.getIdentity().equals("folder")){
             changeToDir((ExtFolder) file);
@@ -316,7 +297,7 @@ public class MainController extends BaseController{
         searchContextMenu.hide();
     }
     private void setUpContextMenus(){
-        contextMenuItems = new MenuItem[20];
+        contextMenuItems = new MenuItem[30];
         tableDragContextMenu = new ContextMenu();
         tableContextMenu = new ContextMenu();
         markedContextMenu = new ContextMenu();
@@ -379,11 +360,9 @@ public class MainController extends BaseController{
         });
         contextMenuItems[6] = new MenuItem("Add to marked");
         contextMenuItems[6].setOnAction((eh)->{
-            for(ExtFile file:selectedList){
-                if(!TaskFactory.getInstance().markedList.contains(file)){
-                    TaskFactory.getInstance().markedList.add(file);
-                }  
-            }  
+            selectedList.stream().forEach((file) -> {
+                TaskFactory.getInstance().addToMarked(file);
+            });  
         });
         contextMenuItems[7] = new MenuItem("Clean this list");
         contextMenuItems[7].setOnAction((e)->{
@@ -457,15 +436,62 @@ public class MainController extends BaseController{
         contextMenuItems[17].setOnAction(eh ->{
             ViewManager.getInstance().newWindow(ArtificialRoot, (ExtFolder) tableView.getSelectionModel().getSelectedItem());
         });
+        contextMenuItems[18] = new MenuItem("Open");
+        contextMenuItems[18].setOnAction(eh ->{
+            ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+            this.handleOpen(file);
+        });
+        
+        //For search View
+        contextMenuItems[19] = new MenuItem("All");
+        contextMenuItems[19].setOnAction(eh ->{
+            searchView.getSelectionModel().selectAll();
+        });
+        contextMenuItems[20] = new MenuItem("Invert Selection");
+        contextMenuItems[20].setOnAction(eh ->{
+            this.selectInverted(searchView.getSelectionModel());
+        });
+        //For table View
+        contextMenuItems[21] = new MenuItem("All");
+        contextMenuItems[21].setOnAction(eh ->{
+            tableView.getSelectionModel().selectAll();
+        });
+        contextMenuItems[22] = new MenuItem("Invert Selection");
+        contextMenuItems[22].setOnAction(eh ->{
+            this.selectInverted(tableView.getSelectionModel());
+        });
+        contextMenuItems[23] = new MenuItem("Mark selected");
+        contextMenuItems[23].setOnAction(eh ->{
+            ObservableList<String> selectedItems = searchView.getSelectionModel().getSelectedItems();
+            
+                Platform.runLater(()->{
+                for(String item:selectedItems){
+                    ExtFile file = LocationAPI.getInstance().getFileAndPopulate(item);
+                    TaskFactory.getInstance().addToMarked(file);
+                }
+                });
+                
+            
+        });
         
         
-        
+        submenuSelectSearch = new Menu("Select...");
+        submenuSelectSearch.getItems().setAll(
+                contextMenuItems[19],
+                contextMenuItems[20]
+        );
+        submenuSelectTable = new Menu("Select...");
+        submenuSelectTable.getItems().setAll(
+                contextMenuItems[21],
+                contextMenuItems[22]
+        );
         submenuMarked = new Menu("Marked...");
         submenuCreate = new Menu("Create...");
         submenuCreate.getItems().setAll(
                 contextMenuItems[0],
                 contextMenuItems[5]
         );
+        
         searchContextMenu.getItems().setAll(
                 contextMenuItems[12]
         );
@@ -503,6 +529,8 @@ public class MainController extends BaseController{
             }
         });
         
+        
+        
         columns.add(nameCol);
         columns.add(typeCol);
         columns.add(sizeCol);
@@ -519,10 +547,18 @@ public class MainController extends BaseController{
         tableView.setOnMousePressed((MouseEvent event) -> {
             hideAllContextMenus();
             tableContextMenu.getItems().clear();
+            int itemCount1 = tableView.getSelectionModel().getSelectedItems().size();
+            int markedSize = TaskFactory.getInstance().markedList.size();
             if (event.isSecondaryButtonDown()) {
+                if (itemCount1 == 1) {
+                        tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
+                        ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+                        if(file.getIdentity().equals("folder")){
+                            tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
+                        }
+                }
                 if (!MC.currentDir.isAbsoluteRoot()) {
-                    int itemCount1 = tableView.getSelectionModel().getSelectedItems().size();
-                    int markedSize = TaskFactory.getInstance().markedList.size();
+                    
                     if (markedSize==0 && itemCount1 >= 1) {
                         submenuMarked.getItems().setAll(
                                 contextMenuItems[6]         //Add to marked
@@ -546,10 +582,7 @@ public class MainController extends BaseController{
                         );
                     }
                     if (itemCount1 == 1) {
-                        ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                        if(file.getIdentity().equals("folder")){
-                            tableContextMenu.getItems().add(contextMenuItems[17]);
-                        }
+                        
                         tableContextMenu.getItems().addAll(
                                 submenuCreate,
                                 contextMenuItems[1],    //Rename dialog
@@ -568,7 +601,7 @@ public class MainController extends BaseController{
                                 //contextMenuItems[2]     //Delete dialog
                         );
                     }
-                    tableContextMenu.getItems().add(submenuMarked);
+                    tableContextMenu.getItems().addAll(submenuSelectTable,submenuMarked);
                 }
             } else if(event.isPrimaryButtonDown()){
                 if(!tableView.getSelectionModel().isEmpty()){
@@ -636,6 +669,7 @@ public class MainController extends BaseController{
         
         //***************************************
         //Marked View
+        markedView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         markedView.setItems(TaskFactory.getInstance().markedList);
         markedView.setContextMenu(markedContextMenu);
         markedView.setOnMousePressed((eh) ->{ 
@@ -700,16 +734,23 @@ public class MainController extends BaseController{
         
         //***************************************
         //Search View
+        searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
         searchView.setOnMousePressed((MouseEvent eh) ->{
             searchContextMenu.getItems().clear();
             if(!searchView.getItems().isEmpty()){
-                searchContextMenu.getItems().setAll(contextMenuItems[12]);
+                searchContextMenu.getItems().addAll(
+                        submenuSelectSearch,
+                        contextMenuItems[23]);
+                if(searchView.getSelectionModel().getSelectedItems().size()==1){
+                    searchContextMenu.getItems().add(contextMenuItems[12]);
+                }
             }
         });
         //***************************************
         //Link View
+        
         linkView.setContextMenu(linksContextMenu);
         linkView.setItems(FileManagerLB.links);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){

@@ -13,6 +13,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Properties;
 
 /**
  *
@@ -75,5 +76,13 @@ public class Log extends PrintStream{
     }
     public static void write(Object object){
         Log.INSTANCE.print(object);
+    }
+    public static void printProperties(Properties properties){
+        Object[] toArray = properties.keySet().toArray();
+        
+        for(Object o:toArray){
+            String property = properties.getProperty((String) o);
+            writeln(o.toString()+" : "+property);
+        }
     }
 }

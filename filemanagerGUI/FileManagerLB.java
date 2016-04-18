@@ -44,7 +44,7 @@ public class FileManagerLB extends Application {
         }
     }
     
-    public static final String ARTIFICIAL_ROOT_NAME = "Devices";
+    public static final String ARTIFICIAL_ROOT_NAME = "/&&";
     public static ExtFolder ArtificialRoot;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
@@ -63,9 +63,9 @@ public class FileManagerLB extends Application {
         remount();
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
-        ArtificialRoot.getFoldersFromFiles().stream().forEach((device) -> {
-            //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
-        });
+//        ArtificialRoot.getFoldersFromFiles().stream().forEach((device) -> {
+//            //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
+//        });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
         ViewManager.getInstance().updateAllWindows();
     } 

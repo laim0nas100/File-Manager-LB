@@ -5,6 +5,8 @@
  */
 package utility;
 
+import static filemanagerGUI.FileManagerLB.reportError;
+
 /**
  *
  * @author Laimonas Beniušis
@@ -46,7 +48,13 @@ public class AdvancedRename {
         return newName.trim();
     }
     public static String parseRegex(String originalName, String regex, String replacement){
-        return originalName.replaceAll(regex, replacement).trim();
+        String result = originalName;
+        try{
+            result= originalName.replaceAll(regex, replacement).trim();
+        }catch(Exception e){
+            reportError(e);
+        }
+        return result;
     }
     public static String parseSimple(String originalName, String lookFor, String replacement){
         return originalName.replace(lookFor, replacement).trim();
