@@ -6,9 +6,12 @@
 package filemanagerLogic.fileStructure;
 
 
+import static filemanagerGUI.FileManagerLB.rootSet;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
@@ -29,9 +32,7 @@ public class ExtFile extends FileAbs{
     public void setIsAbsoluteRoot(boolean isAbsoluteRoot) {
         this.isAbsoluteRoot = isAbsoluteRoot;
     }
-
-    
-     protected void setDefaultValues(){         
+    protected void setDefaultValues(){         
         this.relativePath = "";
         this.destination = Paths.get(""); 
         this.propertyName = new SimpleStringProperty(this.getName());
@@ -47,10 +48,6 @@ public class ExtFile extends FileAbs{
         super(path);
         setDefaultValues();
     }
-    
-    
-    
-
     /**
      * get true form
      * @return
@@ -61,30 +58,16 @@ public class ExtFile extends FileAbs{
     public String getIdentity(){
         return "file";
     }
-    
-    public String getRelativePath() {
-        return relativePath;
+    public Collection<ExtFile> getListRecursive(){
+        ArrayList<ExtFile> list = new ArrayList<>();
+        list.add(this);
+        return list; 
     }
-
-
-
-    public Path getDestination() {
-        return destination;
+    public boolean isRoot(){
+        String path = this.getAbsolutePath();
+        return rootSet.contains(path);
     }
-
-    public void setDestination(Path destination) {
-        this.destination = destination;
+    public String getAbsoluteDirectory(){
+        return this.getAbsolutePath();
     }
-    public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
-    }
-    public void setRelativePath(ExtFile dest){
-        String path = dest.getName()+File.separator+this.getAbsolutePath().replace(dest.getAbsolutePath(), "");
-        this.relativePath = path;
-    }
-    
-
-
-    
-
 }

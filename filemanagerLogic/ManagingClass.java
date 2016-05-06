@@ -123,27 +123,19 @@ public class ManagingClass {
     }
     
     public void createNewFolder() throws IOException{
-        String path = this.currentDir.getAbsolutePath();
         String newName = "New Folder";
-        while(currentDir.files.containsKey(newName)){
-            newName= "New "+newName; 
-        }
-        path +=File.separator+newName;
-        Files.createDirectory(Paths.get(path));
-        ExtFolder folder = new ExtFolder(path);
-        LocationInRoot location = new LocationInRoot(path);
+        newName = TaskFactory.resolveAvailableName(currentDir, newName);
+        Files.createDirectory(Paths.get(newName));
+        ExtFolder folder = new ExtFolder(newName);
+        LocationInRoot location = new LocationInRoot(newName);
         LocationAPI.getInstance().putByLocation(location, folder);
     }
     public void createNewFile() throws IOException{
-        String path = this.currentDir.getAbsolutePath();
         String newName = "New File";
-        while(currentDir.files.containsKey(newName)){
-            newName= "New "+newName; 
-        }
-        path +=File.separator+newName;
-        Files.createFile(Paths.get(path));
-        ExtFile file = new ExtFile(path);
-        LocationInRoot location = new LocationInRoot(path);
+        newName = TaskFactory.resolveAvailableName(currentDir, newName);
+        Files.createFile(Paths.get(newName));
+        ExtFile file = new ExtFile(newName);
+        LocationInRoot location = new LocationInRoot(newName);
         LocationAPI.getInstance().putByLocation(location, file);
     }
     public boolean hasPrev(){

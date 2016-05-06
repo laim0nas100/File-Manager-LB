@@ -5,6 +5,7 @@
  */
 package filemanagerLogic.fileStructure;
 
+import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
@@ -19,7 +20,6 @@ import javafx.beans.property.StringProperty;
  */
 public abstract class FileAbs extends File {
     
-    protected boolean operationSuccessfull;
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;
@@ -27,13 +27,7 @@ public abstract class FileAbs extends File {
     public FileAbs(String string) {
         super(string);
     }
-    public boolean isOperationSuccessfull() {
-        return operationSuccessfull;
-    }
 
-    public void setOperationSuccessfull(boolean operationSuccessfull) {
-        this.operationSuccessfull = operationSuccessfull;
-    }
     public LocationInRoot getMapping(){
         return LocationAPI.getInstance().getLocationMapping(this.getAbsolutePath());
     }

@@ -20,7 +20,6 @@ import utility.DesktopApi;
  */
 public class ExtLink extends ExtFile{
     private boolean pointsToDirectory;
-    private String targetDir;
 
     
     public ExtLink(String link){
@@ -32,7 +31,7 @@ public class ExtLink extends ExtFile{
             }else{
                 this.pointsToDirectory = false;
             }
-        }catch(Exception x){};
+        }catch(Exception x){}
         
     }
     public String getTargetDir() throws IOException {
@@ -47,8 +46,6 @@ public class ExtLink extends ExtFile{
     public ExtLink getTrueForm(){
         return this;
     }
-
-    
     @Override
     public String getIdentity(){
         return "link";

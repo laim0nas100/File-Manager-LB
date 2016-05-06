@@ -104,16 +104,16 @@ public class ExtFolder extends ExtFile{
     }
     public Collection<ExtFile> getListRecursive(){
         ArrayList<ExtFile> list = new ArrayList<>();
-        getRootList(list,this,this);
+        list.add(this);
+        getRootList(list,this);
         return list; 
     }
-    private void getRootList(Collection<ExtFile> list,ExtFolder folder,ExtFolder root){
-        if(!folder.populated){
-            folder.populateRecursive();
-        }
+    private void getRootList(Collection<ExtFile> list,ExtFolder folder){
+        folder.update();
+        
         list.addAll(folder.getFilesCollection());
         for(ExtFolder fold:folder.getFoldersFromFiles()){
-            getRootList(list,fold,root);
+            getRootList(list,fold);
         }
     }
     public void update(){
@@ -136,9 +136,13 @@ public class ExtFolder extends ExtFile{
         }
         
     }
-    public boolean isRoot(){
-        String path = this.getAbsolutePath();
-        return rootSet.contains(path);
+    @Override
+    public String getAbsoluteDirectory(){
+        String dir = this.getAbsolutePath();
+        if(!dir.endsWith(File.separator)){
+            dir+=File.separator;
+        }
+        return dir;
     }
     
     

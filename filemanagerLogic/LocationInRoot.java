@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import utility.Log;
 
@@ -20,11 +22,11 @@ import utility.Log;
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
-    public ArrayList<String> coordinates;
+    public LinkedList<String> coordinates;
 
     
     public LocationInRoot(String filePath){
-        coordinates = new ArrayList<>();
+        coordinates = new LinkedList<>();
         if(!filePath.isEmpty()){
             Path path = new File(filePath).toPath();
             String rootLoc = path.getRoot().toString();
@@ -41,39 +43,22 @@ public class LocationInRoot {
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);
                 
-                for(int i=list.size()-1; i>=0; i--){
-                    if(list.get(i).isEmpty()){
-                        list.remove(i);
+                Iterator<String> iterator = list.iterator();
+                while(iterator.hasNext()){
+                    String next = iterator.next();
+                    if(next.isEmpty()){
+                        iterator.remove();
                     }
                 }
                 coordinates.addAll(list);
             }
         }
     }
-//    public LocationInRoot(String filePath){
-//        coordinates = new ArrayList<>();
-//        
-//            String[] fileArray = filePath.split("\\"+File.separatorChar);
-//            List<String> asList = Arrays.asList(fileArray);
-//            ArrayList<String> list = new ArrayList<>();
-//            list.addAll(asList);
-//            for(int i=list.size()-1; i>=0; i--){
-//                if(list.get(i).isEmpty()){
-//                   list.remove(i);
-//                }
-//            }
-//            //Unix specific
-//            if(filePath.startsWith(File.separator)){
-//                list.add(0,File.separator);
-//            }
-//            coordinates.addAll(list);
-//        
-//    }
     public LocationInRoot(LocationInRoot loc){
-        this.coordinates = (ArrayList<String>) loc.coordinates.clone();
+        this.coordinates.addAll(loc.coordinates);
     }
-    private LocationInRoot(ArrayList<String> coord){
-        coordinates = new ArrayList<>();
+    private LocationInRoot(List<String> coord){
+        coordinates = new LinkedList<>();
         coordinates.addAll(coord);
         
     }
@@ -94,9 +79,9 @@ public class LocationInRoot {
         return this.coordinates.get(i);
     }
     public LocationInRoot getParentLocation(){
-        ArrayList<String> list = new ArrayList<>();
+        LinkedList<String> list = new LinkedList<>();
         list.addAll(this.coordinates);
-        list.remove(this.length()-1);
+        list.removeLast();
         return new LocationInRoot(list);
     }
     @Override

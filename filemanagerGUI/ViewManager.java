@@ -87,9 +87,7 @@ public class ViewManager {
             windows.put(frame.getTitle(),frame);
             controller.setUp(stage.getTitle(),rootFolder,currentFolder);
             stage.show();
-            for(Object o:stage.getProperties().values()){
-                Log.writeln(o);
-            }
+
             
             
         } catch (IOException ex) {

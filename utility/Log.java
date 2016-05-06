@@ -13,6 +13,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Properties;
 
 /**
@@ -22,10 +23,11 @@ import java.util.Properties;
 public class Log extends PrintStream{
     
     private static final Log INSTANCE = new Log();
+    private ArrayList<String> list;
     protected Log(){
         
         super(new FileOutputStream(FileDescriptor.out));
-        
+        list = new ArrayList<>();
     }
     public static Log getInstance(){        
         return INSTANCE;
@@ -40,6 +42,7 @@ public class Log extends PrintStream{
             INSTANCE.out.close();
         } catch (IOException ex) {
             ex.printStackTrace();
+            
         }
         switch(c){
             case('f'):{
@@ -61,21 +64,18 @@ public class Log extends PrintStream{
         }
     }
     
-    public static void write(String...strings){
-        for(String s:strings){  
-            Log.INSTANCE.print(s);
+    public static void write(Object...objects){
+        String string = "";
+        for(Object s:objects){  
+            string+=s.toString();
         }
+        Log.writeln(string);
     }
-    public static void writeln(String...strings){
-        for(String s:strings){
+    public static void writeln(Object...objects){
+        for(Object s:objects){
             Log.INSTANCE.println(s);
+            Log.INSTANCE.list.add(s.toString());
         }
-    }
-    public static void writeln(Object object){
-        Log.INSTANCE.println(object);
-    }
-    public static void write(Object object){
-        Log.INSTANCE.print(object);
     }
     public static void printProperties(Properties properties){
         Object[] toArray = properties.keySet().toArray();

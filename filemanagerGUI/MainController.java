@@ -5,6 +5,7 @@
  */
 package filemanagerGUI;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
@@ -47,8 +48,13 @@ import utility.FavouriteLink;
 import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import filemanagerLogic.snapshots.Snapshot;
+import filemanagerLogic.snapshots.SnapshotAPI;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.io.Console;
 import java.io.File;
+import javafx.scene.text.Text;
 
 /**
  * FXML Controller class
@@ -84,6 +90,11 @@ public class MainController extends BaseController{
     @FXML public Button buttonForw;
     @FXML public Button buttonGo;
     
+    @FXML public TextField snapshotLoadField;
+    @FXML public TextField snapshotCreateField;
+    @FXML public Text snapshotTextDate;
+    @FXML public Text snapshotTextFolder;
+    @FXML public ListView snapshotView;
     
     
     @FXML public MenuItem miAdvancedRename;
@@ -149,6 +160,8 @@ public class MainController extends BaseController{
             currentDirText.setText(MC.currentDir.getAbsolutePath());
         }
         MC.currentDir.update();
+
+        
         Iterator<ExtFile> iterator = TaskFactory.getInstance().markedList.iterator();
         while(iterator.hasNext()){
             if(!Files.exists(iterator.next().toPath())){
@@ -173,9 +186,23 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        Log.writeln("Properties");
-        Log.printProperties(System.getProperties());
+        try{
+        Snapshot sn1 = SnapshotAPI.getInstace().getEmptySnapshot();
+        ObjectMapper mapper = new ObjectMapper();
+        File file = new File("E:\\snp");
+        if(file.exists()){
+            sn1 = mapper.readValue(file, Snapshot.class);
+        }else{
+            sn1 = SnapshotAPI.getInstace().createSnapshot((ExtFolder) MC.currentDir.files.get("NewD"));
+        }
+        Snapshot sn2 = SnapshotAPI.getInstace().createSnapshot((ExtFolder) MC.currentDir.files.get("NewF"));
+        Snapshot cmp = SnapshotAPI.getInstace().comapareSnapshots(sn1, sn2);
         
+        Log.writeln(cmp);
+        mapper.writeValue(file,sn1);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     
@@ -233,6 +260,41 @@ public class MainController extends BaseController{
             }
        
         }   
+    }
+    public void loadSnapshot(){
+        try{
+            String possibleSnapshot = this.snapshotLoadField.getText().trim();
+            ObjectMapper mapper = new ObjectMapper();
+            File file = new File(possibleSnapshot);
+            Snapshot sn = SnapshotAPI.getEmptySnapshot();
+            Snapshot currentSnapshot = SnapshotAPI.createSnapshot(MC.currentDir);
+            if(file.exists()){
+                sn = mapper.readValue(file, sn.getClass());
+                this.snapshotTextDate.setText(sn.dateCreated);
+                this.snapshotTextFolder.setText(sn.folderCreatedFrom);
+                Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.comapareSnapshots(currentSnapshot, sn));
+                ObservableList list = FXCollections.observableArrayList();
+                list.addAll(result.map.values());
+                this.snapshotView.getItems().clear();
+                this.snapshotView.getItems().addAll(list);
+                
+            }
+        }catch(Exception ex){
+            reportError(ex);
+        }
+    }
+    public void createSnapshot(){
+        try{
+        String possibleSnapshot = this.snapshotCreateField.getText().trim();
+        ObjectMapper mapper = new ObjectMapper();
+        Snapshot currentSnapshot = SnapshotAPI.createSnapshot(MC.currentDir);
+        File file = new File(TaskFactory.resolveAvailableName(MC.currentDir, possibleSnapshot));
+        mapper.writeValue(file,currentSnapshot);
+        }catch(Exception ex){
+            reportError(ex);
+        }
+        ViewManager.getInstance().updateAllWindows();
+
     }
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();
@@ -473,7 +535,11 @@ public class MainController extends BaseController{
                 
             
         });
-        
+        contextMenuItems[24] = new MenuItem("Copy Absolute Path");
+        contextMenuItems[24].setOnAction(eh ->{
+            String absolutePath = this.selectedList.get(0).getAbsolutePath();
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
+        });
         
         submenuSelectSearch = new Menu("Select...");
         submenuSelectSearch.getItems().setAll(
@@ -483,7 +549,8 @@ public class MainController extends BaseController{
         submenuSelectTable = new Menu("Select...");
         submenuSelectTable.getItems().setAll(
                 contextMenuItems[21],
-                contextMenuItems[22]
+                contextMenuItems[22],
+                contextMenuItems[24]
         );
         submenuMarked = new Menu("Marked...");
         submenuCreate = new Menu("Create...");
@@ -556,6 +623,7 @@ public class MainController extends BaseController{
                         if(file.getIdentity().equals("folder")){
                             tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
                         }
+                        
                 }
                 if (!MC.currentDir.isAbsoluteRoot()) {
                     
@@ -803,9 +871,11 @@ public class MainController extends BaseController{
             @Override
             public ListCell<ErrorReport> call(ListView<ErrorReport> p) {  
                 ListCell<ErrorReport> cell = new ListCell<ErrorReport>(){
+                    
                     @Override
                     protected void updateItem(ErrorReport t, boolean bln) {
-                        super.updateItem(t, bln);
+                        Platform.runLater(()->{
+                            super.updateItem(t, bln);
                         if (t != null) {
                             setText(t.getErrorName().get());
                             setTooltip(t.getTooltip());
@@ -813,6 +883,8 @@ public class MainController extends BaseController{
                             setText("");
                             this.tooltipProperty().unbind();
                         }
+                        });
+                        
                     }
                 };
                 

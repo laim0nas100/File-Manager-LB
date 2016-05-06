@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package filemanagerGUI.dialog;
-
 import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.dialog.BaseDialog;
 import filemanagerLogic.LocationAPI;
@@ -52,6 +51,7 @@ private ArrayList<String> nameCollection2;
 private long startingNumber;
 private LocationInRoot location;
 public void setUp(String title,LocationInRoot folderLocation){
+    
     super.setUp(title);
     this.location = folderLocation;
     this.setNumber();

@@ -5,6 +5,9 @@
  */
 package filemanagerLogic;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -18,17 +21,15 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
-import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.LinkOption;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import static filemanagerGUI.FileManagerLB.reportError;
+import filemanagerLogic.fileStructure.ActionFile;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
-import javafx.application.Platform;
+import java.util.regex.Matcher;
 import utility.FileNameException;
 
 /**
@@ -39,7 +40,7 @@ import utility.FileNameException;
 
 //
 public class TaskFactory {
-    //public  ExtFile itemToRename;
+
     public  ObservableList<ExtFile> dragList;
     public  ObservableList<ExtFile> markedList;
     public  ArrayList<ExtFile> actionList;
@@ -68,12 +69,12 @@ public class TaskFactory {
         actionList = new ArrayList<>();
     }
         
-    private static final Comparator<ExtFile> cmpDesc = (ExtFile f1, ExtFile f2) -> {
-        return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
+    private static final Comparator<ActionFile> cmpDesc = (ActionFile f1, ActionFile f2) -> {
+        return f1.paths[0].compareTo(f2.paths[0]);
     };
-    private static final Comparator<ExtFile> cmpAsc = (ExtFile f1, ExtFile f2) -> {
-        return f2.getAbsolutePath().compareTo(f1.getAbsolutePath());
-    };  
+    private static final Comparator<ActionFile> cmpAsc = (ActionFile f1, ActionFile f2) -> {
+        return f2.paths[0].compareTo(f1.paths[0]);
+    };
     
 //RENAME
     public void renameTo(String fileToRename, String newName) throws IOException, FileNameException{
@@ -105,6 +106,7 @@ public class TaskFactory {
     }
     
 //PREPARE FOR TASKS
+
     public void addToMarked(ExtFile file){
         if(file!=null&&!markedList.contains(file)){
             markedList.add(file);
@@ -114,113 +116,85 @@ public class TaskFactory {
         this.actionList.clear();
         this.actionList.addAll(filelist);
     }
-    private ExtFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
+    private ActionFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
         Log.writeln("List recieved in task");
         
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        ArrayList<ExtFile> list = new ArrayList<>();
+        ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
-            
-            LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
-            if(newFile.getIdentity().equals("folder")){
-                ExtFolder folder = (ExtFolder) newFile;
-                ArrayList<ExtFile> subList = new ArrayList<>();
-                subList.addAll(folder.getListRecursive());
-                for(ExtFile subFile:subList){
-                    subFile.setRelativePath(folder);
-                }
-                folder.setRelativePath(folder.getName());
-                list.addAll(subList);
-                list.add(folder);
-            }else{
-                newFile.setRelativePath(newFile.getName());
-                list.add(newFile);  
+            Collection<ExtFile> listRecursive = file.getListRecursive();
+            ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            for(ExtFile f:listRecursive){
+                String relativePath = resolveRelativePath(f, parentFile);
+                list.add(new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath));
             }
-            
+           
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
 
-        ExtFile[] array = new ExtFile[list.size()];
+        ActionFile[] array = new ActionFile[list.size()];
         array = list.toArray(array);
-        for (ExtFile array1 : array) {
-            array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-            Log.writeln(array1.getAbsolutePath() +" -> "+array1.getDestination());
+        for (ActionFile array1 : array) {
+            Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
         }
         return array;
         
     }   
-    private ExtFile[] prepareForDelete(Collection<ExtFile> fileList){
-    Log.writeln("List recieved in task");
-        
+    private ActionFile[] prepareForDelete(Collection<ExtFile> fileList){
+        Log.writeln("List recieved in task");
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        ArrayList<ExtFile> list = new ArrayList<>();
+        ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
-            
-            LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
-            if(newFile.getIdentity().equals("folder")){
-                ExtFolder folder = (ExtFolder) newFile;
-                ArrayList<ExtFile> subList = new ArrayList<>();
-                subList.addAll(folder.getListRecursive());
-                list.addAll(subList);
-                list.add(folder);
-            }else{
-                list.add(newFile);  
+            Collection<ExtFile> listRecursive = file.getListRecursive();
+            for(ExtFile f:listRecursive){
+                list.add(new ActionFile(f.getAbsolutePath()));
             }
-            
         }
         list.sort(cmpAsc);
         Log.writeln("List after computing");
-        for(ExtFile file:list){
-            Log.writeln(file.getAbsolutePath());
+        for(ActionFile file:list){
+            Log.writeln(file);
         }
-        ExtFile[] array = new ExtFile[list.size()];
+        ActionFile[] array = new ActionFile[list.size()];
         array = list.toArray(array);
         return array;
         
     } 
-    private ExtFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
-       Log.writeln("List recieved in task");
+    private ActionFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
+        Log.writeln("List recieved in task");
         
         for(ExtFile file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
-        ArrayList<ExtFile> list = new ArrayList<>();
+        ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtFile file:fileList){
-            
-            LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-            ExtFile newFile = LocationAPI.getInstance().getFileByLocation(location);
-            if(newFile.getIdentity().equals("folder")){
-                ExtFolder folder = (ExtFolder) newFile;
-                ArrayList<ExtFile> subList = new ArrayList<>();
-                subList.addAll(folder.getListRecursive());
-                for(ExtFile subFile:subList){
-                    subFile.setRelativePath(folder);
-                }
-                folder.setRelativePath(folder.getName());
-                list.addAll(subList);
-                list.add(folder);
-            }else{
-                newFile.setRelativePath(newFile.getName());
-                list.add(newFile);  
+            Collection<ExtFile> listRecursive = file.getListRecursive();
+            ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            for(ExtFile f:listRecursive){
+                
+                String relativePath = resolveRelativePath(f, parentFile);
+                Log.write("RelativePath: ",relativePath);
+                ActionFile AF = new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath);
+                Log.write("ActionFile: ",AF);
+                list.add(AF);
             }
-            
+           
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
-        ExtFile[] array = new ExtFile[list.size()];
+
+        ActionFile[] array = new ActionFile[list.size()];
         array = list.toArray(array);
-        for (ExtFile array1 : array) {
-            array1.setDestination(Paths.get(dest.getAbsolutePath()+File.separatorChar + array1.getRelativePath()));
-            Log.writeln(array1.getAbsolutePath() +" -> "+array1.getDestination());
+        for (ActionFile array1 : array) {
+            Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
         }
         return array;
+        
         
     
     }
@@ -231,7 +205,7 @@ public class TaskFactory {
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
-                ExtFile[] list = prepareForCopy(fileList,dest);
+                ActionFile[] list = prepareForCopy(fileList,dest);
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -240,24 +214,23 @@ public class TaskFactory {
                         }
                     }
                     if(this.isCancelled()){
-                        break;
+                        return null;
                     }
                     
-                    str = "Source: \t\t"+list[i].getAbsolutePath()+"\n";
-                    str +="Destination: \t"+list[i].getDestination();
+                    str = "Source: \t\t"+list[i].paths[0]+"\n";
+                    str +="Destination: \t"+list[i].paths[1];
                     updateMessage(str);
                     updateProgress(i+0.5, list.length);
                     try{
-                        Files.copy(list[i].toPath(),list[i].getDestination());
-                        list[i].setOperationSuccessfull(true);
-                        System.out.println("OK:"+list[i].getAbsolutePath());
+                        Files.copy(list[i].paths[0],list[i].paths[1]);
+                        Log.writeln("OK:"+list[i]);
                         
                     }catch(Exception e){
-                        list[i].setOperationSuccessfull(false);
-                        report(e); 
+                        reportError(e); 
                     }
                     updateProgress(i+1, list.length);                    
                 }
+                updateProgress(1,1);
                 updateMessage("FINISHED");
                 return null;
             }
@@ -266,10 +239,11 @@ public class TaskFactory {
     public ExtTask moveFiles(Collection<ExtFile> fileList, ExtFile dest){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
-                ArrayList<ExtFile> leftFolders = new ArrayList<>();
+                ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
                 updateMessage("Populating list for move");
-                ExtFile[] list = prepareForMove(fileList,dest);
+                ActionFile[] list = prepareForMove(fileList,dest);
+                updateMessage("Begin");
                 int index1 = 0;
                 for(; index1<list.length; index1++){
                     while(this.isPaused()){
@@ -279,26 +253,24 @@ public class TaskFactory {
                         }
                     }
                     if(this.isCancelled()){
-                        break;
+                        return null;
                     }
                     
-                    str = "Source: \t\t"+list[index1].getAbsolutePath()+"\n";
-                    str +="Destination: \t"+list[index1].getDestination();
+                    str = "Source: \t\t"+list[index1].paths[0]+"\n";
+                    str +="Destination: \t"+list[index1].paths[1];
                     updateMessage(str);
                     updateProgress(index1+0.5, list.length+leftFolders.size());
                     try{
-                        if(list[index1].getIdentity().equals("folder")){
+                        if(Files.isDirectory(list[index1].paths[0])){
                             leftFolders.add(list[index1]);
-                            Files.createDirectory(list[index1].getDestination());
-                            Log.writeln("Added to flders:"+list[index1].getAbsolutePath());
+                            Files.createDirectory(list[index1].paths[1]);
+                            Log.writeln("Added to flders:"+list[index1].paths[1]);
                         }else{
-                            Files.move(list[index1].toPath(),list[index1].getDestination());
-                            list[index1].setOperationSuccessfull(true);
-                            System.out.println("OK:"+list[index1].getAbsolutePath());
+                            Files.move(list[index1].paths[0],list[index1].paths[1]);
+                            Log.writeln("OK:"+list[index1]);
                         }
                     }catch(Exception e){
-                        list[index1].setOperationSuccessfull(false);
-                        report(e); 
+                        reportError(e); 
                         
                     }
                     updateProgress(index1+1, list.length+leftFolders.size());
@@ -307,16 +279,17 @@ public class TaskFactory {
                 int i=0;
                 Log.writeln("Folders size: "+leftFolders.size());
                 leftFolders.sort(cmpDesc);
-                for(;i<leftFolders.size();i++){
+                for(ActionFile f:leftFolders){
                     try{
-                        Log.writeln("Deleting "+leftFolders.get(i));
-                        Files.delete(leftFolders.get(i).toPath());
+                        Log.writeln("Deleting "+f.paths[0]);
+                        Files.delete(f.paths[0]);
+                        i++;
                     }catch(Exception x){
-                        
+                        report(x);
                     }
                     updateProgress(index1+i+2, list.length+leftFolders.size());
                 }
-                updateProgress(index1+i+2, list.length+leftFolders.size());
+                updateProgress(1,1);
                 updateMessage("FINISHED");
                 return null;
             }
@@ -328,7 +301,7 @@ public class TaskFactory {
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
-                ExtFile[] list = prepareForDelete(fileList);
+                ActionFile[] list = prepareForDelete(fileList);
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -337,28 +310,25 @@ public class TaskFactory {
                         }
                     }
                     if(this.isCancelled()){
-                        break;
+                        return null;
                     }
-
-                    str = "Deleting: \t"+list[i].getAbsolutePath();
+                    str = "Deleting: \t"+list[i];
                     updateMessage(str);
                     updateProgress(i+0.5, list.length);
                     try{
-                        list[i].setOperationSuccessfull(Files.deleteIfExists(list[i].toPath()));
-                     
+                        Files.deleteIfExists(list[i].paths[0]);
                     }catch(Exception e){
-                        list[i].setOperationSuccessfull(false);
-                        report(e);
+                        reportError(e);
                     }
                     updateProgress(i+1, list.length);
 
                 }
+                updateProgress(1,1);
                 updateMessage("FINISHED");
                 return null;
             }
         };
-    }
-    
+    } 
     private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
        
         if(level<MAX_DEPTH){
@@ -387,5 +357,71 @@ public class TaskFactory {
             return null;
             }
         };
+    }
+    
+ //MISC
+    public static String resolveRelativePath(ExtFile f1, ExtFile f2){
+        ExtFolder parent = (ExtFolder) f2;
+        String parentFolder = parent.getAbsoluteDirectory();
+        String path1 = f1.getAbsolutePath();
+        String quoteReplacement;
+        quoteReplacement  = Matcher.quoteReplacement(parentFolder); 
+        //Log.write("Replace ",quoteReplacement," from ",path1);
+        return path1.replaceFirst(quoteReplacement, "");
+    }
+    public static String resolveAvailableName(ExtFolder folder,String name){
+        String path = folder.getAbsoluteDirectory();
+        String newName = name;
+        int i=0;
+        while(folder.files.containsKey(newName)){
+            newName = i+" "+name;
+            i++;
+        }
+        return path+newName;
+    }
+    
+    public static void serializeObject(String whereToSave, Object whatToSave){
+        boolean success = true;
+        ObjectMapper mapper = new ObjectMapper();
+        try{
+           
+            
+            mapper.writeValue(new File(whereToSave), whatToSave);
+        }catch(Exception ex){
+            reportError(ex);
+            success = false;
+        }
+        
+        
+        if(success){
+            Log.write("Saved at: ",whereToSave);
+        }else{
+            Log.writeln("Failed to save at: ",whereToSave);
+        }
+        
+    }
+    public static <TP> boolean readSerializedObject(String whereToRead,TP object) {
+        File file = new File(whereToRead);
+        if(!file.exists()){
+            return false;
+        }
+
+        
+        boolean success = true;
+        try {
+           ObjectMapper mapper = new ObjectMapper();
+           object = mapper.readValue(file, (Class<TP>) object.getClass());
+           
+        } catch (Exception e) {
+            success = false;
+        }
+        if(success){
+            Log.write("Read: ", object, " at",whereToRead);
+        }else{
+            Log.write("Failed to read ",whereToRead);
+        }
+        
+    
+        return success;
     }
 }
