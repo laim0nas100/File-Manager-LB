@@ -1,0 +1,5 @@
+CREATE TABLE labe2219.PREKE (
+PrekesID VARCHAR(15) not NULL,
+Kaina FLOAT not NULL,
+Aprasas VARCHAR(1000),
+PRIMARY KEY (PrekesID) )
