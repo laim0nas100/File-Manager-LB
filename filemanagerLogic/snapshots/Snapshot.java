@@ -5,6 +5,7 @@
  */
 package filemanagerLogic.snapshots;
 
+import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -47,7 +48,7 @@ public class Snapshot implements Serializable{
 
     private void init(){
         Date date = Calendar.getInstance().getTime();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
         String format = dateFormat.format(date);
         dateCreated = format;
         folderCreatedFrom = "";

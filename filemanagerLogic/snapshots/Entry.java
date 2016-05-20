@@ -5,7 +5,13 @@
  */
 package filemanagerLogic.snapshots;
 
+import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtFile;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  *
@@ -39,7 +45,7 @@ public class Entry{
         @Override
         public String toString(){
             String s="";
-            s+= relativePath +" "+size +" "+lastModified;
+            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/FileManagerLB.DataSize.KB.size;
             if(isNew){
                 s+=" new";
             }else if(isMissing){

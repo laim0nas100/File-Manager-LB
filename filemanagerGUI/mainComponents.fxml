@@ -155,7 +155,7 @@
                         </AnchorPane>
                     </content>
                   </Tab>
-                  <Tab text="Snapshot">
+                  <Tab closable="false" text="Snapshot">
                     <content>
                         <AnchorPane>
                            <children>
@@ -215,10 +215,22 @@
                                           <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                                        </padding>
                                        <children>
-                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Folder:" />
-                                          <Text fx:id="snapshotTextFolder" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" />
-                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Date:" />
-                                          <Text fx:id="snapshotTextDate" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" />
+                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Folder:">
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                             </HBox.margin></Text>
+                                          <Text fx:id="snapshotTextFolder" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" visible="false">
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" right="5.0" top="5.0" />
+                                             </HBox.margin></Text>
+                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Date:">
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                             </HBox.margin></Text>
+                                          <Text fx:id="snapshotTextDate" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" visible="false">
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" right="5.0" top="5.0" />
+                                             </HBox.margin></Text>
                                        </children>
                                     </HBox>
                                     <ListView fx:id="snapshotView" VBox.vgrow="ALWAYS" />

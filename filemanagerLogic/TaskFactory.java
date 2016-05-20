@@ -5,8 +5,6 @@
  */
 package filemanagerLogic;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -22,14 +20,18 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.reportError;
+import filemanagerGUI.ViewManager;
 import filemanagerLogic.fileStructure.ActionFile;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import filemanagerLogic.snapshots.Snapshot;
+import filemanagerLogic.snapshots.SnapshotAPI;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.regex.Matcher;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
 import utility.FileNameException;
 
 /**
@@ -380,6 +382,73 @@ public class TaskFactory {
         return path+newName;
     }
     
+    public ExtTask snapshotCreateTask(ExtFolder folder,File file){
+        return new ExtTask(){
+            @Override
+            protected Void call() throws Exception {
+
+                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    Thread thread = new Thread(populateRecursiveParallel);
+                    thread.setDaemon(true);
+                    thread.start();
+                    thread.join();
+
+                    
+                    ObjectMapper mapper = new ObjectMapper();
+                    Snapshot currentSnapshot =  SnapshotAPI.createSnapshot(folder);
+
+                    Platform.runLater(()->{
+                        try {
+                            mapper.writeValue(file,currentSnapshot);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                        ViewManager.getInstance().updateAllWindows(); 
+                    });
+                    
+                
+                return null;
+            }
+  
+        };
+    }
+    public ExtTask snapshotLoadTask(Text t1, Text t2, ListView lw,ExtFolder folder,File nextSnap){
+        return new ExtTask(){
+            @Override
+            protected Void call() throws Exception {
+
+                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    Thread thread = new Thread(populateRecursiveParallel);
+                    thread.setDaemon(true);
+                    thread.start();
+                    thread.join();
+
+                    
+                    ObjectMapper mapper = new ObjectMapper();
+                    Snapshot currentSnapshot =  SnapshotAPI.createSnapshot(folder);
+                    Snapshot sn = SnapshotAPI.getEmptySnapshot();
+                    sn = mapper.readValue(nextSnap, sn.getClass());
+                    
+                    Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.comapareSnapshots(currentSnapshot, sn));
+                    ObservableList list = FXCollections.observableArrayList();
+                    list.addAll(result.map.values());
+                    t1.setText(sn.dateCreated);
+                    t2.setText(sn.folderCreatedFrom);
+                    t1.setVisible(true);
+                    t2.setVisible(true);
+                    Platform.runLater(()->{
+                        lw.getItems().clear();
+                        lw.getItems().addAll(list);
+                    });
+                         
+                return null;
+            }
+  
+        };
+    }
+    
+    
+    
     public static void serializeObject(String whereToSave, Object whatToSave){
         boolean success = true;
         ObjectMapper mapper = new ObjectMapper();
@@ -424,4 +493,5 @@ public class TaskFactory {
     
         return success;
     }
+    
 }

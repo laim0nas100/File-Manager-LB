@@ -52,8 +52,8 @@ import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.io.Console;
 import java.io.File;
+import javafx.concurrent.Task;
 import javafx.scene.text.Text;
 
 /**
@@ -264,37 +264,21 @@ public class MainController extends BaseController{
     public void loadSnapshot(){
         try{
             String possibleSnapshot = this.snapshotLoadField.getText().trim();
-            ObjectMapper mapper = new ObjectMapper();
+            
             File file = new File(possibleSnapshot);
-            Snapshot sn = SnapshotAPI.getEmptySnapshot();
-            Snapshot currentSnapshot = SnapshotAPI.createSnapshot(MC.currentDir);
+           
             if(file.exists()){
-                sn = mapper.readValue(file, sn.getClass());
-                this.snapshotTextDate.setText(sn.dateCreated);
-                this.snapshotTextFolder.setText(sn.folderCreatedFrom);
-                Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.comapareSnapshots(currentSnapshot, sn));
-                ObservableList list = FXCollections.observableArrayList();
-                list.addAll(result.map.values());
-                this.snapshotView.getItems().clear();
-                this.snapshotView.getItems().addAll(list);
-                
+                new Thread(TaskFactory.getInstance().snapshotLoadTask(snapshotTextDate, snapshotTextFolder, snapshotView,MC.currentDir,file)).start(); 
             }
         }catch(Exception ex){
             reportError(ex);
         }
     }
     public void createSnapshot(){
-        try{
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
-        ObjectMapper mapper = new ObjectMapper();
-        Snapshot currentSnapshot = SnapshotAPI.createSnapshot(MC.currentDir);
         File file = new File(TaskFactory.resolveAvailableName(MC.currentDir, possibleSnapshot));
-        mapper.writeValue(file,currentSnapshot);
-        }catch(Exception ex){
-            reportError(ex);
-        }
-        ViewManager.getInstance().updateAllWindows();
-
+        new Thread(TaskFactory.getInstance().snapshotCreateTask(MC.currentDir, file)).start();
+       
     }
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();

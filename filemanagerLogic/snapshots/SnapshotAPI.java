@@ -5,22 +5,12 @@
  */
 package filemanagerLogic.snapshots;
 
+import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
-import java.io.File;
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import javafx.application.Platform;
 
 /**
  *
