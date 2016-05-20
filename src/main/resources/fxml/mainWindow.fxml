@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.databasemanagement.FXMLController">
+   <children>
+      <VBox>
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="Nustatymai">
+                  <items>
+                        <MenuItem mnemonicParsing="false" onAction="#createTables" text="Create Tables" />
+                        <MenuItem mnemonicParsing="false" onAction="#dropTables" text="Drop Tables" />
+                        <MenuItem mnemonicParsing="false" onAction="#createAdditionalThings" text="Create Additional Things" />
+                        <MenuItem mnemonicParsing="false" onAction="#fillSampleData" text="Fill Sample Data" />
+                        <MenuItem mnemonicParsing="false" onAction="#newAdminWindow" text="Admin Window" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <TabPane tabClosingPolicy="UNAVAILABLE">
+              <tabs>
+                <Tab fx:id="tabOrders" text="Naujas užsakymas">
+                     <content>
+                        <GridPane alignment="CENTER">
+                          <columnConstraints>
+                            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                              <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                              <ColumnConstraints fillWidth="false" halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                              <RowConstraints fillHeight="false" maxHeight="158.0" minHeight="10.0" prefHeight="158.0" valignment="CENTER" />
+                          </rowConstraints>
+                           <children>
+                              <VBox GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Adresas" />
+                                    <TextField fx:id="address" VBox.vgrow="ALWAYS" />
+                                 </children>
+                              </VBox>
+                              <VBox GridPane.columnIndex="1" GridPane.hgrow="NEVER">
+                                 <children>
+                                    <Label text="Prekė" />
+                                    <ComboBox fx:id="comboboxProducts" onMouseClicked="#fillProductsCombobox" prefWidth="150.0" VBox.vgrow="NEVER" />
+                                 </children>
+                              </VBox>
+                              <VBox GridPane.columnIndex="2" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+                                 <children>
+                                    <Label text="Vienetų" />
+                                    <TextField fx:id="ammount" VBox.vgrow="NEVER" />
+                                 </children>
+                              </VBox>
+                              <Button alignment="CENTER" mnemonicParsing="false" onAction="#commitOrder" text="Užsakyti" textAlignment="CENTER" GridPane.columnIndex="3" />
+                           </children>
+                        </GridPane>
+                     </content>
+                </Tab>
+                  <Tab fx:id="tabProducts" onSelectionChanged="#fillProducts" text="Prekės">
+                     <content>
+                        <AnchorPane>
+                           <children>
+                              <TableView fx:id="changeableTable2" prefHeight="400.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <columns>
+                                    <TableColumn prefWidth="75.0" text="C1" />
+                                    <TableColumn prefWidth="75.0" text="C2" />
+                                 </columns>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab fx:id="tabLogIn" text="Prisijungti">
+                     <content>
+                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <ComboBox fx:id="comboboxWorkers" onMouseClicked="#fillWorkersCombobox">
+                                 <HBox.margin>
+                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                 </HBox.margin>
+                                 <padding>
+                                    <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                                 </padding>
+                              </ComboBox>
+                              <Button mnemonicParsing="false" onAction="#logIn" text="Prisijungti">
+                                 <HBox.margin>
+                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                 </HBox.margin>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </content>
+                  </Tab>
+              </tabs>
+            </TabPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

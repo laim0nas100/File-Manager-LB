@@ -1,0 +1,6 @@
+E:\Programming\Java\Workspace\DatabaseManagement\src\main\resources\SQLfiles\
+tablePreke.sql
+tableEtatas.sql
+tableDarbuotojas.sql
+tableAtaskaita.sql
+tableUzsakymas.sql

@@ -1,0 +1,9 @@
+labe2219.DARBUOTOJAS
+'11101','Juozas','Puškinas','pardavėjas'
+'11100','Renata','Akinaitė','prekybos vadovas'
+'11102','Paulius','Marius','tiekėjas'
+'11103','Kasparas','Slepas','tiekėjas'
+'11104','Fill','Richards','sandėlininkas'
+'11105','Laima','Rukienė','vyr.finansininkas'
+'11106','Julius','Romas','direktorius'
+'11107','Kristina','Kredždė','gamybos vadovas'

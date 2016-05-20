@@ -1,0 +1,7 @@
+labe2219.preke 
+'0001' , 25.12 , 'Šviestuvas Lauko'
+'0002' , 20.50 , 'Šviestuvas Vidaus'
+'0003' , 50.00 , 'Šviestuvas Aikštes'
+'0004' , 10.10 , 'Varžtų komplektas (50 vnt)'
+'0005' , 99.23 , 'Gražtas'
+'0006' , 200.00, 'Įrankių komplektas'
