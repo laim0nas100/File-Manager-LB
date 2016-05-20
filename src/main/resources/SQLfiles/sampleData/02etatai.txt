@@ -1,8 +1,0 @@
-labe2219.etatas 
-'pardavėjas' , 5.0 , 1300
-'direktorius' , 5.0 , 3500
-'vyr.finansininkas' , 5.0 , 2500
-'tiekėjas' , 5.0 , 1500
-'sandėlininkas' , 5.0 , 1300
-'gamybos vadovas' , 5.0 , 2000
-'prekybos vadovas' , 5.0 , 2000

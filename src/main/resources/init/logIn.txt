@@ -1,2 +1,0 @@
-postgres;this will not be read
-masterkey
