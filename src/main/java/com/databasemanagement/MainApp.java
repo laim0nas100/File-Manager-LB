@@ -11,10 +11,8 @@ import static javafx.application.Application.launch;
 
 
 public class MainApp extends Application {
-    public static ArrayList<String> queryList;
     @Override
     public void start(Stage stage) throws Exception {
-        queryList = new ArrayList<>();
         load();
         ViewManager.getInstance().newWindow();
         ViewManager.getInstance().newAdminWindow();

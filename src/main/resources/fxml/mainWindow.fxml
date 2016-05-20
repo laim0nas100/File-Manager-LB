@@ -31,7 +31,6 @@
                         <MenuItem mnemonicParsing="false" onAction="#dropTables" text="Drop Tables" />
                         <MenuItem mnemonicParsing="false" onAction="#createAdditionalThings" text="Create Additional Things" />
                         <MenuItem mnemonicParsing="false" onAction="#fillSampleData" text="Fill Sample Data" />
-                        <MenuItem mnemonicParsing="false" onAction="#test" text="Test" />
                         <MenuItem mnemonicParsing="false" onAction="#newAdminWindow" text="Admin Window" />
                   </items>
                 </Menu>
@@ -39,7 +38,7 @@
             </MenuBar>
             <TabPane tabClosingPolicy="UNAVAILABLE">
               <tabs>
-                <Tab fx:id="tabOrders" onSelectionChanged="#fillProductsCombobox" text="Naujas užsakymas">
+                <Tab fx:id="tabOrders" text="Naujas užsakymas">
                      <content>
                         <GridPane alignment="CENTER">
                           <columnConstraints>
@@ -61,7 +60,7 @@
                               <VBox GridPane.columnIndex="1" GridPane.hgrow="NEVER">
                                  <children>
                                     <Label text="Prekė" />
-                                    <ComboBox fx:id="comboboxProducts" prefWidth="150.0" VBox.vgrow="NEVER" />
+                                    <ComboBox fx:id="comboboxProducts" onMouseClicked="#fillProductsCombobox" prefWidth="150.0" VBox.vgrow="NEVER" />
                                  </children>
                               </VBox>
                               <VBox GridPane.columnIndex="2" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
@@ -89,11 +88,11 @@
                         </AnchorPane>
                      </content>
                   </Tab>
-                  <Tab fx:id="tabLogIn" onSelectionChanged="#fillWorkersCombobox" text="Prisijungti">
+                  <Tab fx:id="tabLogIn" text="Prisijungti">
                      <content>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <ComboBox fx:id="comboboxWorkers">
+                              <ComboBox fx:id="comboboxWorkers" onMouseClicked="#fillWorkersCombobox">
                                  <HBox.margin>
                                     <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                                  </HBox.margin>

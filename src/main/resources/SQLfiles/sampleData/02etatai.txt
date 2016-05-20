@@ -1,4 +1,4 @@
-labe2219.etatas ; lenteles pavadinimas
+labe2219.etatas 
 'pardavėjas' , 5.0 , 1300
 'direktorius' , 5.0 , 3500
 'vyr.finansininkas' , 5.0 , 2500

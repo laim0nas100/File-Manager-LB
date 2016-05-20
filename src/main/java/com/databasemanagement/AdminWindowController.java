@@ -100,12 +100,12 @@ public class AdminWindowController extends BaseController {
         System.out.println(Arrays.toString(split));
         String result = "";
         if(prefix.equals("fire")){
-           result = "DELETE FROM labe2219.darbuotojas WHERE darbID ='"+split[0]+"'";
+           result = "DELETE FROM labe2219.darbuotojas WHERE labe2219.darbuotojas.DarbID ='"+split[0]+"'";
         }else if(prefix.equals("hire")){
             String values = "'"+split[0]+"','"+split[1]+"','"+split[2]+"','"+split[3]+"'";
             result = "INSERT INTO labe2219.darbuotojas VALUES ( "+values+" )";
         }else if(prefix.equals("productOut")){
-            result = "DELETE FROM labe2219.preke WHERE prekesID='"+split[0]+"'";
+            result = "UPDATE labe2219.preke SET Yra = FALSE WHERE prekesID='"+split[0]+"'";
         }else if(prefix.equals("productNew")){
             result = "INSERT INTO labe2219.darbuotojas VALUES (";
             String values = "'"+split[0]+"',"+split[1];
@@ -128,70 +128,81 @@ public class AdminWindowController extends BaseController {
             result = "SELECT * from labe2219.uzsakymas";
         }else if(prefix.equals("showStaffOrders")){
             result = "SELECT * from labe2219.DARBUOTOJU_UZSAKYMAI";
+        }else if(prefix.equals("showStaffOrderCount")){
+            result = "SELECT * from labe2219.DARBUOTOJU_UZIMTUMAS";
         }
         return result;
         
     }
     private void parseCommand(String com) throws SQLException{
-        stringList.clear();
-        if(com.startsWith("/")){//execute command
-            com = com.substring(1);
-            if(com.startsWith("clear")){
-                this.consoleList.getItems().clear();
-            }
-            if(com.startsWith("help")){
-                stringList.add("Komandos: (parametrai,skliausteliuose,!nebutini)  ");
-                stringList.add("/help - šita komanda");
-                stringList.add("/clear - išvalyti console");
-                stringList.add("/exit - System.exit(0) (Pabaigti darbą ir išjungti)");
-                stringList.add("/quit - išjungti šį langą");
-                stringList.add("fire (darbID) - atlesti darbuotoja");
-                stringList.add("hire (darbID,vardas,pavarde,pareigos)");
-                stringList.add("productNew (prekesID,kaina,!aprasas)");
-                stringList.add("productOut (prekesID)");
-                stringList.add("showReports (!data)");
-                stringList.add("showProducts");
-                stringList.add("showStaff");
-                stringList.add("showOrders");
-                stringList.add("showStaffOrders");
-                this.addLine(stringList.toArray(new String[stringList.size()]));       
-            }
-            if(com.startsWith("exit")){
-                System.exit(0);
-            }
-            if(com.startsWith("quit")){
-                this.exit();
-            }
-        //    org.apache.log4j.
-        }else if(com.startsWith("==")){ //execute query
-            
-            ResultTable table = Commander.getInstance().getTable(com.substring(2));
-            ViewManager.getInstance().newTableWindow(table);
-        }else if(com.startsWith("=")){ //execute statement
-            Statement state = Commander.getInstance().con.createStatement();
-            state.execute(com.substring(1));
-            
-        }else{//execute predefined
-            if(com.startsWith("showReports")){
-                ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showReports",com))); 
-            }else if(com.startsWith("fire")){
-                Commander.getInstance().db.update(parseCommand("fire",com));
-            }else if(com.startsWith("hire")){
-                Commander.getInstance().db.update(parseCommand("hire",com));
-            }else if(com.startsWith("productOut")){
-                Commander.getInstance().db.update(parseCommand("productOut",com));
-            }else if(com.startsWith("productNew")){
-                Commander.getInstance().db.update(parseCommand("productNew",com));
-            }else if(com.startsWith("showProducts")){
-                ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showProducts",com)));
-            }else if(com.startsWith("showStaffOrders")){
-                ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showStaffOrders",com)));           
-            }else if(com.startsWith("showStaff")){
-                ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showStaff",com)));           
-            }else if(com.startsWith("showOrders")){
-                ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showOrders",com)));
-            }
+        try{
+            stringList.clear();
+            if(com.startsWith("/")){//execute command
+                com = com.substring(1);
+                if(com.startsWith("clear")){
+                    this.consoleList.getItems().clear();
+                }
+                if(com.startsWith("help")){
+                    stringList.add("Komandos: (parametrai,skliausteliuose,!nebutini)  ");
+                    stringList.add("/help - šita komanda");
+                    stringList.add("/clear - išvalyti console");
+                    stringList.add("/exit - System.exit(0) (Pabaigti darbą ir išjungti)");
+                    stringList.add("/quit - išjungti šį langą");
+                    stringList.add("fire (darbID) - atlesti darbuotoja");
+                    stringList.add("hire (darbID,vardas,pavarde,pareigos)");
+                    stringList.add("productNew (prekesID,kaina,!aprasas)");
+                    stringList.add("productOut (prekesID)");
+                    stringList.add("showReports (!data)");
+                    stringList.add("showProducts");
+                    stringList.add("showStaff");
+                    stringList.add("showOrders");
+                    stringList.add("showStaffOrders");
+                    stringList.add("showStaffOrderCount");
+                    stringList.add("==[Query]");
+                    stringList.add("=[Statement]");
+                    this.addLine(stringList.toArray(new String[stringList.size()]));       
+                }
+                if(com.startsWith("exit")){
+                    System.exit(0);
+                }
+                if(com.startsWith("quit")){
+                    this.exit();
+                }
+            }else if(com.startsWith("==")){ //execute query
 
+                ResultTable table = Commander.getInstance().getTable(com.substring(2));
+                ViewManager.getInstance().newTableWindow(table);
+            }else if(com.startsWith("=")){ //execute statement
+                Statement state = Commander.getInstance().con.createStatement();
+                state.execute(com.substring(1));
+
+            }else{//execute predefined
+
+                if(com.startsWith("showReports")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showReports",com))); 
+                }else if(com.startsWith("fire")){
+                    Commander.getInstance().db.update(parseCommand("fire",com));
+                }else if(com.startsWith("hire")){
+                    Commander.getInstance().db.update(parseCommand("hire",com));
+                }else if(com.startsWith("productOut")){
+                    Commander.getInstance().db.update(parseCommand("productOut",com));
+                }else if(com.startsWith("productNew")){
+                    Commander.getInstance().db.update(parseCommand("productNew",com));
+                }else if(com.startsWith("showProducts")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showProducts",com)));
+                }else if(com.startsWith("showStaffOrders")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showStaffOrders",com)));           
+                }else if(com.startsWith("showStaffOrderCount")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showStaffOrderCount",com)));              
+                }else if(com.startsWith("showStaff")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showStaff",com)));           
+                }else if(com.startsWith("showOrders")){
+                    ViewManager.getInstance().newTableWindow(Commander.getInstance().getTable(parseCommand("showOrders",com)));
+                }
+
+            }
+        }catch(Exception ex){
+            System.out.println(ex);
         }
     }
 

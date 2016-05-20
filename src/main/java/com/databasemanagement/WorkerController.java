@@ -17,6 +17,8 @@ import java.sql.Time;
 import java.util.Calendar;
 import java.util.List;
 import java.util.ResourceBundle;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
@@ -52,7 +54,7 @@ public class WorkerController extends BaseController {
             this.text.setText("Nepildyta");
         }
         Commander.getInstance().db.update("DELETE FROM ONLY labe2219.ataskaita WHERE (DarbID = '"+this.workerID +"') AND (Data ='"+this.sessionStart+"')");
-        String value = "'"+workerID+"','"+sessionStart+"','"+time+"','Nepildyta'";
+        String value = "'"+workerID+"','"+sessionStart+"','"+time+"','"+this.text.getText()+"'";
         Commander.getInstance().insertTo("labe2219.ataskaita",value);
         table = Commander.getInstance().getTable("SELECT labe2219.uzsakymas.uzsakymoNr from labe2219.uzsakymas WHERE (uzsakymas.atsakingasID = '"+
                 this.workerID+"' ) AND (NOT uzsakymas.uzbaigtas)");
@@ -75,6 +77,19 @@ public class WorkerController extends BaseController {
     @FXML public void markAsCompleted(){
         String selectedItem = (String) this.combobox.getSelectionModel().getSelectedItem();
         Commander.getInstance().db.update("UPDATE labe2219.uzsakymas SET uzbaigtas = true WHERE uzsakymas.uzsakymoNR = '"+selectedItem+"'");
+        fillOrdersCombobox();
+    }
+    public ObservableList<String> getUnfinishedOrders(){
+        ObservableList<String> orderList = FXCollections.observableArrayList();
+        ResultTable table2 = Commander.getInstance().getTable("SELECT labe2219.uzsakymas.uzsakymoNR FROM labe2219.uzsakymas WHERE (labe2219.uzsakymas.atsakingasID = '"+this.workerID+"' AND NOT labe2219.uzsakymas.uzbaigtas)");
+        table2.getRows().forEach(row ->{
+        orderList.add(row.get(0).toString());
+        });
+        return orderList;
+    }
+    @FXML public void fillOrdersCombobox(){
+        this.combobox.getItems().clear();
+        this.combobox.getItems().addAll(getUnfinishedOrders());
     }
     
 }

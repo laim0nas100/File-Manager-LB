@@ -33,14 +33,18 @@ public class Commander {
         ArrayList<String> list = new ArrayList<>();
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(URL),"UTF8"));
         reader.lines().forEach((String ln) -> {
-            int indexOf = ln.indexOf(";");      //Find comment start
+            int indexOf = ln.indexOf("--");      //Find comment start
             if(indexOf!=0){
+                String line = "";
                 if(indexOf==-1){
-                        list.add(ln.trim());   
-                    }else{
-                        list.add(ln.substring(0,indexOf).trim());
-                    }
+                    line = ln;
+                }else{
+                    line = ln.substring(0,indexOf);
                 }
+                line = line.replaceAll("\\s+$", "");
+                list.add(line);
+            }
+            
         });
         reader.close();
         return list;

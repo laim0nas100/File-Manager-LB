@@ -3,10 +3,13 @@ package com.databasemanagement;
 import com.databasemanagement.sqlParsing.Commander;
 import java.io.File;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -38,9 +41,6 @@ public class FXMLController extends BaseController {
     @Override
     public void setUp(String title){
         super.setUp(title);
-        
-            
-        
     }
     @Override
     public void exit(){
@@ -52,14 +52,44 @@ public class FXMLController extends BaseController {
         String[] tables = new String[tablesURL.size()];
         tablesURL.toArray(tables);
         for(int i=tables.length-1;i>=0;i--){
+            try{
             Commander.getInstance().db.update("DROP TABLE "+tables[i] +" CASCADE");
+            }catch(Exception e){
+                System.out.println(e.getMessage());
+            }
         }
     }
     @FXML public void createAdditionalThings() throws IOException{
-        ArrayList<String> list = Commander.readFromFile("E:\\Programming\\Java\\Workspace\\DatabaseManagement\\src\\main\\resources\\init\\indexAndView.sql");
+        ArrayList<String> list = Commander.readFromFile("E:\\Programming\\Java\\Workspace\\DatabaseManagement\\src\\main\\resources\\init\\additionalThings.sql");
         list.forEach(s ->{
+            try{
             Commander.getInstance().db.update(s);
+            }catch(Exception e){
+                System.out.println(e.getMessage());
+            }
         });
+        list.clear();
+        String com1="";
+        String com2 ="";
+        list = Commander.readFromFile("E:\\Programming\\Java\\Workspace\\DatabaseManagement\\src\\main\\resources\\init\\trigger1.sql");
+        for(String s:list){
+            com1+=s;
+        }
+        list.clear();
+        list = Commander.readFromFile("E:\\Programming\\Java\\Workspace\\DatabaseManagement\\src\\main\\resources\\init\\trigger2.sql");
+        for(String s:list){
+            com2+=s;
+        }
+        try{
+            Commander.getInstance().db.update(com1);
+        }catch(Exception e){
+            System.out.println(e);
+        }
+        try{
+            Commander.getInstance().db.update(com2);
+        }catch(Exception e){
+            System.out.println(e);
+        }
     }
     @FXML public void createTables() throws IOException{
         ArrayList<String> tablesURL = new ArrayList<>();
@@ -90,38 +120,34 @@ public class FXMLController extends BaseController {
                     Commander.getInstance().insertTo(tableName, value);
                 }
             }
+            this.fillProducts();
+            this.fillProductsCombobox();
+            this.fillWorkersCombobox();
             
         });
         
     }
-    @FXML void test(){
-        MainApp.queryList.forEach(q->{
-            Commander.getInstance().db.update(q);
-        });
-    }
     @FXML public void fillProducts(){
-        ViewManager.getInstance().wrapResultTable(Commander.getInstance().getTable("SELECT * FROM labe2219.preke"), changeableTable2);
+        Platform.runLater(()->{
+            ViewManager.getInstance().wrapResultTable(Commander.getInstance().getTable("SELECT * FROM labe2219.preke"), changeableTable2);
+        });
         
     }
     @FXML public void fillWorkersCombobox(){
-        Platform.runLater(()->{
-            ObservableList<String> workerList = FXCollections.observableArrayList();
-            ResultTable table = Commander.getInstance().getTable("SELECT labe2219.darbuotojas.darbID FROM labe2219.darbuotojas");
-            table.getRows().forEach(row ->{
-                workerList.add(row.get(0).toString());
-            });
-            this.comboboxWorkers.setItems(workerList);
-        });
+            this.comboboxWorkers.getItems().clear();
+            this.comboboxWorkers.getItems().addAll(getWorkersList());
+            this.comboboxWorkers.getSelectionModel().selectFirst();
     }
     @FXML public void fillProductsCombobox(){
-        Platform.runLater(()->{ 
+            this.comboboxProducts.getItems().clear();
             ObservableList<String> productList = FXCollections.observableArrayList();
             ResultTable table = Commander.getInstance().getTable("SELECT labe2219.preke.PrekesID FROM labe2219.preke");
             table.getRows().forEach(row ->{
                 productList.add(row.get(0).toString());
             });
-            this.comboboxProducts.setItems(productList);
-        });
+            
+            this.comboboxProducts.getItems().addAll(productList);
+            this.comboboxProducts.getSelectionModel().selectFirst();
     }
     @FXML public void logIn(){
         String selectedItem = this.comboboxWorkers.getSelectionModel().getSelectedItem().toString();
@@ -132,41 +158,73 @@ public class FXMLController extends BaseController {
     }
     @FXML public void commitOrder() throws SQLException{
         System.out.println("Order UP!");
-        int amm = 0;
-        amm = Commander.getInstance().getTable("SELECT * FROM labe2219.UZSAKYMAS").getRowCount();
-        System.out.println("Passed 1");
-        amm++;
-        int amm2 = 2;
+//        int amm = 0;
+//        amm = Commander.getInstance().getTable("SELECT * FROM labe2219.UZSAKYMAS").getRowCount();
+//        amm++;
+        
+        int amm2 = -1;
         try{
             amm2 = Integer.parseInt(this.ammount.getText().trim());
         }catch(Exception e){
             System.out.println(e.getMessage());
             return;
         }
-        System.out.println(amm+"  "+amm2);
         ArrayList<String> workers = new ArrayList<>();
-        workers.addAll(this.comboboxWorkers.getItems());
-        int random = (int) ((Math.random()*workers.size()) % workers.size());
-        String randomWorker = workers.get(random);
+        workers.addAll(this.getWorkersList());
+        String randomWorker;
+        int random;
+        boolean t = true;
+        do{
+            random = (int) ((Math.random()*workers.size()) % workers.size());
+            randomWorker = workers.get(random);
+            try{
+                CallableStatement prepareCall = Commander.getInstance().con.prepareCall("SELECT * FROM labe2219.darbuotojas WHERE (darbuotojas.darbID= '"+randomWorker +"')");
+                ResultSet query = prepareCall.executeQuery();
+                query.next();
+                String eligibleForWork = query.getString(4);
+                if(!eligibleForWork.startsWith("direktorius")){
+                    t = false;
+                }
+            }catch(Exception e){
+                System.out.println(e.getMessage());
+                return;
+            }
+        }while(t);
         String product = this.comboboxProducts.getSelectionModel().getSelectedItem().toString();
+        Double price;
         try{
-            PreparedStatement ps = Commander.getInstance().con.prepareStatement("INSERT INTO labe2219.uzsakymas VALUES(?,?,?,?,?,NULL,NULL,?,FALSE)");
-            ps.setString(1, ""+amm);
-            ps.setTimestamp(2, java.sql.Timestamp.from(Instant.now()));
-            ps.setString(3, this.address.getText());
-            ps.setInt(4, amm2);
-            ps.setString(5, product);
-            ps.setString(6, randomWorker);
+            CallableStatement prepareCall = Commander.getInstance().con.prepareCall("SELECT * FROM labe2219.preke WHERE (preke.prekesID = '"+product +"')");
+            ResultSet query = prepareCall.executeQuery();
+            query.next();
+            price = query.getDouble(2);
+            price *=amm2;
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return;
+        }
+        try{
+            PreparedStatement ps = Commander.getInstance().con.prepareStatement("INSERT INTO labe2219.uzsakymas VALUES(?,?,?,?,?,?)");
+            int i = 1;
+            //ps.setString(i++, String.valueOf(amm));
+            ps.setTimestamp(i, java.sql.Timestamp.valueOf(LocalDateTime.now()));i++;
+            ps.setString(i, this.address.getText());i++;
+            ps.setInt(i, amm2);i++;
+            ps.setString(i, product);i++;
+            ps.setDouble(i, price);i++;
+            ps.setString(i, randomWorker);i++;
+            
             ps.execute();
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
-             
-        String values = "'"+amm+"','"+Commander.getCurrentDate()+" "+Commander.getCurrentTime()+"','"+
-                "Vilnius"+"',"+amm2+",'"+product+"',"+"NULL,"+"NULL,'"+randomWorker+"',FALSE";
-        //Commander.getInstance().insertTo("labe2219.UZSAKYMAS", values);
     }
-    
-    
-    
+    public ObservableList<String> getWorkersList(){
+        ObservableList<String> workerList = FXCollections.observableArrayList();
+        ResultTable table = Commander.getInstance().getTable("SELECT labe2219.darbuotojas.darbID FROM labe2219.darbuotojas");
+        table.getRows().forEach(row ->{
+        workerList.add(row.get(0).toString());
+        });
+        return workerList;
+    }
+
 }
