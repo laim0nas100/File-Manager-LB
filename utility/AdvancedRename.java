@@ -12,14 +12,19 @@ import static filemanagerGUI.FileManagerLB.reportError;
  * @author Laimonas Beniušis
  */
 public class AdvancedRename {
-    public class FilterException extends Exception{
-        
+    public static class FilterException extends Exception{
+        public FilterException(String message){
+            super(message);
+        }
     }
 
-    public static String parseFilter(String originalName, String filter, long currentNumber){
+    public static String parseFilter(String originalName, String filter, long currentNumber) throws FilterException{
         int numerationAmmount = 0;
         String newName = "";
         boolean preWasH = false;
+        if(originalName.contains("?")){
+            throw new FilterException("original name contains '?'");
+        }
         for(int i=0; i<filter.length(); i++){
             char c = filter.charAt(i);
             
@@ -45,7 +50,7 @@ public class AdvancedRename {
         if(preWasH){
             newName+=simpleFormat(currentNumber,numerationAmmount);
         }
-        return newName.trim();
+        return trimEnd(newName);
     }
     public static String parseRegex(String originalName, String regex, String replacement){
         String result = originalName;
@@ -65,5 +70,8 @@ public class AdvancedRename {
             result = '0'+result;
         }
         return result.trim();
+    }
+    public static String trimEnd(String string){
+        return string.replaceAll("\\s+$", "");
     }
 }

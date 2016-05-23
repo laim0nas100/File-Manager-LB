@@ -45,7 +45,7 @@ public class Entry{
         @Override
         public String toString(){
             String s="";
-            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/FileManagerLB.DataSize.KB.size;
+            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/FileManagerLB.DATA_SIZE.KB.size;
             if(isNew){
                 s+=" new";
             }else if(isMissing){

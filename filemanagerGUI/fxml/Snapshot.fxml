@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+
+<AnchorPane id="AnchorPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.92" fx:controller="filemanagerGUI.dialog.SnapshotController">
+   <children>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Text" />
+            <TreeTableView prefHeight="414.0" prefWidth="277.0">
+              <columns>
+                <TreeTableColumn prefWidth="75.0" text="C1" />
+                <TreeTableColumn prefWidth="75.0" text="C2" />
+              </columns>
+            </TreeTableView>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

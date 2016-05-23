@@ -18,7 +18,7 @@ import javafx.application.Platform;
  */
 public class SnapshotAPI {
     private final static SnapshotAPI INSTANCE = new SnapshotAPI();
-    public static SnapshotAPI getInstace(){
+    public static SnapshotAPI getInstance(){
         return INSTANCE;
     }
     public static Snapshot getEmptySnapshot(){

@@ -10,7 +10,7 @@ import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.MountDirectoryDialogController;
 import filemanagerGUI.dialog.ProgressDialogController;
-import filemanagerGUI.dialog.RenameDialog;
+import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.LocationInRoot;
@@ -74,7 +74,7 @@ public class ViewManager {
         try {
             int index = findSmallestAvailable(windows,WINDOW_TITLE);
             
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("mainComponents.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/Main.fxml"));
             Parent root = loader.load();
             MainController controller = loader.<MainController>getController();
             Stage stage = new Stage();
@@ -115,13 +115,15 @@ public class ViewManager {
             controller.updateCurrentView();
         }
     }
-    
+    public BaseController getController(String windowID){
+        return windows.get(windowID).getController();
+    }
 //PROGRESS DIALOG ACTIONS
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
         try {
             int index = findSmallestAvailable(dialogs,PROGRESS_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/ProgressDialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/ProgressDialog.fxml"));
            
             Parent root = loader.load();
             Stage stage = new Stage();
@@ -132,7 +134,7 @@ public class ViewManager {
             stage.setMinWidth(400);
             stage.show();
             stage.toFront();
-            stage.setAlwaysOnTop(true);
+            stage.requestFocus();
             
             //stage.setResizable(false);
             ProgressDialogController controller = loader.<ProgressDialogController>getController();
@@ -153,7 +155,7 @@ public class ViewManager {
     public void newRenameDialog(ObservableList<ExtFile> list,ExtFile itemToRename){
         try {
             int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/RenameDialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/RenameDialog.fxml"));
            
             Parent root = loader.load();
             Stage stage = new Stage();
@@ -164,8 +166,8 @@ public class ViewManager {
             stage.setMinWidth(500);
             stage.show();
             stage.toFront();
-            //stage.setAlwaysOnTop(!autoCloseProgressDialogs.get());
-            RenameDialog controller = loader.<RenameDialog>getController();
+            stage.setAlwaysOnTop(true);
+            RenameDialogController controller = loader.<RenameDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
@@ -180,7 +182,7 @@ public class ViewManager {
     public void newMountDirectoryDialog(){
         try {
             int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/MountDirectoryDialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/MountDirectoryDialog.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.setTitle(TEXT_INPUT_DIALOG_TITLE+index);
@@ -205,7 +207,7 @@ public class ViewManager {
     public void newAdvancedRenameDialog(LocationInRoot location){
        try {
             int index = findSmallestAvailable(dialogs,ADVANCED_RENAME_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("dialog/AdvancedRename.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/AdvancedRename.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.setTitle(ADVANCED_RENAME_DIALOG_TITLE+index);
@@ -228,20 +230,5 @@ public class ViewManager {
         dialogs.get(title).getStage().close();
         dialogs.remove(title);
     }
-    
-//CUSTOM VIEWS
-    public void setTableView(String title,TableView tableView){
-        Scene scene = windows.get(title).getStage().getScene();
-        AnchorPane left = (AnchorPane) scene.lookup("#left");
-        left.getChildren().clear();
-        left.getChildren().add(tableView);
-    }
-    public void setFlowView(String title,ScrollPane flowViewScroll,FlowPane flowView){
-        Scene scene = windows.get(title).getStage().getScene();
-        AnchorPane left = (AnchorPane) scene.lookup("#left");
-        left.getChildren().clear();
-        left.getChildren().add(flowView);
-    }
-    
     
 }

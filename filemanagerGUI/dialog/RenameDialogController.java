@@ -22,7 +22,7 @@ import utility.FileNameException;
  *
  * @author Laimonas Beniušis
  */
-public class RenameDialog extends TextInputDialogController {
+public class RenameDialogController extends TextInputDialogController {
     
     
     

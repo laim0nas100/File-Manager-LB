@@ -6,6 +6,7 @@
 package filemanagerLogic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import filemanagerGUI.BaseController;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -20,6 +21,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.reportError;
+import filemanagerGUI.Frame;
+import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.fileStructure.ActionFile;
 import filemanagerLogic.snapshots.Snapshot;
@@ -376,13 +379,12 @@ public class TaskFactory {
         String newName = name;
         int i=0;
         while(folder.files.containsKey(newName)){
-            newName = i+" "+name;
-            i++;
+            newName = ++i +" "+name;
         }
         return path+newName;
     }
     
-    public ExtTask snapshotCreateTask(ExtFolder folder,File file){
+    public ExtTask snapshotCreateTask(String windowID,ExtFolder folder,File file){
         return new ExtTask(){
             @Override
             protected Void call() throws Exception {
@@ -403,6 +405,10 @@ public class TaskFactory {
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
+                        MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
+                        controller.snapshotView.getItems().clear();
+                        controller.snapshotView.getItems().add("Snapshot:"+file+" created");
+                        
                         ViewManager.getInstance().updateAllWindows(); 
                     });
                     
@@ -412,7 +418,7 @@ public class TaskFactory {
   
         };
     }
-    public ExtTask snapshotLoadTask(Text t1, Text t2, ListView lw,ExtFolder folder,File nextSnap){
+    public ExtTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
         return new ExtTask(){
             @Override
             protected Void call() throws Exception {
@@ -432,13 +438,19 @@ public class TaskFactory {
                     Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.comapareSnapshots(currentSnapshot, sn));
                     ObservableList list = FXCollections.observableArrayList();
                     list.addAll(result.map.values());
-                    t1.setText(sn.dateCreated);
-                    t2.setText(sn.folderCreatedFrom);
-                    t1.setVisible(true);
-                    t2.setVisible(true);
+                    MainController frame = (MainController) ViewManager.getInstance().windows.get(windowID).getController();
+                    
+                    frame.snapshotTextDate.setText(sn.dateCreated);
+                    frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
+                    frame.snapshotTextDate.setVisible(true);
+                    frame.snapshotTextFolder.setVisible(true);
                     Platform.runLater(()->{
-                        lw.getItems().clear();
-                        lw.getItems().addAll(list);
+                        frame.snapshotView.getItems().clear();
+                        if(list.size()>0){
+                            frame.snapshotView.getItems().addAll(list);
+                        }else{
+                            frame.snapshotView.getItems().add("No Differences Detected");
+                        }
                     });
                          
                 return null;

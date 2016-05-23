@@ -15,12 +15,8 @@ import filemanagerLogic.TaskFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.FlowPane;
 import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
@@ -53,7 +49,6 @@ import filemanagerLogic.snapshots.SnapshotAPI;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import javafx.concurrent.Task;
 import javafx.scene.text.Text;
 
 /**
@@ -120,9 +115,7 @@ public class MainController extends BaseController{
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
         super.setUp(title);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
-        
-       
-        
+
         finder = new Finder("",searchView.getItems(),useRegex.selectedProperty());
         
         MC = new ManagingClass(root);
@@ -136,8 +129,8 @@ public class MainController extends BaseController{
     }
     @Override
     public void exit(){ 
-        System.out.println("Closing internally " + title);
-        ViewManager.getInstance().closeWindow(title); 
+        System.out.println("Closing internally " + windowID);
+        ViewManager.getInstance().closeWindow(windowID); 
     }
 
     public void setTableView(){
@@ -187,19 +180,7 @@ public class MainController extends BaseController{
     
     public void test(){
         try{
-        Snapshot sn1 = SnapshotAPI.getInstace().getEmptySnapshot();
-        ObjectMapper mapper = new ObjectMapper();
-        File file = new File("E:\\snp");
-        if(file.exists()){
-            sn1 = mapper.readValue(file, Snapshot.class);
-        }else{
-            sn1 = SnapshotAPI.getInstace().createSnapshot((ExtFolder) MC.currentDir.files.get("NewD"));
-        }
-        Snapshot sn2 = SnapshotAPI.getInstace().createSnapshot((ExtFolder) MC.currentDir.files.get("NewF"));
-        Snapshot cmp = SnapshotAPI.getInstace().comapareSnapshots(sn1, sn2);
-        
-        Log.writeln(cmp);
-        mapper.writeValue(file,sn1);
+       
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -207,7 +188,7 @@ public class MainController extends BaseController{
 
     
     public void openCustomDir() {
-        changeToCustomDir(new ExtFile(currentDirText.getText()).getAbsolutePath());
+        changeToCustomDir(currentDirText.getText().trim());
     }    
     public void changeToParent(){
         MC.changeToParent();
@@ -268,17 +249,22 @@ public class MainController extends BaseController{
             File file = new File(possibleSnapshot);
            
             if(file.exists()){
-                new Thread(TaskFactory.getInstance().snapshotLoadTask(snapshotTextDate, snapshotTextFolder, snapshotView,MC.currentDir,file)).start(); 
+                new Thread(TaskFactory.getInstance().snapshotLoadTask(this.windowID,MC.currentDir,file)).start(); 
             }
         }catch(Exception ex){
             reportError(ex);
         }
     }
     public void createSnapshot(){
+        if(MC.currentDir.isAbsoluteRoot()){
+            reportError(new Exception("Cannot create stapshots at ROOT"));
+            return;
+        }
+        this.snapshotView.getItems().add("Creating snapshot at "+MC.currentDir.getAbsoluteDirectory());
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
         File file = new File(TaskFactory.resolveAvailableName(MC.currentDir, possibleSnapshot));
-        new Thread(TaskFactory.getInstance().snapshotCreateTask(MC.currentDir, file)).start();
-       
+        new Thread(TaskFactory.getInstance().snapshotCreateTask(windowID,MC.currentDir, file)).start();
+        
     }
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();
@@ -313,17 +299,21 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equals("ROOT")){
+            if(possibleDir.equalsIgnoreCase("ROOT")){
                 changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot("")));
             }else if(Files.isDirectory(Paths.get(possibleDir))){
-                    LocationInRoot location = new LocationInRoot(possibleDir);
+                possibleDir = Paths.get(possibleDir).toRealPath().toString();
+                ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(possibleDir);
+                this.changeToDir((ExtFolder) fileAndPopulate);
+                /*LocationInRoot location = new LocationInRoot(possibleDir);
                     if(!LocationAPI.getInstance().existByLocation(location)){
-                    
                         ExtFolder folder = new ExtFolder(possibleDir);
                         Log.writeln("put by Location Recursive: "+location);
                         LocationAPI.getInstance().putByLocationRecursive(location, folder);
                     }
                     changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
+                */
+                
             }else{
                updateCurrentView(); 
             }
@@ -332,7 +322,7 @@ public class MainController extends BaseController{
         }
     }
     private Stage getStage(){
-        return ViewManager.getInstance().windows.get(this.title).getStage();
+        return ViewManager.getInstance().windows.get(this.windowID).getStage();
     }
     private void hideAllContextMenus(){
         tableContextMenu.hide();

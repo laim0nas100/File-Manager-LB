@@ -19,10 +19,6 @@ import javafx.scene.control.TextField;
  * @author Laimonas Beniušis
  */
 
-
-
-
-
 public abstract class TextInputDialogController extends BaseDialog implements TextInputDialogEssentials {
     @FXML public TextField textField;
     @FXML public Button buttonEnter;

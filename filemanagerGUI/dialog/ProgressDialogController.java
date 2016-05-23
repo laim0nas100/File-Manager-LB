@@ -36,8 +36,6 @@ public class ProgressDialogController extends BaseDialog {
     @FXML public Label timeWasted;
     
     protected CustomClock clock;
-
-    
     private ExtTask task;
     private SimpleBooleanProperty paused;
     

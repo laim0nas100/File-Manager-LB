@@ -37,7 +37,6 @@ public class ExtTask extends Task<Void> {
     public void setTaskDescription(String taskDescription) {
         this.taskDescription = taskDescription;
     }
-    
 
     public boolean isPaused() {
         return paused;

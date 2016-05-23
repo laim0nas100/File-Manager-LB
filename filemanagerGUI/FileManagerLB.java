@@ -5,17 +5,13 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
@@ -44,7 +40,7 @@ public class FileManagerLB extends Application {
         }
     }
     
-    public static final String ARTIFICIAL_ROOT_NAME = "/&&";
+    public static String ARTIFICIAL_ROOT_NAME = "./ROOT";
     public static ExtFolder ArtificialRoot;
     public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
@@ -56,9 +52,11 @@ public class FileManagerLB extends Application {
         links = FXCollections.observableArrayList();
         errorLog = FXCollections.observableArrayList();
         DataSize = DATA_SIZE.KB;
+        ARTIFICIAL_ROOT_NAME = TaskFactory.resolveAvailableName(new ExtFolder("/"), ARTIFICIAL_ROOT_NAME);
         ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
         ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
+        Log.write(ARTIFICIAL_ROOT_NAME);
         rootSet = new HashSet<>();
         remount();
         ArtificialRoot.propertyName.set("ROOT");

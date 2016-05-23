@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" prefWidth="664.0" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.RenameDialog">
+<VBox alignment="CENTER" prefWidth="664.0" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.RenameDialogController">
    <children>
       <Label fx:id="description" alignment="CENTER" contentDisplay="CENTER" text="Label" />
       <HBox alignment="CENTER" prefHeight="35.0" prefWidth="638.0">

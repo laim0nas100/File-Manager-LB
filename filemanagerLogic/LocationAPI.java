@@ -13,6 +13,8 @@ import static filemanagerGUI.FileManagerLB.reportError;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 
 /**
@@ -30,14 +32,16 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String path){
         ExtFile file;
-        LocationInRoot fileLocation = new LocationInRoot(path);
-        if(path.equals("ROOT")||path.isEmpty()){
-                file = (ExtFolder) getFileByLocation(fileLocation);
+        
+        if(path.isEmpty()){
+                file = ArtificialRoot;
         }else {
-            if(new File(path).exists()){
+            if(Files.exists(Paths.get(path))){
+                LocationInRoot fileLocation = new LocationInRoot(path);
                 if(!existByLocation(fileLocation)){
                     ExtFolder folder = new ExtFolder(new File(path).getParent());
                     putByLocationRecursive(folder.getMapping(), folder);
+                    Log.writeln(folder.getMapping());
                     folder.update(); 
                 }
                 file = getFileByLocation(fileLocation);
@@ -62,7 +66,7 @@ public class LocationAPI {
         }
         return folder.files.containsKey(location.getName());
     }
-
+    
     public void removeByLocation(LocationInRoot location) {
         int i = 0;
         ExtFolder folder = ArtificialRoot;

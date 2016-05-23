@@ -3,25 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package filemanagerGUI;
+package filemanagerGUI.dialog;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.Initializable;
 
 /**
+ * FXML Controller class
  *
  * @author Laimonas Beniušis
  */
-
-public abstract class BaseController implements Initializable{
-    protected String windowID;
+public class SnapshotController extends BaseDialog {
     
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {}; 
-    
-    protected void setUp(String title){
-       this.windowID = title;
-    }
-    public abstract void exit();
 }

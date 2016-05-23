@@ -90,7 +90,11 @@ public void update(){
         nameCollection2.clear();
         long number = startingNumber;
         for(String s:nameCollection1){
-            nameCollection2.add(AdvancedRename.parseFilter(s, filter, number++)); 
+            try { 
+                nameCollection2.add(AdvancedRename.parseFilter(s, filter, number++));
+            } catch (AdvancedRename.FilterException ex) {
+                reportError(ex);
+            }
         }
         lwFutureFolder.getItems().clear();
         lwFutureFolder.getItems().addAll(nameCollection2);
