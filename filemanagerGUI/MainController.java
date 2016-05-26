@@ -172,9 +172,20 @@ public class MainController extends BaseController{
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
     }
-    public void advancedRename(){
+    public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot()){
-            ViewManager.getInstance().newAdvancedRenameDialog(MC.currentDir.getMapping());
+            ArrayList<String> list = new ArrayList<>();
+            list.add(MC.currentDir.getAbsolutePath());
+            ViewManager.getInstance().newAdvancedRenameDialog(list);
+        }
+    }
+    public void advancedRenameMarked(){
+        if(!MC.currentDir.isAbsoluteRoot()){
+            ArrayList<String> list = new ArrayList<>();
+            this.markedView.getItems().forEach(file ->{
+                list.add(file.toString());
+            });
+            ViewManager.getInstance().newAdvancedRenameDialog(list);
         }
     }
     
@@ -499,14 +510,11 @@ public class MainController extends BaseController{
         contextMenuItems[23] = new MenuItem("Mark selected");
         contextMenuItems[23].setOnAction(eh ->{
             ObservableList<String> selectedItems = searchView.getSelectionModel().getSelectedItems();
-            
-                Platform.runLater(()->{
+       
                 for(String item:selectedItems){
                     ExtFile file = LocationAPI.getInstance().getFileAndPopulate(item);
                     TaskFactory.getInstance().addToMarked(file);
-                }
-                });
-                
+                }   
             
         });
         contextMenuItems[24] = new MenuItem("Copy Absolute Path");

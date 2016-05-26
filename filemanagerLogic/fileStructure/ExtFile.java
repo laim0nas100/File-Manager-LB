@@ -6,7 +6,7 @@
 package filemanagerLogic.fileStructure;
 
 
-import static filemanagerGUI.FileManagerLB.rootSet;
+import filemanagerGUI.FileManagerLB;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,7 +65,7 @@ public class ExtFile extends FileAbs{
     }
     public boolean isRoot(){
         String path = this.getAbsolutePath();
-        return rootSet.contains(path);
+        return FileManagerLB.getRootSet().contains(path);
     }
     public String getAbsoluteDirectory(){
         return this.getAbsolutePath();

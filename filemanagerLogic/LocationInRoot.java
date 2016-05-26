@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import filemanagerGUI.FileManagerLB;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
+import org.apache.commons.lang3.StringUtils;
 import utility.Log;
 
 /**
@@ -27,18 +29,22 @@ public class LocationInRoot {
     
     public LocationInRoot(String filePath){
         coordinates = new LinkedList<>();
+        String rootLoc = "";
         if(!filePath.isEmpty()){
-            Path path = new File(filePath).toPath();
-            String rootLoc = path.getRoot().toString();
-            filePath = path.toString();
+            ArrayList<String> roots = new ArrayList<>();
+            FileManagerLB.getRootSet().forEach(root ->{
+                roots.add(root);
+            });
+            for(String s:roots){
+                if(StringUtils.contains(filePath, s)){
+                    rootLoc = s;
+                    break;
+                }
+            }
             coordinates.add(rootLoc);
             if(!filePath.equals(rootLoc)){
-                
-                filePath = filePath.replaceFirst(Matcher.quoteReplacement(rootLoc),"");
-                //Log.writeln("passed 1",filePath);
-                filePath = filePath.replace(File.separator, "/");
-                //Log.writeln("passed 2",filePath);
-                String[] fileArray = filePath.split("/");
+                filePath = StringUtils.replaceOnce(filePath, rootLoc, "");
+                String[] fileArray = StringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);
@@ -52,6 +58,7 @@ public class LocationInRoot {
                 }
                 coordinates.addAll(list);
             }
+            //Log.writeln(coordinates);
         }
     }
     public LocationInRoot(LocationInRoot loc){

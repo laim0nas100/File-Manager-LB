@@ -40,7 +40,7 @@ public class MountDirectoryDialogController extends TextInputDialogController {
         if(new File(stringToCheck).exists()){
             Path path = Paths.get(stringToCheck);
             stringToCheck = path.toString();
-            if(!FileManagerLB.rootSet.contains(stringToCheck)){
+            if(!FileManagerLB.getRootSet().contains(stringToCheck)){
                 if((path.getNameCount() ==0)&&(Files.isDirectory(path))){
                     nameIsAvailable.set(true);
                 }

@@ -16,7 +16,9 @@ import filemanagerLogic.ExtTask;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
@@ -204,7 +206,7 @@ public class ViewManager {
         }
         
     }
-    public void newAdvancedRenameDialog(LocationInRoot location){
+    public void newAdvancedRenameDialog(ArrayList<String> list){
        try {
             int index = findSmallestAvailable(dialogs,ADVANCED_RENAME_DIALOG_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/AdvancedRename.fxml"));
@@ -218,7 +220,7 @@ public class ViewManager {
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
-            controller.setUp(stage.getTitle(),location);
+            controller.setUp(stage.getTitle(),list);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {

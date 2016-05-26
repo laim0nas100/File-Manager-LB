@@ -5,12 +5,15 @@
  */
 package filemanagerGUI;
 
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,7 +45,6 @@ public class FileManagerLB extends Application {
     
     public static String ARTIFICIAL_ROOT_NAME = "./ROOT";
     public static ExtFolder ArtificialRoot;
-    public static HashSet<String> rootSet;
     public static DATA_SIZE DataSize;
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
@@ -57,7 +59,6 @@ public class FileManagerLB extends Application {
         ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
         Log.write(ARTIFICIAL_ROOT_NAME);
-        rootSet = new HashSet<>();
         remount();
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
@@ -65,6 +66,7 @@ public class FileManagerLB extends Application {
 //            //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
 //        });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
+        //ViewManager.getInstance().newMountDirectoryDialog();
         ViewManager.getInstance().updateAllWindows();
     } 
     /**
@@ -78,7 +80,6 @@ public class FileManagerLB extends Application {
         File[] roots = File.listRoots();
         for(ExtFile f:ArtificialRoot.getFilesCollection()){
             if(!Files.isDirectory(f.toPath())){
-                rootSet.remove(f.propertyName.get());
                 ArtificialRoot.files.remove(f.propertyName.get());
             }
         }
@@ -102,7 +103,6 @@ public class FileManagerLB extends Application {
                 //Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
                 ArtificialRoot.files.putIfAbsent(newName, device);
-                rootSet.add(newName);
                 //Log.writeln("Mounted successfully");
             }
         }
@@ -110,7 +110,16 @@ public class FileManagerLB extends Application {
     }
     public static void reportError(Exception ex){
         ErrorReport error = new ErrorReport(ex);
+        System.err.println(ex.getMessage());
         errorLog.add(0, error);
+    }
+    public static Set<String> getRootSet(){
+        HashSet<String> set = new HashSet<>();
+        for(ExtFile file:ArtificialRoot.files.values()){
+            set.add(file.propertyName.get());
+        }
+        return set;
+        
     }
 
 }

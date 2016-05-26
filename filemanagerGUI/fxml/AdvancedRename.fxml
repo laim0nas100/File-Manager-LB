@@ -4,19 +4,21 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane id="AnchorPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
-   <children>
-      <VBox alignment="CENTER" prefHeight="651.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
+  <items>
+      <VBox>
          <children>
             <TabPane prefHeight="180.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE">
               <tabs>
@@ -72,7 +74,7 @@
                         </AnchorPane>
                   </content>
                 </Tab>
-                  <Tab fx:id="tbNumerize" closable="false" onSelectionChanged="#updateLists" text="Numerize/Text Insertion">
+                  <Tab fx:id="tbNumerize" closable="false" text="Numerize/Text Insertion">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -81,7 +83,8 @@
                                     <Label text="Filter">
                                        <padding>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding></Label>
+                                       </padding>
+                                    </Label>
                                     <TextField fx:id="tfFilter">
                                        <tooltip>
                                           <Tooltip text="? - original name, # - number spot, any other symbol will be inserted in specified spot" />
@@ -93,58 +96,75 @@
                                     <Label layoutX="20.0" layoutY="20.0" text="Starting number">
                                        <padding>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding></Label>
+                                       </padding>
+                                    </Label>
                                     <TextField fx:id="tfStartingNumber" onAction="#setNumber" onKeyTyped="#setNumber">
                                        <padding>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding></TextField>
+                                       </padding>
+                                    </TextField>
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                  </padding>
                               </VBox>
-                           </children></AnchorPane>
+                           </children>
+                        </AnchorPane>
                     </content>
                   </Tab>
               </tabs>
             </TabPane>
             <HBox alignment="CENTER" prefHeight="51.0" prefWidth="600.0">
                <children>
-                <Button mnemonicParsing="false" onAction="#update" prefHeight="27.0" prefWidth="120.0" text="Preview">
+                <Button mnemonicParsing="false" onAction="#update" text="Update">
                      <HBox.margin>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </HBox.margin>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </Button>
-                  <Button fx:id="buttonApply" mnemonicParsing="false" onAction="#apply" prefHeight="27.0" prefWidth="120.0" text="Apply">
+                  <Button layoutX="111.0" layoutY="22.0" mnemonicParsing="false" onAction="#previewSetting" text="Preview">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Button>
+                  <Button fx:id="buttonApply" mnemonicParsing="false" onAction="#apply" text="Apply">
                      <HBox.margin>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </HBox.margin>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </Button>
+                  <CheckBox fx:id="recursive" mnemonicParsing="false" text="Recursive">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="showFullPath" mnemonicParsing="false" text="Show full path">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </CheckBox>
                </children>
             </HBox>
-            <SplitPane dividerPositions="0.29797979797979796" prefHeight="400.0" prefWidth="600.0">
-              <items>
-                  <VBox>
-                     <children>
-                        <Label text="Current Contents" />
-                        <ListView fx:id="lwCurrentFolder" prefHeight="398.0" prefWidth="200.0" />
-                     </children>
-                  </VBox>
-                  <VBox alignment="TOP_RIGHT">
-                     <children>
-                        <Label text="Contents After Rename" />
-                        <ListView fx:id="lwFutureFolder" prefHeight="398.0" prefWidth="417.0" />
-                     </children>
-                  </VBox>
-              </items>
-            </SplitPane>
          </children>
       </VBox>
-   </children>
-</AnchorPane>
+      <TableView fx:id="table">
+        <columns>
+          <TableColumn prefWidth="75.0" text="C1" />
+          <TableColumn prefWidth="75.0" text="C2" />
+        </columns>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" />
+         </padding>
+      </TableView>
+  </items>
+</SplitPane>

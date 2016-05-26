@@ -6,16 +6,13 @@
 package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
-import static filemanagerGUI.FileManagerLB.rootSet;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import javafx.beans.property.SimpleDoubleProperty;
 import utility.Log;
 
 /**

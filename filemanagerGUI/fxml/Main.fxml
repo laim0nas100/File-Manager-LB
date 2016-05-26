@@ -37,7 +37,12 @@
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                         <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
-                        <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRename" text="Advanced Rename" />
+                        <Menu mnemonicParsing="false" text="Advanced Rename">
+                          <items>
+                              <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRenameFolder" text="Current Folder" />
+                              <MenuItem mnemonicParsing="false" onAction="#advancedRenameMarked" text="Marked Items" />
+                          </items>
+                        </Menu>
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">

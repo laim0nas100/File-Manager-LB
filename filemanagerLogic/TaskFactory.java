@@ -6,7 +6,6 @@
 package filemanagerLogic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import filemanagerGUI.BaseController;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -21,7 +20,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.reportError;
-import filemanagerGUI.Frame;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.fileStructure.ActionFile;
@@ -29,12 +27,7 @@ import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.regex.Matcher;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.text.Text;
 import utility.FileNameException;
 
 /**
@@ -132,7 +125,7 @@ public class TaskFactory {
             Collection<ExtFile> listRecursive = file.getListRecursive();
             ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
             for(ExtFile f:listRecursive){
-                String relativePath = resolveRelativePath(f, parentFile);
+                String relativePath = resolveRelativePath(f, (ExtFolder) parentFile);
                 list.add(new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath));
             }
            
@@ -181,12 +174,15 @@ public class TaskFactory {
             Collection<ExtFile> listRecursive = file.getListRecursive();
             ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
             for(ExtFile f:listRecursive){
-                
-                String relativePath = resolveRelativePath(f, parentFile);
-                Log.write("RelativePath: ",relativePath);
+                try{
+                String relativePath = resolveRelativePath(f, (ExtFolder) parentFile);
+                //Log.write("RelativePath: ",relativePath);
                 ActionFile AF = new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath);
-                Log.write("ActionFile: ",AF);
+                //Log.write("ActionFile: ",AF);
                 list.add(AF);
+                }catch(Exception e){
+                    reportError(e);
+                }
             }
            
         }
@@ -199,9 +195,6 @@ public class TaskFactory {
             Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
         }
         return array;
-        
-        
-    
     }
     
 //TASKS    
@@ -365,14 +358,12 @@ public class TaskFactory {
     }
     
  //MISC
-    public static String resolveRelativePath(ExtFile f1, ExtFile f2){
-        ExtFolder parent = (ExtFolder) f2;
-        String parentFolder = parent.getAbsoluteDirectory();
+    public static String resolveRelativePath(ExtFile f1, ExtFolder f2){
+
+        String parentFolder = f2.getAbsoluteDirectory();
         String path1 = f1.getAbsolutePath();
-        String quoteReplacement;
-        quoteReplacement  = Matcher.quoteReplacement(parentFolder); 
-        //Log.write("Replace ",quoteReplacement," from ",path1);
-        return path1.replaceFirst(quoteReplacement, "");
+        String result = org.apache.commons.lang3.StringUtils.replaceOnce(path1, parentFolder, "");
+        return result;
     }
     public static String resolveAvailableName(ExtFolder folder,String name){
         String path = folder.getAbsoluteDirectory();
