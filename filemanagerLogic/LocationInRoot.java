@@ -7,16 +7,12 @@ package filemanagerLogic;
 
 import filemanagerGUI.FileManagerLB;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.regex.Matcher;
-import org.apache.commons.lang3.StringUtils;
-import utility.Log;
+import utility.ExtStringUtils;
 
 /**
  * Location Mapping Class
@@ -36,15 +32,15 @@ public class LocationInRoot {
                 roots.add(root);
             });
             for(String s:roots){
-                if(StringUtils.contains(filePath, s)){
+                if(ExtStringUtils.contains(filePath, s)){
                     rootLoc = s;
                     break;
                 }
             }
             coordinates.add(rootLoc);
             if(!filePath.equals(rootLoc)){
-                filePath = StringUtils.replaceOnce(filePath, rootLoc, "");
-                String[] fileArray = StringUtils.split(filePath, File.separatorChar);
+                filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
+                String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);

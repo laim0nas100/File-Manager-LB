@@ -6,14 +6,7 @@
 package filemanagerLogic;
 
 import static filemanagerGUI.FileManagerLB.reportError;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Timer;
-import java.util.TimerTask;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
-import utility.CustomClock;
 
 /**
  * Custom Task

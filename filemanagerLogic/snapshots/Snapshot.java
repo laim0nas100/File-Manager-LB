@@ -5,7 +5,6 @@
  */
 package filemanagerLogic.snapshots;
 
-import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;

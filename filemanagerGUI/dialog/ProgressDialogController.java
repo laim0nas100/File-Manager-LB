@@ -5,7 +5,6 @@
  */
 package filemanagerGUI.dialog;
 
-import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
 import javafx.beans.property.SimpleBooleanProperty;

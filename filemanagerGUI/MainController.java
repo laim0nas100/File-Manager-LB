@@ -5,7 +5,6 @@
  */
 package filemanagerGUI;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
@@ -45,17 +44,12 @@ import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.FileManagerLB.DATA_SIZE;
-import filemanagerLogic.fileStructure.ActionFile;
-import filemanagerLogic.snapshots.Snapshot;
-import filemanagerLogic.snapshots.SnapshotAPI;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.Comparator;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Text;
 import utility.ExtStringUtils;
 
@@ -65,10 +59,8 @@ import utility.ExtStringUtils;
  * @author Laimonas Beniušis
  */
 public class MainController extends BaseController{
-    
-    
-    
 
+    
     @FXML public CheckMenuItem autoClose;
     @FXML public SplitPane splitPane;
     

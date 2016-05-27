@@ -6,7 +6,6 @@
 package filemanagerGUI.dialog;
 
 import static filemanagerGUI.FileManagerLB.reportError;
-import filemanagerGUI.ViewManager;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;

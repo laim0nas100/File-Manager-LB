@@ -5,12 +5,9 @@
  */
 package filemanagerLogic.snapshots;
 
-import filemanagerLogic.ExtTask;
-import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import javafx.application.Platform;
 
 /**
  *

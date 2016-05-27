@@ -5,6 +5,7 @@
  */
 package utility;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
@@ -15,14 +16,10 @@ public class MultiLinedString{
     public LinkedList<String> list;
     public MultiLinedString(String...str){
         list = new LinkedList<>();
-        for(String s:str){
-            list.add(s);
-        }
+        list.addAll(Arrays.asList(str));
     }
     public void addLines(String...str){
-        for(String s:str){
-            list.add(s);
-        }
+        list.addAll(Arrays.asList(str));
     }
     public String getLines(){
         String s = "";
@@ -43,7 +40,4 @@ public class MultiLinedString{
     public char getCharAt(int line,int index){
         return list.get(line).charAt(index);
     }
-    
-    
-    
 }

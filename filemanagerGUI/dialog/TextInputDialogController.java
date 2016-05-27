@@ -5,8 +5,6 @@
  */
 package filemanagerGUI.dialog;
 
-import filemanagerGUI.BaseController;
-import filemanagerGUI.ViewManager;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
