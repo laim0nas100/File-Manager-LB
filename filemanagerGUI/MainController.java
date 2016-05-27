@@ -44,12 +44,20 @@ import utility.FavouriteLink;
 import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import filemanagerGUI.FileManagerLB.DATA_SIZE;
+import filemanagerLogic.fileStructure.ActionFile;
 import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.util.Comparator;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Text;
+import utility.ExtStringUtils;
 
 /**
  * FXML Controller class
@@ -91,9 +99,10 @@ public class MainController extends BaseController{
     @FXML public Text snapshotTextFolder;
     @FXML public ListView snapshotView;
     
-    
+    @FXML public Menu menuSizeUnits;
     @FXML public MenuItem miAdvancedRename;
-        
+    
+    
     private ContextMenu tableContextMenu;
     private ContextMenu markedContextMenu;
     private ContextMenu tableDragContextMenu;
@@ -108,12 +117,42 @@ public class MainController extends BaseController{
     
     private ManagingClass MC;
     private Finder finder;
-    
-    private int currentView;
-    
-    
+    private DATA_SIZE unitSize;
+    private SimpleStringProperty propertyUnitSizeName;
+    private SimpleLongProperty propertyUnitSize;
+    private SimpleBooleanProperty propertyUnitSizeAuto;
+    public static final Comparator<String> compareSizeAsString = new Comparator<String>() {
+        @Override
+        public int compare(String f1, String f2) {
+            if(f1.isEmpty()||f2.isEmpty()){
+                return f1.compareTo(f2);
+            }
+            return extractSize(f1).compareTo(extractSize(f2));
+        }
+    };
+    public static Double extractSize(String s){
+        Long multiplier = DATA_SIZE.B.size;;
+        if(s.startsWith("(B)")){
+            s = s.replace("(B) ", "");
+        }else if(s.startsWith("(KB)")){
+            s = s.replace("(KB) ", "");
+            multiplier = DATA_SIZE.KB.size;
+        }else if(s.startsWith("(MB)")){
+            s = s.replace("(MB) ", "");
+            multiplier = DATA_SIZE.MB.size;
+        }else if(s.startsWith("(GB)")){
+            s = s.replace("(GB) ", "");
+            multiplier = DATA_SIZE.GB.size;;
+        }
+        return  Double.parseDouble(s)*multiplier;
+    }
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+        
         super.setUp(title);
+        unitSize = DATA_SIZE.KB;
+        propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
+        propertyUnitSize = new SimpleLongProperty(unitSize.size);
+        propertyUnitSizeAuto = new SimpleBooleanProperty(false);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
 
         finder = new Finder("",searchView.getItems(),useRegex.selectedProperty());
@@ -134,7 +173,6 @@ public class MainController extends BaseController{
     }
 
     public void setTableView(){
-        currentView = 0;
         tableView.getItems().clear();
         tableView.getItems().addAll(MC.getCurrentContents());
         tableView.getColumns().setAll(columns);
@@ -566,23 +604,38 @@ public class MainController extends BaseController{
         TableColumn<ExtFile, String> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyType);
 
-        TableColumn<ExtFile, String> sizeCol = new TableColumn<>("Size ("+FileManagerLB.DataSize.sizename+")");
+        TableColumn<ExtFile, String> sizeCol = new TableColumn<>();
+        sizeCol.textProperty().bind(this.propertyUnitSizeName);
         sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+                
                 if(cellData.getValue().getIdentity().equals("folder")){
                     return new SimpleStringProperty("");
+                }else if(propertyUnitSizeAuto.get()){
+                    return cellData.getValue().propertySizeAuto;
                 }else{
-                    return cellData.getValue().propertySize.divide(FileManagerLB.DataSize.size).asString();
+                    SimpleStringProperty string = new SimpleStringProperty();
+                    Double get = cellData.getValue().propertySize.divide((double)propertyUnitSize.get()).get();
+                    if(get>0.001){
+//                        String doubleString = String.valueOf(get);
+//                        int indexOf = doubleString.indexOf('.');
+//                        doubleString = doubleString.substring(0, Math.min(doubleString.length(),indexOf+4));
+                        string.set(ExtStringUtils.extractNumber(get));
+                    }else{
+                        string.set("0");
+                    }
+                    return string;
                 }
             }
         });
-        
-        
-        
+        sizeCol.setComparator(compareSizeAsString);
+        TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
+        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
         columns.add(nameCol);
         columns.add(typeCol);
         columns.add(sizeCol);
+        columns.add(dateCol);
         
 
         
@@ -895,5 +948,33 @@ public class MainController extends BaseController{
             errorView.getSelectionModel().clearSelection();
             linkView.getSelectionModel().clearSelection();  
         });
+        
+        for(MenuItem item:menuSizeUnits.getItems()){
+            String sizeType = item.getText();
+            
+            if("Auto".equalsIgnoreCase(sizeType)){
+                item.setOnAction(eh ->{
+                   setSizeAuto();
+                });
+            }else{  
+                item.setOnAction(eh ->{
+                   this.propertyUnitSizeAuto.set(false);
+                   this.unitSize = DATA_SIZE.valueOf(sizeType);
+                   Log.writeln(unitSize);
+                   this.propertyUnitSizeName.set("Size "+unitSize.sizename);
+                   this.propertyUnitSize.set(unitSize.size);
+                   this.updateCurrentView();
+                });
+            }
+        }
+        Platform.runLater(()->{
+            setSizeAuto();
+        });
+        
+    }
+    private void setSizeAuto(){
+        this.propertyUnitSizeAuto.set(true);
+        this.propertyUnitSizeName.set("Size Auto");
+        this.updateCurrentView();
     }
 }

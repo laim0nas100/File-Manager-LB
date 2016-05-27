@@ -11,10 +11,9 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-
 
 <SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
   <items>
@@ -24,137 +23,150 @@
               <tabs>
                 <Tab closable="false" text="Specific Rename">
                   <content>
-                    <AnchorPane>
+                        <VBox alignment="CENTER_LEFT" prefHeight="151.0" prefWidth="600.0">
                            <children>
-                              <VBox alignment="CENTER_LEFT" prefHeight="151.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <HBox alignment="CENTER_LEFT" prefHeight="35.0" prefWidth="570.0">
                                  <children>
-                                    <HBox alignment="CENTER_LEFT" prefHeight="0.0" prefWidth="580.0">
-                                       <children>
-                                          <Label text="String / Regex" />
-                                          <CheckBox fx:id="useRegex" mnemonicParsing="false" text="Use regex">
-                                             <HBox.margin>
-                                                <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-                                             </HBox.margin>
-                                          </CheckBox>
-                                       </children>
-                                       <padding>
-                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                       </padding>
-                                       <VBox.margin>
+                                    <Label text="String / Regex">
+                                       <HBox.margin>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </VBox.margin>
-                                    </HBox>
-                                    <TextField fx:id="tfStrReg">
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                       <VBox.margin>
-                                          <Insets />
-                                       </VBox.margin>
-                                    </TextField>
-                                    <Label prefHeight="27.0" prefWidth="97.0" text="Replace With">
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
+                                       </HBox.margin>
                                     </Label>
-                                    <TextField fx:id="tfReplaceWith">
-                                       <padding>
+                                    <CheckBox fx:id="useRegex" mnemonicParsing="false" text="Use regex">
+                                       <HBox.margin>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </TextField>
+                                       </HBox.margin>
+                                    </CheckBox>
                                  </children>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </VBox.margin>
+                              </HBox>
+                              <TextField fx:id="tfStrReg">
                                  <padding>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </padding>
-                              </VBox>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </TextField>
+                              <HBox>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <Label text="Replace With">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                              <TextField fx:id="tfReplaceWith">
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </TextField>
                            </children>
-                        </AnchorPane>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
                   </content>
                 </Tab>
                   <Tab fx:id="tbNumerize" closable="false" text="Numerize/Text Insertion">
                     <content>
-                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                        <VBox prefHeight="151.0" prefWidth="600.0">
                            <children>
-                              <VBox prefHeight="151.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <HBox prefHeight="35.0">
                                  <children>
                                     <Label text="Filter">
-                                       <padding>
+                                       <HBox.margin>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
+                                       </HBox.margin>
                                     </Label>
-                                    <TextField fx:id="tfFilter">
-                                       <tooltip>
-                                          <Tooltip text="? - original name, # - number spot, any other symbol will be inserted in specified spot" />
-                                       </tooltip>
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </TextField>
-                                    <Label layoutX="20.0" layoutY="20.0" text="Starting number">
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </Label>
-                                    <TextField fx:id="tfStartingNumber" onAction="#setNumber" onKeyTyped="#setNumber">
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </TextField>
                                  </children>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </VBox.margin>
+                              </HBox>
+                              <TextField fx:id="tfFilter">
+                                 <tooltip>
+                                    <Tooltip text="? - original name, # - number spot, any other symbol will be inserted in specified spot" />
+                                 </tooltip>
                                  <padding>
-                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </padding>
-                              </VBox>
+                              </TextField>
+                              <HBox>
+                                 <children>
+                                    <Label text="Starting number">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </VBox.margin>
+                              </HBox>
+                              <TextField fx:id="tfStartingNumber" onAction="#setNumber" onKeyTyped="#setNumber">
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </TextField>
                            </children>
-                        </AnchorPane>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
                     </content>
                   </Tab>
               </tabs>
             </TabPane>
-            <HBox alignment="CENTER" prefHeight="51.0" prefWidth="600.0">
+            <FlowPane alignment="CENTER" columnHalignment="CENTER">
                <children>
                 <Button mnemonicParsing="false" onAction="#update" text="Update">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                     <FlowPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </FlowPane.margin>
                   </Button>
-                  <Button layoutX="111.0" layoutY="22.0" mnemonicParsing="false" onAction="#previewSetting" text="Preview">
+                  <Button mnemonicParsing="false" onAction="#previewSetting" text="Preview">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                     <FlowPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </FlowPane.margin>
                   </Button>
                   <Button fx:id="buttonApply" mnemonicParsing="false" onAction="#apply" text="Apply">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                     <FlowPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </FlowPane.margin>
                   </Button>
                   <CheckBox fx:id="recursive" mnemonicParsing="false" text="Recursive">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </CheckBox>
                   <CheckBox fx:id="showFullPath" mnemonicParsing="false" text="Show full path">
-                     <HBox.margin>
+                     <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="includeFolders" mnemonicParsing="false" text="Include Folders">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </CheckBox>
                </children>
-            </HBox>
+            </FlowPane>
          </children>
       </VBox>
       <TableView fx:id="table">

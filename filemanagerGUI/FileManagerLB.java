@@ -28,24 +28,26 @@ import utility.Log;
  */
 public class FileManagerLB extends Application {
     public static enum DATA_SIZE{
-        
         B  (1,"B"),
         KB (1024,"KB"),
-        Mb (1024*1024/8,"Kb"),
         MB (1024*1024,"MB"),
-        Gb (1024*1024*1024/8,"Gb"),
         GB (1024*1024*1024,"GB");
-        public final long size;
-        public final String sizename;
+        public long size;
+        public String sizename;
         DATA_SIZE(long size,String s){
             this.size = size;
             this.sizename = s;
+        }
+        public void set(DATA_SIZE e,String sizename){
+            e.size = DATA_SIZE.valueOf(sizename).size;
+            e.sizename = DATA_SIZE.valueOf(sizename).sizename;
         }
     }
     
     public static String ARTIFICIAL_ROOT_NAME = "./ROOT";
     public static ExtFolder ArtificialRoot;
     public static DATA_SIZE DataSize;
+    
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;

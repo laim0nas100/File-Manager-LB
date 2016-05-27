@@ -8,10 +8,11 @@ package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
@@ -21,8 +22,6 @@ import javafx.beans.property.SimpleStringProperty;
  * Extended File for custom actions
  */
 public class ExtFile extends FileAbs{
-    protected String relativePath;
-    protected Path destination;
     protected boolean isAbsoluteRoot;
 
     public boolean isAbsoluteRoot() {
@@ -33,11 +32,29 @@ public class ExtFile extends FileAbs{
         this.isAbsoluteRoot = isAbsoluteRoot;
     }
     protected void setDefaultValues(){         
-        this.relativePath = "";
-        this.destination = Paths.get(""); 
         this.propertyName = new SimpleStringProperty(this.getName());
         this.propertyType = new SimpleStringProperty(this.getIdentity());
         this.propertySize = new SimpleLongProperty(this.length());
+        this.propertyDate = new SimpleStringProperty(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(this.lastModified()))));
+        String stringSize = this.propertySize.asString().get();
+        Double size = Double.valueOf(stringSize);
+        String sizeType = "B";
+        if(size>=1024){
+            size =size /1024;
+            sizeType = "KB";
+        }
+        if(size>=1024){
+            size =size /1024;
+            sizeType = "MB";
+        }
+        if(size>=1024){
+            size =size /1024;
+            sizeType = "GB";
+        }
+        stringSize = String.valueOf(size);
+        int indexOf = stringSize.indexOf('.');
+        this.propertySizeAuto = new SimpleStringProperty("("+sizeType+") "+stringSize.substring(0, Math.min(stringSize.length(), indexOf+3)));
+        
         this.isAbsoluteRoot = false;
     }   
     public ExtFile(File file){

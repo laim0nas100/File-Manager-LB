@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.dialog;
 import static filemanagerGUI.FileManagerLB.reportError;
+import filemanagerGUI.MainController;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
@@ -29,7 +30,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
-import utility.AdvancedRename;
+import utility.ExtStringUtils;
 import utility.Log;
 
 /**
@@ -53,6 +54,7 @@ public class AdvancedRenameController extends BaseDialog {
 @FXML public CheckBox useRegex;
 @FXML public CheckBox showFullPath;
 @FXML public CheckBox recursive;
+@FXML public CheckBox includeFolders;
 @FXML public Button buttonApply;
 
 
@@ -108,7 +110,7 @@ public void setUp(String title,ArrayList<String> fileList){
             return cellData.getValue().date;
         }
     });
-
+    sizeCol.setComparator(MainController.compareSizeAsString);
     
     columns.add(nameCol1);
     columns.add(nameCol2);
@@ -155,12 +157,26 @@ public void updateLists(){
         ArrayList<String> locArray = new ArrayList<>();
         if(recursive.selectedProperty().get()){
             for(ExtFile file:folder.getListRecursive()){
-                locArray.add(file.getAbsolutePath());
+                if(this.includeFolders.selectedProperty().get()){
+                    locArray.add(file.getAbsolutePath());
+                }else{
+                    if(!file.getIdentity().equals("folder")){
+                        locArray.add(file.getAbsolutePath());
+                    }
+                }
             }
-            locArray.remove(0);
+            if(this.includeFolders.selectedProperty().get()){
+                locArray.remove(0);
+            }
         }else{
             for(ExtFile file:folder.getFilesCollection()){
-                locArray.add(file.getAbsolutePath());
+                if(this.includeFolders.selectedProperty().get()){
+                    locArray.add(file.getAbsolutePath());
+                }else{
+                    if(!file.getIdentity().equals("folder")){
+                        locArray.add(file.getAbsolutePath());
+                    }
+                }
             } 
         }
         array.addAll(locArray);
@@ -181,8 +197,8 @@ public void previewSetting(){
         for(Object s:table.getItems()){
             try {
                 TableItemObject object = (TableItemObject) s;
-                object.newName(AdvancedRename.parseFilter(object.name1.get(), filter, number++));
-            } catch (AdvancedRename.FilterException ex) {
+                object.newName(ExtStringUtils.parseFilter(object.name1.get(), filter, number++));
+            } catch (Exception ex) {
                 reportError(ex);
             }
         }
@@ -192,12 +208,12 @@ public void previewSetting(){
         if(useRegex.isSelected()){
             for(Object s:table.getItems()){
                 TableItemObject object = (TableItemObject) s;
-                object.newName(AdvancedRename.parseRegex(object.name1.get(), strRegex, replacement)); 
+                object.newName(ExtStringUtils.parseRegex(object.name1.get(), strRegex, replacement)); 
             }
         }else{
            for(Object s:table.getItems()){
                 TableItemObject object = (TableItemObject) s;
-                object.newName(AdvancedRename.parseSimple(object.name1.get(), strRegex, replacement)); 
+                object.newName(ExtStringUtils.parseSimple(object.name1.get(), strRegex, replacement)); 
            } 
         }
     }

@@ -52,9 +52,7 @@ public class ErrorReport {
             return err.substring(0,index);
         }else{
             return err;
-        }
-            
+        } 
     }
-    
-    
+ 
 }

@@ -29,13 +29,27 @@
               <menus>
                 <Menu mnemonicParsing="false" text="File">
                   <items>
-                    <MenuItem mnemonicParsing="false" onAction="#exit" text="Close" />
-                        <MenuItem mnemonicParsing="false" onAction="#closeAllWindows" text="Close All" />
+                    <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
+                    <MenuItem mnemonicParsing="false" onAction="#exit" text="Close this window" />
+                        <MenuItem mnemonicParsing="false" onAction="#closeAllWindows" text="Exit" />
                   </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="Edit">
-                  <items>
-                    <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
+                  <Menu mnemonicParsing="false" text="Options">
+                     <items>
+                        <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
+                        <Menu fx:id="menuSizeUnits" mnemonicParsing="false" text="Size Units">
+                          <items>
+                            <MenuItem mnemonicParsing="false" text="B" />
+                              <MenuItem mnemonicParsing="false" text="KB" />
+                              <MenuItem mnemonicParsing="false" text="MB" />
+                              <MenuItem mnemonicParsing="false" text="GB" />
+                              <MenuItem mnemonicParsing="false" text="Auto" />
+                          </items>
+                        </Menu>
+                     </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Tools">
+                    <items>
                         <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
                         <Menu mnemonicParsing="false" text="Advanced Rename">
                           <items>
@@ -43,13 +57,12 @@
                               <MenuItem mnemonicParsing="false" onAction="#advancedRenameMarked" text="Marked Items" />
                           </items>
                         </Menu>
-                  </items>
-                </Menu>
-                <Menu mnemonicParsing="false" text="View">
+                    </items>
+                  </Menu>
+                <Menu mnemonicParsing="false" text="Other">
                   <items>
                     <MenuItem mnemonicParsing="false" text="About" />
                         <MenuItem disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
-                        <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
                   </items>
                 </Menu>
               </menus>
