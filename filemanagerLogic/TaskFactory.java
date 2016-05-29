@@ -19,15 +19,18 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.fileStructure.ActionFile;
+import filemanagerLogic.snapshots.ExtEntry;
 import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
+import utility.ErrorReport;
 import utility.FileNameException;
 
 /**
@@ -181,7 +184,7 @@ public class TaskFactory {
                 //Log.write("ActionFile: ",AF);
                 list.add(AF);
                 }catch(Exception e){
-                    reportError(e);
+                    ErrorReport.report(e);
                 }
             }
            
@@ -224,7 +227,7 @@ public class TaskFactory {
                         Log.writeln("OK:"+list[i]);
                         
                     }catch(Exception e){
-                        reportError(e); 
+                        ErrorReport.report(e); 
                     }
                     updateProgress(i+1, list.length);                    
                 }
@@ -268,7 +271,7 @@ public class TaskFactory {
                             Log.writeln("OK:"+list[index1]);
                         }
                     }catch(Exception e){
-                        reportError(e); 
+                        ErrorReport.report(e); 
                         
                     }
                     updateProgress(index1+1, list.length+leftFolders.size());
@@ -316,7 +319,7 @@ public class TaskFactory {
                     try{
                         Files.deleteIfExists(list[i].paths[0]);
                     }catch(Exception e){
-                        reportError(e);
+                        ErrorReport.report(e);
                     }
                     updateProgress(i+1, list.length);
 
@@ -328,22 +331,13 @@ public class TaskFactory {
         };
     } 
     private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
-       
+        
         if(level<MAX_DEPTH){
-            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsolutePath());
-            LocationInRoot loc = folder.getMapping();
-            if(!LocationAPI.getInstance().existByLocation(loc)){
-                LocationAPI.getInstance().putByLocation(loc, folder);
-            }
-            folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(loc);
-            if(!folder.isPopulated()){
-                folder.populateFolder();  
-            }
+            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsoluteDirectory());
+            folder.update();
             
             for(ExtFolder fold:folder.getFoldersFromFiles()){
-                LocationInRoot location = LocationAPI.getInstance().getLocationMapping(fold.getAbsolutePath());
-                LocationAPI.getInstance().removeByLocation(location);
-                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
+                populateRecursiveParallelInner(fold, ++level,MAX_DEPTH);
             }
         }
     }
@@ -375,7 +369,20 @@ public class TaskFactory {
         return path+newName;
     }
     
-    public ExtTask snapshotCreateTask(String windowID,ExtFolder folder,File file){
+    public Task<Snapshot> snapshotCreateTask(String folder){
+        return new Task(){
+            @Override
+            protected Snapshot call() throws Exception {
+                ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel((ExtFolder) LocationAPI.getInstance().getFileAndPopulate(folder), 50);
+                Thread thread = new Thread(populateRecursiveParallel);
+                thread.start();
+                thread.join();
+                return new Snapshot((ExtFolder) LocationAPI.getInstance().getFileAndPopulate(folder));
+            }
+  
+        };
+    }
+    public ExtTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
         return new ExtTask(){
             @Override
             protected Void call() throws Exception {
@@ -396,11 +403,13 @@ public class TaskFactory {
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
-                        MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
-                        controller.snapshotView.getItems().clear();
-                        controller.snapshotView.getItems().add("Snapshot:"+file+" created");
-                        
-                        ViewManager.getInstance().updateAllWindows(); 
+                        try{
+                            MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
+                            controller.snapshotView.getItems().clear();
+                            controller.snapshotView.getItems().add("Snapshot:"+file+" created");
+
+                            ViewManager.getInstance().updateAllWindows(); 
+                        }catch(Exception e){}
                     });
                     
                 
@@ -426,7 +435,7 @@ public class TaskFactory {
                     Snapshot sn = SnapshotAPI.getEmptySnapshot();
                     sn = mapper.readValue(nextSnap, sn.getClass());
                     
-                    Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.comapareSnapshots(currentSnapshot, sn));
+                    Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.compareSnapshots(currentSnapshot, sn));
                     ObservableList list = FXCollections.observableArrayList();
                     list.addAll(result.map.values());
                     MainController frame = (MainController) ViewManager.getInstance().windows.get(windowID).getController();
@@ -450,6 +459,70 @@ public class TaskFactory {
         };
     }
     
+    public ExtTask syncronizeTask(String folder1,String folder2,ObservableList<ExtEntry> listFirst,ObservableList<ExtEntry> listLast){
+         return new ExtTask(){
+            @Override
+            protected Void call(){
+                int i=0;
+                int size = listFirst.size()+listLast.size();
+                Log.writeln("Size "+size);
+                for(ExtEntry entry:listFirst){
+                    this.updateProgress(i, size);
+                    Path path1 = Paths.get(folder1+entry.relativePath);
+                    Path path2 = Paths.get(folder2+entry.relativePath);
+                    try{
+                        action(path1,path2,entry);
+                    }catch(Exception e){
+                        ErrorReport.report(e);
+                    }
+                    
+                    i++;
+                }
+                
+                for(ExtEntry entry:listLast){
+                    this.updateProgress(i, size);
+                    Path path1 = Paths.get(folder1+entry.relativePath);
+                    Path path2 = Paths.get(folder2+entry.relativePath);
+                    try{
+                        action(path1,path2,entry);
+                    }catch(Exception e){
+                        ErrorReport.report(e);
+                    }
+                }
+                return null;
+            
+            }
+        };
+    }
+    private void action(Path path1,Path path2,ExtEntry entry) throws Exception{
+        switch(entry.actionType.get()){
+            case(1):{
+                Files.copy(path2, path1,StandardCopyOption.COPY_ATTRIBUTES);                      
+                break;
+            }case(2):{
+                if(!Files.isDirectory(path1)){
+                    Files.copy(path2, path1, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+                }else{
+                    throw new Exception();
+                }
+                break;
+            }case(3):{
+                Files.copy(path1, path2,StandardCopyOption.COPY_ATTRIBUTES); 
+                break;
+            }case(4):{
+                if(!Files.isDirectory(path2)){
+                    Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+                }else{
+                    throw new Exception();
+                }
+                break;
+            }case(5):{
+                Files.deleteIfExists(path1);
+                break;
+            }
+        }
+        entry.actionCompleted.set(true);
+    }
     
     
     public static void serializeObject(String whereToSave, Object whatToSave){
@@ -460,7 +533,7 @@ public class TaskFactory {
             
             mapper.writeValue(new File(whereToSave), whatToSave);
         }catch(Exception ex){
-            reportError(ex);
+            ErrorReport.report(ex);
             success = false;
         }
         

@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package filemanagerGUI.dialog;
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.MainController;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
@@ -30,6 +29,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
+import utility.ErrorReport;
 import utility.ExtStringUtils;
 import utility.Log;
 
@@ -199,7 +199,7 @@ public void previewSetting(){
                 TableItemObject object = (TableItemObject) s;
                 object.newName(ExtStringUtils.parseFilter(object.name1.get(), filter, number++));
             } catch (Exception ex) {
-                reportError(ex);
+                ErrorReport.report(ex);
             }
         }
     }else{
@@ -238,7 +238,7 @@ public void apply(){
         try {
             TaskFactory.getInstance().renameTo(ob.path1.get(),ob.name2.get());
         } catch (Exception ex) {
-            reportError(ex);
+            ErrorReport.report(ex);
         }
     }
     update();

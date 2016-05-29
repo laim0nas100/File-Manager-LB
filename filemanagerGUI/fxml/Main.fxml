@@ -50,13 +50,14 @@
                   </Menu>
                   <Menu mnemonicParsing="false" text="Tools">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#mountDirectory" text="Mount Folder" />
                         <Menu mnemonicParsing="false" text="Advanced Rename">
                           <items>
                               <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRenameFolder" text="Current Folder" />
                               <MenuItem mnemonicParsing="false" onAction="#advancedRenameMarked" text="Marked Items" />
                           </items>
                         </Menu>
+                        <MenuItem mnemonicParsing="false" onAction="#dirSync" text="Directory Sync" />
+
                     </items>
                   </Menu>
                 <Menu mnemonicParsing="false" text="Other">

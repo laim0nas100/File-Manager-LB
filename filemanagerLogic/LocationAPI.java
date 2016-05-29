@@ -5,17 +5,17 @@
  */
 package filemanagerLogic;
 
+import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import static filemanagerGUI.FileManagerLB.reportError;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import javafx.application.Platform;
+import utility.ErrorReport;
 
 /**
  *
@@ -30,23 +30,31 @@ public class LocationAPI {
     public LocationInRoot getLocationMapping(String path){
         return new LocationInRoot(path);
     }
-    public ExtFile getFileAndPopulate(String path){
-        ExtFile file;
+    public ExtFile getFileAndPopulate(String pathl){
+        ExtFile file = ArtificialRoot;
         
-        if(path.isEmpty()){
-                file = ArtificialRoot;
-        }else {
-            if(Files.exists(Paths.get(path))){
-                LocationInRoot fileLocation = new LocationInRoot(path);
-                if(!existByLocation(fileLocation)){
-                    ExtFolder folder = new ExtFolder(new File(path).getParent());
-                    putByLocationRecursive(folder.getMapping(), folder);
-                    Log.writeln(folder.getMapping());
-                    folder.update(); 
+        if(!pathl.isEmpty()){
+            try{
+                pathl = pathl.toUpperCase();
+                Path path = Paths.get(pathl).toRealPath();
+                ExtFile tempFile = new ExtFile(path.toString());
+                if(!tempFile.isRoot()){
+                    FileManagerLB.mountDevice(path.getRoot().toString());
                 }
-                file = getFileByLocation(fileLocation);
-            }else{
-                file = null;
+                if(Files.exists(path)){
+                    LocationInRoot fileLocation = new LocationInRoot(path.toString());
+                    if(!existByLocation(fileLocation)){
+                        ExtFolder folder = new ExtFolder(new File(path.toString()).getParent());
+                        putByLocationRecursive(folder.getMapping(), folder);
+                        Log.writeln(folder.getMapping());
+                        folder.update(); 
+                    }
+                    file = getFileByLocation(fileLocation);
+                }else{
+                    file = null;
+                }
+            }catch(Exception e){
+                ErrorReport.report(e);
             }
         }
         return file;           
@@ -113,10 +121,31 @@ public class LocationAPI {
         
         return folder.files.get(location.getName());
         }catch(Exception x){
-            reportError(x);
+            ErrorReport.report(x);
             return null;
         }
        
+    }
+    public boolean exists(String file){
+        try{
+            Path get = Paths.get(file).toRealPath();
+            return Files.exists(get);
+        }catch(Exception e){
+            return false;
+        }
+    }
+    public boolean isDirectory(String file){
+        try{
+            Path get = Paths.get(file).toRealPath();
+            return Files.isDirectory(get);
+        }catch(Exception e){
+            return false;
+        }
+    
+    }
+    public String getRealPath(String path) throws IOException{
+            Path get = Paths.get(path).toRealPath();
+            return get.toString();
     }
     
 }

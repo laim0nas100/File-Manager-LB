@@ -5,6 +5,8 @@
  */
 package utility;
 
+import filemanagerGUI.FileManagerLB;
+import static filemanagerGUI.FileManagerLB.DEBUG;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,6 +18,15 @@ import javafx.scene.control.Tooltip;
  * @author Laimonas Beniušis
  */
 public class ErrorReport {
+    
+    public static void report(Exception ex) {
+        ErrorReport error = new ErrorReport(ex);
+        System.err.println(ex.getMessage());
+        if(DEBUG){
+            ex.printStackTrace();
+        }
+        FileManagerLB.errorLog.add(0, error);
+    }
     private final SimpleStringProperty errorName;
     private final Exception errorCause;
     private final Date date;

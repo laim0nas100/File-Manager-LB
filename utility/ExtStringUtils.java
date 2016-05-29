@@ -5,13 +5,12 @@
  */
 package utility;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  *
  * @author Laimonas Beniušis
  */
-public class ExtStringUtils extends StringUtils {
+
+public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
     private static final double PRECISION = 0.0001;
     public static class FilterException extends Exception{
         public FilterException(String message){
@@ -28,13 +27,10 @@ public class ExtStringUtils extends StringUtils {
         return result;
     }
 
-    public static String parseFilter(String originalName, String filter, long currentNumber) throws FilterException {
+    public static String parseFilter(String originalName, String filter, long currentNumber){
         int numerationAmmount = 0;
         String newName = "";
         boolean preWasH = false;
-        if (originalName.contains("?")) {
-            throw new FilterException("original name contains '?'");
-        }
         for (int i = 0; i < filter.length(); i++) {
             char c = filter.charAt(i);
             if (c == '#') {
@@ -84,7 +80,6 @@ public class ExtStringUtils extends StringUtils {
         numb = numb - fullPart;
         if(fullPart>0){
             while(fullPart>0){
-
                 result = (fullPart % 10) + result;
                 fullPart/=10;
             }

@@ -21,7 +21,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import static filemanagerGUI.FileManagerLB.errorLog;
 import static filemanagerGUI.FileManagerLB.links;
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
 import java.nio.file.Path;
@@ -44,6 +43,7 @@ import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.FileManagerLB.DATA_SIZE;
+import filemanagerLogic.snapshots.Snapshot;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
@@ -123,7 +123,7 @@ public class MainController extends BaseController{
         }
     };
     public static Double extractSize(String s){
-        Long multiplier = DATA_SIZE.B.size;;
+        Long multiplier = DATA_SIZE.B.size;
         if(s.startsWith("(B)")){
             s = s.replace("(B) ", "");
         }else if(s.startsWith("(KB)")){
@@ -134,7 +134,7 @@ public class MainController extends BaseController{
             multiplier = DATA_SIZE.MB.size;
         }else if(s.startsWith("(GB)")){
             s = s.replace("(GB) ", "");
-            multiplier = DATA_SIZE.GB.size;;
+            multiplier = DATA_SIZE.GB.size;
         }
         return  Double.parseDouble(s)*multiplier;
     }
@@ -155,9 +155,6 @@ public class MainController extends BaseController{
         
         changeToDir(currentDir);
     }
-    public void mountDirectory(){
-        ViewManager.getInstance().newMountDirectoryDialog();
-    }
     @Override
     public void exit(){ 
         System.out.println("Closing internally " + windowID);
@@ -167,8 +164,7 @@ public class MainController extends BaseController{
     public void setTableView(){
         tableView.getItems().clear();
         tableView.getItems().addAll(MC.getCurrentContents());
-        tableView.getColumns().setAll(columns);
-        tableView.getSortOrder().add(columns.get(0));
+        tableView.sort();
         
     }
 
@@ -180,7 +176,7 @@ public class MainController extends BaseController{
         if(MC.currentDir.isAbsoluteRoot()){
             currentDirText.setText("ROOT");
         }else{
-            currentDirText.setText(MC.currentDir.getAbsolutePath());
+            currentDirText.setText(MC.currentDir.getAbsoluteDirectory());
         }
         MC.currentDir.update();
 
@@ -221,7 +217,8 @@ public class MainController extends BaseController{
     
     public void test(){
         try{
-       
+            Snapshot sn = new Snapshot((ExtFolder) LocationAPI.getInstance().getFileAndPopulate("E:\\t1"));
+            Log.writeln(sn);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -265,7 +262,7 @@ public class MainController extends BaseController{
                         Files.walkFileTree(MC.currentDir.toPath(), finder);
                         itemCount.setText(finder.list.size()+"");
                     } catch (Exception ex) {
-                        reportError(ex);
+                        ErrorReport.report(ex);
                     }
                 });   
             }else{
@@ -276,7 +273,7 @@ public class MainController extends BaseController{
                         }
                         itemCount.setText(finder.list.size()+"");
                     } catch (Exception ex) {
-                        reportError(ex);
+                        ErrorReport.report(ex);
                     }
                 });   
             }
@@ -293,28 +290,29 @@ public class MainController extends BaseController{
                 new Thread(TaskFactory.getInstance().snapshotLoadTask(this.windowID,MC.currentDir,file)).start(); 
             }
         }catch(Exception ex){
-            reportError(ex);
+            ErrorReport.report(ex);
         }
     }
     public void createSnapshot(){
         if(MC.currentDir.isAbsoluteRoot()){
-            reportError(new Exception("Cannot create stapshots at ROOT"));
+            ErrorReport.report(new Exception("Cannot create stapshots at ROOT"));
             return;
         }
         this.snapshotView.getItems().add("Creating snapshot at "+MC.currentDir.getAbsoluteDirectory());
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
         File file = new File(TaskFactory.resolveAvailableName(MC.currentDir, possibleSnapshot));
-        new Thread(TaskFactory.getInstance().snapshotCreateTask(windowID,MC.currentDir, file)).start();
+        new Thread(TaskFactory.getInstance().snapshotCreateWriteTask(windowID,MC.currentDir, file)).start();
         
+    }
+    public void dirSync(){
+        ViewManager.getInstance().newDirSyncDialog();
     }
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();
         ArrayList<Integer> array = new ArrayList<>();
         array.addAll(selected);
         sm.selectAll();
-        array.stream().forEach((i)->{
-            sm.clearSelection(i);
-        });
+        array.stream().forEach(sm::clearSelection);
     }
     private void handleOpen(ExtFile file){
         if(file.getIdentity().equals("folder")){
@@ -341,25 +339,18 @@ public class MainController extends BaseController{
     private void changeToCustomDir(String possibleDir){
         try{
             if(possibleDir.equalsIgnoreCase("ROOT")){
-                changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot("")));
+                changeToDir(ArtificialRoot);
             }else if(Files.isDirectory(Paths.get(possibleDir))){
-                possibleDir = Paths.get(possibleDir).toRealPath().toString();
-                ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(possibleDir);
-                this.changeToDir((ExtFolder) fileAndPopulate);
-                /*LocationInRoot location = new LocationInRoot(possibleDir);
-                    if(!LocationAPI.getInstance().existByLocation(location)){
-                        ExtFolder folder = new ExtFolder(possibleDir);
-                        Log.writeln("put by Location Recursive: "+location);
-                        LocationAPI.getInstance().putByLocationRecursive(location, folder);
-                    }
-                    changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
-                */
+                Path path = Paths.get(possibleDir);
+                
+                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(path.toString());
+                this.changeToDir(fileAndPopulate);
                 
             }else{
-               updateCurrentView(); 
+                updateCurrentView(); 
             }
         } catch (Exception ex) {
-            reportError(ex);
+            ErrorReport.report(ex);
         }
     }
     private Stage getStage(){
@@ -388,7 +379,7 @@ public class MainController extends BaseController{
                 MC.createNewFolder();
                 MainController.this.updateCurrentView();
             }catch (Exception ex) {
-                reportError(ex);
+                ErrorReport.report(ex);
             }
         });
         
@@ -432,7 +423,7 @@ public class MainController extends BaseController{
                 MC.createNewFile();
                 MainController.this.updateCurrentView();
             }catch (IOException ex) {
-                reportError(ex);
+                ErrorReport.report(ex);
             }
         });
         contextMenuItems[6] = new MenuItem("Add to marked");
@@ -486,7 +477,7 @@ public class MainController extends BaseController{
                     changeToCustomDir(path.getParent().toString());
                 }
             }catch(Exception ex){
-                reportError(ex);
+                ErrorReport.report(ex);
             }
         });
         
@@ -632,8 +623,6 @@ public class MainController extends BaseController{
 
         
         //TABLE VIEW ACTIONS
-        
-       
 
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -933,6 +922,7 @@ public class MainController extends BaseController{
         setUpContextMenus();
         setUpTableView();
         setUpListViews();
+        
         getStage().getScene().setOnMouseClicked((eh) -> {
             markedView.getSelectionModel().clearSelection();
             tableView.getSelectionModel().clearSelection();
@@ -961,6 +951,9 @@ public class MainController extends BaseController{
         }
         Platform.runLater(()->{
             setSizeAuto();
+            tableView.getItems().clear();
+            tableView.getItems().addAll(MC.getCurrentContents());
+            tableView.getColumns().setAll(columns);
         });
         
     }

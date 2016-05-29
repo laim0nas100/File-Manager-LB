@@ -5,14 +5,14 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -27,30 +27,15 @@ import utility.Log;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    public static enum DATA_SIZE{
-        B  (1,"B"),
-        KB (1024,"KB"),
-        MB (1024*1024,"MB"),
-        GB (1024*1024*1024,"GB");
-        public long size;
-        public String sizename;
-        DATA_SIZE(long size,String s){
-            this.size = size;
-            this.sizename = s;
-        }
-        public void set(DATA_SIZE e,String sizename){
-            e.size = DATA_SIZE.valueOf(sizename).size;
-            e.sizename = DATA_SIZE.valueOf(sizename).sizename;
-        }
-    }
-    
-    public static String ARTIFICIAL_ROOT_NAME = "./ROOT";
+    public static String ARTIFICIAL_ROOT_NAME = "./.ARTIFICIAL_ROOT";
     public static ExtFolder ArtificialRoot;
     public static DATA_SIZE DataSize;
     
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;
+    public static final boolean DEBUG = false;
+    
     @Override
     public void start(Stage primaryStage) {
         links = FXCollections.observableArrayList();
@@ -85,35 +70,34 @@ public class FileManagerLB extends Application {
                 ArtificialRoot.files.remove(f.propertyName.get());
             }
         }
-        for(int i = 0; i < roots.length ; i++){
-            Log.writeln("Root["+i+"]:" + roots[i].getAbsolutePath());
-            mountDevice(roots[i].getAbsolutePath());
+        for (File root : roots) {
+            //Log.writeln("Root["+i+"]:" + roots[i].getAbsolutePath());
+            mountDevice(root.getAbsolutePath());
         }
     }
     public static boolean mountDevice(String name){
         boolean result = false;
+        name = name.toUpperCase();
+        Path path = Paths.get(name);
         if(!new File(name).exists()){
             return false;
         }
-        if(Files.isDirectory(new File(name).toPath())){
-            ExtFolder device = new ExtFolder(name);
-            int nameCount = device.toPath().getNameCount();
+        if(Files.isDirectory(path)){
+            ExtFolder device = new ExtFolder(path.toString());
+            int nameCount = path.getNameCount();
             //Log.write("Is direcory");
             if(nameCount == 0){
                 result = true;
-                String newName = device.toPath().getRoot().toString();
+                String newName = path.getRoot().toString();
                 //Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
                 ArtificialRoot.files.putIfAbsent(newName, device);
+                device.update();
+                
                 //Log.writeln("Mounted successfully");
             }
         }
         return result;
-    }
-    public static void reportError(Exception ex){
-        ErrorReport error = new ErrorReport(ex);
-        System.err.println(ex.getMessage());
-        errorLog.add(0, error);
     }
     public static Set<String> getRootSet(){
         HashSet<String> set = new HashSet<>();
@@ -123,5 +107,20 @@ public class FileManagerLB extends Application {
         return set;
         
     }
-
+    public static enum DATA_SIZE{
+        B  (1,"B"),
+        KB (1024,"KB"),
+        MB (1024*1024,"MB"),
+        GB (1024*1024*1024,"GB");
+        public long size;
+        public String sizename;
+        DATA_SIZE(long size,String s){
+            this.size = size;
+            this.sizename = s;
+        }
+        public void set(DATA_SIZE e,String sizename){
+            e.size = DATA_SIZE.valueOf(sizename).size;
+            e.sizename = DATA_SIZE.valueOf(sizename).sizename;
+        }
+    }
 }

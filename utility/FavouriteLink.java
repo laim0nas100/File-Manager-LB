@@ -5,8 +5,6 @@
  */
 package utility;
 
-import java.io.File;
-import java.nio.file.Paths;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 
@@ -15,16 +13,15 @@ import javafx.scene.control.Tooltip;
  * @author Laimonas Beniušis
  */
 public class FavouriteLink {
-    private SimpleStringProperty propertyName;
-    private String location;
+    private final SimpleStringProperty propertyName;
+    private final String location;
     public FavouriteLink(String name,String dir){
         propertyName = new SimpleStringProperty(name);
         if(dir.isEmpty()){
-          location = "";  
-        } else if(new File(dir).exists()){
-            location = Paths.get(dir).toString();
+            location = "ROOT";  
+        } else {
+            location = dir;
         }
-        
     }
 
     public String getDirectory(){

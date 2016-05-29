@@ -6,34 +6,25 @@
 package filemanagerGUI;
 
 
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerGUI.dialog.AdvancedRenameController;
-import filemanagerGUI.dialog.MountDirectoryDialogController;
+import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
-import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TableView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import utility.Log;
+import utility.ErrorReport;
 
 /**
  *
@@ -45,6 +36,7 @@ public class ViewManager {
     public static final String TEXT_INPUT_DIALOG_TITLE="Text Input Dialog ";
     public static final String MESSAGE_DIALOG_TITLE="Message Dialog ";
     public static final String ADVANCED_RENAME_DIALOG_TITLE="Advanced Rename ";
+    public static final String DIR_SYNC_DIALOG_TITLE="Directory Syncronization ";
     public SimpleBooleanProperty autoCloseProgressDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
     
@@ -93,7 +85,7 @@ public class ViewManager {
             
             
         } catch (IOException ex) {
-            reportError(ex);
+            ErrorReport.report(ex);
         }
         
     }
@@ -147,7 +139,7 @@ public class ViewManager {
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
-           reportError(ex);
+           ErrorReport.report(ex);
         }
         
     }
@@ -177,32 +169,7 @@ public class ViewManager {
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
-            reportError(ex);
-        }
-        
-    }
-    public void newMountDirectoryDialog(){
-        try {
-            int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/MountDirectoryDialog.fxml"));
-            Parent root = loader.load();
-            Stage stage = new Stage();
-            stage.setTitle(TEXT_INPUT_DIALOG_TITLE+index);
-            stage.setScene(new Scene(root));
-            stage.setMaxHeight(200);
-            stage.setMinHeight(200);
-            stage.setMinWidth(500);
-            stage.show();
-            stage.toFront();
-            MountDirectoryDialogController controller = loader.<MountDirectoryDialogController>getController();
-            stage.setOnCloseRequest((WindowEvent we) -> {
-                controller.exit();
-            });
-            controller.setUp(stage.getTitle());
-            Frame frame = new Frame(stage,controller);
-            dialogs.put(frame.getTitle(),frame);          
-        } catch (Exception ex) {
-            reportError(ex);
+            ErrorReport.report(ex);
         }
         
     }
@@ -224,10 +191,30 @@ public class ViewManager {
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
-            reportError(ex);
+            ErrorReport.report(ex);
         } 
     }
-    
+    public void newDirSyncDialog(){
+      try {
+           int index = findSmallestAvailable(dialogs,DIR_SYNC_DIALOG_TITLE);
+           FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/DirSync.fxml"));
+           Parent root = loader.load();
+           Stage stage = new Stage();
+           stage.setTitle(DIR_SYNC_DIALOG_TITLE+index);
+           stage.setScene(new Scene(root));
+           stage.show();
+           stage.toFront();
+           DirSyncController controller = loader.<DirSyncController>getController();
+           stage.setOnCloseRequest((WindowEvent we) -> {
+               controller.exit();
+           });
+           controller.setUp(stage.getTitle());
+           Frame frame = new Frame(stage,controller);
+           dialogs.put(frame.getTitle(),frame);          
+       } catch (Exception ex) {
+           ErrorReport.report(ex);
+       } 
+   }
     public void closeDialog(String title){
         dialogs.get(title).getStage().close();
         dialogs.remove(title);

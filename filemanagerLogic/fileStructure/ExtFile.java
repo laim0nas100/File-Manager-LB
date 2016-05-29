@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
@@ -81,8 +82,14 @@ public class ExtFile extends FileAbs{
         return list; 
     }
     public boolean isRoot(){
-        String path = this.getAbsolutePath();
-        return FileManagerLB.getRootSet().contains(path);
+        String path = this.getAbsoluteDirectory();
+        Iterator<String> iterator = FileManagerLB.getRootSet().iterator();
+        while(iterator.hasNext()){
+            if(path.equalsIgnoreCase(iterator.next())){
+                return true;
+            }
+        }
+        return false;
     }
     public String getAbsoluteDirectory(){
         return this.getAbsolutePath();

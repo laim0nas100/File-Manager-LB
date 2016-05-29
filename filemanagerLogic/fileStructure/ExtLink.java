@@ -22,11 +22,7 @@ public class ExtLink extends ExtFile{
         super(link);
         try{
             Path path = Files.readSymbolicLink(this.toPath());
-            if(Files.isDirectory(path)){
-                this.pointsToDirectory = true;
-            }else{
-                this.pointsToDirectory = false;
-            }
+            this.pointsToDirectory = Files.isDirectory(path);
         }catch(Exception x){}
         
     }

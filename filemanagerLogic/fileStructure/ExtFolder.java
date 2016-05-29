@@ -39,7 +39,7 @@ public class ExtFolder extends ExtFile{
     
     @Override
     protected final void setDefaultValues(){
-        this.files = new ConcurrentHashMap<>();
+        this.files = new ConcurrentHashMap<>(2,0.75f,25);
         this.populated = false;
         super.setDefaultValues();
         this.propertySize.setValue(null);
@@ -118,7 +118,8 @@ public class ExtFolder extends ExtFile{
         if(this.isAbsoluteRoot){
             
             FileManagerLB.remount();
-        }else if(this.isPopulated()){
+        }
+        if(this.isPopulated()){
             Log.writeln("Update:"+this.getAbsolutePath());
             
             for(ExtFile file:this.getFilesCollection()){

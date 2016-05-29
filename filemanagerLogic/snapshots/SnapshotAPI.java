@@ -8,6 +8,7 @@ package filemanagerLogic.snapshots;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import utility.Log;
 
 /**
  *
@@ -19,40 +20,38 @@ public class SnapshotAPI {
         return INSTANCE;
     }
     public static Snapshot getEmptySnapshot(){
-        return new Snapshot();
+        Snapshot sn = new Snapshot();
+        sn.dateCreated="";
+        sn.folderCreatedFrom="";
+        sn.map = new LinkedHashMap<>();
+        return sn;
     }
     public static Snapshot createSnapshot(ExtFolder folder){
         return new Snapshot(folder);
     }
-    public static Snapshot comapareSnapshots(Snapshot s1, Snapshot s2){
-        LinkedHashMap<String,Entry> map1 = new LinkedHashMap<>();
-        LinkedHashMap<String,Entry> map2 = new LinkedHashMap<>();
-        s1.map.values().forEach(val ->{
-            map1.put(val.relativePath, val);
-        });
-        s2.map.values().forEach(val ->{
-            map2.put(val.relativePath, val);
-        });
+    public static Snapshot compareSnapshots(Snapshot s1, Snapshot s2){
+        LinkedHashMap<String,Entry> map1 = s1.map;
+        LinkedHashMap<String,Entry> map2 = s2.map;
         map1.values().stream().forEach(entry ->{
             if(map2.containsKey(entry.relativePath)){
                 Entry get = map2.get(entry.relativePath);
                 if((get.lastModified != entry.lastModified)||(get.size!=entry.size)){
-                    entry.isModified = true;
+                    entry.isModified.set(true);
                     if(get.lastModified>entry.lastModified){
-                        entry.isOlder = true;
+                        entry.isOlder.set(true);
                     }
                     if(get.size<entry.size){
-                        entry.isBigger = true;
+                        entry.isBigger.set(true);
                     }
                 }
             }else{
-                entry.isNew = true;
+                entry.isNew.set(true);
             }
         });
         map2.values().forEach(entry ->{
             if(!map1.containsKey(entry.relativePath)){
                 Entry newEntry = new Entry(entry);
-                newEntry.isMissing = true;
+                newEntry.isMissing.set(true);
                 map1.put(newEntry.relativePath, newEntry);
             }
         });
@@ -66,14 +65,18 @@ public class SnapshotAPI {
         Iterator<Entry> iterator = newS.map.values().iterator();
         while(iterator.hasNext()){
             Entry next = iterator.next();
-            if(!next.isNew && !next.isModified && !next.isMissing) {
+            if(!next.isNew.get() && !next.isModified.get() && !next.isMissing.get()) {
                 iterator.remove();
             }
-        
         }
         return newS;
     }
-    
-    
-    
+    public static void copySnapshot(Snapshot src,Snapshot dest){
+        dest.dateCreated = src.dateCreated;
+        dest.folderCreatedFrom = src.folderCreatedFrom;
+        dest.map.clear();
+        for (Entry entry :src.map.values()){
+            dest.map.put(entry.relativePath, new Entry(entry));
+        }
+    }
 }

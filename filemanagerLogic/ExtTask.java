@@ -5,8 +5,8 @@
  */
 package filemanagerLogic;
 
-import static filemanagerGUI.FileManagerLB.reportError;
 import javafx.concurrent.Task;
+import utility.ErrorReport;
 
 /**
  * Custom Task
@@ -22,7 +22,7 @@ public class ExtTask extends Task<Void> {
     private String taskDescription;
     private long refreshDuration = 500;
     private boolean paused;
-    
+    public Task childTask;
     public String getTaskDescription() {
         return taskDescription;
     }
@@ -45,7 +45,7 @@ public class ExtTask extends Task<Void> {
         return this.refreshDuration;
     }
     public void report(Exception e){
-        reportError(e);
+        ErrorReport.report(e);
     }
 
 

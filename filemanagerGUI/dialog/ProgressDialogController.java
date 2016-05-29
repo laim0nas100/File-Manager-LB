@@ -7,6 +7,7 @@ package filemanagerGUI.dialog;
 
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -59,6 +60,15 @@ public class ProgressDialogController extends BaseDialog {
         t.start();
         task.setOnSucceeded((e)->{
             clock.stopTimer();
+            if(task.childTask!=null){
+                try {
+                    Thread t2 = new Thread(task.childTask);
+                    t2.start();;
+                    t2.join();
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
             if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
                 this.exit();
             }

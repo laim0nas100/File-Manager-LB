@@ -5,7 +5,6 @@
  */
 package filemanagerGUI.dialog;
 
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import utility.ErrorReport;
 import utility.FileNameException;
 
 /**
@@ -60,12 +60,11 @@ public class RenameDialogController extends TextInputDialogController {
             try {
                 TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),stringToCheck.trim());
                 exit();
-            } catch (IOException ex) {
-                reportError(ex);
-            } catch(FileNameException ex){
-                //reportError(ex);
+            }catch(FileNameException ex){
                 this.nameAvailable.setText(ex.getMessage());
-            }
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            } 
         }
     }   
 }

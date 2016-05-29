@@ -6,7 +6,6 @@
 package filemanagerLogic;
 
 //import static filemanagerGUI.FileManagerLB.rootDirectory;
-import static filemanagerGUI.FileManagerLB.reportError;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.IOException;
@@ -17,6 +16,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import utility.ErrorReport;
 
 /**
  *
@@ -33,17 +33,16 @@ public class ManagingClass {
         cacheIndex = 0;
     }
     public void changeDirTo(ExtFolder file){
-        Log.writeln("Change dir to: "+file.getAbsolutePath());
+        Log.writeln("Change dir to: "+file.getAbsoluteDirectory());
             if(file.isAbsoluteRoot()){
                 currentDir = ArtificialRoot;
                
             }else if(file.isRoot()){
-                currentDir = (ExtFolder) LocationAPI.getInstance().getFileByLocation(
-                        new LocationInRoot(file.getAbsolutePath()));
+                currentDir = (ExtFolder) ArtificialRoot.files.get(file.getAbsoluteDirectory());
             }else{
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());      
                 if(!LocationAPI.getInstance().existByLocation(location)){
-                    //Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
+                    Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
                     LocationAPI.getInstance().putByLocation(location, file);
                 }
                 currentDir = file;
@@ -74,6 +73,9 @@ public class ManagingClass {
     public void changeToParent(){
         if(!currentDir.isAbsoluteRoot()){
             try {
+                if(currentDir.isRoot()){
+                    this.changeDirTo(ArtificialRoot);
+                }else{
                 LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());
 //                Log.writeln("Absolute Path:"+currentDir.getAbsolutePath());
 //                Log.writeln("CurrentLocation:"+location.toString());
@@ -82,10 +84,10 @@ public class ManagingClass {
                 ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location);
 //                Log.writeln("Parent path:"+folder.getAbsolutePath());
                 this.changeDirTo(folder);
+                }
             } catch (Exception ex) {
-                reportError(ex);
+                ErrorReport.report(ex);
             } 
-            
         }
     }
     public ObservableList<ExtFile> getCurrentContents(){

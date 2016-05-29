@@ -36,9 +36,11 @@ public class LocationInRoot {
                     rootLoc = s;
                     break;
                 }
+                
             }
+            rootLoc = rootLoc.toUpperCase();
             coordinates.add(rootLoc);
-            if(!filePath.equals(rootLoc)){
+            if(!filePath.toUpperCase().equals(rootLoc)){
                 filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
                 String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
