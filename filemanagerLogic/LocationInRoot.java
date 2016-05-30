@@ -20,8 +20,9 @@ import utility.ExtStringUtils;
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
-    public LinkedList<String> coordinates;
 
+    public LinkedList<String> coordinates;
+    
     
     public LocationInRoot(String filePath){
         coordinates = new LinkedList<>();
@@ -76,6 +77,12 @@ public class LocationInRoot {
     }
     public void setName(String name){
         this.coordinates.set((this.coordinates.size()-1),name);
+    }
+    public LocationInRoot getRoot(){
+        LinkedList<String> list = new LinkedList<>();
+        list.add(this.coordinates.getFirst());
+        list.add(this.coordinates.get(1));
+        return new LocationInRoot(list);
     }
     public int length(){
         return this.coordinates.size();

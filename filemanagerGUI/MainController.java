@@ -217,8 +217,8 @@ public class MainController extends BaseController{
     
     public void test(){
         try{
-            Snapshot sn = new Snapshot((ExtFolder) LocationAPI.getInstance().getFileAndPopulate("E:\\t1"));
-            Log.writeln(sn);
+            ExtFile file = LocationAPI.getInstance().getFileAndPopulate("E:\\T1");
+            Log.writeln(file.getAbsoluteDirectory());
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -340,14 +340,14 @@ public class MainController extends BaseController{
         try{
             if(possibleDir.equalsIgnoreCase("ROOT")){
                 changeToDir(ArtificialRoot);
-            }else if(Files.isDirectory(Paths.get(possibleDir))){
-                Path path = Paths.get(possibleDir);
-                
-                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(path.toString());
-                this.changeToDir(fileAndPopulate);
-                
             }else{
-                updateCurrentView(); 
+                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
+                if(fileAndPopulate!=null){
+                    this.changeToDir(fileAndPopulate);
+                }else{
+                    updateCurrentView();
+                }
+                
             }
         } catch (Exception ex) {
             ErrorReport.report(ex);

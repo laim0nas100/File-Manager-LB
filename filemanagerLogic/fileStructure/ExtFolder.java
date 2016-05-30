@@ -135,6 +135,32 @@ public class ExtFolder extends ExtFile{
         }
         
     }
+    public ExtFile getIgnoreCase(String name){
+        ArrayList<String> keys = new ArrayList<>();
+        keys.addAll(files.keySet());
+        String request = "";
+        for(String key:keys){
+            if(name.equalsIgnoreCase(key)){
+                request = key;
+            }
+        }
+        return files.get(request);
+    }
+    public boolean hasFileIgnoreCase(String name){
+        String key = getKey(name);
+        return !key.isEmpty();
+    }
+    public String getKey(String name){
+        ArrayList<String> keys = new ArrayList<>();
+        keys.addAll(files.keySet());
+        String request = "";
+        for(String key:keys){
+            if(name.equalsIgnoreCase(key)){
+                request = key;
+            }
+        }
+        return request;
+    }
     @Override
     public String getAbsoluteDirectory(){
         String dir = this.getAbsolutePath();

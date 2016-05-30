@@ -22,6 +22,9 @@ import utility.ErrorReport;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
+    private static class LocationException extends Exception{
+        
+    }
     private static final LocationAPI INSTANCE = new LocationAPI();
     protected LocationAPI() {};
     public static LocationAPI getInstance(){
@@ -32,27 +35,26 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
+        LocationInRoot loc;
         
         if(!pathl.isEmpty()){
             try{
                 pathl = pathl.toUpperCase();
-                Path path = Paths.get(pathl).toRealPath();
-                ExtFile tempFile = new ExtFile(path.toString());
-                if(!tempFile.isRoot()){
-                    FileManagerLB.mountDevice(path.getRoot().toString());
-                }
-                if(Files.exists(path)){
-                    LocationInRoot fileLocation = new LocationInRoot(path.toString());
-                    if(!existByLocation(fileLocation)){
-                        ExtFolder folder = new ExtFolder(new File(path.toString()).getParent());
-                        putByLocationRecursive(folder.getMapping(), folder);
-                        Log.writeln(folder.getMapping());
-                        folder.update(); 
+                ExtFile tempFile = new ExtFile(pathl);
+                if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
+                    Path path = Paths.get(pathl).toRealPath();
+                    if(Files.isDirectory(path)){
+                        if(!tempFile.isRoot()){
+                            FileManagerLB.mountDevice(path.getRoot().toString());
+                        }
                     }
-                    file = getFileByLocation(fileLocation);
-                }else{
-                    file = null;
+                    
                 }
+                loc = tempFile.getMapping();
+                this.populateByLocation(loc.getParentLocation());
+                Log.write("Location:",loc);
+                file = getFileByLocation(loc);
+                
             }catch(Exception e){
                 ErrorReport.report(e);
             }
@@ -65,8 +67,8 @@ public class LocationAPI {
         ExtFolder folder = ArtificialRoot;
         //Log.writeln(location.toString());
         while (i< location.length()-1) {
-            if (folder.files.containsKey(location.at(i))) {
-                folder = (ExtFolder) folder.files.get(location.at(i));
+            if (folder.hasFileIgnoreCase(location.at(i))) {
+                folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
                 i++;
             } else {
                 return false;
@@ -79,7 +81,7 @@ public class LocationAPI {
         int i = 0;
         ExtFolder folder = ArtificialRoot;
         while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.files.get(location.at(i++));
+            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
         }
         folder.files.remove(location.at(i));
     }
@@ -89,7 +91,7 @@ public class LocationAPI {
         ExtFolder folder = ArtificialRoot;
         //Log.writeln("Put by location:"+location.toString());
         while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.files.get(location.at(i++));
+            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
 
         }
         folder.files.put(location.getName(), file);
@@ -99,27 +101,52 @@ public class LocationAPI {
         ExtFolder folder = ArtificialRoot;
         
         while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.files.get(location.at(i++));
-            Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
+            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
+            //Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
             folder.update();
         }
         folder.files.put(location.getName(), file);
     }
-
+    private void populateByLocation(LocationInRoot location){
+        int i = 0;
+        ExtFolder folder = ArtificialRoot;
+        Log.writeln("Pupulate by location",location);
+        folder.update();
+        for(String s:location.coordinates) {
+            if(folder.hasFileIgnoreCase(s)){
+                folder = (ExtFolder) folder.getIgnoreCase(s);
+            }else{
+                return;
+            }
+            folder.update();
+            
+            //Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
+            
+        }
+    }
     public ExtFile getFileByLocation(LocationInRoot location) {
         if(location.length()==0){
             return ArtificialRoot;
         }
         try{
-            int i = 0;
             ExtFolder folder = ArtificialRoot;
+            ExtFile file = ArtificialRoot;
             //Log.writeln("Request:" + location.toString());
-            while (i < location.length()-1) {
-                folder = (ExtFolder) folder.files.get(location.at(i++));
+            for (String s:location.coordinates) {
+                if(folder.hasFileIgnoreCase(s)){
+                    file = folder.getIgnoreCase(s);
+                    if(file.getIdentity().equals("folder")){
+                        folder = (ExtFolder) folder.getIgnoreCase(s);        
+                    }else{
+                        return file;
+                    }
+                }else{
+                    return folder;
+                }
                 //Log.writeln(folder.propertyName.get());
             }
         
-        return folder.files.get(location.getName());
+        return file;
         }catch(Exception x){
             ErrorReport.report(x);
             return null;
