@@ -35,25 +35,30 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
-        LocationInRoot loc;
+        pathl = pathl.toUpperCase();
+        LocationInRoot loc = new LocationInRoot(pathl);
         
         if(!pathl.isEmpty()){
             try{
-                pathl = pathl.toUpperCase();
                 ExtFile tempFile = new ExtFile(pathl);
-                if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
-                    Path path = Paths.get(pathl).toRealPath();
-                    if(Files.isDirectory(path)){
-                        if(!tempFile.isRoot()){
-                            FileManagerLB.mountDevice(path.getRoot().toString());
+                try{
+                    if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
+                        Path path = Paths.get(pathl).toRealPath();
+                        //tempFile = new ExtFile(path.toString());
+                        if(Files.isDirectory(path)){
+                            if(!tempFile.isRoot()){
+                                FileManagerLB.mountDevice(path.getRoot().toString());
+                            }
                         }
                     }
-                    
+                }catch(Exception e){
+                    //ErrorReport.report(new Exception("windows auto pathing exception"));
                 }
-                loc = tempFile.getMapping();
-                this.populateByLocation(loc.getParentLocation());
+                //loc = tempFile.getMapping();
                 Log.write("Location:",loc);
-                file = getFileByLocation(loc);
+                this.populateByLocation(loc.getParentLocation());
+                
+                file = getClosestFileByLocation(loc);
                 
             }catch(Exception e){
                 ErrorReport.report(e);
@@ -153,26 +158,29 @@ public class LocationAPI {
         }
        
     }
-    public boolean exists(String file){
-        try{
-            Path get = Paths.get(file).toRealPath();
-            return Files.exists(get);
-        }catch(Exception e){
-            return false;
+    public ExtFile getClosestFileByLocation(LocationInRoot location){
+        if(location.length()==0){
+            return ArtificialRoot;
         }
-    }
-    public boolean isDirectory(String file){
+        ExtFolder folder = ArtificialRoot;
+        ExtFile file = ArtificialRoot;
         try{
-            Path get = Paths.get(file).toRealPath();
-            return Files.isDirectory(get);
-        }catch(Exception e){
-            return false;
+            for (String s:location.coordinates) {
+                if(folder.hasFileIgnoreCase(s)){
+                    file = folder.getIgnoreCase(s);
+                    if(file.getIdentity().equals("folder")){
+                        folder = (ExtFolder) folder.getIgnoreCase(s);        
+                    }else{
+                        return file;
+                    }
+                }else{
+                    return folder;
+                }
+            }
+        }catch(Exception x){
+            ErrorReport.report(x);
         }
-    
-    }
-    public String getRealPath(String path) throws IOException{
-            Path get = Paths.get(path).toRealPath();
-            return get.toString();
+        return file;
     }
     
 }

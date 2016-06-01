@@ -36,22 +36,23 @@ public class SnapshotAPI {
             if(map2.containsKey(entry.relativePath)){
                 Entry get = map2.get(entry.relativePath);
                 if((get.lastModified != entry.lastModified)||(get.size!=entry.size)){
-                    entry.isModified.set(true);
-                    if(get.lastModified>entry.lastModified){
-                        entry.isOlder.set(true);
+                    entry.isModified = true;
+                    
+                    if(get.lastModified != entry.lastModified){
+                        entry.isOlder = (entry.lastModified - get.lastModified)>1;
                     }
-                    if(get.size<entry.size){
-                        entry.isBigger.set(true);
+                    if(get.size!=entry.size){
+                        entry.isBigger = (entry.size - get.size)>0;
                     }
                 }
             }else{
-                entry.isNew.set(true);
+                entry.isNew = true;
             }
         });
         map2.values().forEach(entry ->{
             if(!map1.containsKey(entry.relativePath)){
                 Entry newEntry = new Entry(entry);
-                newEntry.isMissing.set(true);
+                newEntry.isMissing = true;
                 map1.put(newEntry.relativePath, newEntry);
             }
         });
@@ -65,7 +66,7 @@ public class SnapshotAPI {
         Iterator<Entry> iterator = newS.map.values().iterator();
         while(iterator.hasNext()){
             Entry next = iterator.next();
-            if(!next.isNew.get() && !next.isModified.get() && !next.isMissing.get()) {
+            if(!next.isNew && !next.isModified && !next.isMissing) {
                 iterator.remove();
             }
         }

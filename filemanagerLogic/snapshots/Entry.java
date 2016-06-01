@@ -18,12 +18,13 @@ import javafx.beans.property.SimpleStringProperty;
  * @author Laimonas Beniušis
  */
 public class Entry{
-        public SimpleBooleanProperty isMissing;
-        public SimpleBooleanProperty isModified;
-        public SimpleBooleanProperty isNew;
-        public SimpleBooleanProperty isOlder;
-        public SimpleBooleanProperty isBigger;
-
+        public boolean isMissing;
+        public boolean isModified;
+        public boolean isNew;
+        public boolean isOlder;
+        public boolean isBigger;
+        public boolean isFolder;
+        
         public long lastModified;
         public long size;
         public String relativePath;
@@ -39,34 +40,36 @@ public class Entry{
             isMissing = oldEntry.isMissing;
             isOlder = oldEntry.isOlder;
             isBigger = oldEntry.isBigger;
+            isFolder = oldEntry.isFolder;
         }
         public Entry(ExtFile file,String relPath){
             size = file.length();
             lastModified = file.lastModified();
             relativePath = relPath;
             absolutePath = file.getAbsolutePath();
-            isModified = new SimpleBooleanProperty();
-            isNew = new SimpleBooleanProperty();
-            isMissing = new SimpleBooleanProperty();
-            isOlder = new SimpleBooleanProperty();
-            isBigger = new SimpleBooleanProperty();
+            isFolder = file.getIdentity().equals("folder");
+//            isModified = new SimpleBooleanProperty();
+//            isNew = new SimpleBooleanProperty();
+//            isMissing = new SimpleBooleanProperty();
+//            isOlder = new SimpleBooleanProperty();
+//            isBigger = new SimpleBooleanProperty();
         }
         @Override
         public String toString(){
             String s="";
             s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/FileManagerLB.DATA_SIZE.KB.size;
-            if(isNew.get()){
+            if(isNew){
                 s+=" new";
-            }else if(isMissing.get()){
+            }else if(isMissing){
                 s+=" missing";
-            }else if(isModified.get()){
+            }else if(isModified){
                 s+=" modified";
-                if(isOlder.get()){
+                if(isOlder){
                     s+= " older";
                 }else{
                     s+= " newer";
                 }
-                if(isBigger.get()){
+                if(isBigger){
                     s+= " bigger";
                 }else{
                     s+= " smaller";

@@ -16,6 +16,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.VBox;
 import utility.CustomClock;
+import utility.ErrorReport;
 
 /**
  * FXML Controller class
@@ -61,13 +62,8 @@ public class ProgressDialogController extends BaseDialog {
         task.setOnSucceeded((e)->{
             clock.stopTimer();
             if(task.childTask!=null){
-                try {
-                    Thread t2 = new Thread(task.childTask);
-                    t2.start();;
-                    t2.join();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
+                Thread t2 = new Thread(task.childTask);
+                t2.start();
             }
             if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
                 this.exit();
@@ -84,10 +80,10 @@ public class ProgressDialogController extends BaseDialog {
         if(task.isPaused()&&task.isRunning()){
             pauseButton.setText("PAUSE");
             paused.set(false);
-            task.setPaused(false);
+            task.paused.set(false);
         }else if(!task.isPaused()&&task.isRunning()){
             pauseButton.setText("CONTINUE");
-            task.setPaused(true);
+            task.paused.set(true);
             paused.set(true);
         }
     }

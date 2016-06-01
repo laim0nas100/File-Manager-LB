@@ -27,25 +27,22 @@ import utility.Log;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    public static String ARTIFICIAL_ROOT_NAME = "./.ARTIFICIAL_ROOT";
-    public static ExtFolder ArtificialRoot;
+    public static String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+"/.ROOT.root";
+    public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
     public static DATA_SIZE DataSize;
     
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = 1==0;
     
     @Override
     public void start(Stage primaryStage) {
         links = FXCollections.observableArrayList();
         errorLog = FXCollections.observableArrayList();
-        DataSize = DATA_SIZE.KB;
-        ARTIFICIAL_ROOT_NAME = TaskFactory.resolveAvailableName(new ExtFolder("/"), ARTIFICIAL_ROOT_NAME);
-        ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
+        //DataSize = DATA_SIZE.KB;
         ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
-        Log.write(ARTIFICIAL_ROOT_NAME);
         remount();
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));

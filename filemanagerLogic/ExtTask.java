@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
 
@@ -19,9 +20,10 @@ public class ExtTask extends Task<Void> {
         
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
     private String taskDescription;
     private long refreshDuration = 500;
-    private boolean paused;
+    public SimpleBooleanProperty paused = new SimpleBooleanProperty(false);
     public Task childTask;
     public String getTaskDescription() {
         return taskDescription;
@@ -32,12 +34,9 @@ public class ExtTask extends Task<Void> {
     }
 
     public boolean isPaused() {
-        return paused;
+        return paused.get();
     }
 
-    public void setPaused(boolean paused) {
-        this.paused = paused;
-    }
     public void setRefreshDuration(long numb){
         refreshDuration = numb;
     }

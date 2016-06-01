@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import utility.ErrorReport;
 import utility.Log;
 
 /**
@@ -59,7 +60,13 @@ public class ExtFolder extends ExtFile{
         try{
             if(null != this.list()){
                 for(File f:this.listFiles()){
-                    if(!this.files.containsKey(f.getName())){//NEW LINE
+                    long lastMod = 0;
+                    if(this.files.containsKey(f.getName())){
+                        lastMod = this.files.get(f.getName()).lastModified();
+                        
+                    }
+                    if(lastMod!=f.lastModified()||!this.files.containsKey(f.getName())){//NEW LINE
+                        this.files.remove(f.getName());
                         ExtFile file = new ExtFile(f.getAbsolutePath());
                         if(f.isDirectory()){
                             file = new ExtFolder(f);             
@@ -73,7 +80,7 @@ public class ExtFolder extends ExtFile{
             }
             this.populated = true;
         }catch(Exception e){
-            Log.writeln(e.getMessage());
+            ErrorReport.report(e);
         }
     }
     public void populateRecursive(){
@@ -163,6 +170,9 @@ public class ExtFolder extends ExtFile{
     }
     @Override
     public String getAbsoluteDirectory(){
+        if(isAbsoluteRoot()){
+            return "";
+        }
         String dir = this.getAbsolutePath();
         if(!dir.endsWith(File.separator)){
             dir+=File.separator;

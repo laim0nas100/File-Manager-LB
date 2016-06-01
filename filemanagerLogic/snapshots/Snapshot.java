@@ -70,9 +70,9 @@ public class Snapshot implements Serializable{
         }else{
             int nonModifiedCount = 0;
             for(Entry entry:list){
-                if(entry.isModified.get()){
+                if(entry.isModified){
                     reEvalueateFolder(entry.relativePath,null);
-                    if(!entry.isModified.get()){
+                    if(!entry.isModified){
                         nonModifiedCount++;                       
                     }
                 }else{
@@ -81,7 +81,7 @@ public class Snapshot implements Serializable{
             }
             Log.write(folderPath," ",nonModifiedCount,"  ",list.size());
             if(nonModifiedCount == list.size()){
-                map.get(folderPath).isModified.set(false);
+                map.get(folderPath).isModified = false;
             }
         }
        

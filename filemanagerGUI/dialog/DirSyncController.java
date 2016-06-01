@@ -17,7 +17,6 @@ import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,7 +42,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
-import org.apache.commons.lang3.StringUtils;
 import utility.ExtStringUtils;
 import utility.Log;
 
@@ -65,6 +63,7 @@ public class DirSyncController extends BaseDialog {
     @FXML public CheckBox checkPrioritizeBigger;
     @FXML public CheckBox checkShowOnlyDifferences;
     @FXML public CheckBox checkDeleteFirst;
+    @FXML public CheckBox checkIgnoreFolderDate;
     @FXML public Button btnLoad;
     @FXML public Button btnCompare;
     @FXML public Button btnSync;
@@ -82,7 +81,8 @@ public class DirSyncController extends BaseDialog {
     private final SimpleBooleanProperty prioritizeBigger = new SimpleBooleanProperty();
     private final SimpleBooleanProperty noDelete = new SimpleBooleanProperty();
     private final SimpleBooleanProperty onlyDifferences = new SimpleBooleanProperty();
-     private final SimpleBooleanProperty deleteFirst = new SimpleBooleanProperty();
+    private final SimpleBooleanProperty deleteFirst = new SimpleBooleanProperty();
+    private final SimpleBooleanProperty ignoreFolderDate = new SimpleBooleanProperty();
     private ObservableList<TableColumn<ExtEntry,String>> tableColumns; 
     
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
@@ -123,7 +123,9 @@ public class DirSyncController extends BaseDialog {
         prioritizeBigger.bind(checkPrioritizeBigger.selectedProperty());
         onlyDifferences.bind(checkShowOnlyDifferences.selectedProperty());
         deleteFirst.bind(checkDeleteFirst.selectedProperty());
-        
+        ignoreFolderDate.bind(checkIgnoreFolderDate.selectedProperty());
+        checkIgnoreFolderDate.setSelected(true);
+        checkShowOnlyDifferences.setSelected(true);
         tableColumns.add(new TableColumn<>("Path"));
         tableColumns.get(0).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
             @Override
@@ -131,11 +133,7 @@ public class DirSyncController extends BaseDialog {
                 String path =cellData.getValue().relativePath;
                 SimpleStringProperty string = new SimpleStringProperty(path);
                 if(showAbsolutePath.get()){
-                    if(cellData.getValue().isMissing.get()){
-                        path = snapshot1.folderCreatedFrom+cellData.getValue().relativePath;
-                    }else{
-                        path = snapshot0.folderCreatedFrom+cellData.getValue().relativePath;
-                    }
+                    path = cellData.getValue().absolutePath;
                     string.set(path);
                 }
                 return string;
@@ -148,18 +146,18 @@ public class DirSyncController extends BaseDialog {
                 
                 SimpleStringProperty string = new SimpleStringProperty("No changes");
                 String s="";
-                    if(cellData.getValue().isNew.get()){
+                    if(cellData.getValue().isNew){
                         s+=" new";
-                    }else if(cellData.getValue().isMissing.get()){
+                    }else if(cellData.getValue().isMissing){
                         s+=" missing";
-                    }else if(cellData.getValue().isModified.get()){
+                    }else if(cellData.getValue().isModified){
                         s+=" modified";
-                        if(cellData.getValue().isOlder.get()){
+                        if(cellData.getValue().isOlder){
                             s+= " older";
                         }else{
                             s+= " not older";
                         }
-                        if(cellData.getValue().isBigger.get()){
+                        if(cellData.getValue().isBigger){
                             s+= " bigger";
                         }else{
                             s+= " not bigger";
@@ -198,22 +196,20 @@ public class DirSyncController extends BaseDialog {
     }
     public void checkDirs(){
         btnSync.setDisable(true);
-        btnLoad.setDisable(true);
-        String text1 = directory1.getText();
+        btnLoad.setDisable(true);    
         String text0 = directory0.getText();
+        String text1 = directory1.getText();
         cond0 = false;
         cond1 = false;
-        if(LocationAPI.getInstance().exists(text0)){
-            file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
-            cond0 = (!file0.isAbsoluteRoot()&&!file0.isRoot()&&file0.getIdentity().equals("folder"));
-        }
-        if(LocationAPI.getInstance().exists(text1)){
-            file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
-            cond1 = (!file1.isAbsoluteRoot()&&!file1.isRoot()&&file1.getIdentity().equals("folder"));
-
-        }
         status0.setText("BAD");
         status1.setText("BAD");
+        
+        file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
+        cond0 = (!file0.isAbsoluteRoot()&&!file0.isRoot()&&file0.getIdentity().equals("folder"));
+
+        file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
+        cond1 = (!file1.isAbsoluteRoot()&&!file1.isRoot()&&file1.getIdentity().equals("folder"));
+
         if(cond0){
             status0.setText("OK");
         }
@@ -238,13 +234,15 @@ public class DirSyncController extends BaseDialog {
     }
     public void load(){
             setDirs();
+            snapshot0 = SnapshotAPI.getEmptySnapshot();
+            snapshot1 = SnapshotAPI.getEmptySnapshot();
+            
+            this.btnSync.setDisable(true);
             this.btnCompare.setDisable(true);
-            if(cond0&&cond1){
-                
+            if(cond0&&cond1){           
                 Task<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask((directory0.getText()));
                 Task<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask((directory1.getText()));
-                task0.setOnSucceeded(eh ->{
-                   
+                task0.setOnSucceeded(eh ->{                  
                     snapshot0 = task0.getValue();
                     //Log.writeln(snapshot0);
                     new Thread(task1).start();
@@ -255,15 +253,12 @@ public class DirSyncController extends BaseDialog {
                     btnCompare.setDisable(false);
                 });
                 new Thread(task0).start();
-                
-                
-                
-            }
-                
+            }       
     }
     
     public void compare(){
-        
+            table.getSortOrder();
+            
             Long date = Instant.now().toEpochMilli();
 
             try{
@@ -289,8 +284,17 @@ public class DirSyncController extends BaseDialog {
                 }else if(modeDate == 1 && next.lastModified<date){
                     remove = true;
                 }else{
+                    if(ignoreFolderDate.get()){
+                        if(next.isFolder){
+                           next.isModified = false;
+                           remove = true;
+                        }
+                    }
+                }
+                if(!remove){
                     list.add(new ExtEntry(next));
                 }
+                
             }
             //Action Types
             //0 - no Action
@@ -301,26 +305,26 @@ public class DirSyncController extends BaseDialog {
             //5 - Delete this
             int mode = syncMode.getSelectionModel().getSelectedIndex();
             for(ExtEntry entry:list){
+                entry.setAction(0);
                 switch(mode){
                     case(0):{//Bidirectional
-                        if(entry.isMissing.get()){
-                            
+                        if(entry.isMissing){
                             entry.setAction(1);
-                        }else if(entry.isNew.get()){
-                            entry.setAction(3);
+                        }else if(entry.isNew){
+                            entry.setAction(2);
                         }else{
-                            if(entry.isModified.get()){
+                            if(entry.isModified){
                                 if(this.prioritizeBigger.get()){
-                                    if(!entry.isBigger.get()){
+                                    if(entry.isBigger){
                                         entry.setAction(2);
                                     }else{
-                                        entry.setAction(4);
+                                        entry.setAction(1);
                                     }
                                 }else{
-                                    if(entry.isOlder.get()){
+                                    if(!entry.isOlder){
                                         entry.setAction(2);
                                     }else{
-                                        entry.setAction(4);
+                                        entry.setAction(1);
                                     }
                                 }
                             }
@@ -328,29 +332,72 @@ public class DirSyncController extends BaseDialog {
                         break;
                     }
                     case(1):{//A dominant
+                        if(entry.isMissing){
+                            if(!noDelete.get()){
+                                entry.setAction(4);
+                            }
+                        }else if(entry.isNew){
+                            entry.setAction(2);
+                        }else{
+                            if(entry.isModified){
+                                if(this.prioritizeBigger.get()){
+                                    if(entry.isBigger){
+                                        entry.setAction(2);
+                                    }else{
+                                        entry.setAction(1);
+                                    }
+                                }else{
+                                    if(!entry.isOlder){
+                                        entry.setAction(2);
+                                    }else{
+                                        entry.setAction(1);
+                                    }
+                                }
+                            }
+                        }
                         break;
                     }
                     case(2):{//B dominant
+                        if(entry.isMissing){
+                            
+                                entry.setAction(1);
+                           
+                        }else if(entry.isNew){
+                            if(!noDelete.get()){
+                                entry.setAction(3);
+                            }
+                        }else{
+                            if(entry.isModified){
+                                if(this.prioritizeBigger.get()){
+                                    if(entry.isBigger){
+                                        entry.setAction(2);
+                                    }else{
+                                        entry.setAction(1);
+                                    }
+                                }else{
+                                    if(!entry.isOlder){
+                                        entry.setAction(2);
+                                    }else{
+                                        entry.setAction(1);
+                                    }
+                                }
+                            }
+                        }
                         break;
                     }
                 }
             }
-            if(noDelete.get()){
-                for(ExtEntry entry:list){
-                   if(entry.actionType.get()==5){
-                       entry.setAction(0);
-                   }
-                }
-            }
+            
             
         Platform.runLater(()->{
-            table.getItems().clear();
-            table.getItems().addAll(list);
+            table.setItems(list);
             this.btnSync.setDisable(false);
+            table.sort();
         });
     }
     
     public void synchronize(){
+        this.btnSync.setDisable(true);
         Log.writeln("Syncronize!");
         ObservableList<ExtEntry> list = FXCollections.observableArrayList();
         ObservableList<ExtEntry> listDelete = FXCollections.observableArrayList();
@@ -381,14 +428,16 @@ public class DirSyncController extends BaseDialog {
                     if(!entry.actionCompleted.get()){
                         result.reEvalueateFolder(entry.relativePath, null);
                     }
-                    if(!entry.isModified.get()){
+                    if(!entry.isModified){
                         if(snapshot1.folderCreatedFrom.equalsIgnoreCase(ExtStringUtils.replaceOnce(entry.absolutePath, snapshot1.folderCreatedFrom, ""))){
                             Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot0.folderCreatedFrom+entry.relativePath)));
                         }else{
-                             Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot1.folderCreatedFrom+entry.relativePath)));                           
+                            Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot1.folderCreatedFrom+entry.relativePath)));                           
                         }
                     }
+                    btnCompare.setDisable(true);
                 }
+                
                 return null;
             }
         };

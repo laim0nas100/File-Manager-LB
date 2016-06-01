@@ -43,6 +43,7 @@ import utility.Finder;
 import utility.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.FileManagerLB.DATA_SIZE;
+import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.snapshots.Snapshot;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -107,6 +108,8 @@ public class MainController extends BaseController{
     private Menu submenuSelectSearch;
     private Menu submenuSelectTable;
     
+    
+    private FileAddressField fileAddress;
     private ManagingClass MC;
     private Finder finder;
     private DATA_SIZE unitSize;
@@ -141,6 +144,7 @@ public class MainController extends BaseController{
     public void setUp(String title,ExtFolder root,ExtFolder currentDir){
         
         super.setUp(title);
+        
         unitSize = DATA_SIZE.KB;
         propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
         propertyUnitSize = new SimpleLongProperty(unitSize.size);
@@ -148,10 +152,11 @@ public class MainController extends BaseController{
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
 
         finder = new Finder("",searchView.getItems(),useRegex.selectedProperty());
-        
+
         MC = new ManagingClass(root);
 
-        LOAD(); 
+        LOAD();
+        fileAddress = new FileAddressField(currentDirText);
         
         changeToDir(currentDir);
     }
@@ -169,17 +174,22 @@ public class MainController extends BaseController{
     }
 
     public void updateCurrentView(){
+        Platform.runLater(()->{
+            
+        
         this.buttonForw.setDisable(!MC.hasForward());
         this.buttonPrev.setDisable(!MC.hasPrev());
         this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
         this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
         if(MC.currentDir.isAbsoluteRoot()){
-            currentDirText.setText("ROOT");
+            fileAddress.field.setText("ROOT");
         }else{
-            currentDirText.setText(MC.currentDir.getAbsoluteDirectory());
+            fileAddress.field.setText(MC.currentDir.getAbsoluteDirectory());
         }
+        fileAddress.field.positionCaret(fileAddress.field.getLength());
         MC.currentDir.update();
-
+        fileAddress.folder = MC.currentDir;
+        fileAddress.f = null;
         
         Iterator<ExtFile> iterator = TaskFactory.getInstance().markedList.iterator();
         while(iterator.hasNext()){
@@ -188,7 +198,8 @@ public class MainController extends BaseController{
             }
         }
         setTableView();
-        
+       
+        });
         
         
     }
@@ -217,7 +228,7 @@ public class MainController extends BaseController{
     
     public void test(){
         try{
-            ExtFile file = LocationAPI.getInstance().getFileAndPopulate("E:\\T1");
+            ExtFile file = LocationAPI.getInstance().getFileAndPopulate(fileAddress.field.getText());
             Log.writeln(file.getAbsoluteDirectory());
         }catch (Exception e){
             e.printStackTrace();
@@ -226,7 +237,7 @@ public class MainController extends BaseController{
 
     
     public void openCustomDir() {
-        changeToCustomDir(currentDirText.getText().trim());
+        changeToCustomDir(fileAddress.field.getText().trim());
     }    
     public void changeToParent(){
         MC.changeToParent();
@@ -338,7 +349,7 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equalsIgnoreCase("ROOT")){
+            if(possibleDir.equalsIgnoreCase("ROOT")||possibleDir.isEmpty()){
                 changeToDir(ArtificialRoot);
             }else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
@@ -626,7 +637,6 @@ public class MainController extends BaseController{
 
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        
         tableView.setOnMousePressed((MouseEvent event) -> {
             hideAllContextMenus();
             tableContextMenu.getItems().clear();

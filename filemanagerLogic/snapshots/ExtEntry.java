@@ -23,34 +23,30 @@ public class ExtEntry extends Entry{
         actionCompleted = new SimpleBooleanProperty(false);
         actionType = new SimpleIntegerProperty(0);
     }
+    
     public void setAction(int act){
         this.actionType.set(act);
         //Action Types
             //0 - no Action
-            //1 - Missing file, copy here
-            //2 - Replacable file
-            //3 - New file, copy this
-            //4 - Replacement file, copy this
-            //5 - Delete this
+            //1 - copy to source
+            //2 - copy from source
+            //3 - delete from source
+            //4 - delete from compared
         switch(act){
             case(1):{
-                this.action.set("(1) Missing file, copy here");
+                this.action.set("(1) Copy from compared to source");
                 break;
             }
             case(2):{
-                this.action.set("(2) Replaceable file, copy here");
+                this.action.set("(2) Copy from source to compared");
                 break;
             }
             case(3):{
-                this.action.set("(3) New file, copy this");
+                this.action.set("(3) Delete from source");
                 break;
             }
             case(4):{
-                this.action.set("(4) Replacement file, copy this");
-                break;
-            }
-            case(5):{
-                this.action.set("(5) Delete this");
+                this.action.set("(4) Delete from compared");
                 break;
             }
             default:{

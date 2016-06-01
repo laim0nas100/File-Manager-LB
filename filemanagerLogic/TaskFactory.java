@@ -462,25 +462,22 @@ public class TaskFactory {
     public ExtTask syncronizeTask(String folder1,String folder2,ObservableList<ExtEntry> listFirst,ObservableList<ExtEntry> listLast){
          return new ExtTask(){
             @Override
-            protected Void call(){
+            protected Void call() throws InterruptedException{
+                listFirst.addAll(listLast);
                 int i=0;
-                int size = listFirst.size()+listLast.size();
-                Log.writeln("Size "+size);
-                for(ExtEntry entry:listFirst){
-                    this.updateProgress(i, size);
-                    Path path1 = Paths.get(folder1+entry.relativePath);
-                    Path path2 = Paths.get(folder2+entry.relativePath);
-                    try{
-                        action(path1,path2,entry);
-                    }catch(Exception e){
-                        ErrorReport.report(e);
-                    }
-                    
-                    i++;
+                int size = listFirst.size();
+                Log.write("List");
+                for(ExtEntry e:listFirst){
+                    Log.write(e.relativePath,"  ",e.action.get());
                 }
-                
-                for(ExtEntry entry:listLast){
-                    this.updateProgress(i, size);
+                //Log.writeln("Size "+size);
+                for(ExtEntry entry:listFirst){
+                    while(this.isPaused()){
+                        Thread.sleep(this.getRefreshDuration());
+                        if(this.isCancelled()){
+                            break;
+                        }
+                    }
                     Path path1 = Paths.get(folder1+entry.relativePath);
                     Path path2 = Paths.get(folder2+entry.relativePath);
                     try{
@@ -488,6 +485,8 @@ public class TaskFactory {
                     }catch(Exception e){
                         ErrorReport.report(e);
                     }
+                    this.updateProgress(++i, size);
+                    this.updateMessage(entry.action.get()+"\n"+entry.relativePath);
                 }
                 return null;
             
@@ -495,29 +494,44 @@ public class TaskFactory {
         };
     }
     private void action(Path path1,Path path2,ExtEntry entry) throws Exception{
+        Log.write(path1,"|",path2);
         switch(entry.actionType.get()){
+            
             case(1):{
-                Files.copy(path2, path1,StandardCopyOption.COPY_ATTRIBUTES);                      
+                try{
+                    Files.copy(path2, path1,StandardCopyOption.REPLACE_EXISTING);
+                }catch(Exception e){
+                    if(!Files.isDirectory(path1)){
+                        Files.delete(path1);
+                        Files.createDirectories(path1);
+                    }
+                    Files.setLastModifiedTime(path1, Files.getLastModifiedTime(path2));
+                    entry.isModified = false;
+                    Log.write("Directory:",path2); 
+                }
                 break;
             }case(2):{
-                if(!Files.isDirectory(path1)){
-                    Files.copy(path2, path1, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
-                }else{
-                    throw new Exception();
+                try{
+                    Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING);  
+                }catch(Exception e){
+                    if(!Files.isDirectory(path2)){
+                        Files.delete(path1);
+                        Files.createDirectories(path2);
+                    }
+                    
+                    Files.setLastModifiedTime(path2, Files.getLastModifiedTime(path1));
+                    entry.isModified = false;
+                    Log.write("Directory:",path1);
                 }
+                
                 break;
             }case(3):{
-                Files.copy(path1, path2,StandardCopyOption.COPY_ATTRIBUTES); 
+                Files.delete(path1); 
                 break;
             }case(4):{
-                if(!Files.isDirectory(path2)){
-                    Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
-                }else{
-                    throw new Exception();
-                }
+                Files.delete(path2);
                 break;
-            }case(5):{
-                Files.deleteIfExists(path1);
+            }default:{
                 break;
             }
         }
