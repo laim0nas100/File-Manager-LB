@@ -391,8 +391,8 @@ public class DirSyncController extends BaseDialog {
             
         Platform.runLater(()->{
             table.setItems(list);
-            this.btnSync.setDisable(false);
             table.sort();
+            this.btnSync.setDisable(false);
         });
     }
     

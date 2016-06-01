@@ -16,6 +16,7 @@ import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 
@@ -103,11 +104,13 @@ public class ViewManager {
         }
     }
     public void updateAllWindows(){
-        String[] keys = windows.keySet().toArray(new String[0]);
-        for(String s:keys){
-            MainController controller = (MainController) windows.get(s).getController();
-            controller.updateCurrentView();
-        }
+        Platform.runLater(()->{
+            for(String s:windows.keySet()){
+                MainController controller = (MainController) windows.get(s).getController();
+                controller.updateCurrentView();
+            }
+        });
+        
     }
     public BaseController getController(String windowID){
         return windows.get(windowID).getController();
@@ -146,7 +149,7 @@ public class ViewManager {
     
 //TEXT INPUT DIALOG ACTIONS
    
-    public void newRenameDialog(ObservableList<ExtFile> list,ExtFile itemToRename){
+    public void newRenameDialog(ExtFolder folder,ExtFile itemToRename){
         try {
             int index = findSmallestAvailable(dialogs,TEXT_INPUT_DIALOG_TITLE);
             FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/RenameDialog.fxml"));
@@ -165,7 +168,7 @@ public class ViewManager {
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
-            controller.setUp(stage.getTitle(), list,itemToRename);
+            controller.setUp(stage.getTitle(),folder,itemToRename);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {

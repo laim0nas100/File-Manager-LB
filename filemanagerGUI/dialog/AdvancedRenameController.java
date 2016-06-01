@@ -236,7 +236,10 @@ public void apply(){
     for(Object object:table.getItems()){
         TableItemObject ob = (TableItemObject) object;
         try {
-            TaskFactory.getInstance().renameTo(ob.path1.get(),ob.name2.get());
+            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.get()).getParentLocation());
+            String fallback = TaskFactory.resolveAvailableName(parent, ob.name1.get());
+            fallback = ExtStringUtils.replaceOnce(fallback, parent.getAbsoluteDirectory(), "");
+            TaskFactory.getInstance().renameTo(ob.path1.get(),ob.name2.get(),fallback);
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
@@ -267,7 +270,7 @@ private static class TableItemObject{
         int length = oldName.length();
         String newPath = path2.get().substring(0, path2.get().length()-length);
         path2.set(newPath+s);
-        Log.write(path2,"  ",name2);
+        //Log.write(path2,"  ",name2);
     }
 }
     

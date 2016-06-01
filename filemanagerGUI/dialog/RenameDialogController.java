@@ -5,16 +5,20 @@
  */
 package filemanagerGUI.dialog;
 
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
-import java.io.IOException;
+import filemanagerLogic.fileStructure.ExtFolder;
 import java.util.Locale;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
+import utility.ExtStringUtils;
 import utility.FileNameException;
+import utility.Log;
 
 /**
  * FXML Controller class
@@ -29,24 +33,29 @@ public class RenameDialogController extends TextInputDialogController {
    
     
     private ExtFile itemToRename;
+    private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
     
     
-    public void setUp(String title,ObservableList<ExtFile> currentList,ExtFile itemToRename){
+    public void setUp(String title,ExtFolder folder,ExtFile itemToRename){
         super.setUp(title);
         this.description.setText("Rename "+itemToRename.propertyName.get());
         this.itemToRename = itemToRename;
         this.textField.setText(itemToRename.propertyName.get());
         nameIsAvailable.set(false);
+        this.folder = folder;
         
-        for(ExtFile file:currentList){
-            listToCheck.add(file.propertyName.get().toUpperCase(Locale.ROOT));
-        }
+        
     }
     @Override
     public void checkAvailable(){
+        listToCheck.clear();
+        folder.update();
+        for(ExtFile file:folder.getFilesCollection()){
+            listToCheck.add(file.propertyName.get());
+        }
         stringToCheck = textField.getText();
-        if(listToCheck.contains(stringToCheck.toUpperCase(Locale.ROOT)) ||stringToCheck.length()<1){
+        if(listToCheck.contains(stringToCheck) ||stringToCheck.length()<1){
             nameIsAvailable.set(false);
             nameAvailable.setText("Taken");
         }else{
@@ -58,7 +67,9 @@ public class RenameDialogController extends TextInputDialogController {
     public void apply(){
         if(nameIsAvailable.get()){
             try {
-                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),stringToCheck.trim());
+                String fallback = TaskFactory.resolveAvailableName(folder, itemToRename.propertyName.get()).trim();
+                fallback = ExtStringUtils.replaceOnce(fallback, folder.getAbsoluteDirectory(), "");
+                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),stringToCheck.trim(),fallback);
                 exit();
             }catch(FileNameException ex){
                 this.nameAvailable.setText(ex.getMessage());

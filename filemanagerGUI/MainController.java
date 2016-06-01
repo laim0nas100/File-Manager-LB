@@ -343,7 +343,7 @@ public class MainController extends BaseController{
                     DesktopApi.open(file);
                 }
             }catch(Exception x){
-                //TODO error handling
+                ErrorReport.report(x);
             }
         }
     }
@@ -399,7 +399,7 @@ public class MainController extends BaseController{
             Log.writeln("Invoke rename dialog");
             ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
             ExtFile fileCopy = new ExtFile(path.getAbsolutePath());
-            ViewManager.getInstance().newRenameDialog(tableView.getItems(),fileCopy);
+            ViewManager.getInstance().newRenameDialog(MC.currentDir,fileCopy);
             //Invoke text input dialog
         });
         

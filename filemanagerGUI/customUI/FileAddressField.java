@@ -5,19 +5,13 @@
  */
 package filemanagerGUI.customUI;
 
-import filemanagerLogic.LocationAPI;
-import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.Cursor;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import org.apache.commons.lang3.StringUtils;
 import utility.ExtStringUtils;
-import utility.Log;
 import LibraryLB.LoopingList;
 
 /**
@@ -59,7 +53,7 @@ public class FileAddressField{
                             s = list.prev();
                         }
                         index++;
-                        if(ExtStringUtils.startsWith(s.toUpperCase(), name.toUpperCase())){
+                        if(ExtStringUtils.startsWithIgnoreCase(s, name)){
                             Platform.runLater(()->{
                                 f = name;
                                 field.setText(folder.getAbsoluteDirectory()+s);

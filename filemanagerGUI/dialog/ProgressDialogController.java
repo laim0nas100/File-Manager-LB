@@ -62,8 +62,7 @@ public class ProgressDialogController extends BaseDialog {
         task.setOnSucceeded((e)->{
             clock.stopTimer();
             if(task.childTask!=null){
-                Thread t2 = new Thread(task.childTask);
-                t2.start();
+                task.run();
             }
             if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
                 this.exit();

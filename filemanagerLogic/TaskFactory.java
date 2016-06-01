@@ -41,12 +41,13 @@ import utility.FileNameException;
 
 //
 public class TaskFactory {
-
+    
     public  ObservableList<ExtFile> dragList;
     public  ObservableList<ExtFile> markedList;
     public  ArrayList<ExtFile> actionList;
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory instance = new TaskFactory();
+    private static final int TRY_LIMIT = 5;
     public static TaskFactory getInstance(){
         
         return instance;
@@ -78,18 +79,28 @@ public class TaskFactory {
     };
     
 //RENAME
-    public void renameTo(String fileToRename, String newName) throws IOException, FileNameException{
+    public void renameTo(String fileToRename, String newName,String fallbackName) throws IOException, FileNameException{
         for(Character c:newName.toCharArray()){
             if(illegalCharacters.contains(c)){
                 throw new FileNameException(newName+" contains illegal character "+c);
             }
         }
         LocationInRoot location  = new LocationInRoot(fileToRename);
-        Path file = LocationAPI.getInstance().getFileByLocation(location).toPath();
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(location);
+        ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
         
-        Path newPath = Paths.get(file.getParent()+File.separator+newName);
-        Log.writeln("Rename",file.toString(),newPath.toString());
-        Files.move(file, newPath);
+        String path1 = file.getAbsolutePath();
+        String path2 = parent.getAbsoluteDirectory()+newName;
+        String fPath = parent.getAbsoluteDirectory()+fallbackName;
+        
+        Log.writeln("Rename:",path1,"New Name:"+newName,"Fallback:"+fallbackName);
+        if(path1.equalsIgnoreCase(path2)){
+            Files.move(new File(path1).toPath(),new File(fPath).toPath());
+            parent.update();
+            Files.move(new File(fPath).toPath(), new File(path2).toPath());
+        }else{
+            Files.move(new File(path1).toPath(), new File(path2).toPath());
+        }
     }
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
@@ -317,6 +328,7 @@ public class TaskFactory {
                     updateMessage(str);
                     updateProgress(i+0.5, list.length);
                     try{
+                        
                         Files.deleteIfExists(list[i].paths[0]);
                     }catch(Exception e){
                         ErrorReport.report(e);
@@ -364,7 +376,7 @@ public class TaskFactory {
         String newName = name;
         int i=0;
         while(folder.files.containsKey(newName)){
-            newName = ++i +" "+name;
+            newName = ++i +name;
         }
         return path+newName;
     }
