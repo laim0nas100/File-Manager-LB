@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
+<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -165,6 +165,11 @@
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                        </HBox.margin>
                                     </CheckBox>
+                                    <Text fx:id="searchStatus" strokeType="OUTSIDE" strokeWidth="0.0" text="Waiting">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
                                     <Label fx:id="itemCount" alignment="CENTER" text="0">
                                        <HBox.margin>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

@@ -205,10 +205,10 @@ public class DirSyncController extends BaseDialog {
         status1.setText("BAD");
         
         file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
-        cond0 = (!file0.isAbsoluteRoot()&&!file0.isRoot()&&file0.getIdentity().equals("folder"));
+        cond0 = (!file0.isAbsoluteRoot()&&file0.getIdentity().equals("folder"));
 
         file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
-        cond1 = (!file1.isAbsoluteRoot()&&!file1.isRoot()&&file1.getIdentity().equals("folder"));
+        cond1 = (!file1.isAbsoluteRoot()&&file1.getIdentity().equals("folder"));
 
         if(cond0){
             status0.setText("OK");

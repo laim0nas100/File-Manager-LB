@@ -28,11 +28,7 @@ public class LocationInRoot {
         coordinates = new LinkedList<>();
         String rootLoc = "";
         if(!filePath.isEmpty()){
-            ArrayList<String> roots = new ArrayList<>();
-            FileManagerLB.getRootSet().forEach(root ->{
-                roots.add(root);
-            });
-            for(String s:roots){
+            for(String s:FileManagerLB.getRootSet()){
                 if(ExtStringUtils.contains(filePath, s)){
                     rootLoc = s;
                     break;
@@ -41,7 +37,8 @@ public class LocationInRoot {
             }
             rootLoc = rootLoc.toUpperCase();
             coordinates.add(rootLoc);
-            if(!filePath.toUpperCase().equals(rootLoc)){
+            if(!filePath.equalsIgnoreCase(rootLoc)){
+                filePath = ExtStringUtils.upperCase(filePath);
                 filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
                 String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);

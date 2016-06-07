@@ -10,10 +10,14 @@ import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
+import utility.ExtStringUtils;
 import utility.Log;
 
 /**
@@ -59,14 +63,20 @@ public class ExtFolder extends ExtFile{
     public void populateFolder(){
         try{
             if(null != this.list()){
-                for(File f:this.listFiles()){
-                    if(!this.files.containsKey(f.getName())){//NEW LINE
-                        this.files.remove(f.getName());
-                        ExtFile file = new ExtFile(f.getAbsolutePath());
-                        if(f.isDirectory()){
+                String parent = this.getAbsoluteDirectory();
+                for(String f:this.list()){
+                    
+                   
+                    if(!this.files.containsKey(f)){//NEW LINE
+                        String name = f;
+                        f = parent + name;
+                        //this.files.remove(name);
+                        Path path = Paths.get(f);
+                        ExtFile file = new ExtFile(f);
+                        if(Files.isDirectory(path)){
                             file = new ExtFolder(f);             
-                        }else if(Files.isSymbolicLink(f.toPath())){
-                            file = new ExtLink(f.getAbsolutePath());
+                        }else if(Files.isSymbolicLink(path)){
+                            file = new ExtLink(f);
                         }
                         files.put(file.propertyName.get(), file);
                         //LocationInRoot location = new LocationInRoot(file.getAbsolutePath());

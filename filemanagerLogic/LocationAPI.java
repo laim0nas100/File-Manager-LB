@@ -35,7 +35,6 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
-        pathl = pathl.toUpperCase();
         LocationInRoot loc = new LocationInRoot(pathl);
         
         if(!pathl.isEmpty()){
@@ -143,7 +142,7 @@ public class LocationAPI {
                 if(folder.hasFileIgnoreCase(s)){
                     file = folder.getIgnoreCase(s);
                     if(file.getIdentity().equals("folder")){
-                        folder = (ExtFolder) folder.getIgnoreCase(s);        
+                        folder = (ExtFolder) file; 
                     }else{
                         return file;
                     }

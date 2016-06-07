@@ -401,6 +401,16 @@ public class TaskFactory {
         };
     }
     
+    public ExtTask searchTask(String search, boolean useRegex){
+        return new ExtTask(){
+            @Override
+            protected Void call(){
+               
+                return null;
+            }
+        };
+    }
+    
     public Task<Snapshot> snapshotCreateTask(String folder){
         return new Task(){
             @Override

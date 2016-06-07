@@ -34,7 +34,7 @@ public class FileManagerLB extends Application {
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;
-    public static final boolean DEBUG = 1==0;
+    public static final boolean DEBUG = 1==1;
     
     @Override
     public void start(Stage primaryStage) {

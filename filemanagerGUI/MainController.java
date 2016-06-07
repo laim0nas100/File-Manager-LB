@@ -49,8 +49,10 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.Comparator;
+import java.util.List;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
+import javafx.beans.binding.MapExpression;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.scene.text.Text;
@@ -77,6 +79,7 @@ public class MainController extends BaseController{
     @FXML public Label itemCount;
     @FXML public ListView searchView;
     @FXML public TextField searchField;
+    @FXML public Text searchStatus;
     
     @FXML public ListView markedView;
     @FXML public Text markedSize;
@@ -120,6 +123,8 @@ public class MainController extends BaseController{
     private SimpleStringProperty propertyUnitSizeName;
     private SimpleLongProperty propertyUnitSize;
     private SimpleBooleanProperty propertyUnitSizeAuto;
+    private SimpleBooleanProperty propertyReadyToSearch;
+    private ExtTask searchTask;
     public static final Comparator<String> compareSizeAsString = new Comparator<String>() {
         @Override
         public int compare(String f1, String f2) {
@@ -153,10 +158,15 @@ public class MainController extends BaseController{
         propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
         propertyUnitSize = new SimpleLongProperty(unitSize.size);
         propertyUnitSizeAuto = new SimpleBooleanProperty(false);
+        propertyReadyToSearch = new SimpleBooleanProperty(true);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
 
-        finder = new Finder("",searchView.getItems(),useRegex.selectedProperty());
+        finder = new Finder("",useRegex.selectedProperty());
+        Bindings.bindContentBidirectional(finder.list, searchView.getItems());
+        searchTask = new ExtTask();
+        finder.isCanceled.bind(this.propertyReadyToSearch);
 
+        itemCount.textProperty().bind(Bindings.size(finder.list).asString());
         MC = new ManagingClass(root);
 
         LOAD();
@@ -268,31 +278,42 @@ public class MainController extends BaseController{
     }
     public void search(){
         String pattern = this.searchField.getText();
+        this.propertyReadyToSearch.set(true);
+        finder.list.clear();
+        searchView.getItems().clear();
         if(pattern.length()>1){
-            finder.newTask(pattern);
-            this.searchView.getItems().clear();
-            finder.list.clear();
-            if(!MC.currentDir.isAbsoluteRoot()){
-                Platform.runLater(()-> {
+            this.propertyReadyToSearch.set(false);
+            
+            this.searchStatus.setText("Searching");
+            searchTask = new ExtTask(){
+                @Override
+                protected Void call() throws Exception {
+                finder.newTask(pattern);
+                
+                if(!MC.currentDir.isAbsoluteRoot()){
                     try {
                         Files.walkFileTree(MC.currentDir.toPath(), finder);
-                        itemCount.setText(finder.list.size()+"");
+                        
                     } catch (Exception ex) {
                         ErrorReport.report(ex);
                     }
-                });   
-            }else{
-                Platform.runLater(()-> {
+                }else{
                     try {
                         for(ExtFile file:ArtificialRoot.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
                         }
-                        itemCount.setText(finder.list.size()+"");
                     } catch (Exception ex) {
                         ErrorReport.report(ex);
                     }
-                });   
-            }
+                }
+                    return null;
+                };
+            };
+            searchTask.setOnSucceeded(eh ->{
+                searchStatus.setText("Waiting");
+            });
+            new Thread(searchTask).start();
+            
        
         }   
     }
