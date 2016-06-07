@@ -28,6 +28,7 @@ import filemanagerLogic.snapshots.SnapshotAPI;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
@@ -120,9 +121,13 @@ public class TaskFactory {
 //PREPARE FOR TASKS
 
     public void addToMarked(ExtFile file){
-        if(file!=null&&!markedList.contains(file)){
-            markedList.add(file);
-        }
+        Platform.runLater(()->{
+            if(file!=null&&!file.isAbsoluteRoot()&&!markedList.contains(file)){
+                markedList.add(file);
+            } 
+        });
+        
+        
     }
     public void prepareActionList(Collection<ExtFile> filelist){
         this.actionList.clear();
@@ -379,6 +384,21 @@ public class TaskFactory {
             newName = ++i +name;
         }
         return path+newName;
+    }
+    
+    public ExtTask markFiles(List<String> list){
+        return new ExtTask(){
+            @Override
+            protected Void call(){
+                list.forEach(file ->{
+                    ExtFile f = LocationAPI.getInstance().getFileAndPopulate(file);
+                    if(!f.isAbsoluteRoot()){
+                        addToMarked(f);
+                    }
+                });
+                return null;
+            }
+        };
     }
     
     public Task<Snapshot> snapshotCreateTask(String folder){

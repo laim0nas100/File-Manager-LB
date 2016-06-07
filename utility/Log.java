@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Properties;
+import javafx.application.Platform;
 
 /**
  *
@@ -39,8 +40,7 @@ public class Log extends PrintStream{
         try {
             INSTANCE.out.close();
         } catch (IOException ex) {
-            ex.printStackTrace();
-            
+            ex.printStackTrace();          
         }
         switch(c){
             case('f'):{
@@ -70,10 +70,11 @@ public class Log extends PrintStream{
         Log.writeln(string);
     }
     public static void writeln(Object...objects){
-        for(Object s:objects){
-            Log.INSTANCE.println(s);
-            Log.INSTANCE.list.add(s.toString());
-        }
+            for(Object s:objects){
+                Log.INSTANCE.println(s);
+                Log.INSTANCE.list.add(s.toString());
+            } 
+        
     }
     public static void printProperties(Properties properties){
         Object[] toArray = properties.keySet().toArray();

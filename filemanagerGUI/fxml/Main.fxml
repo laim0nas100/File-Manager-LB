@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
+<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -64,6 +64,7 @@
                   <items>
                     <MenuItem mnemonicParsing="false" text="About" />
                         <MenuItem disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
+                        <MenuItem mnemonicParsing="false" onAction="#regexHelp" text="Regex Help" />
                   </items>
                 </Menu>
               </menus>
@@ -136,7 +137,17 @@
                <tabs>
                   <Tab closable="false" text="Marked List">
                      <content>
-                        <ListView fx:id="markedView" />
+                        <VBox>
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Marked count:" />
+                                    <Text fx:id="markedSize" strokeType="OUTSIDE" strokeWidth="0.0" text="0" />
+                                 </children>
+                              </HBox>
+                              <ListView fx:id="markedView" VBox.vgrow="ALWAYS" />
+                           </children>
+                        </VBox>
                      </content>
                   </Tab>
                   <Tab closable="false" text="Search">

@@ -102,7 +102,7 @@ public class LocationInRoot {
         for(String s:this.coordinates){
             str+=s+",";
         }
-        return "<"+str+">";
+        return "<"+str.substring(0, str.length()-1)+">";
     }
     
 }

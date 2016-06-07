@@ -60,12 +60,7 @@ public class ExtFolder extends ExtFile{
         try{
             if(null != this.list()){
                 for(File f:this.listFiles()){
-                    long lastMod = 0;
-                    if(this.files.containsKey(f.getName())){
-                        lastMod = this.files.get(f.getName()).lastModified();
-                        
-                    }
-                    if(lastMod!=f.lastModified()||!this.files.containsKey(f.getName())){//NEW LINE
+                    if(!this.files.containsKey(f.getName())){//NEW LINE
                         this.files.remove(f.getName());
                         ExtFile file = new ExtFile(f.getAbsolutePath());
                         if(f.isDirectory()){
@@ -73,8 +68,9 @@ public class ExtFolder extends ExtFile{
                         }else if(Files.isSymbolicLink(f.toPath())){
                             file = new ExtLink(f.getAbsolutePath());
                         }
-                        LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-                        LocationAPI.getInstance().putByLocation(location, file);
+                        files.put(file.propertyName.get(), file);
+                        //LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+                        //LocationAPI.getInstance().putByLocation(location, file);
                     }
                 }
             }
@@ -123,24 +119,19 @@ public class ExtFolder extends ExtFile{
     }
     public void update(){
         if(this.isAbsoluteRoot){
-            
             FileManagerLB.remount();
         }
         if(this.isPopulated()){
-            Log.writeln("Update:"+this.getAbsolutePath());
-            
+            //Log.writeln("Update:"+this.getAbsolutePath());
             for(ExtFile file:this.getFilesCollection()){
                 if(!Files.exists(file.toPath())){
-                    Log.writeln(file+" dont exist");
+                    //Log.writeln(file+" dont exist");
                     LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                     LocationAPI.getInstance().removeByLocation(location);
                 }
-            }
-            this.populateFolder();
-        }else{
-            this.populateFolder();
+            }   
         }
-        
+        this.populateFolder();
     }
     public ExtFile getIgnoreCase(String name){
         ArrayList<String> keys = new ArrayList<>();

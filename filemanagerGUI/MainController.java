@@ -49,6 +49,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.Comparator;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.scene.text.Text;
@@ -77,6 +79,8 @@ public class MainController extends BaseController{
     @FXML public TextField searchField;
     
     @FXML public ListView markedView;
+    @FXML public Text markedSize;
+    
     @FXML public ListView linkView;
     @FXML public ListView errorView;
     
@@ -267,6 +271,7 @@ public class MainController extends BaseController{
         if(pattern.length()>1){
             finder.newTask(pattern);
             this.searchView.getItems().clear();
+            finder.list.clear();
             if(!MC.currentDir.isAbsoluteRoot()){
                 Platform.runLater(()-> {
                     try {
@@ -318,6 +323,11 @@ public class MainController extends BaseController{
     public void dirSync(){
         ViewManager.getInstance().newDirSyncDialog();
     }
+    public void regexHelp(){
+        ViewManager.getInstance().newRegexHelpDialog();
+    }
+    
+    
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();
         ArrayList<Integer> array = new ArrayList<>();
@@ -445,7 +455,8 @@ public class MainController extends BaseController{
         });
         contextMenuItems[7] = new MenuItem("Clean this list");
         contextMenuItems[7].setOnAction((e)->{
-            TaskFactory.getInstance().markedList.clear();
+            //TaskFactory.getInstance().markedList.clear();
+            this.markedView.getItems().clear();
         });
         
         contextMenuItems[8] = new MenuItem("Remove this item");
@@ -541,13 +552,13 @@ public class MainController extends BaseController{
         });
         contextMenuItems[23] = new MenuItem("Mark selected");
         contextMenuItems[23].setOnAction(eh ->{
-            ObservableList<String> selectedItems = searchView.getSelectionModel().getSelectedItems();
-       
-                for(String item:selectedItems){
-                    ExtFile file = LocationAPI.getInstance().getFileAndPopulate(item);
-                    TaskFactory.getInstance().addToMarked(file);
-                }   
-            
+            Platform.runLater(()->{
+                ArrayList<String> list = new ArrayList<>();
+                list.addAll(searchView.getItems());
+                ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
+                new Thread(markFiles).start();
+            });
+                       
         });
         contextMenuItems[24] = new MenuItem("Copy Absolute Path");
         contextMenuItems[24].setOnAction(eh ->{
@@ -765,6 +776,8 @@ public class MainController extends BaseController{
         //Marked View
         markedView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         markedView.setItems(TaskFactory.getInstance().markedList);
+        IntegerBinding size = Bindings.size(markedView.getItems());
+        this.markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
         markedView.setOnMousePressed((eh) ->{ 
             if((markedView.getSelectionModel().getSelectedItem()!= null)&&(TaskFactory.getInstance().markedList.size()>0)){
@@ -792,7 +805,7 @@ public class MainController extends BaseController{
                 event.consume();
             }
         }); //drag
-
+        
         markedView.setOnDragOver((DragEvent event) -> {
             if(MC.currentDir.isAbsoluteRoot()){
                 return;

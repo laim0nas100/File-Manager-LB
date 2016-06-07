@@ -44,8 +44,9 @@ public class LocationAPI {
                 try{
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
+                        
                         //tempFile = new ExtFile(path.toString());
-                        if(Files.isDirectory(path)){
+                        if(path.getNameCount()==0 && Files.isDirectory(path)){
                             if(!tempFile.isRoot()){
                                 FileManagerLB.mountDevice(path.getRoot().toString());
                             }
@@ -115,9 +116,10 @@ public class LocationAPI {
     private void populateByLocation(LocationInRoot location){
         int i = 0;
         ExtFolder folder = ArtificialRoot;
-        Log.writeln("Pupulate by location",location);
-        folder.update();
+        Log.writeln("Populate by location",location);
+        //folder.update();
         for(String s:location.coordinates) {
+            
             if(folder.hasFileIgnoreCase(s)){
                 folder = (ExtFolder) folder.getIgnoreCase(s);
             }else{
