@@ -56,8 +56,9 @@ public class ExtFile extends FileAbs{
         stringSize = String.valueOf(size);
         int indexOf = stringSize.indexOf('.');
         this.propertySizeAuto = new SimpleStringProperty("("+sizeType+") "+stringSize.substring(0, Math.min(stringSize.length(), indexOf+3)));
-        
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
+        this.isAbsoluteRoot.set(false);
+        
     }   
     public ExtFile(File file){
         super(file.getAbsolutePath());

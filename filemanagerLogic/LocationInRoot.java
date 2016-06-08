@@ -69,7 +69,7 @@ public class LocationInRoot {
         if(this.coordinates.size()>0){
             return this.coordinates.get(this.coordinates.size()-1);
         }else{
-            return null;
+            return "";
         }
     }
     public void setName(String name){
@@ -96,10 +96,11 @@ public class LocationInRoot {
     @Override
     public String toString(){
         String str ="";
-        for(String s:this.coordinates){
-            str+=s+",";
+        for(int i=0;i<length()-1;i++){
+            str+=this.coordinates.get(i)+",";
         }
-        return "<"+str.substring(0, str.length()-1)+">";
+        str+=getName();
+        return "<"+str+">";
     }
     
 }

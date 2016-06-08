@@ -54,7 +54,9 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.MapExpression;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 import utility.ExtStringUtils;
 
@@ -124,6 +126,9 @@ public class MainController extends BaseController{
     private SimpleLongProperty propertyUnitSize;
     private SimpleBooleanProperty propertyUnitSizeAuto;
     private SimpleBooleanProperty propertyReadyToSearch;
+    private SimpleBooleanProperty propertyDeleteCondition;
+    private SimpleBooleanProperty propertyRenameCondition;
+    private IntegerBinding selectedSize;
     private ExtTask searchTask;
     public static final Comparator<String> compareSizeAsString = new Comparator<String>() {
         @Override
@@ -159,6 +164,8 @@ public class MainController extends BaseController{
         propertyUnitSize = new SimpleLongProperty(unitSize.size);
         propertyUnitSizeAuto = new SimpleBooleanProperty(false);
         propertyReadyToSearch = new SimpleBooleanProperty(true);
+        propertyDeleteCondition = new SimpleBooleanProperty(false);
+        propertyRenameCondition = new SimpleBooleanProperty(false);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
 
         finder = new Finder("",useRegex.selectedProperty());
@@ -168,11 +175,16 @@ public class MainController extends BaseController{
 
         itemCount.textProperty().bind(Bindings.size(finder.list).asString());
         MC = new ManagingClass(root);
-
+        
         LOAD();
         fileAddress = new FileAddressField(currentDirText);
         
+        
         changeToDir(currentDir);
+        selectedSize = Bindings.size(this.selectedList);
+        Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
+        
+
     }
     @Override
     public void exit(){ 
@@ -181,9 +193,11 @@ public class MainController extends BaseController{
     }
 
     public void setTableView(){
-        tableView.getItems().clear();
-        tableView.getItems().addAll(MC.getCurrentContents());
-        tableView.sort();
+        Platform.runLater(()->{
+            tableView.setItems(MC.getCurrentContents());
+            tableView.sort();
+        });
+        
         
     }
 
@@ -212,7 +226,8 @@ public class MainController extends BaseController{
             }
         }
         setTableView();
-       
+        propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
+        propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
         });
         
         
@@ -427,19 +442,12 @@ public class MainController extends BaseController{
         
         contextMenuItems[1] = new MenuItem("Rename");
         contextMenuItems[1].setOnAction((eh)->{
-            Log.writeln("Invoke rename dialog");
-            ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
-            ExtFile fileCopy = new ExtFile(path.getAbsolutePath());
-            ViewManager.getInstance().newRenameDialog(MC.currentDir,fileCopy);
-            //Invoke text input dialog
+            rename();
         });
         
         contextMenuItems[2] = new MenuItem("Delete");
         contextMenuItems[2].setOnAction((eh)->{
-            Log.writeln("Deleting");
-            ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
-            task.setTaskDescription("Delete selected files");
-            ViewManager.getInstance().newProgressDialog(task);
+            delete();
         });
         
         contextMenuItems[3] = new MenuItem("Copy Here");
@@ -673,7 +681,7 @@ public class MainController extends BaseController{
             hideAllContextMenus();
             tableContextMenu.getItems().clear();
             int itemCount1 = tableView.getSelectionModel().getSelectedItems().size();
-            int markedSize = TaskFactory.getInstance().markedList.size();
+            int markedSize1 = TaskFactory.getInstance().markedList.size();
             if (event.isSecondaryButtonDown()) {
                 if (itemCount1 == 1) {
                         tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
@@ -683,51 +691,51 @@ public class MainController extends BaseController{
                         }
                         
                 }
+                boolean con = false;
                 if (!MC.currentDir.isAbsoluteRoot()) {
                     
-                    if (markedSize==0 && itemCount1 >= 1) {
+                    if (markedSize1==0 && itemCount1 >= 1) {
                         submenuMarked.getItems().setAll(
                                 contextMenuItems[6]         //Add to marked
                                 //contextMenuItems[3],      //Copy
                                 //contextMenuItems[4],      //Move
                                 //contextMenuItems[9]       //Delete marked
                         );
-                    } else if (markedSize>0 && itemCount1 >= 1) {
+                    } else if (markedSize1>0 && itemCount1 >= 1) {
                         submenuMarked.getItems().setAll(
                                 contextMenuItems[6],      //Add to marked
                                 contextMenuItems[3],      //Copy
                                 contextMenuItems[4],      //Move
                                 contextMenuItems[9]       //Delete marked
                         );
-                    } else if (markedSize>0 && itemCount1 == 0) {
+                    } else if (markedSize1>0 && itemCount1 == 0) {
                         submenuMarked.getItems().setAll(
                                 //contextMenuItems[6]         //Add to marked
                                 contextMenuItems[3],      //Copy
                                 contextMenuItems[4],      //Move
                                 contextMenuItems[9]       //Delete marked
                         );
+                    }else{
+                        con = true;
                     }
+
                     if (itemCount1 == 1) {
                         
                         tableContextMenu.getItems().addAll(
-                                submenuCreate,
+//                                submenuCreate,
                                 contextMenuItems[1],    //Rename dialog
                                 contextMenuItems[2]     //Delete dialog
                         );
                     } else if (itemCount1 > 1) {
                         tableContextMenu.getItems().addAll(
-                                submenuCreate,
+//                                submenuCreate,
                                 //contextMenuItems[1],  //Rename dialog
                                 contextMenuItems[2]     //Delete dialog
                         );
-                    } else {
-                        tableContextMenu.getItems().addAll(
-                                submenuCreate
-                                //contextMenuItems[1],      //Rename dialog
-                                //contextMenuItems[2]     //Delete dialog
-                        );
                     }
-                    tableContextMenu.getItems().addAll(submenuSelectTable,submenuMarked);
+                    tableContextMenu.getItems().addAll(submenuCreate,submenuSelectTable,submenuMarked);
+                    if(con)
+                        tableContextMenu.getItems().remove(submenuMarked);
                 }
             } else if(event.isPrimaryButtonDown()){
                 if(!tableView.getSelectionModel().isEmpty()){
@@ -740,7 +748,14 @@ public class MainController extends BaseController{
                 } 
             }
         });  
-        
+        tableView.setOnKeyReleased(eh->{
+            KeyCode code = eh.getCode();
+            if(code.equals(KeyCode.DELETE)){
+                delete();
+            }else if(code.equals(KeyCode.F2)){
+                rename();
+            }
+        });
         tableView.setOnDragDetected((MouseEvent event) -> {
             if(MC.currentDir.isAbsoluteRoot()){
                 return;
@@ -849,9 +864,7 @@ public class MainController extends BaseController{
             boolean success = false;
             if (!TaskFactory.getInstance().dragList.isEmpty()) {
                 for(ExtFile f:TaskFactory.getInstance().dragList){
-                    if(!TaskFactory.getInstance().markedList.contains(f)){
-                        TaskFactory.getInstance().markedList.add(f);
-                    }
+                    TaskFactory.getInstance().addToMarked(f);
                 }
                 success = true;
             }
@@ -1003,5 +1016,26 @@ public class MainController extends BaseController{
         this.propertyUnitSizeAuto.set(true);
         this.propertyUnitSizeName.set("Size Auto");
         this.updateCurrentView();
+    }
+    
+    private void delete(){
+        if(this.propertyDeleteCondition.not().get()){
+            return;
+        }
+        Log.writeln("Deleting");
+        ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
+        task.setTaskDescription("Delete selected files");
+        ViewManager.getInstance().newProgressDialog(task);
+    }
+    private void rename(){
+        if(this.propertyRenameCondition.not().get()){
+            return;
+        }   
+        
+        Log.writeln("Invoke rename dialog");
+        ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
+        ViewManager.getInstance().newRenameDialog(MC.currentDir,path);
+        //Invoke text input dialog
+        
     }
 }
