@@ -575,7 +575,7 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    
+    private void VOID(){};
     
     public static void serializeObject(String whereToSave, Object whatToSave){
         boolean success = true;
