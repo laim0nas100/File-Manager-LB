@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Properties;
-import javafx.application.Platform;
 
 /**
  *
@@ -22,7 +21,7 @@ import javafx.application.Platform;
 public class Log extends PrintStream{
     
     private static final Log INSTANCE = new Log();
-    private ArrayList<String> list;
+    private final ArrayList<String> list;
     protected Log(){
         
         super(new FileOutputStream(FileDescriptor.out));
@@ -31,12 +30,7 @@ public class Log extends PrintStream{
     public static Log getInstance(){        
         return INSTANCE;
     }
-    private static char LogType = 'e';
-    public void setType(char c){
-        Log.LogType = c;
-        changeStream(c);
-    }
-    public static void changeStream (char c,File...file){
+    public static void changeStream(char c,File...file){
         try {
             INSTANCE.out.close();
         } catch (IOException ex) {
@@ -44,10 +38,9 @@ public class Log extends PrintStream{
         }
         switch(c){
             case('f'):{
-            try {
-                INSTANCE.out = new FileOutputStream(file[0]);
-                } catch (FileNotFoundException ex) {
-                }
+                try {
+                    INSTANCE.out = new FileOutputStream(file[0]);
+                } catch (FileNotFoundException ex) {}
                 break;
             }
             case('e'):{

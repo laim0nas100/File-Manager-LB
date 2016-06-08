@@ -219,11 +219,13 @@ public class MainController extends BaseController{
         fileAddress.folder = MC.currentDir;
         fileAddress.f = null;
         
-        Iterator<ExtFile> iterator = TaskFactory.getInstance().markedList.iterator();
+        Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
         while(iterator.hasNext()){
-            if(!Files.exists(iterator.next().toPath())){
+            try{
+            if(!Files.exists(Paths.get(iterator.next()))){
                 iterator.remove();
             }
+            }catch(Exception e){}
         }
         setTableView();
         propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
@@ -479,7 +481,7 @@ public class MainController extends BaseController{
         contextMenuItems[6] = new MenuItem("Add to marked");
         contextMenuItems[6].setOnAction((eh)->{
             selectedList.stream().forEach((file) -> {
-                TaskFactory.getInstance().addToMarked(file);
+                TaskFactory.getInstance().addToMarked(file.getAbsoluteDirectory());
             });  
         });
         contextMenuItems[7] = new MenuItem("Clean this list");
@@ -503,17 +505,19 @@ public class MainController extends BaseController{
             
         });
         contextMenuItems[10] = new MenuItem("Move here selected");
-        contextMenuItems[10].setOnAction(eh ->{    
-            TaskFactory.getInstance().prepareActionList(TaskFactory.getInstance().dragList);
-            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().actionList,MC.currentDir);
+        contextMenuItems[10].setOnAction(eh ->{   
+            TaskFactory.getInstance().actionList.clear();
+            TaskFactory.getInstance().actionList.addAll(TaskFactory.getInstance().dragList);
+            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(TaskFactory.getInstance().actionList),MC.currentDir);
             task.setTaskDescription("Move Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
         contextMenuItems[11] = new MenuItem("Copy here selected");
         contextMenuItems[11].setOnAction(eh ->{        
             //Log.writeln("Copy Dragger");
-            TaskFactory.getInstance().prepareActionList(TaskFactory.getInstance().dragList);
-            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().actionList,MC.currentDir);
+             TaskFactory.getInstance().actionList.clear();
+            TaskFactory.getInstance().actionList.addAll(TaskFactory.getInstance().dragList);
+            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(TaskFactory.getInstance().actionList),MC.currentDir);
             task.setTaskDescription("Copy Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -864,7 +868,7 @@ public class MainController extends BaseController{
             boolean success = false;
             if (!TaskFactory.getInstance().dragList.isEmpty()) {
                 for(ExtFile f:TaskFactory.getInstance().dragList){
-                    TaskFactory.getInstance().addToMarked(f);
+                    TaskFactory.getInstance().addToMarked(f.getAbsoluteDirectory());
                 }
                 success = true;
             }
@@ -1023,7 +1027,7 @@ public class MainController extends BaseController{
             return;
         }
         Log.writeln("Deleting");
-        ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
+        ExtTask task = TaskFactory.getInstance().deleteFiles(TaskFactory.getInstance().populateStringFileList(selectedList));
         task.setTaskDescription("Delete selected files");
         ViewManager.getInstance().newProgressDialog(task);
     }

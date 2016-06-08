@@ -44,7 +44,7 @@ import utility.FileNameException;
 public class TaskFactory {
     
     public  ObservableList<ExtFile> dragList;
-    public  ObservableList<ExtFile> markedList;
+    public  ObservableList<String> markedList;
     public  ArrayList<ExtFile> actionList;
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory instance = new TaskFactory();
@@ -120,7 +120,7 @@ public class TaskFactory {
     
 //PREPARE FOR TASKS
 
-    public void addToMarked(ExtFile file){
+    public void addToMarked(String file){
         Platform.runLater(()->{
             if(file!=null&&!markedList.contains(file)){
                 markedList.add(file);
@@ -129,10 +129,21 @@ public class TaskFactory {
         
         
     }
-    public void prepareActionList(Collection<ExtFile> filelist){
-        this.actionList.clear();
-        this.actionList.addAll(filelist);
+    public Collection<ExtFile> populateExtFileList(Collection<String> filelist){
+        Collection<ExtFile> collection = FXCollections.observableArrayList();
+        filelist.forEach(item ->{
+            collection.add(LocationAPI.getInstance().getFileAndPopulate(item));
+        });
+        return collection;
     }
+    public Collection<String> populateStringFileList(Collection<ExtFile> filelist){
+        Collection<String> collection = FXCollections.observableArrayList();
+        filelist.forEach(item ->{
+            collection.add(item.getAbsoluteDirectory());
+        });
+        return collection;
+    }
+    
     private ActionFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
         Log.writeln("List recieved in task");
         
@@ -217,12 +228,12 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public ExtTask copyFiles(Collection<ExtFile> fileList, ExtFile dest){  
+    public ExtTask copyFiles(Collection<String> fileList, ExtFile dest){  
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
-                ActionFile[] list = prepareForCopy(fileList,dest);
+                ActionFile[] list = prepareForCopy(populateExtFileList(fileList),dest);
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -253,13 +264,13 @@ public class TaskFactory {
             }
         };
     }
-    public ExtTask moveFiles(Collection<ExtFile> fileList, ExtFile dest){
+    public ExtTask moveFiles(Collection<String> fileList, ExtFile dest){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
                 updateMessage("Populating list for move");
-                ActionFile[] list = prepareForMove(fileList,dest);
+                ActionFile[] list = prepareForMove(populateExtFileList(fileList),dest);
                 updateMessage("Begin");
                 int index1 = 0;
                 for(; index1<list.length; index1++){
@@ -313,12 +324,12 @@ public class TaskFactory {
             
         };
     }
-    public ExtTask deleteFiles(Collection<ExtFile> fileList){
+    public ExtTask deleteFiles(Collection<String> fileList){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
-                ActionFile[] list = prepareForDelete(fileList);
+                ActionFile[] list = prepareForDelete(populateExtFileList(fileList));
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -391,10 +402,7 @@ public class TaskFactory {
             @Override
             protected Void call(){
                 list.forEach(file ->{
-                    ExtFile f = LocationAPI.getInstance().getFileAndPopulate(file);
-                    if(!f.isAbsoluteRoot()){
-                        addToMarked(f);
-                    }
+                    addToMarked(file);
                 });
                 return null;
             }
