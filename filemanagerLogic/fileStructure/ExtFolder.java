@@ -144,15 +144,12 @@ public class ExtFolder extends ExtFile{
         this.populateFolder();
     }
     public ExtFile getIgnoreCase(String name){
-        ArrayList<String> keys = new ArrayList<>();
-        keys.addAll(files.keySet());
-        String request = "";
-        for(String key:keys){
-            if(name.equalsIgnoreCase(key)){
-                request = key;
-            }
+        if(hasFileIgnoreCase(name)){
+            String request = getKey(name);
+            return files.get(request);
+        }else{
+            return null;
         }
-        return files.get(request);
     }
     public boolean hasFileIgnoreCase(String name){
         String key = getKey(name);

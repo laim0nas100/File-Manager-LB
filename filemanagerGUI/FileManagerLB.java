@@ -80,12 +80,10 @@ public class FileManagerLB extends Application {
     public static boolean mountDevice(String name){
         boolean result = false;
         name = name.toUpperCase();
+        //Log.write("Mount:",name);
         Path path = Paths.get(name);
-        if(!new File(name).exists()){
-            return false;
-        }
         if(Files.isDirectory(path)){
-            ExtFolder device = new ExtFolder(path.toString());
+            ExtFolder device = new ExtFolder(name);
             int nameCount = path.getNameCount();
             //Log.write("Is direcory");
             if(nameCount == 0){
@@ -93,10 +91,13 @@ public class FileManagerLB extends Application {
                 String newName = path.getRoot().toString();
                 //Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
-                ArtificialRoot.files.putIfAbsent(newName, device);
-                device.update();
-                
-                //Log.writeln("Mounted successfully");
+                if(!ArtificialRoot.files.containsKey(newName)){
+                    ArtificialRoot.files.put(newName, device);
+                    device.update();
+                    
+                }else{
+                    result = false;
+                }
             }
         }
         return result;

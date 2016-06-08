@@ -354,7 +354,7 @@ public class TaskFactory {
             folder.update();
             
             for(ExtFolder fold:folder.getFoldersFromFiles()){
-                populateRecursiveParallelInner(fold, ++level,MAX_DEPTH);
+                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
             }
         }
     }
@@ -415,10 +415,6 @@ public class TaskFactory {
         return new Task(){
             @Override
             protected Snapshot call() throws Exception {
-                ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel((ExtFolder) LocationAPI.getInstance().getFileAndPopulate(folder), 50);
-                Thread thread = new Thread(populateRecursiveParallel);
-                thread.start();
-                thread.join();
                 return new Snapshot((ExtFolder) LocationAPI.getInstance().getFileAndPopulate(folder));
             }
   

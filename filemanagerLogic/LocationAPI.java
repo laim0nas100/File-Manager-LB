@@ -35,7 +35,7 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
-        LocationInRoot loc = new LocationInRoot(pathl);
+        
         
         if(!pathl.isEmpty()){
             try{
@@ -43,11 +43,9 @@ public class LocationAPI {
                 try{
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
-                        
-                        //tempFile = new ExtFile(path.toString());
-                        if(path.getNameCount()==0 && Files.isDirectory(path)){
-                            if(!tempFile.isRoot()){
-                                FileManagerLB.mountDevice(path.getRoot().toString());
+                        if(!tempFile.isRoot()){
+                            if(FileManagerLB.mountDevice(path.getRoot().toString())){
+                                ArtificialRoot.update();
                             }
                         }
                     }
@@ -55,6 +53,7 @@ public class LocationAPI {
                     //ErrorReport.report(new Exception("windows auto pathing exception"));
                 }
                 //loc = tempFile.getMapping();
+                LocationInRoot loc = tempFile.getMapping();
                 Log.write("Location:",loc);
                 this.populateByLocation(loc.getParentLocation());
                 
@@ -88,7 +87,8 @@ public class LocationAPI {
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
         }
-        folder.files.remove(location.at(i));
+        String key = folder.getKey(location.at(i));
+        folder.files.remove(key);
     }
 
     public void putByLocation(LocationInRoot location, ExtFile file) {
@@ -99,7 +99,7 @@ public class LocationAPI {
             folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
 
         }
-        folder.files.put(location.getName(), file);
+        folder.files.put(file.propertyName.get(), file);
     }
     public void putByLocationRecursive(LocationInRoot location, ExtFile file) {
         int i = 0;
@@ -110,7 +110,7 @@ public class LocationAPI {
             //Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
             folder.update();
         }
-        folder.files.put(location.getName(), file);
+        folder.files.put(file.propertyName.get(), file);
     }
     private void populateByLocation(LocationInRoot location){
         int i = 0;

@@ -29,7 +29,7 @@ public class LocationInRoot {
         String rootLoc = "";
         if(!filePath.isEmpty()){
             for(String s:FileManagerLB.getRootSet()){
-                if(ExtStringUtils.contains(filePath, s)){
+                if(ExtStringUtils.containsIgnoreCase(filePath, s)){
                     rootLoc = s;
                     break;
                 }
