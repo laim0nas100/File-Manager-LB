@@ -40,8 +40,8 @@ public class ProgressDialogController extends BaseDialog {
     private ExtTask task;
     private SimpleBooleanProperty paused;
     
-    public void setUp(String title,ExtTask newTask){
-        super.setUp(title);
+    public void afterShow(ExtTask newTask){
+        super.afterShow();
         paused = new SimpleBooleanProperty(false);
         this.task = newTask;
         bar.progressProperty().bind(task.progressProperty());
@@ -70,6 +70,10 @@ public class ProgressDialogController extends BaseDialog {
         });
         
         
+    }
+    @Override
+    public void beforeShow(String title){
+        super.beforeShow(title);
     }
     public void cancelTask(){
         this.task.cancel();

@@ -63,8 +63,8 @@ private ObservableList<TableItemObject> tableList;
 private ArrayList<ExtFolder> folders;
 private ArrayList<ExtFile> files;
 
-public void setUp(String title,ArrayList<String> fileList){
-    super.setUp(title);    
+public void beforeShow(String title,ArrayList<String> fileList){
+    super.beforeShow(title);    
     this.setNumber();
     this.tableList = FXCollections.observableArrayList();
     this.files = new ArrayList<>();

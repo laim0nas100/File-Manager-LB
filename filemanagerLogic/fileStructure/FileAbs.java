@@ -8,6 +8,7 @@ package filemanagerLogic.fileStructure;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.StringProperty;
 
@@ -16,7 +17,7 @@ import javafx.beans.property.StringProperty;
  * @author Laimonas Beniušis
  */
 public abstract class FileAbs extends File {
-    
+    public BooleanProperty isAbsoluteRoot;
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;

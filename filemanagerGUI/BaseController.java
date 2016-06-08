@@ -20,8 +20,11 @@ public abstract class BaseController implements Initializable{
     @Override
     public void initialize(URL url, ResourceBundle rb) {}; 
     
-    protected void setUp(String title){
+    protected void beforeShow(String title){
        this.windowID = title;
+    }
+    protected void afterShow(){
+        
     }
     public abstract void exit();
 }

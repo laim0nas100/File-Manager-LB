@@ -128,7 +128,7 @@ public class ExtFolder extends ExtFile{
         }
     }
     public void update(){
-        if(this.isAbsoluteRoot){
+        if(isAbsoluteRoot()){
             FileManagerLB.remount();
         }
         if(this.isPopulated()){

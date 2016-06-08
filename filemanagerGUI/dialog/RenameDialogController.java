@@ -37,8 +37,8 @@ public class RenameDialogController extends TextInputDialogController {
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
     
     
-    public void setUp(String title,ExtFolder folder,ExtFile itemToRename){
-        super.setUp(title);
+    public void afterShow(ExtFolder folder,ExtFile itemToRename){
+        
         this.description.setText("Rename "+itemToRename.propertyName.get());
         this.itemToRename = itemToRename;
         this.textField.setText(itemToRename.propertyName.get());
@@ -46,6 +46,10 @@ public class RenameDialogController extends TextInputDialogController {
         this.folder = folder;
         
         
+    }
+    @Override
+    public void beforeShow(String title){
+        super.beforeShow(title);
     }
     @Override
     public void checkAvailable(){

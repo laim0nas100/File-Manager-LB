@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
@@ -23,14 +24,14 @@ import javafx.beans.property.SimpleStringProperty;
  * Extended File for custom actions
  */
 public class ExtFile extends FileAbs{
-    protected boolean isAbsoluteRoot;
+    
 
     public boolean isAbsoluteRoot() {
-        return isAbsoluteRoot;
+        return isAbsoluteRoot.get();
     }
 
     public void setIsAbsoluteRoot(boolean isAbsoluteRoot) {
-        this.isAbsoluteRoot = isAbsoluteRoot;
+        this.isAbsoluteRoot.set(isAbsoluteRoot);
     }
     protected void setDefaultValues(){         
         this.propertyName = new SimpleStringProperty(this.getName());
@@ -56,7 +57,7 @@ public class ExtFile extends FileAbs{
         int indexOf = stringSize.indexOf('.');
         this.propertySizeAuto = new SimpleStringProperty("("+sizeType+") "+stringSize.substring(0, Math.min(stringSize.length(), indexOf+3)));
         
-        this.isAbsoluteRoot = false;
+        this.isAbsoluteRoot = new SimpleBooleanProperty(false);
     }   
     public ExtFile(File file){
         super(file.getAbsolutePath());

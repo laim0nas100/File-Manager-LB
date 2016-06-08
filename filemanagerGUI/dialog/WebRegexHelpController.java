@@ -24,8 +24,8 @@ public class WebRegexHelpController extends BaseDialog{
    
 
     @Override
-    public void setUp(String title) {
-        super.setUp(title);
+    public void beforeShow(String title) {
+        super.beforeShow(title);
         String path = "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html";
        
         try{

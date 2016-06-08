@@ -87,7 +87,7 @@ public class ViewManager {
             });
             Frame frame = new Frame(stage,controller);
             windows.put(frame.getTitle(),frame);
-            controller.setUp(stage.getTitle(),rootFolder,currentFolder);
+            controller.beforeShow(stage.getTitle(),rootFolder,currentFolder);
             stage.show();
         } catch (IOException ex) {
             ErrorReport.report(ex);
@@ -138,16 +138,18 @@ public class ViewManager {
             stage.setMaxHeight(300);
             stage.setMinHeight(250);
             stage.setMinWidth(400);
-            stage.show();
-            stage.toFront();
-            stage.requestFocus();
+            
             
             //stage.setResizable(false);
             ProgressDialogController controller = loader.<ProgressDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });  
-            controller.setUp(stage.getTitle(), task);
+            controller.beforeShow(stage.getTitle());
+            stage.show();
+            stage.toFront();
+            stage.requestFocus();
+            controller.afterShow(task);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
@@ -167,14 +169,16 @@ public class ViewManager {
             stage.setMaxHeight(200);
             stage.setMinHeight(200);
             stage.setMinWidth(500);
-            stage.show();
-            stage.toFront();
-            stage.setAlwaysOnTop(true);
+            
             RenameDialogController controller = loader.<RenameDialogController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
-            controller.setUp(stage.getTitle(),folder,itemToRename);
+            controller.beforeShow(stage.getTitle());
+            stage.show();
+            stage.toFront();
+            stage.setAlwaysOnTop(true);
+            controller.afterShow(folder,itemToRename);
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
@@ -190,13 +194,14 @@ public class ViewManager {
             Stage stage = new Stage();
             stage.setTitle(Titles.ADVANCED_RENAME_DIALOG+index);
             stage.setScene(new Scene(root));
-            stage.show();
-            stage.toFront();
+            
             AdvancedRenameController controller = loader.<AdvancedRenameController>getController();
             stage.setOnCloseRequest((WindowEvent we) -> {
                 controller.exit();
             });
-            controller.setUp(stage.getTitle(),list);
+            controller.beforeShow(stage.getTitle(),list);
+            stage.show();
+            stage.toFront();
             Frame frame = new Frame(stage,controller);
             dialogs.put(frame.getTitle(),frame);          
         } catch (Exception ex) {
@@ -211,13 +216,14 @@ public class ViewManager {
            Stage stage = new Stage();
            stage.setTitle(Titles.DIR_SYNC_DIALOG+index);
            stage.setScene(new Scene(root));
-           stage.show();
-           stage.toFront();
+           
            DirSyncController controller = loader.<DirSyncController>getController();
            stage.setOnCloseRequest((WindowEvent we) -> {
                controller.exit();
            });
-           controller.setUp(stage.getTitle());
+           controller.beforeShow(stage.getTitle());
+           stage.show();
+           stage.toFront();
            Frame frame = new Frame(stage,controller);
            dialogs.put(frame.getTitle(),frame);          
        } catch (Exception ex) {
@@ -232,13 +238,14 @@ public class ViewManager {
            Stage stage = new Stage();
            stage.setTitle(Titles.REGEX_HELP_DIALOG+index);
            stage.setScene(new Scene(root));
-           stage.show();
-           stage.toFront();
+           
            WebRegexHelpController controller = loader.<WebRegexHelpController>getController();
            stage.setOnCloseRequest((WindowEvent we) -> {
                controller.exit();
            });
-           controller.setUp(stage.getTitle());
+           controller.beforeShow(stage.getTitle());
+           stage.show();
+           stage.toFront();
            Frame frame = new Frame(stage,controller);
            dialogs.put(frame.getTitle(),frame);          
        } catch (Exception ex) {

@@ -27,8 +27,8 @@ public abstract class TextInputDialogController extends BaseDialog implements Te
     protected String stringToCheck;
     
     @Override
-    public void setUp(String title){
-        super.setUp(title);
+    public void beforeShow(String title){
+        super.beforeShow(title);
         buttonEnter.disableProperty().bind(nameIsAvailable.not());
     }
 }

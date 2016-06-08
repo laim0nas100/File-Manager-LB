@@ -95,8 +95,8 @@ public class DirSyncController extends BaseDialog {
     
     
     @Override
-    public void setUp(String title){
-    super.setUp(title);
+    public void beforeShow(String title){
+    super.beforeShow(title);
     Platform.runLater(()->{
         
         ObservableList<String> options = FXCollections.observableArrayList();

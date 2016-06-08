@@ -150,9 +150,9 @@ public class MainController extends BaseController{
         }
         return  Double.parseDouble(s)*multiplier;
     }
-    public void setUp(String title,ExtFolder root,ExtFolder currentDir){
+    public void beforeShow(String title,ExtFolder root,ExtFolder currentDir){
         
-        super.setUp(title);
+        super.beforeShow(title);
         
         unitSize = DATA_SIZE.KB;
         propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
@@ -995,8 +995,6 @@ public class MainController extends BaseController{
         }
         Platform.runLater(()->{
             setSizeAuto();
-            tableView.getItems().clear();
-            tableView.getItems().addAll(MC.getCurrentContents());
             tableView.getColumns().setAll(columns);
         });
         
