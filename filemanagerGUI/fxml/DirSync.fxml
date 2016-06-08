@@ -29,7 +29,7 @@
                         </TextField>
                         <Text fx:id="status0" strokeType="OUTSIDE" strokeWidth="0.0" text="STATUS">
                            <HBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
                            </HBox.margin>
                         </Text>
                      </children>
@@ -43,7 +43,7 @@
                         </TextField>
                         <Text fx:id="status1" strokeType="OUTSIDE" strokeWidth="0.0" text="STATUS">
                            <HBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
                            </HBox.margin>
                         </Text>
                      </children>
@@ -136,6 +136,11 @@
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                            </FlowPane.margin>
                         </Button>
+                        <Text fx:id="status" strokeType="OUTSIDE" strokeWidth="0.0" text="Waiting">
+                           <FlowPane.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </FlowPane.margin>
+                        </Text>
                      </children>
                   </FlowPane>
                </children>

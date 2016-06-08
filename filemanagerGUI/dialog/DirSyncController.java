@@ -56,6 +56,7 @@ public class DirSyncController extends BaseDialog {
     @FXML public TextField directory1;
     @FXML public Text status0;
     @FXML public Text status1;
+    @FXML public Text status;
     @FXML public TableView table;
     @FXML public DatePicker datePicker;
     @FXML public CheckBox checkShowAbsolutePath;
@@ -236,7 +237,7 @@ public class DirSyncController extends BaseDialog {
             setDirs();
             snapshot0 = SnapshotAPI.getEmptySnapshot();
             snapshot1 = SnapshotAPI.getEmptySnapshot();
-            
+            this.status.textProperty().set("Loading A");
             this.btnSync.setDisable(true);
             this.btnCompare.setDisable(true);
             if(cond0&&cond1){           
@@ -245,20 +246,23 @@ public class DirSyncController extends BaseDialog {
                 task0.setOnSucceeded(eh ->{                  
                     snapshot0 = task0.getValue();
                     //Log.writeln(snapshot0);
+                    this.status.textProperty().set("Loading B");
                     new Thread(task1).start();
                 });
                 task1.setOnSucceeded(eh ->{
                     snapshot1 = task1.getValue();
                     //Log.writeln(snapshot1);
                     btnCompare.setDisable(false);
+                    this.status.textProperty().set("Done");
                 });
                 new Thread(task0).start();
             }       
     }
     
     public void compare(){
-            table.getSortOrder();
+            ObservableList sortOrder = table.getSortOrder();
             
+            this.status.textProperty().set("Comparing");
             Long date = Instant.now().toEpochMilli();
 
             try{
@@ -391,7 +395,9 @@ public class DirSyncController extends BaseDialog {
             
         Platform.runLater(()->{
             table.setItems(list);
+            table.getSortOrder().setAll(sortOrder);
             table.sort();
+            this.status.textProperty().set("Done");
             this.btnSync.setDisable(false);
         });
     }
@@ -418,10 +424,11 @@ public class DirSyncController extends BaseDialog {
         }else{
             task = TaskFactory.getInstance().syncronizeTask(snapshot0.folderCreatedFrom, snapshot1.folderCreatedFrom, list, listDelete);
         }
-        task.setTaskDescription("Syncronization");
+        task.setTaskDescription("Synchronization");
         task.childTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
+                status.textProperty().set("Synchronization");
                 Log.writeln("Child task invoked");
                 for(Object ob:table.getItems()){
                     ExtEntry entry = (ExtEntry) ob;
@@ -436,6 +443,7 @@ public class DirSyncController extends BaseDialog {
                         }
                     }
                     btnCompare.setDisable(true);
+                    status.textProperty().set("Done");
                 }
                 
                 return null;

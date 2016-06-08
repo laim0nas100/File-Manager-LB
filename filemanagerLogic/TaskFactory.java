@@ -122,7 +122,7 @@ public class TaskFactory {
 
     public void addToMarked(ExtFile file){
         Platform.runLater(()->{
-            if(file!=null&&!file.isAbsoluteRoot()&&!markedList.contains(file)){
+            if(file!=null&&!markedList.contains(file)){
                 markedList.add(file);
             } 
         });
@@ -539,27 +539,25 @@ public class TaskFactory {
                 try{
                     Files.copy(path2, path1,StandardCopyOption.REPLACE_EXISTING);
                 }catch(Exception e){
-                    if(!Files.isDirectory(path1)){
-                        Files.delete(path1);
-                        Files.createDirectories(path1);
+                    if(Files.isDirectory(path1)){
+                        Files.setLastModifiedTime(path1, Files.getLastModifiedTime(path2));
+                        entry.isModified = false;
+                        //Log.write("Directory:",path2);
                     }
-                    Files.setLastModifiedTime(path1, Files.getLastModifiedTime(path2));
-                    entry.isModified = false;
-                    Log.write("Directory:",path2); 
+                     
                 }
                 break;
             }case(2):{
                 try{
                     Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING);  
                 }catch(Exception e){
-                    if(!Files.isDirectory(path2)){
-                        Files.delete(path1);
-                        Files.createDirectories(path2);
+                    if(Files.isDirectory(path2)){
+                        Files.setLastModifiedTime(path2, Files.getLastModifiedTime(path1));
+                        entry.isModified = false;
+                        //Log.write("Directory:",path1);
                     }
                     
-                    Files.setLastModifiedTime(path2, Files.getLastModifiedTime(path1));
-                    entry.isModified = false;
-                    Log.write("Directory:",path1);
+                    
                 }
                 
                 break;
