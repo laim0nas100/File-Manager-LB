@@ -19,19 +19,19 @@ import utility.Log;
  *
  * @author lemmin
  */
-public class WebRegexHelpController extends BaseDialog{
+public class WebDialogController extends BaseDialog{
    @FXML public WebView browser;
    
 
-    @Override
-    public void beforeShow(String title) {
-        super.beforeShow(title);
-        String path = "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html";
-       
+
+    public void afterShow(String...strings) {
+        String path = "";
+        
         try{
+            path = strings[0];
             Log.writeln(path);
-            if(!isInternetReachable()){
-                path = "file:///"+System.getProperty("user.dir")+"/Pattern (Java Platform SE 7 ).html";
+            if(!isInternetReachable(strings[0])){
+                path = "file:///"+System.getProperty("user.dir")+"/"+strings[1];
             }
             Log.writeln("Loading from local");
             browser.getEngine().load(path);
@@ -39,14 +39,11 @@ public class WebRegexHelpController extends BaseDialog{
         }catch(Exception e){
             ErrorReport.report(e);
         }
-       
-       
-        
     }
-    public static boolean isInternetReachable(){
+    public static boolean isInternetReachable(String path){
             try {
                 //make a URL to a known source
-                URL url = new URL("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html");
+                URL url = new URL(path);
 
                 //open a connection to that source
                 HttpURLConnection urlConnect = (HttpURLConnection)url.openConnection();

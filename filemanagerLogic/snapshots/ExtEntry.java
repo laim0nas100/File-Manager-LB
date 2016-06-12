@@ -56,5 +56,7 @@ public class ExtEntry extends Entry{
             }
         }
     }
-    
+    public String toString(){
+        return super.toString() + " "+action.get();
+    }
 }

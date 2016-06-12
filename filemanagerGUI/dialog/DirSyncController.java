@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
@@ -290,8 +291,10 @@ public class DirSyncController extends BaseDialog {
                 }else{
                     if(ignoreFolderDate.get()){
                         if(next.isFolder){
-                           next.isModified = false;
-                           remove = true;
+                            if(next.isModified){
+                                next.isModified = false;
+                                remove = true;
+                            }
                         }
                     }
                 }
@@ -325,10 +328,10 @@ public class DirSyncController extends BaseDialog {
                                         entry.setAction(1);
                                     }
                                 }else{
-                                    if(!entry.isOlder){
-                                        entry.setAction(2);
-                                    }else{
+                                    if(entry.isOlder){
                                         entry.setAction(1);
+                                    }else{
+                                        entry.setAction(2);
                                     }
                                 }
                             }
@@ -344,19 +347,7 @@ public class DirSyncController extends BaseDialog {
                             entry.setAction(2);
                         }else{
                             if(entry.isModified){
-                                if(this.prioritizeBigger.get()){
-                                    if(entry.isBigger){
-                                        entry.setAction(2);
-                                    }else{
-                                        entry.setAction(1);
-                                    }
-                                }else{
-                                    if(!entry.isOlder){
-                                        entry.setAction(2);
-                                    }else{
-                                        entry.setAction(1);
-                                    }
-                                }
+                                entry.setAction(2);
                             }
                         }
                         break;
@@ -372,19 +363,7 @@ public class DirSyncController extends BaseDialog {
                             }
                         }else{
                             if(entry.isModified){
-                                if(this.prioritizeBigger.get()){
-                                    if(entry.isBigger){
-                                        entry.setAction(2);
-                                    }else{
-                                        entry.setAction(1);
-                                    }
-                                }else{
-                                    if(!entry.isOlder){
-                                        entry.setAction(2);
-                                    }else{
-                                        entry.setAction(1);
-                                    }
-                                }
+                                entry.setAction(1);
                             }
                         }
                         break;
@@ -405,12 +384,12 @@ public class DirSyncController extends BaseDialog {
     public void synchronize(){
         this.btnSync.setDisable(true);
         Log.writeln("Syncronize!");
-        ObservableList<ExtEntry> list = FXCollections.observableArrayList();
-        ObservableList<ExtEntry> listDelete = FXCollections.observableArrayList();
+        ArrayList<ExtEntry> list = new ArrayList<>();
+        ArrayList<ExtEntry> listDelete = new ArrayList<>();
         table.sort();
         for(Object object:table.getItems()){
             ExtEntry entry = (ExtEntry) object;
-            if(entry.actionType.get()==5){
+            if(entry.actionType.get()>2){
                 listDelete.add(entry);
             }else{
                 list.add(entry);
@@ -419,11 +398,18 @@ public class DirSyncController extends BaseDialog {
         listDelete.sort(cmpAsc.reversed());
         list.sort(cmpAsc);
         ExtTask task;
+        
+        
         if(deleteFirst.get()){
-            task = TaskFactory.getInstance().syncronizeTask(snapshot0.folderCreatedFrom, snapshot1.folderCreatedFrom, listDelete, list);
+            list.addAll(0, listDelete);
         }else{
-            task = TaskFactory.getInstance().syncronizeTask(snapshot0.folderCreatedFrom, snapshot1.folderCreatedFrom, list, listDelete);
+            list.addAll(listDelete);
         }
+        for(ExtEntry en:list){
+            Log.write(en.toString());
+        }
+        task = TaskFactory.getInstance().syncronizeTask(snapshot0.folderCreatedFrom, snapshot1.folderCreatedFrom, list);
+
         task.setTaskDescription("Synchronization");
         task.childTask = new Task<Void>() {
             @Override
@@ -442,10 +428,10 @@ public class DirSyncController extends BaseDialog {
                             Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot1.folderCreatedFrom+entry.relativePath)));                           
                         }
                     }
-                    btnCompare.setDisable(true);
-                    status.textProperty().set("Done");
+                    
                 }
-                
+                btnCompare.setDisable(true);
+                status.textProperty().set("Done");
                 return null;
             }
         };

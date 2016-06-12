@@ -39,7 +39,7 @@ public class SnapshotAPI {
                     entry.isModified = true;
                     
                     if(get.lastModified != entry.lastModified){
-                        entry.isOlder = (entry.lastModified - get.lastModified)>1;
+                        entry.isOlder = (get.lastModified - entry.lastModified)>0;
                     }
                     if(get.size!=entry.size){
                         entry.isBigger = (entry.size - get.size)>0;

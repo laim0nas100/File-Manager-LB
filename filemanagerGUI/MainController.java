@@ -104,6 +104,9 @@ public class MainController extends BaseController{
     @FXML public Menu menuSizeUnits;
     @FXML public MenuItem miAdvancedRename;
     
+    @FXML public MenuItem menuItemAbout;
+    @FXML public MenuItem menuItemTest;
+    
     
     private ContextMenu tableContextMenu;
     private ContextMenu markedContextMenu;
@@ -159,6 +162,7 @@ public class MainController extends BaseController{
         
         super.beforeShow(title);
         
+        menuItemTest.visibleProperty().bind(FileManagerLB.DEBUG);
         unitSize = DATA_SIZE.KB;
         propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
         propertyUnitSize = new SimpleLongProperty(unitSize.size);
@@ -186,6 +190,7 @@ public class MainController extends BaseController{
         
 
     }
+    
     @Override
     public void exit(){ 
         System.out.println("Closing internally " + windowID);
@@ -259,8 +264,7 @@ public class MainController extends BaseController{
     
     public void test(){
         try{
-            ExtFile file = LocationAPI.getInstance().getFileAndPopulate(fileAddress.field.getText());
-            Log.writeln(file.getAbsoluteDirectory());
+            Log.writeln(FileManagerLB.getRootSet());
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -362,9 +366,12 @@ public class MainController extends BaseController{
         ViewManager.getInstance().newDirSyncDialog();
     }
     public void regexHelp(){
-        ViewManager.getInstance().newRegexHelpDialog();
+        ViewManager.getInstance().newWebDialog("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","Pattern (Java Platform SE 7 ).html");
     }
-    
+    public void aboutPage(){
+        ViewManager.getInstance().newWebDialog("","About.html");
+       
+    }
     
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();

@@ -11,7 +11,7 @@ import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
-import filemanagerGUI.dialog.WebRegexHelpController;
+import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtFile;
@@ -36,13 +36,13 @@ import utility.ErrorReport;
  */
 public class ViewManager {
     private static class Titles{
-        private static final String WINDOW = "LB File Manager ";
+        private static final String WINDOW = "FileManagerLB ";
         private static final String PROGRESS_DIALOG ="Progress Dialog ";
         private static final String TEXT_INPUT_DIALOG="Text Input Dialog ";
         private static final String MESSAGE_DIALOG="Message Dialog ";
         private static final String ADVANCED_RENAME_DIALOG="Advanced Rename ";
-        private static final String DIR_SYNC_DIALOG="Directory Syncronization ";
-        private static final String REGEX_HELP_DIALOG="Regex Help ";
+        private static final String DIR_SYNC_DIALOG="Directory Synchronization ";
+        private static final String REGEX_HELP_DIALOG="Web Dialog ";
     }
     
     public SimpleBooleanProperty autoCloseProgressDialogs;
@@ -230,21 +230,22 @@ public class ViewManager {
            ErrorReport.report(ex);
        } 
    }
-    public void newRegexHelpDialog(){
+    public void newWebDialog(String...strings){
     try {
            int index = findSmallestAvailable(dialogs,Titles.REGEX_HELP_DIALOG);
-           FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/WebRegexHelp.fxml"));
+           FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/WebDialog.fxml"));
            Parent root = loader.load();
            Stage stage = new Stage();
            stage.setTitle(Titles.REGEX_HELP_DIALOG+index);
            stage.setScene(new Scene(root));
            
-           WebRegexHelpController controller = loader.<WebRegexHelpController>getController();
+           WebDialogController controller = loader.<WebDialogController>getController();
            stage.setOnCloseRequest((WindowEvent we) -> {
                controller.exit();
            });
            controller.beforeShow(stage.getTitle());
            stage.show();
+           controller.afterShow(strings);
            stage.toFront();
            Frame frame = new Frame(stage,controller);
            dialogs.put(frame.getTitle(),frame);          

@@ -22,7 +22,7 @@ public class ErrorReport {
     public static void report(Exception ex) {
         ErrorReport error = new ErrorReport(ex);
         System.err.println(ex.getMessage());
-        if(DEBUG){
+        if(DEBUG.get()){
             ex.printStackTrace();
         }
         FileManagerLB.errorLog.add(0, error);

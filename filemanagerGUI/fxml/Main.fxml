@@ -62,8 +62,8 @@
                   </Menu>
                 <Menu mnemonicParsing="false" text="Other">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="About" />
-                        <MenuItem disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
+                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#aboutPage" text="About" />
+                        <MenuItem fx:id="menuItemTest" disable="false" mnemonicParsing="false" onAction="#test" text="TEST" />
                         <MenuItem mnemonicParsing="false" onAction="#regexHelp" text="Regex Help" />
                   </items>
                 </Menu>

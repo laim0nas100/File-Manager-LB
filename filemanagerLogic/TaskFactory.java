@@ -505,11 +505,11 @@ public class TaskFactory {
         };
     }
     
-    public ExtTask syncronizeTask(String folder1,String folder2,ObservableList<ExtEntry> listFirst,ObservableList<ExtEntry> listLast){
+    public ExtTask syncronizeTask(String folder1,String folder2,Collection<ExtEntry> listFirst){
          return new ExtTask(){
             @Override
             protected Void call() throws InterruptedException{
-                listFirst.addAll(listLast);
+                
                 int i=0;
                 int size = listFirst.size();
                 Log.write("List");
@@ -547,6 +547,7 @@ public class TaskFactory {
                 try{
                     Files.copy(path2, path1,StandardCopyOption.REPLACE_EXISTING);
                 }catch(Exception e){
+                    ErrorReport.report(e);
                     if(Files.isDirectory(path1)){
                         Files.setLastModifiedTime(path1, Files.getLastModifiedTime(path2));
                         entry.isModified = false;
@@ -559,13 +560,12 @@ public class TaskFactory {
                 try{
                     Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING);  
                 }catch(Exception e){
+                    ErrorReport.report(e);
                     if(Files.isDirectory(path2)){
                         Files.setLastModifiedTime(path2, Files.getLastModifiedTime(path1));
                         entry.isModified = false;
                         //Log.write("Directory:",path1);
                     }
-                    
-                    
                 }
                 
                 break;

@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
+import utility.ExtStringUtils;
 
 /**
  *
@@ -35,7 +37,7 @@ public class LocationAPI {
     }
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
-        
+        //pathl = ExtStringUtils.upperCase(pathl);
         
         if(!pathl.isEmpty()){
             try{
@@ -46,6 +48,7 @@ public class LocationAPI {
                         if(!tempFile.isRoot()){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 ArtificialRoot.update();
+                                
                             }
                         }
                     }
@@ -53,8 +56,12 @@ public class LocationAPI {
                     //ErrorReport.report(new Exception("windows auto pathing exception"));
                 }
                 //loc = tempFile.getMapping();
+                if(tempFile.isDirectory()){
+                    tempFile = new ExtFolder(tempFile.getAbsoluteDirectory());
+                }
                 LocationInRoot loc = tempFile.getMapping();
                 Log.write("Location:",loc);
+                Log.write("Path:",tempFile.getAbsoluteDirectory());
                 this.populateByLocation(loc.getParentLocation());
                 
                 file = getClosestFileByLocation(loc);

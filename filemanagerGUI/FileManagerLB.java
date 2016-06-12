@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
@@ -34,7 +35,7 @@ public class FileManagerLB extends Application {
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static final int DEPTH = 2;
-    public static final boolean DEBUG = 1==1;
+    public static final SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(1==0);
     
     @Override
     public void start(Stage primaryStage) {
