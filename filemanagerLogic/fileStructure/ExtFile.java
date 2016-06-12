@@ -45,14 +45,11 @@ public class ExtFile extends File{
     }
     protected void setDefaultValues(){         
         this.propertyName = new SimpleStringProperty(this.getName());
-
-        
         this.propertyType = new SimpleStringProperty(this.getIdentity());
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
-                this.set(length());
-                return super.get(); //To change body of generated methods, choose Tools | Templates.
+                return length(); //To change body of generated methods, choose Tools | Templates.
             }
         };
         
@@ -63,7 +60,7 @@ public class ExtFile extends File{
                 return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified())));
             }
         };
-        
+
         this.propertySizeAuto = new SimpleStringProperty(){
             @Override
             public String get() {

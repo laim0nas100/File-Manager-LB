@@ -45,6 +45,7 @@ public class LocationAPI {
                 try{
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
+                        tempFile = new ExtFile(path.toAbsolutePath().toString());
                         if(!tempFile.isRoot()){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 ArtificialRoot.update();

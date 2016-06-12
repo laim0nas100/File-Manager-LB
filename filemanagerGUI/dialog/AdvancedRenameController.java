@@ -257,12 +257,13 @@ private static class TableItemObject{
     
     public TableItemObject(String s){
         LocationInRoot mapping = LocationAPI.getInstance().getLocationMapping(s);
-        this.date = new SimpleStringProperty(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(LocationAPI.getInstance().getFileByLocation(mapping).lastModified()))));
-        this.size = new SimpleLongProperty(LocationAPI.getInstance().getFileByLocation(mapping).propertySize.get());
-        this.path1 = new SimpleStringProperty(s);
-        this.name1 = new SimpleStringProperty(mapping.getName());
-        this.path2 = new SimpleStringProperty(s);
-        this.name2 = new SimpleStringProperty(mapping.getName());
+        ExtFile file = LocationAPI.getInstance().getFileByLocation(mapping);
+        this.date = new SimpleStringProperty(file.propertyDate.get());
+        this.size = new SimpleLongProperty(file.propertySize.get());
+        this.path1 = new SimpleStringProperty(file.getAbsoluteDirectory());
+        this.name1 = new SimpleStringProperty(file.propertyName.get());
+        this.path2 = new SimpleStringProperty(file.getAbsoluteDirectory());
+        this.name2 = new SimpleStringProperty(file.propertyName.get());
     }
     public void newName(String s){
         String oldName = name2.get();
