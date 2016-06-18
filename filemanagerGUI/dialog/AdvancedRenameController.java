@@ -11,10 +11,7 @@ import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -31,7 +28,6 @@ import javafx.scene.control.TextField;
 import javafx.util.Callback;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
-import utility.Log;
 
 /**
  * FXML Controller class

@@ -5,7 +5,6 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -21,7 +20,6 @@ import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import utility.ErrorReport;
 import utility.FavouriteLink;
-import utility.Log;
 
 /**
  *

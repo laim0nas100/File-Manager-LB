@@ -29,7 +29,7 @@ public class ExtEntry extends Entry{
         //Action Types
             //0 - no Action
             //1 - copy to source
-            //2 - copy from source
+            //2 - copy to compared
             //3 - delete from source
             //4 - delete from compared
         switch(act){
@@ -56,6 +56,7 @@ public class ExtEntry extends Entry{
             }
         }
     }
+    @Override
     public String toString(){
         return super.toString() + " "+action.get();
     }

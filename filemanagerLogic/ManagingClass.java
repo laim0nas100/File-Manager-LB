@@ -5,7 +5,6 @@
  */
 package filemanagerLogic;
 
-//import static filemanagerGUI.FileManagerLB.rootDirectory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.IOException;
@@ -14,7 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import utility.Log;
+import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import utility.ErrorReport;
 

@@ -7,7 +7,6 @@ package filemanagerGUI.dialog;
 
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -16,7 +15,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.VBox;
 import utility.CustomClock;
-import utility.ErrorReport;
 
 /**
  * FXML Controller class

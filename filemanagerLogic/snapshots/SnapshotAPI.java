@@ -8,7 +8,6 @@ package filemanagerLogic.snapshots;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import utility.Log;
 
 /**
  *
@@ -37,13 +36,8 @@ public class SnapshotAPI {
                 Entry get = map2.get(entry.relativePath);
                 if((get.lastModified != entry.lastModified)||(get.size!=entry.size)){
                     entry.isModified = true;
-                    
-                    if(get.lastModified != entry.lastModified){
-                        entry.isOlder = (get.lastModified - entry.lastModified)>0;
-                    }
-                    if(get.size!=entry.size){
-                        entry.isBigger = (entry.size - get.size)>0;
-                    }
+                    entry.isOlder = entry.lastModified < get.lastModified;
+                    entry.isBigger = entry.size > get.size;
                 }
             }else{
                 entry.isNew = true;

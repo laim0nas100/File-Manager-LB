@@ -11,14 +11,12 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import utility.Log;
+import LibraryLB.Log;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.fileStructure.ActionFile;
@@ -524,10 +522,9 @@ public class TaskFactory {
                             break;
                         }
                     }
-                    Path path1 = Paths.get(folder1+entry.relativePath);
-                    Path path2 = Paths.get(folder2+entry.relativePath);
+                    ActionFile actionFile = new ActionFile(folder1+entry.relativePath,folder2+entry.relativePath);
                     try{
-                        action(path1,path2,entry);
+                        action(actionFile,entry);
                     }catch(Exception e){
                         ErrorReport.report(e);
                     }
@@ -539,41 +536,38 @@ public class TaskFactory {
             }
         };
     }
-    private void action(Path path1,Path path2,ExtEntry entry) throws Exception{
-        Log.write(path1,"|",path2);
+    private void action(ActionFile action,ExtEntry entry) throws Exception{
+        Log.write(action);
         switch(entry.actionType.get()){
             
             case(1):{
                 try{
-                    Files.copy(path2, path1,StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(action.paths[1], action.paths[0],StandardCopyOption.REPLACE_EXISTING);
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(path1)){
-                        Files.setLastModifiedTime(path1, Files.getLastModifiedTime(path2));
+                    if(Files.isDirectory(action.paths[0])){
+                        Files.setLastModifiedTime(action.paths[0], Files.getLastModifiedTime(action.paths[1]));
                         entry.isModified = false;
-                        //Log.write("Directory:",path2);
                     }
                      
                 }
                 break;
             }case(2):{
                 try{
-                    Files.copy(path1, path2, StandardCopyOption.REPLACE_EXISTING);  
+                    Files.copy(action.paths[0], action.paths[1], StandardCopyOption.REPLACE_EXISTING);  
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(path2)){
-                        Files.setLastModifiedTime(path2, Files.getLastModifiedTime(path1));
+                    if(Files.isDirectory(action.paths[1])){
+                        Files.setLastModifiedTime(action.paths[1], Files.getLastModifiedTime(action.paths[0]));
                         entry.isModified = false;
-                        //Log.write("Directory:",path1);
                     }
                 }
-                
                 break;
             }case(3):{
-                Files.delete(path1); 
+                Files.delete(action.paths[0]); 
                 break;
             }case(4):{
-                Files.delete(path2);
+                Files.delete(action.paths[1]);
                 break;
             }default:{
                 break;

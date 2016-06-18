@@ -10,8 +10,6 @@ import filemanagerLogic.fileStructure.ExtFile;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
 
 /**
  *
@@ -48,11 +46,6 @@ public class Entry{
             relativePath = relPath;
             absolutePath = file.getAbsolutePath();
             isFolder = file.getIdentity().equals("folder");
-//            isModified = new SimpleBooleanProperty();
-//            isNew = new SimpleBooleanProperty();
-//            isMissing = new SimpleBooleanProperty();
-//            isOlder = new SimpleBooleanProperty();
-//            isBigger = new SimpleBooleanProperty();
         }
         @Override
         public String toString(){

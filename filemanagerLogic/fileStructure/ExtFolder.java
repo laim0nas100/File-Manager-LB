@@ -15,10 +15,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
-import utility.ExtStringUtils;
-import utility.Log;
+import LibraryLB.Log;
 
 /**
  *

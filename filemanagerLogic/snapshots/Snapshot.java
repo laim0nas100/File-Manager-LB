@@ -6,19 +6,15 @@
 package filemanagerLogic.snapshots;
 
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.Serializable;
-import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import utility.Log;
+import LibraryLB.Log;
 
 /**
  *

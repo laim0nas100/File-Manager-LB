@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.ObservableList;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -223,6 +222,7 @@ public class ViewManager {
            });
            controller.beforeShow(stage.getTitle());
            stage.show();
+           controller.afterShow();
            stage.toFront();
            Frame frame = new Frame(stage,controller);
            dialogs.put(frame.getTitle(),frame);          
@@ -230,7 +230,7 @@ public class ViewManager {
            ErrorReport.report(ex);
        } 
    }
-    public void newWebDialog(String...strings){
+    public void newWebDialog(String...strings){     
     try {
            int index = findSmallestAvailable(dialogs,Titles.REGEX_HELP_DIALOG);
            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/WebDialog.fxml"));
@@ -251,8 +251,8 @@ public class ViewManager {
            dialogs.put(frame.getTitle(),frame);          
        } catch (Exception ex) {
            ErrorReport.report(ex);
-       } 
-   }
+       }
+    }
     
     public void closeDialog(String title){
         dialogs.get(title).getStage().close();

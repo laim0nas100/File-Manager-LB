@@ -6,13 +6,11 @@
 package filemanagerGUI.dialog;
 
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.URL;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import utility.ErrorReport;
-import utility.Log;
+import LibraryLB.Log;
 
 /**
  * FXML Controller class
@@ -52,7 +50,7 @@ public class WebDialogController extends BaseDialog{
                 //is no connection, this line will fail
                 Object objData = urlConnect.getContent();
             }catch (Exception e) {
-                ErrorReport.report(e);
+                //ErrorReport.report(e);
                 return false;
             }
             return true;

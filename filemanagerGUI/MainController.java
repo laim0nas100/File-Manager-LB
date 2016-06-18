@@ -40,21 +40,17 @@ import utility.DesktopApi;
 import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
-import utility.Log;
+import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.FileManagerLB.DATA_SIZE;
 import filemanagerGUI.customUI.FileAddressField;
-import filemanagerLogic.snapshots.Snapshot;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.Comparator;
-import java.util.List;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
-import javafx.beans.binding.MapExpression;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
@@ -366,11 +362,14 @@ public class MainController extends BaseController{
         ViewManager.getInstance().newDirSyncDialog();
     }
     public void regexHelp(){
-        ViewManager.getInstance().newWebDialog("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","Pattern (Java Platform SE 7 ).html");
+        Platform.runLater(()->{
+            ViewManager.getInstance().newWebDialog("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","Pattern (Java Platform SE 7 ).html");
+        });
     }
     public void aboutPage(){
-        ViewManager.getInstance().newWebDialog("","About.html");
-       
+        Platform.runLater(()->{
+            ViewManager.getInstance().newWebDialog("","About.html");
+        });
     }
     
     private void selectInverted(MultipleSelectionModel sm){

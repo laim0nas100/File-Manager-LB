@@ -41,10 +41,12 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
+import org.controlsfx.control.CheckComboBox;
 import utility.ExtStringUtils;
-import utility.Log;
+import LibraryLB.Log;
 
 /**
  * FXML Controller class
@@ -61,17 +63,18 @@ public class DirSyncController extends BaseDialog {
     @FXML public TableView table;
     @FXML public DatePicker datePicker;
     @FXML public CheckBox checkShowAbsolutePath;
-    @FXML public CheckBox checkNoDelete;
     @FXML public CheckBox checkPrioritizeBigger;
     @FXML public CheckBox checkShowOnlyDifferences;
-    @FXML public CheckBox checkDeleteFirst;
     @FXML public CheckBox checkIgnoreFolderDate;
     @FXML public Button btnLoad;
     @FXML public Button btnCompare;
     @FXML public Button btnSync;
     @FXML public ComboBox syncMode;
     @FXML public ComboBox dateMode;
+    @FXML public VBox specialVBox;
 
+    
+    private CheckComboBox<String> checkComboBox;
     private boolean cond0;
     private boolean cond1;
     private Snapshot snapshot0;
@@ -82,9 +85,11 @@ public class DirSyncController extends BaseDialog {
     private final SimpleBooleanProperty showAbsolutePath = new SimpleBooleanProperty();
     private final SimpleBooleanProperty prioritizeBigger = new SimpleBooleanProperty();
     private final SimpleBooleanProperty noDelete = new SimpleBooleanProperty();
+    private final SimpleBooleanProperty noCopy = new SimpleBooleanProperty();
     private final SimpleBooleanProperty onlyDifferences = new SimpleBooleanProperty();
     private final SimpleBooleanProperty deleteFirst = new SimpleBooleanProperty();
     private final SimpleBooleanProperty ignoreFolderDate = new SimpleBooleanProperty();
+    private final SimpleBooleanProperty ignoreModified = new SimpleBooleanProperty();
     private ObservableList<TableColumn<ExtEntry,String>> tableColumns; 
     
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
@@ -100,6 +105,18 @@ public class DirSyncController extends BaseDialog {
     public void beforeShow(String title){
     super.beforeShow(title);
     Platform.runLater(()->{
+        
+        ObservableList<String> miscOption = FXCollections.observableArrayList();
+        miscOption.add("No Delete");
+        miscOption.add("No Copy");
+        miscOption.add("Ignore modified");
+        miscOption.add("Delete first");
+        
+        
+        this.checkComboBox = new CheckComboBox();
+        this.checkComboBox.getItems().setAll(miscOption);
+        this.specialVBox.getChildren().add(this.checkComboBox);
+        
         
         ObservableList<String> options = FXCollections.observableArrayList();
         options.add("Bidirectional");
@@ -121,11 +138,14 @@ public class DirSyncController extends BaseDialog {
         tableColumns = table.getColumns();
 
         showAbsolutePath.bind(checkShowAbsolutePath.selectedProperty());
-        noDelete.bind(checkNoDelete.selectedProperty());
+        noDelete.bind(this.checkComboBox.getItemBooleanProperty(0));
+        noCopy.bind(this.checkComboBox.getItemBooleanProperty(1));
+        ignoreModified.bind(this.checkComboBox.getItemBooleanProperty(2));
+        deleteFirst.bind(this.checkComboBox.getItemBooleanProperty(3)); 
         prioritizeBigger.bind(checkPrioritizeBigger.selectedProperty());
         onlyDifferences.bind(checkShowOnlyDifferences.selectedProperty());
-        deleteFirst.bind(checkDeleteFirst.selectedProperty());
         ignoreFolderDate.bind(checkIgnoreFolderDate.selectedProperty());
+        
         checkIgnoreFolderDate.setSelected(true);
         checkShowOnlyDifferences.setSelected(true);
         tableColumns.add(new TableColumn<>("Path"));
@@ -195,6 +215,11 @@ public class DirSyncController extends BaseDialog {
 
         
     });
+    }
+    @Override
+    public void afterShow() {
+        super.afterShow();
+        
     }
     public void checkDirs(){
         btnSync.setDisable(true);
@@ -297,6 +322,11 @@ public class DirSyncController extends BaseDialog {
                             }
                         }
                     }
+                    if(ignoreModified.get()){
+                        if(next.isModified){
+                            remove = true;
+                        }
+                    }
                 }
                 if(!remove){
                     list.add(new ExtEntry(next));
@@ -315,12 +345,14 @@ public class DirSyncController extends BaseDialog {
                 entry.setAction(0);
                 switch(mode){
                     case(0):{//Bidirectional
+
                         if(entry.isMissing){
+                            
                             entry.setAction(1);
                         }else if(entry.isNew){
                             entry.setAction(2);
                         }else{
-                            if(entry.isModified){
+                            if(entry.isModified && ignoreModified.not().get()){
                                 if(this.prioritizeBigger.get()){
                                     if(entry.isBigger){
                                         entry.setAction(2);
@@ -340,13 +372,13 @@ public class DirSyncController extends BaseDialog {
                     }
                     case(1):{//A dominant
                         if(entry.isMissing){
-                            if(!noDelete.get()){
-                                entry.setAction(4);
-                            }
+
+                            entry.setAction(4);
                         }else if(entry.isNew){
+   
                             entry.setAction(2);
                         }else{
-                            if(entry.isModified){
+                            if(entry.isModified && ignoreModified.not().get()){
                                 entry.setAction(2);
                             }
                         }
@@ -354,21 +386,29 @@ public class DirSyncController extends BaseDialog {
                     }
                     case(2):{//B dominant
                         if(entry.isMissing){
-                            
-                                entry.setAction(1);
+  
+                            entry.setAction(1);
                            
                         }else if(entry.isNew){
-                            if(!noDelete.get()){
-                                entry.setAction(3);
-                            }
+ 
+                            entry.setAction(3);
+                            
                         }else{
-                            if(entry.isModified){
+                            if(entry.isModified && ignoreModified.not().get()){
+                                
                                 entry.setAction(1);
                             }
                         }
                         break;
                     }
                 }
+                int actionType = entry.actionType.get();
+                if((actionType == 3 || actionType == 4)&& noDelete.get()){
+                   entry.setAction(0);
+                }else if((actionType == 1 || actionType == 2)&& noCopy.get()){
+                   entry.setAction(0);
+                }
+                
             }
             
             

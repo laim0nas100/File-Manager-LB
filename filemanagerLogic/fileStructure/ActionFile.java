@@ -26,7 +26,7 @@ public class ActionFile {
         String s="";
         for(Path p:paths){
             if(p!=null){
-                s+=p+" ";
+                s+=p+" | ";
             }
         }
         return s;

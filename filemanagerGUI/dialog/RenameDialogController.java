@@ -5,20 +5,16 @@
  */
 package filemanagerGUI.dialog;
 
-import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
-import java.util.Locale;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 import utility.FileNameException;
-import utility.Log;
 
 /**
  * FXML Controller class
