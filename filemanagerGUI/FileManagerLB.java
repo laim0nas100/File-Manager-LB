@@ -26,7 +26,7 @@ import utility.FavouriteLink;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+"/root.Don't use this.root";
+    public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+File.separator+"root.Don't use this.root";
     public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
     public static DATA_SIZE DataSize;
     
@@ -39,20 +39,13 @@ public class FileManagerLB extends Application {
     public void start(Stage primaryStage) {
         links = FXCollections.observableArrayList();
         errorLog = FXCollections.observableArrayList();
-        //DataSize = DATA_SIZE.KB;
         ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
         try{
             Files.createFile(ArtificialRoot.toPath());
-        }catch(Exception e){
-            
-        }
-        remount();
+        }catch(Exception e){}
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
-//        ArtificialRoot.getFoldersFromFiles().stream().forEach((device) -> {
-//            //new Thread(TaskFactory.getInstance().populateRecursiveParallel(device, 1)).start();
-//        });
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
         //ViewManager.getInstance().newMountDirectoryDialog();
         ViewManager.getInstance().updateAllWindows();

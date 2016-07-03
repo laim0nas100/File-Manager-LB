@@ -167,7 +167,7 @@ public class ExtFolder extends ExtFile{
     @Override
     public String getAbsoluteDirectory(){
         if(isAbsoluteRoot()){
-            return "";
+            return "ROOT";
         }
         String dir = this.getAbsolutePath();
         if(!dir.endsWith(File.separator)){

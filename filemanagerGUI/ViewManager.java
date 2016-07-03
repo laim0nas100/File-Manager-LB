@@ -9,6 +9,7 @@ package filemanagerGUI;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.DirSyncController;
+import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.WebDialogController;
@@ -36,12 +37,13 @@ import utility.ErrorReport;
 public class ViewManager {
     private static class Titles{
         private static final String WINDOW = "FileManagerLB ";
-        private static final String PROGRESS_DIALOG ="Progress Dialog ";
-        private static final String TEXT_INPUT_DIALOG="Text Input Dialog ";
-        private static final String MESSAGE_DIALOG="Message Dialog ";
-        private static final String ADVANCED_RENAME_DIALOG="Advanced Rename ";
-        private static final String DIR_SYNC_DIALOG="Directory Synchronization ";
-        private static final String REGEX_HELP_DIALOG="Web Dialog ";
+        private static final String PROGRESS_DIALOG ="Progress Dialog";
+        private static final String TEXT_INPUT_DIALOG="Text Input Dialog";
+        private static final String MESSAGE_DIALOG="Message Dialog";
+        private static final String ADVANCED_RENAME_DIALOG="Advanced Rename";
+        private static final String DIR_SYNC_DIALOG="Directory Synchronization";
+        private static final String REGEX_HELP_DIALOG="Web Dialog";
+        private static final String DUPLICATE_FINDER_DIALOG="Duplicate Finder";
     }
     
     public SimpleBooleanProperty autoCloseProgressDialogs;
@@ -127,30 +129,17 @@ public class ViewManager {
     public void newProgressDialog(ExtTask task){
         System.out.println(task.getState());
         try {
-            int index = findSmallestAvailable(dialogs,Titles.PROGRESS_DIALOG);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/ProgressDialog.fxml"));
-           
-            Parent root = loader.load();
-            Stage stage = new Stage();
-            stage.setTitle(Titles.PROGRESS_DIALOG+index);
-            stage.setScene(new Scene(root));
-            stage.setMaxHeight(300);
-            stage.setMinHeight(250);
-            stage.setMinWidth(400);
-            
-            
-            //stage.setResizable(false);
-            ProgressDialogController controller = loader.<ProgressDialogController>getController();
-            stage.setOnCloseRequest((WindowEvent we) -> {
-                controller.exit();
-            });  
-            controller.beforeShow(stage.getTitle());
-            stage.show();
-            stage.toFront();
-            stage.requestFocus();
+
+            Frame frame = newDialogFrame(Titles.PROGRESS_DIALOG,"fxml/ProgressDialog.fxml");
+            ProgressDialogController controller = (ProgressDialogController) frame.getController();
+            controller.beforeShow(frame.getStage().getTitle());
+            frame.getStage().setMaxHeight(300);
+            frame.getStage().setMinHeight(250);
+            frame.getStage().setMinWidth(400);
+            frame.getStage().show();
             controller.afterShow(task);
-            Frame frame = new Frame(stage,controller);
-            dialogs.put(frame.getTitle(),frame);          
+            frame.getStage().requestFocus();
+            frame.getStage().toFront();         
         } catch (Exception ex) {
            ErrorReport.report(ex);
         }
@@ -158,28 +147,18 @@ public class ViewManager {
     }
     public void newRenameDialog(ExtFolder folder,ExtFile itemToRename){
         try {
-            int index = findSmallestAvailable(dialogs,Titles.TEXT_INPUT_DIALOG);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/RenameDialog.fxml"));
-           
-            Parent root = loader.load();
-            Stage stage = new Stage();
-            stage.setTitle(Titles.TEXT_INPUT_DIALOG+index);
-            stage.setScene(new Scene(root));
-            stage.setMaxHeight(200);
-            stage.setMinHeight(200);
-            stage.setMinWidth(500);
             
-            RenameDialogController controller = loader.<RenameDialogController>getController();
-            stage.setOnCloseRequest((WindowEvent we) -> {
-                controller.exit();
-            });
-            controller.beforeShow(stage.getTitle());
-            stage.show();
-            stage.toFront();
-            stage.setAlwaysOnTop(true);
+            Frame frame = newDialogFrame(Titles.TEXT_INPUT_DIALOG,"fxml/RenameDialog.fxml");
+            RenameDialogController controller = (RenameDialogController) frame.getController();
+            controller.beforeShow(frame.getStage().getTitle());
+            frame.getStage().setMaxHeight(200);
+            frame.getStage().setMinHeight(200);
+            frame.getStage().setMinWidth(500);
+            frame.getStage().show();
+            frame.getStage().setAlwaysOnTop(true);
+            
             controller.afterShow(folder,itemToRename);
-            Frame frame = new Frame(stage,controller);
-            dialogs.put(frame.getTitle(),frame);          
+            frame.getStage().toFront();           
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
@@ -187,73 +166,71 @@ public class ViewManager {
     }
     public void newAdvancedRenameDialog(ArrayList<String> list){
        try {
-            int index = findSmallestAvailable(dialogs,Titles.ADVANCED_RENAME_DIALOG);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/AdvancedRename.fxml"));
-            Parent root = loader.load();
-            Stage stage = new Stage();
-            stage.setTitle(Titles.ADVANCED_RENAME_DIALOG+index);
-            stage.setScene(new Scene(root));
-            
-            AdvancedRenameController controller = loader.<AdvancedRenameController>getController();
-            stage.setOnCloseRequest((WindowEvent we) -> {
-                controller.exit();
-            });
-            controller.beforeShow(stage.getTitle(),list);
-            stage.show();
-            stage.toFront();
-            Frame frame = new Frame(stage,controller);
-            dialogs.put(frame.getTitle(),frame);          
+            Frame frame = newDialogFrame(Titles.ADVANCED_RENAME_DIALOG,"fxml/AdvancedRename.fxml");
+            AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
+            controller.beforeShow(frame.getStage().getTitle(),list);
+            frame.getStage().show();
+            controller.afterShow();
+            frame.getStage().toFront();      
         } catch (Exception ex) {
             ErrorReport.report(ex);
         } 
     }
     public void newDirSyncDialog(){
       try {
-           int index = findSmallestAvailable(dialogs,Titles.DIR_SYNC_DIALOG);
-           FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/DirSync.fxml"));
-           Parent root = loader.load();
-           Stage stage = new Stage();
-           stage.setTitle(Titles.DIR_SYNC_DIALOG+index);
-           stage.setScene(new Scene(root));
-           
-           DirSyncController controller = loader.<DirSyncController>getController();
-           stage.setOnCloseRequest((WindowEvent we) -> {
-               controller.exit();
-           });
-           controller.beforeShow(stage.getTitle());
-           stage.show();
+           Frame frame = newDialogFrame(Titles.DIR_SYNC_DIALOG,"fxml/DirSync.fxml");
+           DirSyncController controller = (DirSyncController) frame.getController();
+           controller.beforeShow(frame.getStage().getTitle());
+           frame.getStage().show();
            controller.afterShow();
-           stage.toFront();
-           Frame frame = new Frame(stage,controller);
-           dialogs.put(frame.getTitle(),frame);          
+           frame.getStage().toFront();
+              
+       } catch (Exception ex) {
+           ErrorReport.report(ex);
+       } 
+    }
+    public void newDuplicateFinderDialog(ExtFolder root){
+      try {
+           Frame frame = newDialogFrame(Titles.DUPLICATE_FINDER_DIALOG,"fxml/DuplicateFinder.fxml");
+           DuplicateFinderController controller = (DuplicateFinderController) frame.getController();
+           controller.beforeShow(frame.getStage().getTitle(),root);
+           frame.getStage().show();
+           controller.afterShow();
+           frame.getStage().toFront();
+              
        } catch (Exception ex) {
            ErrorReport.report(ex);
        } 
    }
     public void newWebDialog(String...strings){     
     try {
-           int index = findSmallestAvailable(dialogs,Titles.REGEX_HELP_DIALOG);
-           FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/WebDialog.fxml"));
-           Parent root = loader.load();
-           Stage stage = new Stage();
-           stage.setTitle(Titles.REGEX_HELP_DIALOG+index);
-           stage.setScene(new Scene(root));
-           
-           WebDialogController controller = loader.<WebDialogController>getController();
-           stage.setOnCloseRequest((WindowEvent we) -> {
-               controller.exit();
-           });
-           controller.beforeShow(stage.getTitle());
-           stage.show();
+           Frame frame = newDialogFrame(Titles.REGEX_HELP_DIALOG,"fxml/WebDialog.fxml");
+           WebDialogController controller = (WebDialogController) frame.getController();
+           controller.beforeShow(frame.getStage().getTitle());
+           frame.getStage().show();
            controller.afterShow(strings);
-           stage.toFront();
-           Frame frame = new Frame(stage,controller);
-           dialogs.put(frame.getTitle(),frame);          
+           frame.getStage().toFront();
+              
        } catch (Exception ex) {
            ErrorReport.report(ex);
        }
     }
-    
+    public Frame newDialogFrame(String title,String location) throws IOException{
+        int index = findSmallestAvailable(dialogs,title);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(location));
+        Parent root = loader.load();
+        Stage stage = new Stage();
+        stage.setTitle(title+" "+index);
+        stage.setScene(new Scene(root));
+        BaseController controller = loader.getController();
+        stage.setOnCloseRequest((WindowEvent we) -> {
+            controller.exit();
+        });
+        Frame frame = new Frame(stage,controller);
+        dialogs.put(frame.getTitle(),frame); 
+        return frame;
+       
+    }
     public void closeDialog(String title){
         dialogs.get(title).getStage().close();
         dialogs.remove(title);

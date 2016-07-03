@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
+import LibraryLB.StringOperations;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
+import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerLogic.fileStructure.ActionFile;
 import filemanagerLogic.snapshots.ExtEntry;
 import filemanagerLogic.snapshots.Snapshot;
@@ -576,6 +578,35 @@ public class TaskFactory {
         entry.actionCompleted.set(true);
     }
     private void VOID(){};
+    public ExtTask duplicateFinderTask(ExtFolder folder,double ratio,ObservableList list){
+        return new ExtTask(){
+            @Override
+            protected Void call() throws Exception{
+                ExtFile[] array = new ExtFile[0];
+                Log.write(ratio);
+                array = folder.getListRecursive().toArray(array);
+                    for(int i=0; i<array.length;i++){
+                        for(int j=i+1; j<array.length;j++){
+                            ExtFile file = array[i];
+                            ExtFile file1 = array[j];
+                            
+                            double rat = StringOperations.correlationRatio(file.propertyName.get(),file1.propertyName.get());
+                            
+                            if(rat>=ratio){
+                                Log.write("Found:",file.getAbsoluteDirectory()+" | ",file1.getAbsoluteDirectory()+" "+rat);
+                                Platform.runLater(()->{
+                                    list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
+                                });
+                            }
+                            
+                        }
+                    }   
+                return null;
+            };
+        };
+        
+    }
+    
     
     public static void serializeObject(String whereToSave, Object whatToSave){
         boolean success = true;

@@ -5,6 +5,8 @@
  */
 package utility;
 
+import LibraryLB.Log;
+import LibraryLB.StringOperations;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
@@ -49,9 +51,7 @@ public class Finder extends SimpleFileVisitor<Path> {
                 try{
                     this.pattern = Pattern.compile(pattern);
                     noRegex = false;
-                }catch(Exception e){
-
-                }
+                }catch(Exception e){}
             }
         }
 
@@ -74,12 +74,12 @@ public class Finder extends SimpleFileVisitor<Path> {
                         if(!list.contains(file.toString()))
                         list.add(file.toString()); 
                     });
-                   
                 }
             }
         }
         // Invoke the pattern matching
         // method on each file.
+        @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             find(file);
             if(isCanceled.get()){
@@ -121,7 +121,7 @@ public class Finder extends SimpleFileVisitor<Path> {
                 ',',
                 '+',
                 '|',
-                '?'
+                '?',           
             };
             regexSet = new HashSet<>();
             regexSet.addAll(Arrays.asList(array));

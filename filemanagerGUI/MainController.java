@@ -371,6 +371,9 @@ public class MainController extends BaseController{
             ViewManager.getInstance().newWebDialog("","About.html");
         });
     }
+    public void duplicateFind(){
+        ViewManager.getInstance().newDuplicateFinderDialog(MC.currentDir);
+    }
     
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();

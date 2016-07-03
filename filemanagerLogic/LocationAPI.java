@@ -45,7 +45,6 @@ public class LocationAPI {
                         if(!tempFile.isRoot()){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 ArtificialRoot.update();
-                                
                             }
                         }
                     }

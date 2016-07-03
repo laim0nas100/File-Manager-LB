@@ -57,6 +57,7 @@
                           </items>
                         </Menu>
                         <MenuItem mnemonicParsing="false" onAction="#dirSync" text="Directory Sync" />
+                        <MenuItem mnemonicParsing="false" onAction="#duplicateFind" text="Duplicate Finder" />
 
                     </items>
                   </Menu>
