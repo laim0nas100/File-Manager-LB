@@ -99,10 +99,7 @@ public class ViewManager {
         windows.get(title).getStage().close();
         windows.remove(title);
         if(windows.isEmpty()){
-            try {
-                Files.deleteIfExists(ArtificialRoot.toPath());
-            } catch (IOException ex) {
-            }
+            FileManagerLB.doOnExit();
             System.exit(0);
         }
     }
@@ -215,7 +212,7 @@ public class ViewManager {
            ErrorReport.report(ex);
        }
     }
-    public Frame newDialogFrame(String title,String location) throws IOException{
+    private Frame newDialogFrame(String title,String location) throws IOException{
         int index = findSmallestAvailable(dialogs,title);
         FXMLLoader loader = new FXMLLoader(getClass().getResource(location));
         Parent root = loader.load();

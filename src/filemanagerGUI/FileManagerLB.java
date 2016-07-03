@@ -5,12 +5,19 @@
  */
 package filemanagerGUI;
 
+import LibraryLB.FileManaging.AutoBackupMaker;
+import LibraryLB.FileManaging.FileReader;
+import LibraryLB.Log;
+import LibraryLB.ParametersMap;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
@@ -23,27 +30,47 @@ import utility.FavouriteLink;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author Laimonas Beniu�is
  */
 public class FileManagerLB extends Application {
     public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+File.separator+"root.Don't use this.root";
     public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
     public static DATA_SIZE DataSize;
-    
+    public static String DIR  = System.getProperty("user.dir");
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
-    public static final int DEPTH = 2;
-    public static final SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(1==0);
-    
+    public static int DEPTH = 2;
+    public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(true);
+    public static int LogBackupCount;
+    public static ParametersMap parameters;
     @Override
     public void start(Stage primaryStage) {
         links = FXCollections.observableArrayList();
         errorLog = FXCollections.observableArrayList();
         ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
+        if(!DIR.endsWith(File.separator)){
+            DIR+=File.separator;
+        }
+        
         try{
+            ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
+            parameters = new ParametersMap(list);
+            DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
+            DEPTH = (int) parameters.defaultGet("lookDepth",2);
+            LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
+            Log.changeStream('f', new File(DIR+"Log.txt"));
+            Files.deleteIfExists(ArtificialRoot.toPath());
             Files.createFile(ArtificialRoot.toPath());
-        }catch(Exception e){}
+            
+            
+        }catch(Exception e){
+            ErrorReport.report(e);
+        }
+        
+        
+        
+        
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
@@ -101,6 +128,19 @@ public class FileManagerLB extends Application {
         }
         return set;
         
+    }
+    public static void doOnExit(){
+        try {
+            Files.deleteIfExists(ArtificialRoot.toPath());
+            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,DIR+"BUP","YYYY-MM-dd HH.mm.ss");
+            Collection<Runnable> makeNewCopy = BM.makeNewCopy(DIR+"Log.txt");
+            makeNewCopy.forEach(th ->{
+                th.run();
+            });
+            BM.cleanUp().run();
+        } catch (IOException ex) {
+            ErrorReport.report(ex);
+        }
     }
     public static enum DATA_SIZE{
         B  (1,"B"),

@@ -1,0 +1,4 @@
+debug=1
+lookDepth=i2
+logBackupCount=i5
+lang=sEN
