@@ -47,7 +47,6 @@ import filemanagerGUI.customUI.FileAddressField;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.Comparator;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -129,31 +128,6 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty propertyRenameCondition;
     private IntegerBinding selectedSize;
     private ExtTask searchTask;
-    public static final Comparator<String> compareSizeAsString = new Comparator<String>() {
-        @Override
-        public int compare(String f1, String f2) {
-            if(f1.isEmpty()||f2.isEmpty()){
-                return f1.compareTo(f2);
-            }
-            return extractSize(f1).compareTo(extractSize(f2));
-        }
-    };
-    public static Double extractSize(String s){
-        Long multiplier = DATA_SIZE.B.size;
-        if(s.startsWith("(B)")){
-            s = s.replace("(B) ", "");
-        }else if(s.startsWith("(KB)")){
-            s = s.replace("(KB) ", "");
-            multiplier = DATA_SIZE.KB.size;
-        }else if(s.startsWith("(MB)")){
-            s = s.replace("(MB) ", "");
-            multiplier = DATA_SIZE.MB.size;
-        }else if(s.startsWith("(GB)")){
-            s = s.replace("(GB) ", "");
-            multiplier = DATA_SIZE.GB.size;
-        }
-        return  Double.parseDouble(s)*multiplier;
-    }
     public void beforeShow(String title,ExtFolder root,ExtFolder currentDir){
         
         super.beforeShow(title);
@@ -383,12 +357,12 @@ public class MainController extends BaseController{
         array.stream().forEach(sm::clearSelection);
     }
     private void handleOpen(ExtFile file){
-        if(file.getIdentity().equals("folder")){
+        if(file.getIdentity().equals(ExtFile.Identity.FOLDER)){
             changeToDir((ExtFolder) file);
         }else {
                             
             try{
-                if(file.getIdentity().equals("link")){
+                if(file.getIdentity().equals(ExtFile.Identity.LINK)){
                     ExtLink link = (ExtLink) file.getTrueForm();
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if(link.isPointsToDirectory()){
@@ -396,7 +370,7 @@ public class MainController extends BaseController{
                     }else{
                         DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
                     }
-                }else if(file.getIdentity().equals("file")){
+                }else if(file.getIdentity().equals(ExtFile.Identity.FILE)){
                     DesktopApi.open(file);
                 }
             }catch(Exception x){
@@ -502,7 +476,7 @@ public class MainController extends BaseController{
         contextMenuItems[8] = new MenuItem("Remove this item");
         contextMenuItems[8].setOnAction(eh ->{        
             ExtFile selectedItem = (ExtFile) markedView.getSelectionModel().getSelectedItem();
-            TaskFactory.getInstance().markedList.remove(selectedItem);
+            TaskFactory.getInstance().markedList.remove(selectedItem.getAbsoluteDirectory());
         });
         
         contextMenuItems[9] = new MenuItem("Delete all marked");
@@ -590,6 +564,7 @@ public class MainController extends BaseController{
         });
         contextMenuItems[22] = new MenuItem("Invert Selection");
         contextMenuItems[22].setOnAction(eh ->{
+            
             this.selectInverted(tableView.getSelectionModel());
         });
         contextMenuItems[23] = new MenuItem("Mark selected");
@@ -657,7 +632,7 @@ public class MainController extends BaseController{
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
                 
-                if(cellData.getValue().getIdentity().equals("folder")){
+                if(cellData.getValue().getIdentity().equals(ExtFile.Identity.FOLDER)){
                     return new SimpleStringProperty("");
                 }else if(propertyUnitSizeAuto.get()){
                     return cellData.getValue().propertySizeAuto;
@@ -676,7 +651,7 @@ public class MainController extends BaseController{
                 }
             }
         });
-        sizeCol.setComparator(compareSizeAsString);
+        sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
         TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
         dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
         columns.add(nameCol);
@@ -687,7 +662,7 @@ public class MainController extends BaseController{
 
         
         //TABLE VIEW ACTIONS
-
+        
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tableView.setOnMousePressed((MouseEvent event) -> {
@@ -699,7 +674,7 @@ public class MainController extends BaseController{
                 if (itemCount1 == 1) {
                         tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
                         ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                        if(file.getIdentity().equals("folder")){
+                        if(file.getIdentity().equals(ExtFile.Identity.FOLDER)){
                             tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
                         }
                         

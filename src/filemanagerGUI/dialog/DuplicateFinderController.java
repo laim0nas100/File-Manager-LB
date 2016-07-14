@@ -80,7 +80,9 @@ public class DuplicateFinderController extends BaseDialog{
             
             searchButton.setDisable(false);
         });
-        new Thread(task).start();
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
     public static class SimpleTableItem{
         public ExtFile f1;

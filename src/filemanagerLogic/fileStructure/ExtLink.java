@@ -39,7 +39,7 @@ public class ExtLink extends ExtFile{
         return this;
     }
     @Override
-    public String getIdentity(){
-        return "link";
+    public Identity getIdentity(){
+        return Identity.LINK;
     }
 }

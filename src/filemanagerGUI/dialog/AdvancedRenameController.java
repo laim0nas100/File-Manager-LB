@@ -106,7 +106,7 @@ public void beforeShow(String title,ArrayList<String> fileList){
             return cellData.getValue().date;
         }
     });
-    sizeCol.setComparator(MainController.compareSizeAsString);
+    sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
     
     columns.add(nameCol1);
     columns.add(nameCol2);
@@ -117,7 +117,7 @@ public void beforeShow(String title,ArrayList<String> fileList){
     this.table.setItems(tableList);
     fileList.forEach(file ->{
         ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
-        if(fileAndPopulate.getIdentity().equals("folder")){
+        if(fileAndPopulate.getIdentity().equals(ExtFile.Identity.FOLDER)){
             folders.add((ExtFolder) fileAndPopulate);
         }else{
             files.add(fileAndPopulate);
@@ -156,7 +156,7 @@ public void updateLists(){
                 if(this.includeFolders.selectedProperty().get()){
                     locArray.add(file.getAbsolutePath());
                 }else{
-                    if(!file.getIdentity().equals("folder")){
+                    if(!file.getIdentity().equals(ExtFile.Identity.FOLDER)){
                         locArray.add(file.getAbsolutePath());
                     }
                 }
@@ -169,7 +169,7 @@ public void updateLists(){
                 if(this.includeFolders.selectedProperty().get()){
                     locArray.add(file.getAbsolutePath());
                 }else{
-                    if(!file.getIdentity().equals("folder")){
+                    if(!file.getIdentity().equals(ExtFile.Identity.FOLDER)){
                         locArray.add(file.getAbsolutePath());
                     }
                 }

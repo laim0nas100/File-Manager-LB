@@ -36,8 +36,8 @@ public class ExtFolder extends ExtFile{
 
 
     @Override
-    public String getIdentity(){
-        return "folder";
+    public Identity getIdentity(){
+        return Identity.FOLDER;
     }
     
     @Override
@@ -103,7 +103,7 @@ public class ExtFolder extends ExtFile{
     public Collection<ExtFolder> getFoldersFromFiles(){
         ArrayList<ExtFolder> folders = new ArrayList<>();
         for(ExtFile file:this.getFilesCollection()){
-            if(file.getIdentity().equals("folder")){
+            if(file.getIdentity().equals(Identity.FOLDER)){
                 ExtFolder fold = (ExtFolder) file.getTrueForm();
                 folders.add(fold);
             }

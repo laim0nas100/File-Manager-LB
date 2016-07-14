@@ -7,6 +7,7 @@ package filemanagerLogic.fileStructure;
 
 
 import filemanagerGUI.FileManagerLB;
+import filemanagerGUI.MainController;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
@@ -14,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import javafx.beans.property.BooleanProperty;
@@ -29,6 +31,40 @@ import javafx.beans.property.StringProperty;
  * Extended File for custom actions
  */
 public class ExtFile extends File{
+
+    public static final Comparator<String> COMPARE_SIZE_STRING = new Comparator<String>() {
+        @Override
+        public int compare(String f1, String f2) {
+            if (f1.isEmpty() || f2.isEmpty()) {
+                return f1.compareTo(f2);
+            }
+            return ExtFile.extractSize(f1).compareTo(ExtFile.extractSize(f2));
+        }
+    };
+    public static Double extractSize(String s) {
+        Long multiplier = FileManagerLB.DATA_SIZE.B.size;
+        if (s.startsWith("(B)")) {
+            s = s.replace("(B) ", "");
+        } else if (s.startsWith("(KB)")) {
+            s = s.replace("(KB) ", "");
+            multiplier = FileManagerLB.DATA_SIZE.KB.size;
+        } else if (s.startsWith("(MB)")) {
+            s = s.replace("(MB) ", "");
+            multiplier = FileManagerLB.DATA_SIZE.MB.size;
+        } else if (s.startsWith("(GB)")) {
+            s = s.replace("(GB) ", "");
+            multiplier = FileManagerLB.DATA_SIZE.GB.size;
+        }
+        return Double.parseDouble(s) * multiplier;
+    }
+    public static enum Identity{
+        FILE("file"),FOLDER("folder"),LINK("link");
+        public String identity;
+        Identity(String identity){
+            this.identity = identity;
+        }
+    }
+    
     
     public BooleanProperty isAbsoluteRoot;
     public StringProperty propertyName;
@@ -45,7 +81,7 @@ public class ExtFile extends File{
     }
     protected void setDefaultValues(){         
         this.propertyName = new SimpleStringProperty(this.getName());
-        this.propertyType = new SimpleStringProperty(this.getIdentity());
+        this.propertyType = new SimpleStringProperty(this.getIdentity().identity);
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
@@ -105,8 +141,8 @@ public class ExtFile extends File{
     public ExtFile getTrueForm(){
         return this;
     }
-    public String getIdentity(){
-        return "file";
+    public Identity getIdentity(){
+        return Identity.FILE;
     }
     public Collection<ExtFile> getListRecursive(){
         ArrayList<ExtFile> list = new ArrayList<>();

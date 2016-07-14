@@ -30,7 +30,7 @@ import utility.FavouriteLink;
 
 /**
  *
- * @author Laimonas Beniu�is
+ * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
     public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+File.separator+"root.Don't use this.root";
@@ -54,32 +54,25 @@ public class FileManagerLB extends Application {
         }
         
         try{
+            Log.changeStream('f', new File(DIR+"Log.txt"));
             ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
             parameters = new ParametersMap(list);
             DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
             DEPTH = (int) parameters.defaultGet("lookDepth",2);
             LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
-            Log.changeStream('f', new File(DIR+"Log.txt"));
+            
             Files.deleteIfExists(ArtificialRoot.toPath());
             Files.createFile(ArtificialRoot.toPath());
-            
+            Log.writeln("Parameters",parameters);
             
         }catch(Exception e){
             ErrorReport.report(e);
         }
-        
-        
-        
-        
         ArtificialRoot.propertyName.set("ROOT");
         links.add(new FavouriteLink("ROOT",""));
         ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
-        //ViewManager.getInstance().newMountDirectoryDialog();
         ViewManager.getInstance().updateAllWindows();
     } 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         launch(args);
     }

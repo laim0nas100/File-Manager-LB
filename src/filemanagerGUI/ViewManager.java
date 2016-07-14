@@ -36,14 +36,14 @@ import utility.ErrorReport;
  */
 public class ViewManager {
     private static class Titles{
-        private static final String WINDOW = "FileManagerLB ";
-        private static final String PROGRESS_DIALOG ="Progress Dialog";
-        private static final String TEXT_INPUT_DIALOG="Text Input Dialog";
+        private static final String WINDOW = "File Manager LB ";
+        private static final String PROGRESS_DIALOG ="Progress Dialog ";
+        private static final String TEXT_INPUT_DIALOG="Text Input Dialog ";
         private static final String MESSAGE_DIALOG="Message Dialog";
-        private static final String ADVANCED_RENAME_DIALOG="Advanced Rename";
-        private static final String DIR_SYNC_DIALOG="Directory Synchronization";
-        private static final String REGEX_HELP_DIALOG="Web Dialog";
-        private static final String DUPLICATE_FINDER_DIALOG="Duplicate Finder";
+        private static final String ADVANCED_RENAME_DIALOG="Advanced Rename ";
+        private static final String DIR_SYNC_DIALOG="Directory Synchronization ";
+        private static final String REGEX_HELP_DIALOG="Web Dialog ";
+        private static final String DUPLICATE_FINDER_DIALOG="Duplicate Finder ";
     }
     
     public SimpleBooleanProperty autoCloseProgressDialogs;
@@ -64,7 +64,7 @@ public class ViewManager {
     private int findSmallestAvailable(HashMap<String,Frame> map,String title){
         int i =1;
         while(true){
-            if(map.containsKey(title + i)){
+            if(map.containsKey(title+i)){
                 i++;
             }else{
                 return i;
@@ -96,11 +96,24 @@ public class ViewManager {
         
     }
     public void closeWindow(String title){
-        windows.get(title).getStage().close();
-        windows.remove(title);
-        if(windows.isEmpty()){
+        
+        if(windows.size()==1){
+            ArrayList<String> titles = new ArrayList<>();
+            dialogs.values().forEach(dialog ->{
+                titles.add(dialog.getTitle());
+            });
+            
+            titles.forEach(t ->{
+                closeDialog(t);
+            });
             FileManagerLB.doOnExit();
+            windows.get(title).getStage().close();
+            dialogs.clear();
+            windows.clear();
             System.exit(0);
+        }else{
+            windows.get(title).getStage().close();
+            windows.remove(title); 
         }
     }
     public void closeAllWindows(){
@@ -232,5 +245,6 @@ public class ViewManager {
         dialogs.get(title).getStage().close();
         dialogs.remove(title);
     }
+    
     
 }
