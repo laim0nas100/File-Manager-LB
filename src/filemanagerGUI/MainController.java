@@ -44,6 +44,7 @@ import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.FileManagerLB.DATA_SIZE;
 import filemanagerGUI.customUI.FileAddressField;
+import filemanagerLogic.Enums;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
@@ -177,6 +178,7 @@ public class MainController extends BaseController{
     }
 
     public void updateCurrentView(){
+        
         Platform.runLater(()->{
             
         
@@ -337,12 +339,12 @@ public class MainController extends BaseController{
     }
     public void regexHelp(){
         Platform.runLater(()->{
-            ViewManager.getInstance().newWebDialog("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","Pattern (Java Platform SE 7 ).html");
+            ViewManager.getInstance().newWebDialog(Enums.WebDialog.Regex);
         });
     }
     public void aboutPage(){
         Platform.runLater(()->{
-            ViewManager.getInstance().newWebDialog("","About.html");
+            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         });
     }
     public void duplicateFind(){
@@ -357,12 +359,12 @@ public class MainController extends BaseController{
         array.stream().forEach(sm::clearSelection);
     }
     private void handleOpen(ExtFile file){
-        if(file.getIdentity().equals(ExtFile.Identity.FOLDER)){
+        if(file.getIdentity().equals(Enums.Identity.FOLDER)){
             changeToDir((ExtFolder) file);
         }else {
                             
             try{
-                if(file.getIdentity().equals(ExtFile.Identity.LINK)){
+                if(file.getIdentity().equals(Enums.Identity.LINK)){
                     ExtLink link = (ExtLink) file.getTrueForm();
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if(link.isPointsToDirectory()){
@@ -370,7 +372,7 @@ public class MainController extends BaseController{
                     }else{
                         DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
                     }
-                }else if(file.getIdentity().equals(ExtFile.Identity.FILE)){
+                }else if(file.getIdentity().equals(Enums.Identity.FILE)){
                     DesktopApi.open(file);
                 }
             }catch(Exception x){
@@ -632,7 +634,7 @@ public class MainController extends BaseController{
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
                 
-                if(cellData.getValue().getIdentity().equals(ExtFile.Identity.FOLDER)){
+                if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
                     return new SimpleStringProperty("");
                 }else if(propertyUnitSizeAuto.get()){
                     return cellData.getValue().propertySizeAuto;
@@ -674,7 +676,7 @@ public class MainController extends BaseController{
                 if (itemCount1 == 1) {
                         tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
                         ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
-                        if(file.getIdentity().equals(ExtFile.Identity.FOLDER)){
+                        if(file.getIdentity().equals(Enums.Identity.FOLDER)){
                             tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
                         }
                         

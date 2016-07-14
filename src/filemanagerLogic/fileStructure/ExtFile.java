@@ -8,6 +8,7 @@ package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
+import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
@@ -57,13 +58,7 @@ public class ExtFile extends File{
         }
         return Double.parseDouble(s) * multiplier;
     }
-    public static enum Identity{
-        FILE("file"),FOLDER("folder"),LINK("link");
-        public String identity;
-        Identity(String identity){
-            this.identity = identity;
-        }
-    }
+
     
     
     public BooleanProperty isAbsoluteRoot;

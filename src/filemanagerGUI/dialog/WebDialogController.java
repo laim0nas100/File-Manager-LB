@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import utility.ErrorReport;
 import LibraryLB.Log;
+import filemanagerLogic.Enums;
 
 /**
  * FXML Controller class
@@ -22,14 +23,14 @@ public class WebDialogController extends BaseDialog{
    
 
 
-    public void afterShow(String...strings) {
+    public void afterShow(Enums.WebDialog info) {
         String path = "";
         
         try{
-            path = strings[0];
+            path = info.address;
             Log.writeln(path);
-            if(!isInternetReachable(strings[0])){
-                path = "file:///"+System.getProperty("user.dir")+"/"+strings[1];
+            if(!isInternetReachable(path)){
+                path = "file:///"+System.getProperty("user.dir")+"/"+info.local;
             }
             Log.writeln("Loading from local");
             browser.getEngine().load(path);

@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.customUI;
 
+import filemanagerLogic.Enums;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.util.Collection;
 import javafx.beans.property.SimpleStringProperty;
@@ -12,7 +13,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
-import utility.ExtStringUtils;
 
 /**
  *
@@ -49,7 +49,7 @@ public class CosmeticsFX {
         sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
-                if(cellData.getValue().getIdentity().equals("folder")){
+                if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
                     return new SimpleStringProperty("");
                 }else{
                     return cellData.getValue().propertySizeAuto;

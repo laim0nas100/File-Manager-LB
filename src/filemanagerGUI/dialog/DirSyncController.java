@@ -47,6 +47,7 @@ import javafx.util.Callback;
 import org.controlsfx.control.CheckComboBox;
 import utility.ExtStringUtils;
 import LibraryLB.Log;
+import filemanagerLogic.Enums;
 
 /**
  * FXML Controller class
@@ -232,10 +233,10 @@ public class DirSyncController extends BaseDialog {
         status1.setText("BAD");
         
         file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
-        cond0 = (!file0.isAbsoluteRoot()&&file0.getIdentity().equals(ExtFile.Identity.FOLDER));
+        cond0 = (!file0.isAbsoluteRoot()&&file0.getIdentity().equals(Enums.Identity.FOLDER));
 
         file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
-        cond1 = (!file1.isAbsoluteRoot()&&file1.getIdentity().equals(ExtFile.Identity.FOLDER));
+        cond1 = (!file1.isAbsoluteRoot()&&file1.getIdentity().equals(Enums.Identity.FOLDER));
 
         if(cond0){
             status0.setText("OK");

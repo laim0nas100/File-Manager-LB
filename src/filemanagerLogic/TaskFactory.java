@@ -106,11 +106,11 @@ public class TaskFactory {
     public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
         
         ExtFile file = LocationAPI.getInstance().getFileByLocation(oldLoc);
-        if(file.getIdentity().equals("file")){
+        if(file.getIdentity().equals(Enums.Identity.FILE)){
             ExtFile newFile = new ExtFile(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
             LocationAPI.getInstance().removeByLocation(oldLoc);
             LocationAPI.getInstance().putByLocation(newLoc, newFile);
-        }else if(file.getIdentity().equals("folder")){
+        }else if(file.getIdentity().equals(Enums.Identity.FOLDER)){
             ExtFolder newFile = new ExtFolder(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
             newFile.populateRecursive();
             LocationAPI.getInstance().removeByLocation(oldLoc);

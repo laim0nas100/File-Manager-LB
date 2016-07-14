@@ -13,6 +13,8 @@ import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.WebDialogController;
+import filemanagerLogic.Enums;
+import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtFile;
@@ -140,7 +142,7 @@ public class ViewManager {
         System.out.println(task.getState());
         try {
 
-            Frame frame = newDialogFrame(Titles.PROGRESS_DIALOG,"fxml/ProgressDialog.fxml");
+            Frame frame = newDialogFrame(FrameTitle.PROGRESS_DIALOG);
             ProgressDialogController controller = (ProgressDialogController) frame.getController();
             controller.beforeShow(frame.getStage().getTitle());
             frame.getStage().setMaxHeight(300);
@@ -158,7 +160,7 @@ public class ViewManager {
     public void newRenameDialog(ExtFolder folder,ExtFile itemToRename){
         try {
             
-            Frame frame = newDialogFrame(Titles.TEXT_INPUT_DIALOG,"fxml/RenameDialog.fxml");
+            Frame frame = newDialogFrame(FrameTitle.TEXT_INPUT_DIALOG);
             RenameDialogController controller = (RenameDialogController) frame.getController();
             controller.beforeShow(frame.getStage().getTitle());
             frame.getStage().setMaxHeight(200);
@@ -176,7 +178,7 @@ public class ViewManager {
     }
     public void newAdvancedRenameDialog(ArrayList<String> list){
        try {
-            Frame frame = newDialogFrame(Titles.ADVANCED_RENAME_DIALOG,"fxml/AdvancedRename.fxml");
+            Frame frame = newDialogFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
             AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
             controller.beforeShow(frame.getStage().getTitle(),list);
             frame.getStage().show();
@@ -188,7 +190,7 @@ public class ViewManager {
     }
     public void newDirSyncDialog(){
       try {
-           Frame frame = newDialogFrame(Titles.DIR_SYNC_DIALOG,"fxml/DirSync.fxml");
+           Frame frame = newDialogFrame(FrameTitle.DIR_SYNC_DIALOG);
            DirSyncController controller = (DirSyncController) frame.getController();
            controller.beforeShow(frame.getStage().getTitle());
            frame.getStage().show();
@@ -201,7 +203,7 @@ public class ViewManager {
     }
     public void newDuplicateFinderDialog(ExtFolder root){
       try {
-           Frame frame = newDialogFrame(Titles.DUPLICATE_FINDER_DIALOG,"fxml/DuplicateFinder.fxml");
+           Frame frame = newDialogFrame(FrameTitle.DUPLICATE_FINDER_DIALOG);
            DuplicateFinderController controller = (DuplicateFinderController) frame.getController();
            controller.beforeShow(frame.getStage().getTitle(),root);
            frame.getStage().show();
@@ -212,25 +214,25 @@ public class ViewManager {
            ErrorReport.report(ex);
        } 
    }
-    public void newWebDialog(String...strings){     
+    public void newWebDialog(Enums.WebDialog info){     
     try {
-           Frame frame = newDialogFrame(Titles.REGEX_HELP_DIALOG,"fxml/WebDialog.fxml");
+           Frame frame = newDialogFrame(FrameTitle.WEB_DIALOG);
            WebDialogController controller = (WebDialogController) frame.getController();
            controller.beforeShow(frame.getStage().getTitle());
            frame.getStage().show();
-           controller.afterShow(strings);
+           controller.afterShow(info);
            frame.getStage().toFront();
               
        } catch (Exception ex) {
            ErrorReport.report(ex);
        }
     }
-    private Frame newDialogFrame(String title,String location) throws IOException{
-        int index = findSmallestAvailable(dialogs,title);
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(location));
+    private Frame newDialogFrame(FrameTitle info) throws IOException{
+        int index = findSmallestAvailable(dialogs,info.title);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(info.recourse));
         Parent root = loader.load();
         Stage stage = new Stage();
-        stage.setTitle(title+" "+index);
+        stage.setTitle(info.title+" "+index);
         stage.setScene(new Scene(root));
         BaseController controller = loader.getController();
         stage.setOnCloseRequest((WindowEvent we) -> {

@@ -144,7 +144,7 @@ public class LocationAPI {
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){
                     file = folder.getIgnoreCase(s);
-                    if(file.getIdentity().equals("folder")){
+                    if(file.getIdentity().equals(Enums.Identity.FOLDER)){
                         folder = (ExtFolder) file; 
                     }else{
                         return file;
@@ -172,7 +172,7 @@ public class LocationAPI {
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){
                     file = folder.getIgnoreCase(s);
-                    if(file.getIdentity().equals("folder")){
+                    if(file.getIdentity().equals(Enums.Identity.FOLDER)){
                         folder = (ExtFolder) folder.getIgnoreCase(s);        
                     }else{
                         return file;

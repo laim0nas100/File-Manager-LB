@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.dialog;
 import filemanagerGUI.MainController;
+import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
@@ -117,7 +118,7 @@ public void beforeShow(String title,ArrayList<String> fileList){
     this.table.setItems(tableList);
     fileList.forEach(file ->{
         ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
-        if(fileAndPopulate.getIdentity().equals(ExtFile.Identity.FOLDER)){
+        if(fileAndPopulate.getIdentity().equals(Enums.Identity.FOLDER)){
             folders.add((ExtFolder) fileAndPopulate);
         }else{
             files.add(fileAndPopulate);
@@ -156,7 +157,7 @@ public void updateLists(){
                 if(this.includeFolders.selectedProperty().get()){
                     locArray.add(file.getAbsolutePath());
                 }else{
-                    if(!file.getIdentity().equals(ExtFile.Identity.FOLDER)){
+                    if(!file.getIdentity().equals(Enums.Identity.FOLDER)){
                         locArray.add(file.getAbsolutePath());
                     }
                 }
@@ -169,7 +170,7 @@ public void updateLists(){
                 if(this.includeFolders.selectedProperty().get()){
                     locArray.add(file.getAbsolutePath());
                 }else{
-                    if(!file.getIdentity().equals(ExtFile.Identity.FOLDER)){
+                    if(!file.getIdentity().equals(Enums.Identity.FOLDER)){
                         locArray.add(file.getAbsolutePath());
                     }
                 }

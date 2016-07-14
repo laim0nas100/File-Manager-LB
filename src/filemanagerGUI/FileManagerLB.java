@@ -9,6 +9,7 @@ import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.ParametersMap;
+import filemanagerLogic.Enums;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -45,33 +47,37 @@ public class FileManagerLB extends Application {
     public static ParametersMap parameters;
     @Override
     public void start(Stage primaryStage) {
-        links = FXCollections.observableArrayList();
-        errorLog = FXCollections.observableArrayList();
-        ArtificialRoot.setPopulated(true);
-        ArtificialRoot.setIsAbsoluteRoot(true);
-        if(!DIR.endsWith(File.separator)){
-            DIR+=File.separator;
-        }
+        ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+        Platform.runLater(()->{
+            links = FXCollections.observableArrayList();
+            errorLog = FXCollections.observableArrayList();
+            ArtificialRoot.setPopulated(true);
+            ArtificialRoot.setIsAbsoluteRoot(true);
+            if(!DIR.endsWith(File.separator)){
+                DIR+=File.separator;
+            }
+
+            try{
+                Log.changeStream('f', new File(DIR+"Log.txt"));
+                ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
+                parameters = new ParametersMap(list);
+                DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
+                DEPTH = (int) parameters.defaultGet("lookDepth",2);
+                LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
+
+                Files.deleteIfExists(ArtificialRoot.toPath());
+                Files.createFile(ArtificialRoot.toPath());
+                Log.writeln("Parameters",parameters);
+
+            }catch(Exception e){
+                ErrorReport.report(e);
+            }
+            ArtificialRoot.propertyName.set("ROOT");
+            links.add(new FavouriteLink("ROOT",""));
+            ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
+            ViewManager.getInstance().updateAllWindows();
+        });
         
-        try{
-            Log.changeStream('f', new File(DIR+"Log.txt"));
-            ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
-            parameters = new ParametersMap(list);
-            DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
-            DEPTH = (int) parameters.defaultGet("lookDepth",2);
-            LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
-            
-            Files.deleteIfExists(ArtificialRoot.toPath());
-            Files.createFile(ArtificialRoot.toPath());
-            Log.writeln("Parameters",parameters);
-            
-        }catch(Exception e){
-            ErrorReport.report(e);
-        }
-        ArtificialRoot.propertyName.set("ROOT");
-        links.add(new FavouriteLink("ROOT",""));
-        ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
-        ViewManager.getInstance().updateAllWindows();
     } 
     public static void main(String[] args) {
         launch(args);

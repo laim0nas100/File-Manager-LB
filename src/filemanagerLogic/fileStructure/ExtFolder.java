@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
+import filemanagerLogic.Enums.Identity;
 
 /**
  *
