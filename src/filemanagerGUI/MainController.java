@@ -321,6 +321,8 @@ public class MainController extends BaseController{
            
             if(file.exists()){
                 new Thread(TaskFactory.getInstance().snapshotLoadTask(this.windowID,MC.currentDir,file)).start(); 
+            }else{
+                ErrorReport.report (new Exception("No such File:"+file.getAbsolutePath()));
             }
         }catch(Exception ex){
             ErrorReport.report(ex);
