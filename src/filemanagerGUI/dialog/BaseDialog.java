@@ -15,7 +15,7 @@ import filemanagerGUI.ViewManager;
 public abstract class BaseDialog extends BaseController {
     @Override
     public void exit(){
-        ViewManager.getInstance().closeDialog(this.windowID);
+        ViewManager.getInstance().closeFrame(this.windowID);
         ViewManager.getInstance().updateAllWindows();
     }
 }

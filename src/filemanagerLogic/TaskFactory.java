@@ -447,15 +447,17 @@ public class TaskFactory {
                         try {
                             mapper.writeValue(file,currentSnapshot);
                         } catch (IOException ex) {
-                            ex.printStackTrace();
+                            ErrorReport.report(ex);
                         }
                         try{
-                            MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
+                            MainController controller = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
                             controller.snapshotView.getItems().clear();
                             controller.snapshotView.getItems().add("Snapshot:"+file+" created");
 
                             ViewManager.getInstance().updateAllWindows(); 
-                        }catch(Exception e){}
+                        }catch(Exception e){
+                            ErrorReport.report(e);
+                        }
                     });
                     
                 
@@ -484,7 +486,7 @@ public class TaskFactory {
                     Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.compareSnapshots(currentSnapshot, sn));
                     ObservableList list = FXCollections.observableArrayList();
                     list.addAll(result.map.values());
-                    MainController frame = (MainController) ViewManager.getInstance().windows.get(windowID).getController();
+                    MainController frame = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
                     
                     frame.snapshotTextDate.setText(sn.dateCreated);
                     frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
@@ -577,7 +579,6 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    private void VOID(){};
     public ExtTask duplicateFinderTask(ExtFolder folder,double ratio,ObservableList list){
         return new ExtTask(){
             @Override

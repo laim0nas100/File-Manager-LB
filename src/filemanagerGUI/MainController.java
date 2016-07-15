@@ -42,12 +42,13 @@ import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import filemanagerGUI.FileManagerLB.DATA_SIZE;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
+import filemanagerLogic.Enums.DATA_SIZE;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -145,7 +146,6 @@ public class MainController extends BaseController{
 
         finder = new Finder("",useRegex.selectedProperty());
         Bindings.bindContentBidirectional(finder.list, searchView.getItems());
-        searchTask = new ExtTask();
         finder.isCanceled.bind(this.propertyReadyToSearch);
 
         itemCount.textProperty().bind(Bindings.size(finder.list).asString());
@@ -160,59 +160,59 @@ public class MainController extends BaseController{
         Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
         
 
+
     }
     
     @Override
     public void exit(){ 
-        System.out.println("Closing internally " + windowID);
-        ViewManager.getInstance().closeWindow(windowID); 
-    }
-
-    public void setTableView(){
-        Platform.runLater(()->{
-            tableView.setItems(MC.getCurrentContents());
-            tableView.sort();
-        });
-        
-        
+        Log.write("Closing internally " + windowID);
+        ViewManager.getInstance().closeFrame(windowID); 
     }
 
     public void updateCurrentView(){
         
         Platform.runLater(()->{
             
-        
-        this.buttonForw.setDisable(!MC.hasForward());
-        this.buttonPrev.setDisable(!MC.hasPrev());
-        this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
-        this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
-        if(MC.currentDir.isAbsoluteRoot()){
-            fileAddress.field.setText("ROOT");
-        }else{
-            fileAddress.field.setText(MC.currentDir.getAbsoluteDirectory());
-        }
-        fileAddress.field.positionCaret(fileAddress.field.getLength());
-        MC.currentDir.update();
-        fileAddress.folder = MC.currentDir;
-        fileAddress.f = null;
-        
-        Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
-        while(iterator.hasNext()){
-            try{
-            if(!Files.exists(Paths.get(iterator.next()))){
-                iterator.remove();
+            this.buttonForw.setDisable(!MC.hasForward());
+            this.buttonPrev.setDisable(!MC.hasPrev());
+            this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
+            this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
+            if(MC.currentDir.isAbsoluteRoot()){
+                fileAddress.field.setText("ROOT");
+            }else{
+                fileAddress.field.setText(MC.currentDir.getAbsoluteDirectory());
             }
-            }catch(Exception e){}
-        }
-        setTableView();
-        propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
-        propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
+            fileAddress.field.positionCaret(fileAddress.field.getLength());
+            
+            fileAddress.folder = MC.currentDir;
+            fileAddress.f = null;
+
+            Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
+            while(iterator.hasNext()){
+                try{
+                    if(!Files.exists(Paths.get(iterator.next()))){
+                        iterator.remove();
+                    }
+                }catch(Exception e){}
+            }
+            
+            propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
+            propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
+            MC.currentDir.update();
+           
+            tableView.setItems(FXCollections.observableArrayList(MC.getCurrentContents()));
+            //Workaround to update table
+            TableColumn get = (TableColumn) tableView.getColumns().get(0);
+            get.setVisible(false);
+            get.setVisible(true);
+            
         });
+        
         
         
     }
     public void closeAllWindows(){
-        ViewManager.getInstance().closeAllWindows();
+        FileManagerLB.doOnExit();
     }
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
@@ -262,7 +262,10 @@ public class MainController extends BaseController{
     public void changeToDir(ExtFolder dir){
        MC.changeDirTo(dir);
        new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH)).start();
-       updateCurrentView();
+       Platform.runLater(()->{
+            updateCurrentView();
+       });
+      
     }
     public void searchTyped(){
         if(!this.useRegex.isSelected()){
@@ -336,6 +339,7 @@ public class MainController extends BaseController{
     }
     public void dirSync(){
         ViewManager.getInstance().newDirSyncDialog();
+        
     }
     public void regexHelp(){
         Platform.runLater(()->{
@@ -398,7 +402,7 @@ public class MainController extends BaseController{
         }
     }
     private Stage getStage(){
-        return ViewManager.getInstance().windows.get(this.windowID).getStage();
+        return ViewManager.getInstance().getFrame(windowID).getStage();
     }
     private void hideAllContextMenus(){
         tableContextMenu.hide();
@@ -989,6 +993,7 @@ public class MainController extends BaseController{
                 item.setOnAction(eh ->{
                    this.propertyUnitSizeAuto.set(false);
                    this.unitSize = DATA_SIZE.valueOf(sizeType);
+                   
                    Log.writeln(unitSize);
                    this.propertyUnitSizeName.set("Size "+unitSize.sizename);
                    this.propertyUnitSize.set(unitSize.size);

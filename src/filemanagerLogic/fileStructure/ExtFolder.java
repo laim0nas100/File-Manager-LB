@@ -66,10 +66,9 @@ public class ExtFolder extends ExtFile{
                 for(String f:this.list()){
                     
                    
-                    if(!this.files.containsKey(f)){//NEW LINE
+                    if(!this.files.containsKey(f)){
                         String name = f;
                         f = parent + name;
-                        //this.files.remove(name);
                         Path path = Paths.get(f);
                         ExtFile file = new ExtFile(f);
                         if(Files.isDirectory(path)){
@@ -78,8 +77,7 @@ public class ExtFolder extends ExtFile{
                             file = new ExtLink(f);
                         }
                         files.put(file.propertyName.get(), file);
-                        //LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
-                        //LocationAPI.getInstance().putByLocation(location, file);
+                    
                     }
                 }
             }
@@ -131,10 +129,10 @@ public class ExtFolder extends ExtFile{
             FileManagerLB.remount();
         }
         if(this.isPopulated()){
-            //Log.writeln("Update:"+this.getAbsolutePath());
+            Log.writeln("Update:"+this.getAbsolutePath());
             for(ExtFile file:this.getFilesCollection()){
                 if(!Files.exists(file.toPath())){
-                    //Log.writeln(file+" dont exist");
+                    Log.writeln(file+" dont exist");
                     LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                     LocationAPI.getInstance().removeByLocation(location);
                 }

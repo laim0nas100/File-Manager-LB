@@ -49,6 +49,9 @@ public class RenameDialogController extends TextInputDialogController {
     }
     @Override
     public void checkAvailable(){
+        if(!itemToRename.exists()){
+            exit();
+        }
         listToCheck.clear();
         folder.update();
         for(ExtFile file:folder.getFilesCollection()){

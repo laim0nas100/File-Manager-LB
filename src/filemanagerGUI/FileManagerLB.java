@@ -37,7 +37,6 @@ import utility.FavouriteLink;
 public class FileManagerLB extends Application {
     public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+File.separator+"root.Don't use this.root";
     public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
-    public static DATA_SIZE DataSize;
     public static String DIR  = System.getProperty("user.dir");
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
@@ -49,6 +48,7 @@ public class FileManagerLB extends Application {
     public void start(Stage primaryStage) {
         ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         Platform.runLater(()->{
+            
             links = FXCollections.observableArrayList();
             errorLog = FXCollections.observableArrayList();
             ArtificialRoot.setPopulated(true);
@@ -140,21 +140,7 @@ public class FileManagerLB extends Application {
         } catch (IOException ex) {
             ErrorReport.report(ex);
         }
+        System.exit(0);
     }
-    public static enum DATA_SIZE{
-        B  (1,"B"),
-        KB (1024,"KB"),
-        MB (1024*1024,"MB"),
-        GB (1024*1024*1024,"GB");
-        public long size;
-        public String sizename;
-        DATA_SIZE(long size,String s){
-            this.size = size;
-            this.sizename = s;
-        }
-        public void set(DATA_SIZE e,String sizename){
-            e.size = DATA_SIZE.valueOf(sizename).size;
-            e.sizename = DATA_SIZE.valueOf(sizename).sizename;
-        }
-    }
+    
 }

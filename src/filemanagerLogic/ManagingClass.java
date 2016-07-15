@@ -15,6 +15,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import java.util.Collection;
+import javafx.application.Platform;
 import utility.ErrorReport;
 
 /**
@@ -89,10 +91,8 @@ public class ManagingClass {
             } 
         }
     }
-    public ObservableList<ExtFile> getCurrentContents(){
-        ObservableList<ExtFile> list = FXCollections.observableArrayList();
-        list.addAll(currentDir.getFilesCollection());
-        return list;       
+    public Collection<ExtFile> getCurrentContents(){
+        return currentDir.getFilesCollection();       
     }
     public ObservableList<ExtFile> getAllContents(){
         ObservableList<ExtFile> list = FXCollections.observableArrayList();

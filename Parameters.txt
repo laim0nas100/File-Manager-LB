@@ -1,4 +1,4 @@
-debug=1
-lookDepth=i2
-logBackupCount=i5
-lang=sEN
+debug=true
+lookDepth=2
+logBackupCount=5
+lang=EN

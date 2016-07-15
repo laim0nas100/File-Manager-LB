@@ -6,6 +6,7 @@
 package filemanagerLogic.snapshots;
 
 import filemanagerGUI.FileManagerLB;
+import filemanagerLogic.Enums;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -45,12 +46,12 @@ public class Entry{
             lastModified = file.lastModified();
             relativePath = relPath;
             absolutePath = file.getAbsolutePath();
-            isFolder = file.getIdentity().equals("folder");
+            isFolder = file.getIdentity().equals(Enums.Identity.FOLDER);
         }
         @Override
         public String toString(){
             String s="";
-            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/FileManagerLB.DATA_SIZE.KB.size;
+            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/Enums.DATA_SIZE.KB.size;
             if(isNew){
                 s+=" new";
             }else if(isMissing){

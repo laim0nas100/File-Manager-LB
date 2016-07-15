@@ -13,12 +13,10 @@ import utility.ErrorReport;
  * Custom Task
  * @author Laimonas Beniušis
  */
-public class ExtTask extends Task<Void> {
+public abstract class ExtTask extends Task<Void> {
     
     @Override
-    protected Void call() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    protected abstract Void call() throws Exception;
     
     private String taskDescription;
     private long refreshDuration = 500;

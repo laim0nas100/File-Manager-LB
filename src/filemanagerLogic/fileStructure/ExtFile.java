@@ -8,6 +8,7 @@ package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
+import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
@@ -43,18 +44,18 @@ public class ExtFile extends File{
         }
     };
     public static Double extractSize(String s) {
-        Long multiplier = FileManagerLB.DATA_SIZE.B.size;
+        Long multiplier = DATA_SIZE.B.size;
         if (s.startsWith("(B)")) {
             s = s.replace("(B) ", "");
         } else if (s.startsWith("(KB)")) {
             s = s.replace("(KB) ", "");
-            multiplier = FileManagerLB.DATA_SIZE.KB.size;
+            multiplier = DATA_SIZE.KB.size;
         } else if (s.startsWith("(MB)")) {
             s = s.replace("(MB) ", "");
-            multiplier = FileManagerLB.DATA_SIZE.MB.size;
+            multiplier = DATA_SIZE.MB.size;
         } else if (s.startsWith("(GB)")) {
             s = s.replace("(GB) ", "");
-            multiplier = FileManagerLB.DATA_SIZE.GB.size;
+            multiplier = DATA_SIZE.GB.size;
         }
         return Double.parseDouble(s) * multiplier;
     }
