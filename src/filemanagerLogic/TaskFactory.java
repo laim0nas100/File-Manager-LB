@@ -444,20 +444,16 @@ public class TaskFactory {
                     Snapshot currentSnapshot =  SnapshotAPI.createSnapshot(folder);
 
                     Platform.runLater(()->{
-                        try {
-                            mapper.writeValue(file,currentSnapshot);
-                        } catch (IOException ex) {
-                            ErrorReport.report(ex);
-                        }
-                        try{
                             MainController controller = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
                             controller.snapshotView.getItems().clear();
+                        try {
+                            mapper.writeValue(file,currentSnapshot);
                             controller.snapshotView.getItems().add("Snapshot:"+file+" created");
-
-                            ViewManager.getInstance().updateAllWindows(); 
-                        }catch(Exception e){
-                            ErrorReport.report(e);
+                        } catch (IOException ex) {
+                            ErrorReport.report(ex);
+                            controller.snapshotView.getItems().add("Snapshot:"+file+" failed");
                         }
+                        ViewManager.getInstance().updateAllWindows(); 
                     });
                     
                 
@@ -470,7 +466,13 @@ public class TaskFactory {
         return new ExtTask(){
             @Override
             protected Void call() throws Exception {
+                    
+                    MainController frame = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
 
+                    Platform.runLater(()->{
+                        frame.snapshotView.getItems().clear();
+                        frame.snapshotView.getItems().add("Snapshot Loading");
+                    });
                     ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
                     Thread thread = new Thread(populateRecursiveParallel);
                     thread.setDaemon(true);
@@ -486,7 +488,6 @@ public class TaskFactory {
                     Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.compareSnapshots(currentSnapshot, sn));
                     ObservableList list = FXCollections.observableArrayList();
                     list.addAll(result.map.values());
-                    MainController frame = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
                     
                     frame.snapshotTextDate.setText(sn.dateCreated);
                     frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
