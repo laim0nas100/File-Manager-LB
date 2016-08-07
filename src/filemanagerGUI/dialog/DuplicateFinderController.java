@@ -5,16 +5,19 @@
  */
 package filemanagerGUI.dialog;
 
+import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.text.Text;
@@ -32,10 +35,12 @@ public class DuplicateFinderController extends BaseDialog{
     @FXML public ScrollBar scroll;
     @FXML public Button searchButton;
     @FXML public Text textRootFolder;
+    private MenuTree menuTree;
     private ExtFolder root;
     public void beforeShow(String title,ExtFolder root) {
         super.beforeShow(title);
         this.root = root;
+        list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         textRootFolder.setText(root.getAbsoluteDirectory());
         correlationRatio.textProperty().bind(scroll.valueProperty().divide(100).asString());
         TableColumn<SimpleTableItem, String> nameCol1 = new TableColumn<>("Name 1");
@@ -71,6 +76,29 @@ public class DuplicateFinderController extends BaseDialog{
         });
         
         list.getColumns().setAll(nameCol1,pathCol1,nameCol2,pathCol2);
+    }
+    @Override
+    public void afterShow(){
+        menuTree = new MenuTree(null);
+        MenuItem markPath1 = new MenuItem("Mark Path 1");
+        markPath1.setOnAction(eh ->{
+            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
+            for(Object ob:selectedItems){
+                SimpleTableItem item = (SimpleTableItem) ob;
+                TaskFactory.getInstance().addToMarked(item.f1.getAbsoluteDirectory());
+            }
+        });
+        MenuItem markPath2 = new MenuItem("Mark Path 2");
+        markPath2.setOnAction(eh ->{
+            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
+            for(Object ob:selectedItems){
+                SimpleTableItem item = (SimpleTableItem) ob;
+                TaskFactory.getInstance().addToMarked(item.f2.getAbsoluteDirectory());
+            }
+        });
+        menuTree.addMenuItem(markPath1, markPath1.getText());
+        menuTree.addMenuItem(markPath2, markPath2.getText());
+        this.list.setContextMenu(menuTree.constructContextMenu());
     }
     public void search(){
         searchButton.setDisable(true);
