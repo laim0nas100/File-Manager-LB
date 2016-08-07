@@ -42,6 +42,8 @@ import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import filemanagerGUI.customUI.CosmeticsFX;
+import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
@@ -235,11 +237,18 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        try{
-            Log.writeln(FileManagerLB.getRootSet());
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        MenuItem item0 = new MenuItem("Item0");
+        Menu menu0 = new Menu("Menu0");
+        Menu menu1 = new Menu("Menu1");
+        MenuItem item1 = new MenuItem("Item1");
+        MenuItem item2 = new MenuItem("Item2");
+        MenuTree map = new MenuTree(menu0);
+        map.addMenuItem(item0, "Item0");
+        map.addMenuItem(menu1, "Menu1");
+        map.addMenuItem(item1, "Menu1","Item1");
+        map.addMenuItem(item2, "Item2");
+        map.setHidden(true, "Menu1");
+        this.searchField.setContextMenu(map.constructContextMenu());
     }
 
     
