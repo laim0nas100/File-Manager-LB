@@ -113,8 +113,8 @@ public class CosmeticsFX {
     }
     public static class ExtTableView{
         public final long resizeTimeout = 500;
-        public SortType sortType;
-        public TableColumn sortColumn;
+        public ArrayList<SortType> sortTypes;
+        public ArrayList<TableColumn> sortColumns;
         public int sortByColumn;
         public TableView table;
         public SimpleBooleanProperty recentlyResized;
@@ -125,6 +125,8 @@ public class CosmeticsFX {
         }
         public ExtTableView(){
             defaultValues();
+            sortTypes = new ArrayList<>();
+            sortColumns = new ArrayList<>();
         }
         private void defaultValues(){
             sortByColumn = 0;
@@ -166,17 +168,25 @@ public class CosmeticsFX {
         });
     }
         public void saveSortPrefereces(){
-            
+            sortColumns = new ArrayList<>();
+            sortTypes = new ArrayList<>();
             if (!table.getSortOrder().isEmpty()) {
-                sortColumn = (TableColumn) table.getSortOrder().get(0);
-                sortType = sortColumn.getSortType();
+                table.getSortOrder().forEach(ob->{
+                    TableColumn col = (TableColumn) ob;
+                    sortColumns.add(col);
+                    sortTypes.add(col.getSortType());
+                });
+                
             }
         }
         public void setSortPreferences(){
-            if (sortColumn != null) {
-                table.getSortOrder().add(sortColumn);
-                sortColumn.setSortType(sortType);
-                sortColumn.setSortable(true);
+            if (!sortColumns.isEmpty()) {
+                table.getSortOrder().clear();
+                for(int i=0;i<sortColumns.size();i++){
+                    table.getSortOrder().add(sortColumns.get(i));
+                    sortColumns.get(i).setSortType(sortTypes.get(i));
+                    sortColumns.get(i).setSortable(true);
+                }
             }
         }
         public void updateContents(Collection collection){
