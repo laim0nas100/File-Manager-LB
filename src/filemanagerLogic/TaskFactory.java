@@ -49,6 +49,7 @@ public class TaskFactory {
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory instance = new TaskFactory();
     private static final int TRY_LIMIT = 5;
+    public static String dragInitWindowID ="";
     public static TaskFactory getInstance(){
         
         return instance;

@@ -38,7 +38,8 @@ public class Enums {
         ADVANCED_RENAME_DIALOG("Advanced Rename","fxml/AdvancedRename.fxml"),
         DIR_SYNC_DIALOG("Directory Synchronization","fxml/DirSync.fxml"),
         WEB_DIALOG("Web Dialog","fxml/WebDialog.fxml"),
-        DUPLICATE_FINDER_DIALOG("Duplicate Finder","fxml/DuplicateFinder.fxml");
+        DUPLICATE_FINDER_DIALOG("Duplicate Finder","fxml/DuplicateFinder.fxml"),
+        VIRTUAL_FOLDER_DIALOG("Virtual Folder","fxml/VirtualFolderDialog.fxml");
         public final String recourse;
         private final String title;
         public String getTitle(){

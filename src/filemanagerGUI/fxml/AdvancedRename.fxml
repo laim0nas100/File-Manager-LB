@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.92" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
+<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.101" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
   <items>
       <VBox>
          <children>
@@ -124,7 +124,7 @@
                   </Tab>
               </tabs>
             </TabPane>
-            <FlowPane alignment="CENTER" columnHalignment="CENTER">
+            <FlowPane alignment="CENTER" columnHalignment="CENTER" prefHeight="28.0" prefWidth="600.0">
                <children>
                 <Button mnemonicParsing="false" onAction="#update" text="Update">
                      <padding>
@@ -150,17 +150,26 @@
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </FlowPane.margin>
                   </Button>
-                  <CheckBox fx:id="recursive" mnemonicParsing="false" text="Recursive">
-                     <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </padding>
-                  </CheckBox>
+               </children>
+            </FlowPane>
+            <FlowPane alignment="CENTER" columnHalignment="CENTER" prefHeight="24.0" prefWidth="600.0">
+               <children>
                   <CheckBox fx:id="showFullPath" mnemonicParsing="false" text="Show full path">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </CheckBox>
+                  <CheckBox fx:id="recursive" mnemonicParsing="false" text="Recursive">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </CheckBox>
                   <CheckBox fx:id="includeFolders" mnemonicParsing="false" text="Include Folders">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="showOnlyDifferences" mnemonicParsing="false" text="Show Only Differences">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>

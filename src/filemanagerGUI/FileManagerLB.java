@@ -58,7 +58,7 @@ public class FileManagerLB extends Application {
             }
 
             try{
-                Log.changeStream('f', new File(DIR+"Log.txt"));
+                //Log.changeStream('f', new File(DIR+"Log.txt"));
                 ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
                 parameters = new ParametersMap(list);
                 DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
@@ -130,6 +130,7 @@ public class FileManagerLB extends Application {
     }
     public static void doOnExit(){
         try {
+            LibraryLB.FileManaging.FileReader.writeToFile(DIR+"Log.txt", Log.getInstance().list);
             Files.deleteIfExists(ArtificialRoot.toPath());
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,DIR+"BUP","YYYY-MM-dd HH.mm.ss");
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(DIR+"Log.txt");

@@ -43,6 +43,7 @@ import utility.Finder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.customUI.CosmeticsFX;
+import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
@@ -71,7 +72,6 @@ public class MainController extends BaseController{
     @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
-    private ArrayList< TableColumn<ExtFile, String>> columns;
     private ObservableList<ExtFile> selectedList = FXCollections.observableArrayList();
     
     
@@ -132,6 +132,7 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty propertyRenameCondition;
     private IntegerBinding selectedSize;
     private ExtTask searchTask;
+    private ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder root,ExtFolder currentDir){
         
         super.beforeShow(title);
@@ -157,12 +158,12 @@ public class MainController extends BaseController{
         fileAddress = new FileAddressField(currentDirText);
         
         
-        changeToDir(currentDir);
+        
         selectedSize = Bindings.size(this.selectedList);
         Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
-        
-
-
+        extTableView = new ExtTableView(tableView);
+        extTableView.prepareChangeListeners();
+        changeToDir(currentDir);
     }
     
     @Override
@@ -201,12 +202,8 @@ public class MainController extends BaseController{
             propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
             propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
             MC.currentDir.update();
-           
-            tableView.setItems(FXCollections.observableArrayList(MC.getCurrentContents()));
-            //Workaround to update table
-            TableColumn get = (TableColumn) tableView.getColumns().get(0);
-            get.setVisible(false);
-            get.setVisible(true);
+            extTableView.updateContentsAndSort(MC.getCurrentContents());
+
             
         });
         
@@ -629,7 +626,6 @@ public class MainController extends BaseController{
     }
     private void setUpTableView(){
         //TABLE VIEW SETUP
-        columns = new ArrayList<>();
         
         TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
@@ -671,11 +667,7 @@ public class MainController extends BaseController{
         sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
         TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
         dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
-        columns.add(nameCol);
-        columns.add(typeCol);
-        columns.add(sizeCol);
-        columns.add(dateCol);
-        
+        tableView.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
 
         
         //TABLE VIEW ACTIONS
@@ -765,6 +757,10 @@ public class MainController extends BaseController{
             if(MC.currentDir.isAbsoluteRoot()){
                 return;
             }
+            TaskFactory.dragInitWindowID = this.windowID;
+            if(this.extTableView.recentlyResized.get()){
+                return;
+            }
             // drag was detected, start drag-and-drop gesture
             TaskFactory.getInstance().dragList = selectedList;
             if(!TaskFactory.getInstance().dragList.isEmpty()){
@@ -782,6 +778,9 @@ public class MainController extends BaseController{
             if(MC.currentDir.isAbsoluteRoot()){
                 return;
             }
+            if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                return;
+            }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
             if (event.getDragboard().hasString()){
@@ -796,7 +795,9 @@ public class MainController extends BaseController{
             if(MC.currentDir.isAbsoluteRoot()){
                 return;
             }
-            
+            if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                return;
+            }
             Dragboard db = event.getDragboard();
             boolean success = false;
             if (!TaskFactory.getInstance().dragList.isEmpty()) {
@@ -1014,7 +1015,7 @@ public class MainController extends BaseController{
         }
         Platform.runLater(()->{
             setSizeAuto();
-            tableView.getColumns().setAll(columns);
+//            tableView.getColumns().setAll(columns);
         });
         
     }

@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package filemanagerGUI.dialog;
-import filemanagerGUI.MainController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
@@ -14,6 +13,7 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -52,18 +52,19 @@ public class AdvancedRenameController extends BaseDialog {
 @FXML public CheckBox showFullPath;
 @FXML public CheckBox recursive;
 @FXML public CheckBox includeFolders;
+@FXML public CheckBox showOnlyDifferences;
 @FXML public Button buttonApply;
 
 
 private long startingNumber;
-private ObservableList<TableItemObject> tableList;
+private LinkedList<TableItemObject> tableList;
 private ArrayList<ExtFolder> folders;
 private ArrayList<ExtFile> files;
 
 public void beforeShow(String title,ArrayList<String> fileList){
     super.beforeShow(title);    
     this.setNumber();
-    this.tableList = FXCollections.observableArrayList();
+    this.tableList = new LinkedList<>();
     this.files = new ArrayList<>();
     this.folders = new ArrayList<>();
     ArrayList<TableColumn> columns = new ArrayList<>();
@@ -115,7 +116,7 @@ public void beforeShow(String title,ArrayList<String> fileList){
     columns.add(dateCol);
     this.table.getColumns().setAll(columns);
 
-    this.table.setItems(tableList);
+    this.table.getItems().addAll(tableList);
     fileList.forEach(file ->{
         ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
         if(fileAndPopulate.getIdentity().equals(Enums.Identity.FOLDER)){
@@ -154,26 +155,12 @@ public void updateLists(){
         ArrayList<String> locArray = new ArrayList<>();
         if(recursive.selectedProperty().get()){
             for(ExtFile file:folder.getListRecursive()){
-                if(this.includeFolders.selectedProperty().get()){
-                    locArray.add(file.getAbsolutePath());
-                }else{
-                    if(!file.getIdentity().equals(Enums.Identity.FOLDER)){
-                        locArray.add(file.getAbsolutePath());
-                    }
-                }
+                locArray.add(file.getAbsolutePath());                
             }
-            if(this.includeFolders.selectedProperty().get()){
-                locArray.remove(0);
-            }
+        locArray.remove(0);
         }else{
             for(ExtFile file:folder.getFilesCollection()){
-                if(this.includeFolders.selectedProperty().get()){
-                    locArray.add(file.getAbsolutePath());
-                }else{
-                    if(!file.getIdentity().equals(Enums.Identity.FOLDER)){
-                        locArray.add(file.getAbsolutePath());
-                    }
-                }
+                locArray.add(file.getAbsolutePath()); 
             } 
         }
         array.addAll(locArray);
@@ -182,7 +169,7 @@ public void updateLists(){
     for(String s:array){
        tableList.add(new TableItemObject(s));
     }
-
+    setTableItems(tableList);
     buttonApply.setDisable(true);
 }
 public void previewSetting(){
@@ -191,9 +178,9 @@ public void previewSetting(){
         setNumber();
         
         long number = startingNumber;
-        for(Object s:table.getItems()){
+        
+        for(TableItemObject object:this.tableList){          
             try {
-                TableItemObject object = (TableItemObject) s;
                 object.newName(ExtStringUtils.parseFilter(object.name1.get(), filter, number++));
             } catch (Exception ex) {
                 ErrorReport.report(ex);
@@ -203,23 +190,24 @@ public void previewSetting(){
         String strRegex = this.tfStrReg.getText();
         String replacement =""+ this.tfReplaceWith.getText();
         if(useRegex.isSelected()){
-            for(Object s:table.getItems()){
-                TableItemObject object = (TableItemObject) s;
-                object.newName(ExtStringUtils.parseRegex(object.name1.get(), strRegex, replacement)); 
+            for(TableItemObject object:this.tableList){
+                object.newName(ExtStringUtils.parseRegex(object.name1.get(), strRegex, replacement));
             }
         }else{
-           for(Object s:table.getItems()){
-                TableItemObject object = (TableItemObject) s;
+           for(TableItemObject object:this.tableList){
                 object.newName(ExtStringUtils.parseSimple(object.name1.get(), strRegex, replacement)); 
            } 
         }
     }
+    setTableItems(applyFilters(tableList));
+    
     buttonApply.setDisable(false);
 }
 public void update(){
     updateLists();
     
 }
+
 public void setNumber(){
     try{
         startingNumber = Integer.parseInt(this.tfStartingNumber.getText());
@@ -250,6 +238,8 @@ private static class TableItemObject{
     public SimpleStringProperty name2;
     public SimpleStringProperty date;
     public SimpleLongProperty size;
+    public boolean excludeMe;
+    public boolean isFolder;
     
     
     public TableItemObject(String s){
@@ -261,6 +251,7 @@ private static class TableItemObject{
         this.name1 = new SimpleStringProperty(file.propertyName.get());
         this.path2 = new SimpleStringProperty(file.getAbsoluteDirectory());
         this.name2 = new SimpleStringProperty(file.propertyName.get());
+        this.isFolder = file.getIdentity().equals(Enums.Identity.FOLDER);
     }
     public void newName(String s){
         String oldName = name2.get();
@@ -271,5 +262,33 @@ private static class TableItemObject{
         //Log.write(path2,"  ",name2);
     }
 }
+private LinkedList<TableItemObject> applyFilters(LinkedList<TableItemObject> items){
+    LinkedList<TableItemObject> list = new LinkedList<>();
+    for(TableItemObject object:items){
+        if(!this.includeFolders.selectedProperty().get()){
+            if(object.isFolder){
+                object.excludeMe = true;
+            }
+        }
+        if(this.showOnlyDifferences.selectedProperty().get()){
+            if(object.name1.get().equals(object.name2.get())){
+                object.excludeMe = true;
+            }
+        }
+        list.add(object);
+    }
+    return list;
+}
+private void setTableItems(LinkedList<TableItemObject> items){
     
+    table.getItems().clear();
+    for(TableItemObject object:items){
+        if(!object.excludeMe){
+            table.getItems().add(object);
+        }
+    }
+    TableColumn get = (TableColumn) table.getColumns().get(0);
+    get.setVisible(false);
+    get.setVisible(true);
+}    
 }

@@ -67,15 +67,17 @@ public class DirSyncController extends BaseDialog {
     @FXML public CheckBox checkPrioritizeBigger;
     @FXML public CheckBox checkShowOnlyDifferences;
     @FXML public CheckBox checkIgnoreFolderDate;
+    @FXML public CheckBox checkNoDelete;
+    @FXML public CheckBox checkNoCopy;
+    @FXML public CheckBox checkIgnoreModified;
+    @FXML public CheckBox checkDeleteFirst;
     @FXML public Button btnLoad;
     @FXML public Button btnCompare;
     @FXML public Button btnSync;
     @FXML public ComboBox syncMode;
     @FXML public ComboBox dateMode;
-    @FXML public VBox specialVBox;
 
     
-    private CheckComboBox<String> checkComboBox;
     private boolean cond0;
     private boolean cond1;
     private Snapshot snapshot0;
@@ -107,17 +109,6 @@ public class DirSyncController extends BaseDialog {
     super.beforeShow(title);
     Platform.runLater(()->{
         
-        ObservableList<String> miscOption = FXCollections.observableArrayList();
-        miscOption.add("No Delete");
-        miscOption.add("No Copy");
-        miscOption.add("Ignore modified");
-        miscOption.add("Delete first");
-        
-        
-        this.checkComboBox = new CheckComboBox();
-        this.checkComboBox.getItems().setAll(miscOption);
-        this.specialVBox.getChildren().add(this.checkComboBox);
-        
         
         ObservableList<String> options = FXCollections.observableArrayList();
         options.add("Bidirectional");
@@ -139,10 +130,10 @@ public class DirSyncController extends BaseDialog {
         tableColumns = table.getColumns();
 
         showAbsolutePath.bind(checkShowAbsolutePath.selectedProperty());
-        noDelete.bind(this.checkComboBox.getItemBooleanProperty(0));
-        noCopy.bind(this.checkComboBox.getItemBooleanProperty(1));
-        ignoreModified.bind(this.checkComboBox.getItemBooleanProperty(2));
-        deleteFirst.bind(this.checkComboBox.getItemBooleanProperty(3)); 
+        noDelete.bind(this.checkNoDelete.selectedProperty());
+        noCopy.bind(this.checkNoDelete.selectedProperty());
+        ignoreModified.bind(this.checkIgnoreModified.selectedProperty());
+        deleteFirst.bind(this.checkDeleteFirst.selectedProperty()); 
         prioritizeBigger.bind(checkPrioritizeBigger.selectedProperty());
         onlyDifferences.bind(checkShowOnlyDifferences.selectedProperty());
         ignoreFolderDate.bind(checkIgnoreFolderDate.selectedProperty());

@@ -7,24 +7,21 @@ package filemanagerGUI;
 
 
 import LibraryLB.Log;
-import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
+import filemanagerGUI.dialog.VirtualFolderDialogController;
 import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
-import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -233,6 +230,26 @@ public class ViewManager {
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
+            return null;
+            }
+        };
+        Platform.runLater(et);
+    }
+    public void newVirtualFolder(){
+        ExtTask et = new ExtTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+                Frame frame = newFrame(FrameTitle.VIRTUAL_FOLDER_DIALOG);
+                VirtualFolderDialogController controller = (VirtualFolderDialogController) frame.getController();
+                controller.beforeShow(frame.getStage().getTitle());
+                frame.getStage().show();
+                controller.afterShow();
+                frame.getStage().toFront();
+
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }    
             return null;
             }
         };

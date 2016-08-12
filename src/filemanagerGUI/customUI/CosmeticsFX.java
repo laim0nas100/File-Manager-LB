@@ -5,22 +5,30 @@
  */
 package filemanagerGUI.customUI;
 
+import LibraryLB.Log;
 import filemanagerLogic.Enums;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
+import utility.ErrorReport;
 
 /**
  *
@@ -103,27 +111,93 @@ public class CosmeticsFX {
         }
 
     }
-    public static class ExtFileTableView{
-        
-            
+    public static class ExtTableView{
+        public final long resizeTimeout = 500;
+        public SortType sortType;
+        public TableColumn sortColumn;
         public int sortByColumn;
         public TableView table;
-        
-        public ExtFileTableView(TableView table){
+        public SimpleBooleanProperty recentlyResized;
+        public ExtTableView(TableView table){
+           
+            this.table = table; 
             defaultValues();
-            this.table = table;
         }
-        public ExtFileTableView(){
+        public ExtTableView(){
             defaultValues();
         }
         private void defaultValues(){
             sortByColumn = 0;
+            recentlyResized = new SimpleBooleanProperty();
+            
         }
+        public void prepareChangeListeners(){
+            try{
+                    table.getColumns().forEach(col ->{
+                   
+                    TableColumn c = (TableColumn) col;
+                    changeListener(c);
+                });
+            }catch(Exception e){
+                ErrorReport.report(e);
+            }
+        }
+        public void changeListener(final TableColumn listerColumn) {
+        listerColumn.widthProperty().addListener(new ChangeListener<Number>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
+//                System.out.print(listerColumn.getText() + "  ");
+//                System.out.println(t1);
+                recentlyResized.set(true);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(resizeTimeout);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        recentlyResized.set(false);
+                        
+                    }
+                }).start();
+            }
+        });
+    }
+        public void saveSortPrefereces(){
+            
+            if (!table.getSortOrder().isEmpty()) {
+                sortColumn = (TableColumn) table.getSortOrder().get(0);
+                sortType = sortColumn.getSortType();
+            }
+        }
+        public void setSortPreferences(){
+            if (sortColumn != null) {
+                table.getSortOrder().add(sortColumn);
+                sortColumn.setSortType(sortType);
+                sortColumn.setSortable(true);
+            }
+        }
+        public void updateContents(Collection collection){
+            table.setItems(FXCollections.observableArrayList(collection));
+            //Workaround to update table
+            TableColumn get = (TableColumn) table.getColumns().get(0);
+            get.setVisible(false);
+            get.setVisible(true);
+        }
+        public void updateContentsAndSort(Collection collection){
+            saveSortPrefereces();
+            updateContents(collection);
+            setSortPreferences();
+        }
+
+        
         
         
     }
     
-    public static ExtFileTableView wrapExFileTable(TableView table, Collection<ExtFile> files){
+    public static ExtTableView wrapExFileTable(TableView table, Collection<ExtFile> files){
         TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
             @Override
@@ -152,6 +226,6 @@ public class CosmeticsFX {
         dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
         table.getColumns().clear();
         table.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
-        return new ExtFileTableView(table);
+        return new ExtTableView(table);
     }
 }
