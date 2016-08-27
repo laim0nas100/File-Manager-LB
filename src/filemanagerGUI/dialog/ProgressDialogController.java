@@ -88,5 +88,9 @@ public class ProgressDialogController extends BaseDialog {
             paused.set(true);
         }
     }
+
+    @Override
+    public void update() {
+    }
     
 }

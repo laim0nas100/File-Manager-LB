@@ -471,4 +471,8 @@ public class DirSyncController extends BaseDialog {
         
 
     }
+
+    @Override
+    public void update() {
+    }
 }

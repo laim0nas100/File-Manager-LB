@@ -6,23 +6,24 @@
 package filemanagerLogic.fileStructure;
 
 import filemanagerLogic.Enums;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Iterator;
 
 /**
  *
  * @author Laimonas Beniušis
  */
 public class VirtualFolder {
-    ConcurrentHashMap<String,ExtFile> files;
+    ArrayList<ExtFile> files;
     public VirtualFolder(){
-        files = new ConcurrentHashMap<>();
+        files = new ArrayList<>();
     }
     public Collection<ExtFile> getListRecursive(){
         ArrayList<ExtFile> list = new ArrayList<>();
-        files.values().forEach(file ->{
+        files.forEach(file ->{
             if(file.getIdentity().equals(Enums.Identity.FOLDER)){
                 ExtFolder folder = (ExtFolder) file;
                 list.addAll(folder.getListRecursive());
@@ -33,9 +34,17 @@ public class VirtualFolder {
         return list;
     }
     public Collection<ExtFile> getList(){
-        ArrayList<ExtFile> list = new ArrayList<>();
-        list.addAll(files.values());
-        return list;
+        return files;
+    }
+    public void update(){
+        Iterator<ExtFile> iterator = files.iterator();
+        while(iterator.hasNext()){
+            try{
+                if(!Files.exists(Paths.get(iterator.next().getAbsoluteDirectory()))){
+                    iterator.remove();
+                }
+            }catch(Exception e){}
+        }
     }
     
 }
