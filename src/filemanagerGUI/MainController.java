@@ -172,7 +172,8 @@ public class MainController extends BaseController{
         ViewManager.getInstance().closeFrame(windowID); 
     }
 
-    public void updateCurrentView(){
+    @Override
+    public void update(){
         
         Platform.runLater(()->{
             
@@ -234,18 +235,7 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        MenuItem item0 = new MenuItem("Item0");
-        Menu menu0 = new Menu("Menu0");
-        Menu menu1 = new Menu("Menu1");
-        MenuItem item1 = new MenuItem("Item1");
-        MenuItem item2 = new MenuItem("Item2");
-        MenuTree map = new MenuTree(menu0);
-        map.addMenuItem(item0, "Item0");
-        map.addMenuItem(menu1, "Menu1");
-        map.addMenuItem(item1, "Menu1","Item1");
-        map.addMenuItem(item2, "Item2");
-        map.setHidden(true, "Menu1");
-        this.searchField.setContextMenu(map.constructContextMenu());
+        ViewManager.getInstance().newVirtualFolder();
     }
 
     
@@ -254,22 +244,22 @@ public class MainController extends BaseController{
     }    
     public void changeToParent(){
         MC.changeToParent();
-        updateCurrentView();
+        update();
     }
     public void changeToPrevious(){
         MC.changeToPrevious();
-        updateCurrentView();
+        update();
         
     }
     public void changeToForward(){
         MC.changeToForward();
-        updateCurrentView();
+        update();
     }
     public void changeToDir(ExtFolder dir){
        MC.changeDirTo(dir);
        new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH)).start();
        Platform.runLater(()->{
-            updateCurrentView();
+            update();
        });
       
     }
@@ -401,7 +391,7 @@ public class MainController extends BaseController{
                 if(fileAndPopulate!=null){
                     this.changeToDir(fileAndPopulate);
                 }else{
-                    updateCurrentView();
+                    update();
                 }
                 
             }
@@ -433,7 +423,7 @@ public class MainController extends BaseController{
             Log.writeln("Create new folder");
             try {
                 MC.createNewFolder();
-                MainController.this.updateCurrentView();
+                MainController.this.update();
             }catch (Exception ex) {
                 ErrorReport.report(ex);
             }
@@ -470,7 +460,7 @@ public class MainController extends BaseController{
             Log.writeln("Create new file");
             try {
                 MC.createNewFile();
-                MainController.this.updateCurrentView();
+                MainController.this.update();
             }catch (IOException ex) {
                 ErrorReport.report(ex);
             }
@@ -1009,7 +999,7 @@ public class MainController extends BaseController{
                    Log.writeln(unitSize);
                    this.propertyUnitSizeName.set("Size "+unitSize.sizename);
                    this.propertyUnitSize.set(unitSize.size);
-                   this.updateCurrentView();
+                   this.update();
                 });
             }
         }
@@ -1022,7 +1012,7 @@ public class MainController extends BaseController{
     private void setSizeAuto(){
         this.propertyUnitSizeAuto.set(true);
         this.propertyUnitSizeName.set("Size Auto");
-        this.updateCurrentView();
+        this.update();
     }
     
     private void delete(){

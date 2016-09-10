@@ -81,4 +81,8 @@ public class RenameDialogController extends TextInputDialogController {
             } 
         }
     }   
+
+    @Override
+    public void update() {
+    }
 }

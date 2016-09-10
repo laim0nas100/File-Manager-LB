@@ -44,12 +44,12 @@ public class ViewManager {
     private static final ViewManager INSTANCE = new ViewManager();
     protected ViewManager(){
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
-        this.dialogs = new ConcurrentHashMap<>();
+        this.frames = new ConcurrentHashMap<>();
         this.windows = new HashSet<>();
 
     };
-    private ConcurrentHashMap<String,Frame> dialogs;
-    public HashSet<String> windows;
+    private final ConcurrentHashMap<String,Frame> frames;
+    private final HashSet<String> windows;
 
     public static ViewManager getInstance(){
         return INSTANCE;
@@ -88,14 +88,20 @@ public class ViewManager {
     public void updateAllWindows(){
         Platform.runLater(()->{
             for(String s:windows){
-                MainController controller = (MainController) dialogs.get(s).getController();
-                controller.updateCurrentView();
+                MainController controller = (MainController) frames.get(s).getController();
+                controller.update();
             }
+        }); 
+    }
+    public void updateAllFrames(){
+        Platform.runLater(()->{
+            frames.values().forEach( frame ->{
+                frame.getController().update();
+            });
         });
-        
     }
     public Frame getFrame(String windowID){
-        return dialogs.get(windowID);
+        return frames.get(windowID);
     }
     
 //DIALOG ACTIONS
@@ -256,7 +262,7 @@ public class ViewManager {
         Platform.runLater(et);
     }
     private Frame newFrame(FrameTitle info) throws IOException{
-        int index = findSmallestAvailable(dialogs,info.getTitle());
+        int index = findSmallestAvailable(frames,info.getTitle());
         URL url = getClass().getResource("/filemanagerGUI/"+info.recourse);
         Log.write("URL=",url.toString());
         FXMLLoader loader = new FXMLLoader(url);
@@ -269,13 +275,13 @@ public class ViewManager {
             controller.exit();
         });
         Frame frame = new Frame(stage,controller);
-        dialogs.put(frame.getTitle(),frame); 
+        this.frames.put(frame.getTitle(),frame); 
         return frame;
        
     }
     public void closeFrame(String title){
-        dialogs.get(title).getStage().close();
-        dialogs.remove(title);
+        frames.get(title).getStage().close();
+        frames.remove(title);
         windows.remove(title);
         if(windows.isEmpty()){
             try{

@@ -56,5 +56,9 @@ public class WebDialogController extends BaseDialog{
             }
             return true;
         }
+
+    @Override
+    public void update() {
+    }
     
 }

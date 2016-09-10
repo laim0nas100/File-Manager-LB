@@ -112,6 +112,10 @@ public class DuplicateFinderController extends BaseDialog{
         t.setDaemon(true);
         t.start();
     }
+
+    @Override
+    public void update() {
+    }
     public static class SimpleTableItem{
         public ExtFile f1;
         public ExtFile f2;
