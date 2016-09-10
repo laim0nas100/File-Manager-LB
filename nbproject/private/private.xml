@@ -5,10 +5,13 @@
         <group name="Workspace">
             <file>file:/E:/Programming/Java/Workspace/FileManagerLB/src/utility/ExtStringUtils.java</file>
         </group>
+<<<<<<< HEAD
         <group>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/BaseController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/ViewManager.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/BaseDialog.java</file>
         </group>
+=======
+>>>>>>> origin/master
     </open-files>
 </project-private>
