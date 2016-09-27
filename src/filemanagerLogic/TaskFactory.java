@@ -393,7 +393,7 @@ public class TaskFactory {
         String newName = name;
         int i=0;
         while(folder.files.containsKey(newName)){
-            newName = ++i +name;
+            newName = "New "+newName;
         }
         return path+newName;
     }

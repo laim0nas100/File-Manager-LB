@@ -41,10 +41,8 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
-import org.controlsfx.control.CheckComboBox;
 import utility.ExtStringUtils;
 import LibraryLB.Log;
 import filemanagerLogic.Enums;
@@ -85,14 +83,6 @@ public class DirSyncController extends BaseDialog {
     private Snapshot result;
     private ExtFile file0;
     private ExtFile file1;
-    private final SimpleBooleanProperty showAbsolutePath = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty prioritizeBigger = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty noDelete = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty noCopy = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty onlyDifferences = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty deleteFirst = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty ignoreFolderDate = new SimpleBooleanProperty();
-    private final SimpleBooleanProperty ignoreModified = new SimpleBooleanProperty();
     private ObservableList<TableColumn<ExtEntry,String>> tableColumns; 
     
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
@@ -129,15 +119,6 @@ public class DirSyncController extends BaseDialog {
            
         tableColumns = table.getColumns();
 
-        showAbsolutePath.bind(checkShowAbsolutePath.selectedProperty());
-        noDelete.bind(this.checkNoDelete.selectedProperty());
-        noCopy.bind(this.checkNoDelete.selectedProperty());
-        ignoreModified.bind(this.checkIgnoreModified.selectedProperty());
-        deleteFirst.bind(this.checkDeleteFirst.selectedProperty()); 
-        prioritizeBigger.bind(checkPrioritizeBigger.selectedProperty());
-        onlyDifferences.bind(checkShowOnlyDifferences.selectedProperty());
-        ignoreFolderDate.bind(checkIgnoreFolderDate.selectedProperty());
-        
         checkIgnoreFolderDate.setSelected(true);
         checkShowOnlyDifferences.setSelected(true);
         tableColumns.add(new TableColumn<>("Path"));
@@ -146,7 +127,7 @@ public class DirSyncController extends BaseDialog {
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
                 String path =cellData.getValue().relativePath;
                 SimpleStringProperty string = new SimpleStringProperty(path);
-                if(showAbsolutePath.get()){
+                if(checkShowAbsolutePath.selectedProperty().get()){
                     path = cellData.getValue().absolutePath;
                     string.set(path);
                 }
@@ -290,7 +271,7 @@ public class DirSyncController extends BaseDialog {
             }
             result = SnapshotAPI.compareSnapshots(snapshot0, snapshot1);
             //Log.writeln(snapshot0,snapshot1);
-            if(onlyDifferences.get()){
+            if(checkShowOnlyDifferences.selectedProperty().get()){
                result = SnapshotAPI.getOnlyDifferences(result);
             }
             
@@ -306,7 +287,7 @@ public class DirSyncController extends BaseDialog {
                 }else if(modeDate == 1 && next.lastModified<date){
                     remove = true;
                 }else{
-                    if(ignoreFolderDate.get()){
+                    if(checkIgnoreFolderDate.selectedProperty().get()){
                         if(next.isFolder){
                             if(next.isModified){
                                 next.isModified = false;
@@ -314,7 +295,7 @@ public class DirSyncController extends BaseDialog {
                             }
                         }
                     }
-                    if(ignoreModified.get()){
+                    if(checkIgnoreModified.selectedProperty().get()){
                         if(next.isModified){
                             remove = true;
                         }
@@ -344,8 +325,8 @@ public class DirSyncController extends BaseDialog {
                         }else if(entry.isNew){
                             entry.setAction(2);
                         }else{
-                            if(entry.isModified && ignoreModified.not().get()){
-                                if(this.prioritizeBigger.get()){
+                            if(entry.isModified && checkIgnoreModified.selectedProperty().not().get()){
+                                if(this.checkPrioritizeBigger.selectedProperty().get()){
                                     if(entry.isBigger){
                                         entry.setAction(2);
                                     }else{
@@ -370,7 +351,7 @@ public class DirSyncController extends BaseDialog {
    
                             entry.setAction(2);
                         }else{
-                            if(entry.isModified && ignoreModified.not().get()){
+                            if(entry.isModified && checkIgnoreModified.selectedProperty().not().get()){
                                 entry.setAction(2);
                             }
                         }
@@ -386,7 +367,7 @@ public class DirSyncController extends BaseDialog {
                             entry.setAction(3);
                             
                         }else{
-                            if(entry.isModified && ignoreModified.not().get()){
+                            if(entry.isModified && checkIgnoreModified.selectedProperty().not().get()){
                                 
                                 entry.setAction(1);
                             }
@@ -395,9 +376,9 @@ public class DirSyncController extends BaseDialog {
                     }
                 }
                 int actionType = entry.actionType.get();
-                if((actionType == 3 || actionType == 4)&& noDelete.get()){
+                if((actionType == 3 || actionType == 4)&& checkNoDelete.selectedProperty().get()){
                    entry.setAction(0);
-                }else if((actionType == 1 || actionType == 2)&& noCopy.get()){
+                }else if((actionType == 1 || actionType == 2)&& checkNoCopy.selectedProperty().get()){
                    entry.setAction(0);
                 }
                 
@@ -432,7 +413,7 @@ public class DirSyncController extends BaseDialog {
         ExtTask task;
         
         
-        if(deleteFirst.get()){
+        if(checkDeleteFirst.selectedProperty().get()){
             list.addAll(0, listDelete);
         }else{
             list.addAll(listDelete);
@@ -474,5 +455,6 @@ public class DirSyncController extends BaseDialog {
 
     @Override
     public void update() {
+        this.compare();
     }
 }

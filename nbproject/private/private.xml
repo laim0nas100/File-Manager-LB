@@ -2,16 +2,17 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group name="Workspace">
-            <file>file:/E:/Programming/Java/Workspace/FileManagerLB/src/utility/ExtStringUtils.java</file>
-        </group>
-<<<<<<< HEAD
         <group>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/TaskFactory.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/BaseController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/RenameDialogController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/TextInputDialogEssentials.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/TextInputDialogController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/DirSyncController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/ManagingClass.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/ViewManager.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/BaseDialog.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/MainController.java</file>
         </group>
-=======
->>>>>>> origin/master
     </open-files>
 </project-private>
