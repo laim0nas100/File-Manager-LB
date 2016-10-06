@@ -235,7 +235,7 @@ public class MainController extends BaseController{
     }
     
     public void test(){
-        ViewManager.getInstance().newVirtualFolder();
+        ViewManager.getInstance().newCommandDialog();
     }
 
     

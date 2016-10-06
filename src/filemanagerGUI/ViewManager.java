@@ -8,6 +8,7 @@ package filemanagerGUI;
 
 import LibraryLB.Log;
 import filemanagerGUI.dialog.AdvancedRenameController;
+import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ProgressDialogController;
@@ -241,6 +242,28 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
+    
+    public void newCommandDialog(){
+        ExtTask et = new ExtTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+                Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
+                CommandWindowController controller = (CommandWindowController) frame.getController();
+                controller.beforeShow(frame.getStage().getTitle());
+                frame.getStage().show();
+                controller.afterShow();
+                frame.getStage().toFront();
+
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }    
+            return null;
+            }
+        };
+        Platform.runLater(et);
+    }
+    
     public void newVirtualFolder(){
         ExtTask et = new ExtTask() {
             @Override

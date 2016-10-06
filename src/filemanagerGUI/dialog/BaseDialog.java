@@ -7,7 +7,6 @@ package filemanagerGUI.dialog;
 
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
-
 /**
  *
  * @author Laimonas Beniušis

@@ -39,7 +39,8 @@ public class Enums {
         DIR_SYNC_DIALOG("Directory Synchronization","fxml/DirSync.fxml"),
         WEB_DIALOG("Web Dialog","fxml/WebDialog.fxml"),
         DUPLICATE_FINDER_DIALOG("Duplicate Finder","fxml/DuplicateFinder.fxml"),
-        VIRTUAL_FOLDER_DIALOG("Virtual Folder","fxml/VirtualFolderDialog.fxml");
+        VIRTUAL_FOLDER_DIALOG("Virtual Folder","fxml/VirtualFolderDialog.fxml"),
+        COMMAND_DIALOG("Command Dialog","fxml/CommandWindow.fxml");
         public final String recourse;
         private final String title;
         public String getTitle(){
