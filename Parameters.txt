@@ -2,3 +2,6 @@ debug=true
 lookDepth=2
 logBackupCount=5
 lang=EN
+regex.number=#
+regex.originalName=?
+regex.originalNameNoExtension=*

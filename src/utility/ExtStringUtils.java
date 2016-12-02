@@ -57,6 +57,7 @@ public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
         }
         return trimEnd(newName);
     }
+    
 
     public static String parseSimple(String originalName, String lookFor, String replacement) {
         return originalName.replace(lookFor, replacement).trim();
@@ -92,5 +93,19 @@ public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
         
         return result;
     }
-    
+    public static boolean equalAmmount(String string,String matches0,String matches1,String... matches){
+        int ammount = ExtStringUtils.countMatches(string, matches0);
+        int ammount1 = ExtStringUtils.countMatches(string, matches1);
+        if(ammount != ammount1){
+            return false;
+        }else{
+            for(String match:matches){
+                ammount1 = ExtStringUtils.countMatches(string, match);
+                if(ammount != ammount1){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

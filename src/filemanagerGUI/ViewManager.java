@@ -241,8 +241,7 @@ public class ViewManager {
             }
         };
         Platform.runLater(et);
-    }
-    
+    } 
     public void newCommandDialog(){
         ExtTask et = new ExtTask() {
             @Override
@@ -263,7 +262,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    
+
     public void newVirtualFolder(){
         ExtTask et = new ExtTask() {
             @Override
@@ -284,14 +283,25 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    private Frame newFrame(FrameTitle info) throws IOException{
-        int index = findSmallestAvailable(frames,info.getTitle());
+    private Frame newFrame(FrameTitle info,Object...params) throws IOException, Exception{
+        Boolean frameIsSingleton = false;
+        if(params.length>0){
+            frameIsSingleton = (Boolean) params[0];
+        }
+        String title = info.getTitle();
+        if(!frameIsSingleton){
+            int index = findSmallestAvailable(frames,info.getTitle());
+            title+=index;
+        }
+        if(frames.containsKey(title)){
+            throw new Exception("Frame:"+title+"Allready exists");
+        }
         URL url = getClass().getResource("/filemanagerGUI/"+info.recourse);
         Log.write("URL=",url.toString());
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
         Stage stage = new Stage();
-        stage.setTitle(info.getTitle()+index);
+        stage.setTitle(title);
         stage.setScene(new Scene(root));
         BaseController controller = loader.getController();
         stage.setOnCloseRequest((WindowEvent we) -> {

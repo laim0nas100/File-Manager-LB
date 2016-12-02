@@ -46,6 +46,9 @@ public class FileManagerLB extends Application {
     public static ParametersMap parameters;
     @Override
     public void start(Stage primaryStage) {
+        if(!DIR.endsWith(File.separator)){
+                DIR+=File.separator;
+            }
         ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         Platform.runLater(()->{
             
@@ -53,9 +56,7 @@ public class FileManagerLB extends Application {
             errorLog = FXCollections.observableArrayList();
             ArtificialRoot.setPopulated(true);
             ArtificialRoot.setIsAbsoluteRoot(true);
-            if(!DIR.endsWith(File.separator)){
-                DIR+=File.separator;
-            }
+            
 
             try{
                 //Log.changeStream('f', new File(DIR+"Log.txt"));

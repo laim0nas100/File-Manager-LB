@@ -47,12 +47,12 @@ public class TaskFactory {
     public  ObservableList<String> markedList;
     public  ArrayList<ExtFile> actionList;
     private final HashSet<Character> illegalCharacters;
-    private static final TaskFactory instance = new TaskFactory();
+    private static final TaskFactory INSTANCE = new TaskFactory();
     private static final int TRY_LIMIT = 5;
     public static String dragInitWindowID ="";
     public static TaskFactory getInstance(){
         
-        return instance;
+        return INSTANCE;
     }
     protected TaskFactory(){
         illegalCharacters = new HashSet<>();

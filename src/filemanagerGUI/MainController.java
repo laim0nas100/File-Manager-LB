@@ -352,6 +352,9 @@ public class MainController extends BaseController{
     public void duplicateFind(){
         ViewManager.getInstance().newDuplicateFinderDialog(MC.currentDir);
     }
+    public void commandWindow(){
+        ViewManager.getInstance().newCommandDialog();
+    }
     
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();
