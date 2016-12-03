@@ -1,11 +1,14 @@
-debug=true
-lookDepth=2
-logBackupCount=5
-lang=EN
+debug=false
+lookDepth=2//Populating folder depth
+logBackupCount=5//BUP folder subfolder size
+lang=EN//currently does nothing
 
 //regex.number=#
 //regex.originalName=?
 //regex.originalNameNoExtension=*
-codeGenerate.name=<n>
-codeGenerate.path=<p>
-codeGenerate.nameNoExtension=<nne>
+code.name=<n>//replace with file name
+code.path=<p>//replace with file absolute path
+code.nameNoExtension=<nne>//replace with file name without extension
+code.truncateAfter=10000//truncate commnand text window after 
+code.commandGenerate=generate//command to generate script
+code.commandApply=apply//commnand to load script

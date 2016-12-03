@@ -46,11 +46,20 @@ public class CommandWindowController extends BaseDialog {
     private String nameReplace;
     private String pathReplace;
     private String nameNoExtReplace;
-    
+    private int truncateAfter;
+    private String commandGenerate;
+    private String commandApply;
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
         command = new Command(textField);
+        pathReplace = (String) FileManagerLB.parameters.defaultGet("code.path", "<p>");
+        nameReplace = (String) FileManagerLB.parameters.defaultGet("code.name", "<n>");
+        nameNoExtReplace = (String) FileManagerLB.parameters.defaultGet("code.nameNoExtension", "<nne>");
+        truncateAfter = (Integer) FileManagerLB.parameters.defaultGet("code.truncateAfter", 100000);
+        commandGenerate = (String) FileManagerLB.parameters.defaultGet("code.commandGenerate", "generate");
+        commandApply = (String) FileManagerLB.parameters.defaultGet("code.commandApply", "apply");
+        
         
     }
     public class Command extends AbstractCommandField{
@@ -58,58 +67,68 @@ public class CommandWindowController extends BaseDialog {
         public Command(TextField tf) {
             super(tf);
         }
-        public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards) throws IOException{
+        public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = reader.readLine();
             LinkedList<String> lines = new LinkedList<>();
+            lines.add("$:"+command);
+            if(!setTextAfterwards){
+                addToTextArea(textArea,"$:"+command);
+            }
             while(line!=null){
-                final String l = line;
-                Platform.runLater(()->{
-                    if(setTextAfterwards){
-                        lines.add(l+"\n");
-                    }else{
-                        textArea.setText(textArea.getText()+l+"\n");
-                        textArea.positionCaret(textArea.getLength());
-                    }
-                });
+                if(setTextAfterwards){
+                    lines.add(line+"\n");
+                }else{ 
+                    addToTextArea(textArea,line+"\n");
+                }
                 line = reader.readLine();
             }
+            truncateTextArea(textArea,truncateAfter);
             final int errorCode = process.exitValue();
-            Platform.runLater(()->{    
-                if(setTextAfterwards){
-                        lines.add("Error Code:"+errorCode+"\n");
-                    }else{
-                        textArea.setText(textArea.getText()+"Error Code:"+errorCode+"\n");
-                        textArea.positionCaret(textArea.getLength());
-                }
-            });
+            if(setTextAfterwards){
+                    lines.add("Error Code:"+errorCode+"\n\n");
+                }else{
+                    addToTextArea(textArea,"Error Code:"+errorCode+"\n\n");
+            }
             if(setTextAfterwards){
                 Platform.runLater(()->{
                     String main = textArea.getText();
                     for(String ln:lines){
-                        main+=ln;
+                        main+=ln.trim()+"\n";
                     }
-                    textArea.setText(main);
-                    textArea.positionCaret(main.length());
+                    addToTextArea(textArea,main);
+                    truncateTextArea(textArea,truncateAfter);
                 });
             }
             
         }
+        public void addToTextArea(TextArea textA,String text){
+            Platform.runLater(()->{
+            textA.setText(textA.getText()+text);
+            textA.positionCaret(textA.getLength());   
+            });
+            
+        }
+        public void truncateTextArea(TextArea textA,int length){
+            Platform.runLater(()->{
+            if(textA.getLength()>length){
+               textA.setText(textA.getText().substring(textA.getLength()-length));
+               textA.positionCaret(textA.getLength());
+            }
+            });
+            
+        }
         public void apply(String name) throws IOException{
-            ArrayList<String> readFromFile = LibraryLB.FileManaging.FileReader.readFromFile(name);
+            LinkedList<String> readFromFile = new LinkedList(LibraryLB.FileManaging.FileReader.readFromFile(name));
             this.setTextAfterwards = true;
             for(String command:readFromFile){
                 Log.writeln(command);
-                
                 submit(command);
             }
         }
         public void generate(String command, String name){
             try{
-                pathReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.path", "<p>");
-                nameReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.name", "<n>");
-                nameNoExtReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.nameNoExtension", "<nne>");
-
+            
                 System.out.println(TaskFactory.getInstance().markedList);
                 LinkedList<String> l = new LinkedList<>();
                 l.addAll(0, TaskFactory.getInstance().markedList);
@@ -149,17 +168,17 @@ public class CommandWindowController extends BaseDialog {
                     Process process;
                     LinkedList<String> commands = new LinkedList<>();
                     for(String s:command.split(" ")){
-                        commands.add(s);
+                        if(s.length()>0) commands.add(s);
                     }
-                    if(commands.getFirst().equalsIgnoreCase("generate:")){
+                    if(commands.getFirst().equalsIgnoreCase(commandGenerate)){
                         commands.removeFirst();
                         String newCom = command;
-                        newCom = ExtStringUtils.replaceOnce(newCom, "generate: ", "");
+                        newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
                         String index = commands.removeFirst();
                         newCom = ExtStringUtils.replaceOnce(newCom, index+" ", "");
                         generate(newCom,index);
                         return null;
-                    }else if(commands.getFirst().equalsIgnoreCase("do:")){
+                    }else if(commands.getFirst().equalsIgnoreCase(commandApply)){
                         commands.removeFirst();
                         apply(commands.removeFirst());
                         return null;
@@ -168,9 +187,7 @@ public class CommandWindowController extends BaseDialog {
                     builder.redirectErrorStream(true);
                     process = builder.start();
                       
-                    handleStream(process,textArea,setTextAfterwards);
-                    
-                    
+                    handleStream(process,textArea,setTextAfterwards,command);
                     return null;
                 }                
             };

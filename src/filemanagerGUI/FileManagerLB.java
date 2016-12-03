@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -60,7 +60,7 @@ public class FileManagerLB extends Application {
 
             try{
                 //Log.changeStream('f', new File(DIR+"Log.txt"));
-                ArrayList<String> list = FileReader.readFromFile(DIR+"Parameters.txt");
+                LinkedList<String> list = new LinkedList(FileReader.readFromFile(DIR+"Parameters.txt","//","/*","*/"));
                 parameters = new ParametersMap(list);
                 DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
                 DEPTH = (int) parameters.defaultGet("lookDepth",2);
