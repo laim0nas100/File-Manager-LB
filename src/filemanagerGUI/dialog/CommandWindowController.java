@@ -43,6 +43,9 @@ public class CommandWindowController extends BaseDialog {
     @FXML TextField textField;
     @FXML TextArea textArea;
     private Command command;
+    private String nameReplace;
+    private String pathReplace;
+    private String nameNoExtReplace;
     
     @Override
     public void beforeShow(String title){
@@ -51,30 +54,62 @@ public class CommandWindowController extends BaseDialog {
         
     }
     public class Command extends AbstractCommandField{
-
+        private boolean setTextAfterwards = false;
         public Command(TextField tf) {
             super(tf);
         }
-        public void handleStream(BufferedReader reader,TextArea textArea) throws IOException{
+        public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards) throws IOException{
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = reader.readLine();
+            LinkedList<String> lines = new LinkedList<>();
             while(line!=null){
                 final String l = line;
                 Platform.runLater(()->{
-                    textArea.setText(textArea.getText()+l+"\n");
-                    textArea.positionCaret(textArea.getLength());
+                    if(setTextAfterwards){
+                        lines.add(l+"\n");
+                    }else{
+                        textArea.setText(textArea.getText()+l+"\n");
+                        textArea.positionCaret(textArea.getLength());
+                    }
                 });
                 line = reader.readLine();
             }
+            final int errorCode = process.exitValue();
+            Platform.runLater(()->{    
+                if(setTextAfterwards){
+                        lines.add("Error Code:"+errorCode+"\n");
+                    }else{
+                        textArea.setText(textArea.getText()+"Error Code:"+errorCode+"\n");
+                        textArea.positionCaret(textArea.getLength());
+                }
+            });
+            if(setTextAfterwards){
+                Platform.runLater(()->{
+                    String main = textArea.getText();
+                    for(String ln:lines){
+                        main+=ln;
+                    }
+                    textArea.setText(main);
+                    textArea.positionCaret(main.length());
+                });
+            }
+            
         }
         public void apply(String name) throws IOException{
             ArrayList<String> readFromFile = LibraryLB.FileManaging.FileReader.readFromFile(name);
+            this.setTextAfterwards = true;
             for(String command:readFromFile){
                 Log.writeln(command);
+                
                 submit(command);
             }
         }
         public void generate(String command, String name){
             try{
+                pathReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.path", "<p>");
+                nameReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.name", "<n>");
+                nameNoExtReplace = (String) FileManagerLB.parameters.defaultGet("codeGenerate.nameNoExtension", "<nne>");
+
                 System.out.println(TaskFactory.getInstance().markedList);
                 LinkedList<String> l = new LinkedList<>();
                 l.addAll(0, TaskFactory.getInstance().markedList);
@@ -84,11 +119,19 @@ public class CommandWindowController extends BaseDialog {
                         absPath = absPath.substring(0, absPath.length()-1);
                     }
                     String add = command;
-                    if(add.contains("<p>")){
-                        add = ExtStringUtils.replaceOnce(add, "<p>", absPath);
+                    if(add.contains(pathReplace)){
+                        add = ExtStringUtils.replace(add, pathReplace, absPath);
                     }
-                    if(add.contains("<n>")){
-                        add = ExtStringUtils.replaceOnce(add,"<n>", absPath.substring(absPath.lastIndexOf(File.separator)+1));
+                    String fileName=absPath.substring(absPath.lastIndexOf(File.separator)+1);
+                    String fileNameNoExt = fileName;
+                    if (fileName.contains(".")){
+                        fileNameNoExt = fileName.substring(0,fileName.lastIndexOf("."));
+                    }
+                    if(add.contains(nameReplace)){
+                        add = ExtStringUtils.replace(add,nameReplace, fileName );
+                    }
+                    if(add.contains(nameNoExtReplace)){
+                        add = ExtStringUtils.replace(add, nameNoExtReplace, fileNameNoExt);
                     }
                     commands.add(add);
                     Log.writeln(command+"||"+add);
@@ -124,14 +167,10 @@ public class CommandWindowController extends BaseDialog {
                     ProcessBuilder builder = new ProcessBuilder(commands.toArray(new String[0]));
                     builder.redirectErrorStream(true);
                     process = builder.start();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));  
-                    handleStream(reader,textArea);
+                      
+                    handleStream(process,textArea,setTextAfterwards);
                     
-                    final int errorCode = process.exitValue();
-                    Platform.runLater(()->{                          
-                            textArea.setText(textArea.getText()+"Error Code:"+errorCode+"\n");
-                            textArea.positionCaret(textArea.getLength());
-                        });
+                    
                     return null;
                 }                
             };
@@ -146,6 +185,7 @@ public class CommandWindowController extends BaseDialog {
     public void update() {
     }
     public void submit(){
+        command.setTextAfterwards = false;
         command.submit(this.textField.getText());
     }
 

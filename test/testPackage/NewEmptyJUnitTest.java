@@ -74,7 +74,8 @@ public class NewEmptyJUnitTest {
         print(c.apply(t4, "k"));
         String t5 = "5 <t>some<r>text<i></r><i>that<r><i>is</r>advanced</t>";
         print(c.apply(t5, "k"));
-        
+        String f = "file.txt";
+        print(f.substring(0, f.lastIndexOf(".")));
         
 //        print(ExtStringUtils.countMatches(t3, "<t>"));
 //        print(ExtStringUtils.countMatches(t3, "</t>"));

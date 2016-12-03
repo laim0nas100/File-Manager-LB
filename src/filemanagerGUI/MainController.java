@@ -482,8 +482,8 @@ public class MainController extends BaseController{
         
         contextMenuItems[8] = new MenuItem("Remove this item");
         contextMenuItems[8].setOnAction(eh ->{        
-            ExtFile selectedItem = (ExtFile) markedView.getSelectionModel().getSelectedItem();
-            TaskFactory.getInstance().markedList.remove(selectedItem.getAbsoluteDirectory());
+            String selectedItem = (String) markedView.getSelectionModel().getSelectedItem();
+            TaskFactory.getInstance().markedList.remove(selectedItem);
         });
         
         contextMenuItems[9] = new MenuItem("Delete all marked");
@@ -578,7 +578,7 @@ public class MainController extends BaseController{
         contextMenuItems[23].setOnAction(eh ->{
             Platform.runLater(()->{
                 ArrayList<String> list = new ArrayList<>();
-                list.addAll(searchView.getItems());
+                list.addAll(searchView.getSelectionModel().getSelectedItems());
                 ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
                 new Thread(markFiles).start();
             });

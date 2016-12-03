@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
 import filemanagerLogic.Enums.Identity;
+import java.util.LinkedList;
 
 /**
  *
@@ -77,7 +78,6 @@ public class ExtFolder extends ExtFile{
                             file = new ExtLink(f);
                         }
                         files.put(file.propertyName.get(), file);
-                    
                     }
                 }
             }
@@ -100,7 +100,7 @@ public class ExtFolder extends ExtFile{
         
     };
     public Collection<ExtFolder> getFoldersFromFiles(){
-        ArrayList<ExtFolder> folders = new ArrayList<>();
+        LinkedList<ExtFolder> folders = new LinkedList<>();
         for(ExtFile file:this.getFilesCollection()){
             if(file.getIdentity().equals(Identity.FOLDER)){
                 ExtFolder fold = (ExtFolder) file.getTrueForm();
@@ -111,7 +111,7 @@ public class ExtFolder extends ExtFile{
     }
     @Override
     public Collection<ExtFile> getListRecursive(){
-        ArrayList<ExtFile> list = new ArrayList<>();
+        LinkedList<ExtFile> list = new LinkedList<>();
         list.add(this);
         getRootList(list,this);
         return list; 

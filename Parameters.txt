@@ -2,6 +2,10 @@ debug=true
 lookDepth=2
 logBackupCount=5
 lang=EN
-regex.number=#
-regex.originalName=?
-regex.originalNameNoExtension=*
+
+//regex.number=#
+//regex.originalName=?
+//regex.originalNameNoExtension=*
+codeGenerate.name=<n>
+codeGenerate.path=<p>
+codeGenerate.nameNoExtension=<nne>
