@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
 
 /**
  *
@@ -66,8 +67,13 @@ public class ExtFile extends File{
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;
+    public LongProperty propertyLastModified;
+    
     public StringProperty propertyDate;
     public StringProperty propertySizeAuto;
+    public LongProperty readyToUpdate;
+    private long size = -1;
+    private long lastModified = -1;
     public boolean isAbsoluteRoot() {
         return isAbsoluteRoot.get();
     }
@@ -76,27 +82,75 @@ public class ExtFile extends File{
         this.isAbsoluteRoot.set(isAbsoluteRoot);
     }
     protected void setDefaultValues(){         
+        Task<Void> r = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
+                size =  length();
+                return null;
+            }
+            
+        };
+        r.setOnSucceeded(v->{
+            propertySize.set(size);
+        });
+        Task<Void> r1 = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
+                lastModified = lastModified();
+                return null;
+            }
+            
+        };
+        r1.setOnSucceeded(v->{
+            propertyLastModified.set(lastModified);
+        });
+        this.readyToUpdate = new SimpleLongProperty(){
+            @Override
+            public long get(){
+                if((propertySize.get()!=-1)&&(propertyLastModified.get()!=-1)){
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }
+        };
         this.propertyName = new SimpleStringProperty(this.getName());
         this.propertyType = new SimpleStringProperty(this.getIdentity().identity);
+        
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
-                return length(); //To change body of generated methods, choose Tools | Templates.
+                new Thread(r).start();
+                return size;
+                    
             }
         };
-        
+        this.propertyLastModified = new SimpleLongProperty(){
+            @Override
+            public long get() {
+                new Thread(r1).start();
+                return lastModified;
+                    
+            }
+        };
         this.propertyDate = new SimpleStringProperty(){
             @Override
             public String get() {
-
-                return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified())));
+                if(propertyLastModified.get() == -1){
+                    return "LOADING";
+                }
+                return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(propertyLastModified.get())));
             }
         };
 
         this.propertySizeAuto = new SimpleStringProperty(){
             @Override
             public String get() {
+                if(propertySize.get() == -1){
+                    return "LOADING";
+                }
                 String stringSize = propertySize.asString().get();
+                
                 Double size = Double.valueOf(stringSize);
                 String sizeType = "B";
                 if(size>=1024){

@@ -47,7 +47,6 @@ public class ExtFolder extends ExtFile{
         this.files = new ConcurrentHashMap<>(2,0.75f,25);
         this.populated = false;
         super.setDefaultValues();
-        this.propertySize.setValue(null);
     }
     public ExtFolder(String src){
         super(src);
@@ -71,6 +70,9 @@ public class ExtFolder extends ExtFile{
                         String name = f;
                         f = parent + name;
                         Path path = Paths.get(f);
+                        if(!Files.exists(path)){
+                            continue;
+                        }
                         ExtFile file = new ExtFile(f);
                         if(Files.isDirectory(path)){
                             file = new ExtFolder(f);             

@@ -52,6 +52,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -202,9 +204,46 @@ public class MainController extends BaseController{
             
             propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
             propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
-            MC.currentDir.update();
-            extTableView.updateContentsAndSort(MC.getCurrentContents());
-
+            Platform.runLater(()->{
+                MC.currentDir.update();
+                extTableView.updateContentsAndSort(MC.getCurrentContents());  
+            });
+            Runnable r = () -> {
+                long count = 0;
+                long tryCount = 0;
+                long tryLimit = 5;
+                while(count<extTableView.table.getItems().size()){
+                    count = 0;
+                    for(Object f:extTableView.table.getItems()){
+                        ExtFile file = (ExtFile) f;
+                        count+=file.readyToUpdate.get();
+                    }
+                    Platform.runLater(()->{
+                        MC.currentDir.update();
+                        extTableView.updateContentsAndSort(MC.getCurrentContents());  
+                    });
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ex) {
+                        ErrorReport.report(ex);
+                    }
+                    tryCount+=1;
+                    if(tryCount>=tryLimit){
+                        break;
+                    }
+                    
+                }
+                Platform.runLater(()->{
+                    MC.currentDir.update();
+                    extTableView.updateContentsAndSort(MC.getCurrentContents());  
+                });
+                
+            };
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            t.start();
+                
+            
             
         });
         
@@ -257,10 +296,12 @@ public class MainController extends BaseController{
     }
     public void changeToDir(ExtFolder dir){
        MC.changeDirTo(dir);
-       new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH)).start();
-       Platform.runLater(()->{
+       Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH));
+       Thread t1 = new Thread(() -> {
             update();
        });
+       t.start();
+       t1.start();
       
     }
     public void searchTyped(){
@@ -646,9 +687,6 @@ public class MainController extends BaseController{
                     SimpleStringProperty string = new SimpleStringProperty();
                     Double get = cellData.getValue().propertySize.divide((double)propertyUnitSize.get()).get();
                     if(get>0.001){
-//                        String doubleString = String.valueOf(get);
-//                        int indexOf = doubleString.indexOf('.');
-//                        doubleString = doubleString.substring(0, Math.min(doubleString.length(),indexOf+4));
                         string.set(ExtStringUtils.extractNumber(get));
                     }else{
                         string.set("0");
