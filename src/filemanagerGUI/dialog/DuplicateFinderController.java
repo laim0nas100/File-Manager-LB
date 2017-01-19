@@ -16,6 +16,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
@@ -35,6 +36,7 @@ public class DuplicateFinderController extends BaseDialog{
     @FXML public ScrollBar scroll;
     @FXML public Button searchButton;
     @FXML public Text textRootFolder;
+    @FXML public ProgressBar progressBar;
     private MenuTree menuTree;
     private ExtFolder root;
     public void beforeShow(String title,ExtFolder root) {
@@ -107,7 +109,9 @@ public class DuplicateFinderController extends BaseDialog{
         task.setOnSucceeded(eh ->{
             
             searchButton.setDisable(false);
+            this.progressBar.setProgress(1);
         });
+        this.progressBar.progressProperty().bind(task.progressProperty());
         Thread t = new Thread(task);
         t.setDaemon(true);
         t.start();

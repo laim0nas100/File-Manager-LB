@@ -42,18 +42,14 @@ import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
-import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
+import filemanagerLogic.Enums.Identity;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -185,6 +181,8 @@ public class MainController extends BaseController{
             this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
             if(MC.currentDir.isAbsoluteRoot()){
                 fileAddress.field.setText("ROOT");
+            }else if(MC.currentDir.getIdentity().equals(Identity.VIRTUAL)){
+                fileAddress.field.setText(MC.currentDir.getName());
             }else{
                 fileAddress.field.setText(MC.currentDir.getAbsoluteDirectory());
             }
@@ -204,10 +202,7 @@ public class MainController extends BaseController{
             
             propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
             propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
-            Platform.runLater(()->{
-                MC.currentDir.update();
-                extTableView.updateContentsAndSort(MC.getCurrentContents());  
-            });
+            
             Runnable r = () -> {
                 long count = 0;
                 long tryCount = 0;
@@ -239,10 +234,12 @@ public class MainController extends BaseController{
                 });
                 
             };
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            t.start();
-                
+            
+            
+            Platform.runLater(()->{
+                MC.currentDir.update();
+                extTableView.updateContentsAndSort(MC.getCurrentContents());
+            });
             
             
         });
@@ -273,8 +270,11 @@ public class MainController extends BaseController{
         }
     }
     
-    public void test(){
-        ViewManager.getInstance().newCommandDialog();
+    public void test() throws IOException{
+//        VirtualFolder.createVirtualFolder();
+//        VirtualFolder vf = (VirtualFolder) FileManagerLB.VirtualFolders.files.get("V0");
+//        vf.files.put("0", LocationAPI.getInstance().getFileAndPopulate("/mnt/Extra-Space/Dev/dest/"));
+//        Log.write(vf.getListRecursive());
     }
 
     
@@ -406,12 +406,13 @@ public class MainController extends BaseController{
     }
     private void handleOpen(ExtFile file){
         if(file.getIdentity().equals(Enums.Identity.FOLDER)){
+            Log.write("Change to dir "+file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
         }else {
                             
             try{
                 if(file.getIdentity().equals(Enums.Identity.LINK)){
-                    ExtLink link = (ExtLink) file.getTrueForm();
+                    ExtLink link = (ExtLink) file;
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if(link.isPointsToDirectory()){
                         changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
@@ -612,7 +613,6 @@ public class MainController extends BaseController{
         });
         contextMenuItems[22] = new MenuItem("Invert Selection");
         contextMenuItems[22].setOnAction(eh ->{
-            
             this.selectInverted(tableView.getSelectionModel());
         });
         contextMenuItems[23] = new MenuItem("Mark selected");
@@ -629,6 +629,16 @@ public class MainController extends BaseController{
         contextMenuItems[24].setOnAction(eh ->{
             String absolutePath = this.selectedList.get(0).getAbsolutePath();
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
+        });
+        
+        contextMenuItems[25] = new MenuItem("Toggle Enable/Disable");
+        contextMenuItems[25].setOnAction(eh ->{
+            Platform.runLater(()->{
+                
+                this.selectedList.stream().forEach(c ->{
+                    c.isDisabled.setValue(c.isDisabled.not().get());
+                });
+            });
         });
         
         submenuSelectSearch = new Menu("Select...");
@@ -698,7 +708,9 @@ public class MainController extends BaseController{
         sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
         TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
         dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
-        tableView.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
+        TableColumn<ExtFile, String> disabledCol = new TableColumn<>("Disabled");
+        disabledCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().isDisabled.asString());
+        tableView.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol,disabledCol);
 
         
         //TABLE VIEW ACTIONS
@@ -731,17 +743,19 @@ public class MainController extends BaseController{
                         );
                     } else if (markedSize1>0 && itemCount1 >= 1) {
                         submenuMarked.getItems().setAll(
-                                contextMenuItems[6],      //Add to marked
-                                contextMenuItems[3],      //Copy
-                                contextMenuItems[4],      //Move
-                                contextMenuItems[9]       //Delete marked
+                                contextMenuItems[6],        //Add to marked
+                                contextMenuItems[3],        //Copy
+                                contextMenuItems[4],        //Move
+                                contextMenuItems[9]        //Delete marked
+                                
                         );
                     } else if (markedSize1>0 && itemCount1 == 0) {
                         submenuMarked.getItems().setAll(
-                                //contextMenuItems[6]         //Add to marked
-                                contextMenuItems[3],      //Copy
-                                contextMenuItems[4],      //Move
-                                contextMenuItems[9]       //Delete marked
+                                //contextMenuItems[6]       //Add to marked
+                                contextMenuItems[3],        //Copy
+                                contextMenuItems[4],        //Move
+                                contextMenuItems[9]        //Delete marked
+                                
                         );
                     }else{
                         con = true;
@@ -752,13 +766,15 @@ public class MainController extends BaseController{
                         tableContextMenu.getItems().addAll(
 //                                submenuCreate,
                                 contextMenuItems[1],    //Rename dialog
-                                contextMenuItems[2]     //Delete dialog
+                                contextMenuItems[2],     //Delete dialog
+                                contextMenuItems[25]        //Toggle Enable
                         );
                     } else if (itemCount1 > 1) {
                         tableContextMenu.getItems().addAll(
 //                                submenuCreate,
                                 //contextMenuItems[1],  //Rename dialog
-                                contextMenuItems[2]     //Delete dialog
+                                contextMenuItems[2],     //Delete dialog
+                                contextMenuItems[25]        //Toggle Enable
                         );
                     }
                     tableContextMenu.getItems().addAll(submenuCreate,submenuSelectTable,submenuMarked);

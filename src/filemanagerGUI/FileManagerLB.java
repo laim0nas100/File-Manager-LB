@@ -35,9 +35,12 @@ import utility.FavouriteLink;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    public static final String ARTIFICIAL_ROOT_NAME = System.getProperty("user.dir")+File.separator+"root.Don't use this.root";
+    public static final String HOME_DIR  = System.getProperty("user.dir")+File.separator;
+    public static final String VIRTUAL_FOLDERS_DIR_NAME = HOME_DIR+"VIRTUAL_FOLDERS"+File.separator;
+    public static final String ARTIFICIAL_ROOT_NAME = HOME_DIR+"ARTIFICIAL_ROOT";
     public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT_NAME);
-    public static String DIR  = System.getProperty("user.dir");
+    public static ExtFolder VirtualFolders = new ExtFolder(VIRTUAL_FOLDERS_DIR_NAME);
+    
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static int DEPTH = 2;
@@ -46,9 +49,6 @@ public class FileManagerLB extends Application {
     public static ParametersMap parameters;
     @Override
     public void start(Stage primaryStage) {
-        if(!DIR.endsWith(File.separator)){
-                DIR+=File.separator;
-            }
         ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         Platform.runLater(()->{
             
@@ -56,16 +56,23 @@ public class FileManagerLB extends Application {
             errorLog = FXCollections.observableArrayList();
             ArtificialRoot.setPopulated(true);
             ArtificialRoot.setIsAbsoluteRoot(true);
+            VirtualFolders.setPopulated(true);
+            VirtualFolders.populateFolder();
             
-
             try{
                 //Log.changeStream('f', new File(DIR+"Log.txt"));
-                LinkedList<String> list = new LinkedList(FileReader.readFromFile(DIR+"Parameters.txt","//","/*","*/"));
+                LinkedList<String> list = new LinkedList(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
                 parameters = new ParametersMap(list);
                 DEBUG = new SimpleBooleanProperty((boolean) parameters.defaultGet("debug",false));
                 DEPTH = (int) parameters.defaultGet("lookDepth",2);
                 LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
 
+                
+                for(ExtFile f:VirtualFolders.getFilesCollection()){
+                    Files.deleteIfExists(f.toPath());
+                }
+                Files.deleteIfExists(VirtualFolders.toPath());
+                Files.createDirectory(VirtualFolders.toPath());
                 Files.deleteIfExists(ArtificialRoot.toPath());
                 Files.createFile(ArtificialRoot.toPath());
                 Log.writeln("Parameters",parameters);
@@ -121,6 +128,14 @@ public class FileManagerLB extends Application {
         }
         return result;
     }
+    public static boolean folderIsVirtual(ExtFile fileToCheck){
+        ExtFolder baseFolder = FileManagerLB.VirtualFolders;
+        HashSet<String> set = new HashSet<>();
+        for(ExtFile file:baseFolder.files.values()){
+            set.add(file.getAbsoluteDirectory());
+        }
+        return set.contains(fileToCheck.getAbsoluteDirectory());
+    }
     public static Set<String> getRootSet(){
         HashSet<String> set = new HashSet<>();
         for(ExtFile file:ArtificialRoot.files.values()){
@@ -131,10 +146,15 @@ public class FileManagerLB extends Application {
     }
     public static void doOnExit(){
         try {
-            LibraryLB.FileManaging.FileReader.writeToFile(DIR+"Log.txt", Log.getInstance().list);
+            LibraryLB.FileManaging.FileReader.writeToFile(HOME_DIR+"Log.txt", Log.getInstance().list);
+            VirtualFolders.populateFolder();
+            for(ExtFile f:VirtualFolders.getFilesCollection()){
+                    Files.deleteIfExists(f.toPath());
+                }
+            Files.deleteIfExists(VirtualFolders.toPath());
             Files.deleteIfExists(ArtificialRoot.toPath());
-            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,DIR+"BUP","YYYY-MM-dd HH.mm.ss");
-            Collection<Runnable> makeNewCopy = BM.makeNewCopy(DIR+"Log.txt");
+            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,HOME_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
+            Collection<Runnable> makeNewCopy = BM.makeNewCopy(HOME_DIR+"Log.txt");
             makeNewCopy.forEach(th ->{
                 th.run();
             });

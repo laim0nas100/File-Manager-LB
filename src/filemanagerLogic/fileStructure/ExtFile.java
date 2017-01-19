@@ -35,14 +35,11 @@ import javafx.concurrent.Task;
  */
 public class ExtFile extends File{
 
-    public static final Comparator<String> COMPARE_SIZE_STRING = new Comparator<String>() {
-        @Override
-        public int compare(String f1, String f2) {
-            if (f1.isEmpty() || f2.isEmpty()) {
-                return f1.compareTo(f2);
-            }
-            return ExtFile.extractSize(f1).compareTo(ExtFile.extractSize(f2));
+    public static final Comparator<String> COMPARE_SIZE_STRING = (String f1, String f2) -> {
+        if (f1.isEmpty() || f2.isEmpty()) {
+            return f1.compareTo(f2);
         }
+        return ExtFile.extractSize(f1).compareTo(ExtFile.extractSize(f2));
     };
     public static Double extractSize(String s) {
         Long multiplier = DATA_SIZE.B.size;
@@ -64,6 +61,7 @@ public class ExtFile extends File{
     
     
     public BooleanProperty isAbsoluteRoot;
+    public BooleanProperty isDisabled;
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;
@@ -116,7 +114,7 @@ public class ExtFile extends File{
         };
         this.propertyName = new SimpleStringProperty(this.getName());
         this.propertyType = new SimpleStringProperty(this.getIdentity().identity);
-        
+        this.isDisabled = new SimpleBooleanProperty(false);
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
@@ -178,25 +176,20 @@ public class ExtFile extends File{
     }   
     public ExtFile(File file){
         super(file.getAbsolutePath());
-        setDefaultValues();
+        this.setDefaultValues();
     }
     public ExtFile(String path){
         super(path);
         setDefaultValues();
-    }
-    /**
-     * get true form
-     * @return
-     */
-    public ExtFile getTrueForm(){
-        return this;
     }
     public Identity getIdentity(){
         return Identity.FILE;
     }
     public Collection<ExtFile> getListRecursive(){
         ArrayList<ExtFile> list = new ArrayList<>();
-        list.add(this);
+        if(!this.isDisabled.get()){
+            list.add(this);
+        }
         return list; 
     }
     public boolean isRoot(){

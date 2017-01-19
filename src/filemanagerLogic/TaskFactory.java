@@ -491,7 +491,7 @@ public class TaskFactory {
                     list.addAll(result.map.values());
                     
                     frame.snapshotTextDate.setText(sn.dateCreated);
-                    frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
+                    //frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
                     frame.snapshotTextDate.setVisible(true);
                     frame.snapshotTextFolder.setVisible(true);
                     Platform.runLater(()->{
@@ -509,7 +509,7 @@ public class TaskFactory {
         };
     }
     
-    public ExtTask syncronizeTask(String folder1,String folder2,Collection<ExtEntry> listFirst){
+    public ExtTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
          return new ExtTask(){
             @Override
             protected Void call() throws InterruptedException{
@@ -528,6 +528,7 @@ public class TaskFactory {
                             break;
                         }
                     }
+                    
                     ActionFile actionFile = new ActionFile(folder1+entry.relativePath,folder2+entry.relativePath);
                     try{
                         action(actionFile,entry);
@@ -600,60 +601,15 @@ public class TaskFactory {
                                 Platform.runLater(()->{
                                     list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
                                 });
-                            }
-                            
+                            }                        
                         }
-                    }   
+                        this.updateProgress(i, array.length);
+                    }
+                    this.updateProgress(1,1);
                 return null;
             };
         };
         
-    }
-    
-    
-    public static void serializeObject(String whereToSave, Object whatToSave){
-        boolean success = true;
-        ObjectMapper mapper = new ObjectMapper();
-        try{
-           
-            
-            mapper.writeValue(new File(whereToSave), whatToSave);
-        }catch(Exception ex){
-            ErrorReport.report(ex);
-            success = false;
-        }
-        
-        
-        if(success){
-            Log.write("Saved at: ",whereToSave);
-        }else{
-            Log.writeln("Failed to save at: ",whereToSave);
-        }
-        
-    }
-    public static <TP> boolean readSerializedObject(String whereToRead,TP object) {
-        File file = new File(whereToRead);
-        if(!file.exists()){
-            return false;
-        }
-
-        
-        boolean success = true;
-        try {
-           ObjectMapper mapper = new ObjectMapper();
-           object = mapper.readValue(file, (Class<TP>) object.getClass());
-           
-        } catch (Exception e) {
-            success = false;
-        }
-        if(success){
-            Log.write("Read: ", object, " at",whereToRead);
-        }else{
-            Log.write("Failed to read ",whereToRead);
-        }
-        
-    
-        return success;
     }
     
 }

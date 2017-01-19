@@ -14,11 +14,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -173,10 +172,11 @@ public void updateLists(){
     buttonApply.setDisable(true);
 }
 public void previewSetting(){
+    tableList.clear();
+    tableList.addAll(table.getItems());
     if(this.tbNumerize.isSelected()){
         String filter = this.tfFilter.getText();
         setNumber();
-        
         long number = startingNumber;
         
         for(TableItemObject object:this.tableList){          
@@ -231,6 +231,10 @@ public void apply(){
         }
     }
     update();
+    Platform.runLater(()->{
+        update();
+    });
+    
 }
 private static class TableItemObject{
     public SimpleStringProperty path1;

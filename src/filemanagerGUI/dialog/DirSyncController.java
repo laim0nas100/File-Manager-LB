@@ -15,8 +15,6 @@ import filemanagerLogic.snapshots.Entry;
 import filemanagerLogic.snapshots.ExtEntry;
 import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,7 +25,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Locale;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -43,7 +40,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
-import utility.ExtStringUtils;
 import LibraryLB.Log;
 import filemanagerLogic.Enums;
 
@@ -263,25 +259,21 @@ public class DirSyncController extends BaseDialog {
             
             this.status.textProperty().set("Comparing");
             Long date = Instant.now().toEpochMilli();
-
             try{
                 date = datePicker.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
                 Log.writeln(date);
-            }catch(Exception e){
-            }
+            }catch(Exception e){}
             result = SnapshotAPI.compareSnapshots(snapshot0, snapshot1);
             //Log.writeln(snapshot0,snapshot1);
             if(checkShowOnlyDifferences.selectedProperty().get()){
                result = SnapshotAPI.getOnlyDifferences(result);
             }
-            
             int modeDate = dateMode.getSelectionModel().getSelectedIndex();
             ObservableList<ExtEntry> list = FXCollections.observableArrayList();
             Iterator<Entry> iterator = result.map.values().iterator();
             while(iterator.hasNext()){
                 Entry next = iterator.next();
                 boolean remove = false;
-                
                 if(modeDate == 0 && next.lastModified>date){
                    remove = true;
                 }else if(modeDate == 1 && next.lastModified<date){
@@ -304,7 +296,6 @@ public class DirSyncController extends BaseDialog {
                 if(!remove){
                     list.add(new ExtEntry(next));
                 }
-                
             }
             //Action Types
             //0 - no Action
@@ -318,9 +309,7 @@ public class DirSyncController extends BaseDialog {
                 entry.setAction(0);
                 switch(mode){
                     case(0):{//Bidirectional
-
                         if(entry.isMissing){
-                            
                             entry.setAction(1);
                         }else if(entry.isNew){
                             entry.setAction(2);
@@ -345,10 +334,8 @@ public class DirSyncController extends BaseDialog {
                     }
                     case(1):{//A dominant
                         if(entry.isMissing){
-
                             entry.setAction(4);
-                        }else if(entry.isNew){
-   
+                        }else if(entry.isNew){  
                             entry.setAction(2);
                         }else{
                             if(entry.isModified && checkIgnoreModified.selectedProperty().not().get()){
@@ -359,16 +346,11 @@ public class DirSyncController extends BaseDialog {
                     }
                     case(2):{//B dominant
                         if(entry.isMissing){
-  
                             entry.setAction(1);
-                           
                         }else if(entry.isNew){
- 
                             entry.setAction(3);
-                            
                         }else{
                             if(entry.isModified && checkIgnoreModified.selectedProperty().not().get()){
-                                
                                 entry.setAction(1);
                             }
                         }
@@ -381,7 +363,6 @@ public class DirSyncController extends BaseDialog {
                 }else if((actionType == 1 || actionType == 2)&& checkNoCopy.selectedProperty().get()){
                    entry.setAction(0);
                 }
-                
             }
             
             
@@ -421,33 +402,10 @@ public class DirSyncController extends BaseDialog {
         for(ExtEntry en:list){
             Log.write(en.toString());
         }
-        task = TaskFactory.getInstance().syncronizeTask(snapshot0.folderCreatedFrom, snapshot1.folderCreatedFrom, list);
+        
+        task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom,this.snapshot1.folderCreatedFrom,list);
 
         task.setTaskDescription("Synchronization");
-        task.childTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                status.textProperty().set("Synchronization");
-                Log.writeln("Child task invoked");
-                for(Object ob:table.getItems()){
-                    ExtEntry entry = (ExtEntry) ob;
-                    if(!entry.actionCompleted.get()){
-                        result.reEvalueateFolder(entry.relativePath, null);
-                    }
-                    if(!entry.isModified){
-                        if(snapshot1.folderCreatedFrom.equalsIgnoreCase(ExtStringUtils.replaceOnce(entry.absolutePath, snapshot1.folderCreatedFrom, ""))){
-                            Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot0.folderCreatedFrom+entry.relativePath)));
-                        }else{
-                            Files.setLastModifiedTime(Paths.get(entry.absolutePath), Files.getLastModifiedTime(Paths.get(snapshot1.folderCreatedFrom+entry.relativePath)));                           
-                        }
-                    }
-                    
-                }
-                btnCompare.setDisable(true);
-                status.textProperty().set("Done");
-                return null;
-            }
-        };
         ViewManager.getInstance().newProgressDialog(task);
         
 

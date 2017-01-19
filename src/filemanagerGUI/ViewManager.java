@@ -13,7 +13,6 @@ import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
-import filemanagerGUI.dialog.VirtualFolderDialogController;
 import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
@@ -249,27 +248,6 @@ public class ViewManager {
             try {
                 Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
                 CommandWindowController controller = (CommandWindowController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle());
-                frame.getStage().show();
-                controller.afterShow();
-                frame.getStage().toFront();
-
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }    
-            return null;
-            }
-        };
-        Platform.runLater(et);
-    }
-
-    public void newVirtualFolder(){
-        ExtTask et = new ExtTask() {
-            @Override
-            protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.VIRTUAL_FOLDER_DIALOG);
-                VirtualFolderDialogController controller = (VirtualFolderDialogController) frame.getController();
                 controller.beforeShow(frame.getStage().getTitle());
                 frame.getStage().show();
                 controller.afterShow();

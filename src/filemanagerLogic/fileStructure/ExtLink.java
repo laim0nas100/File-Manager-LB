@@ -36,10 +36,6 @@ public class ExtLink extends ExtFile{
     }
     
     @Override
-    public ExtLink getTrueForm(){
-        return this;
-    }
-    @Override
     public Identity getIdentity(){
         return Identity.LINK;
     }

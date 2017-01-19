@@ -21,7 +21,6 @@ public class SnapshotAPI {
     public static Snapshot getEmptySnapshot(){
         Snapshot sn = new Snapshot();
         sn.dateCreated="";
-        sn.folderCreatedFrom="";
         sn.map = new LinkedHashMap<>();
         return sn;
     }
@@ -41,7 +40,7 @@ public class SnapshotAPI {
                 }
             }else{
                 entry.isNew = true;
-            }
+            }    
         });
         map2.values().forEach(entry ->{
             if(!map1.containsKey(entry.relativePath)){
@@ -51,12 +50,10 @@ public class SnapshotAPI {
             }
         });
         return new Snapshot(map1);
-
     }
     public static Snapshot getOnlyDifferences(Snapshot s1){
         Snapshot newS = new Snapshot(s1.map);
         newS.dateCreated = s1.dateCreated;
-        newS.folderCreatedFrom = s1.folderCreatedFrom;
         Iterator<Entry> iterator = newS.map.values().iterator();
         while(iterator.hasNext()){
             Entry next = iterator.next();
@@ -68,7 +65,6 @@ public class SnapshotAPI {
     }
     public static void copySnapshot(Snapshot src,Snapshot dest){
         dest.dateCreated = src.dateCreated;
-        dest.folderCreatedFrom = src.folderCreatedFrom;
         dest.map.clear();
         for (Entry entry :src.map.values()){
             dest.map.put(entry.relativePath, new Entry(entry));

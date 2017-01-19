@@ -17,6 +17,8 @@ public class ExtEntry extends Entry{
     public SimpleStringProperty action;
     public SimpleBooleanProperty actionCompleted;
     public SimpleIntegerProperty actionType;
+    public String path1;
+    public String path2;
     public ExtEntry(Entry entry){
         super(entry);
         action = new SimpleStringProperty("(0) No Action");

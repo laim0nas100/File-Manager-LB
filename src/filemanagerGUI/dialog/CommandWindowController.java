@@ -8,29 +8,23 @@ package filemanagerGUI.dialog;
 import LibraryLB.Log;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.customUI.AbstractCommandField;
+import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
+import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtFolder;
+import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 
 import javafx.scene.control.TextField;
-import org.apache.commons.lang3.StringUtils;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 
@@ -49,6 +43,13 @@ public class CommandWindowController extends BaseDialog {
     private int truncateAfter;
     private String commandGenerate;
     private String commandApply;
+    private String commandCreateVirtual;
+    private String commandListVirtualFolders;
+    private String commandListVirtual;
+    private String commandList;
+    private String commandListRec;
+    private String commandClear;
+    private String commandAddToVirtual;
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
@@ -59,8 +60,13 @@ public class CommandWindowController extends BaseDialog {
         truncateAfter = (Integer) FileManagerLB.parameters.defaultGet("code.truncateAfter", 100000);
         commandGenerate = (String) FileManagerLB.parameters.defaultGet("code.commandGenerate", "generate");
         commandApply = (String) FileManagerLB.parameters.defaultGet("code.commandApply", "apply");
-        
-        
+        commandCreateVirtual = (String) FileManagerLB.parameters.defaultGet("code.createVirtualFolder", "virtual");
+        commandListVirtualFolders = (String) FileManagerLB.parameters.defaultGet("code.listVirtualFolders", "listVirtualFolders");
+        commandListVirtual = (String) FileManagerLB.parameters.defaultGet("code.listVirtual", "listVirtual");
+        commandClear = (String) FileManagerLB.parameters.defaultGet("code.clear", "clear");
+        commandAddToVirtual = (String) FileManagerLB.parameters.defaultGet("code.addToVirtual", "add");
+        commandList = (String) FileManagerLB.parameters.defaultGet("code.list", "list");
+        commandListRec = (String) FileManagerLB.parameters.defaultGet("code.listRec", "listRec");
     }
     public class Command extends AbstractCommandField{
         private boolean setTextAfterwards = false;
@@ -155,7 +161,7 @@ public class CommandWindowController extends BaseDialog {
                     commands.add(add);
                     Log.writeln(command+"||"+add);
                 }
-                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.DIR+name, commands);
+                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.HOME_DIR+name, commands);
             }catch(Exception ex){
                 ErrorReport.report(ex);
             }
@@ -165,7 +171,7 @@ public class CommandWindowController extends BaseDialog {
             Task<Void> task = new Task<Void>(){
                 @Override
                 protected Void call() throws Exception {
-                    Process process;
+                    
                     LinkedList<String> commands = new LinkedList<>();
                     for(String s:command.split(" ")){
                         if(s.length()>0) commands.add(s);
@@ -182,10 +188,74 @@ public class CommandWindowController extends BaseDialog {
                         commands.removeFirst();
                         apply(commands.removeFirst());
                         return null;
+                    }else if(commands.getFirst().equalsIgnoreCase(commandCreateVirtual)){
+                        VirtualFolder.createVirtualFolder();
+                        return null;
+                    }else if(commands.getFirst().equalsIgnoreCase(commandListVirtualFolders)){
+                        for(ExtFile f:FileManagerLB.VirtualFolders.files.values()){
+                            addToTextArea(textArea,f.getName()+"\n");
+                        }
+                        
+                        return null;
+                     }else if(commands.getFirst().equalsIgnoreCase(commandListVirtual)){
+                        commands.removeFirst();
+                        VirtualFolder VF = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(commands.getFirst());
+                        if (VF == null){
+                            addToTextArea(textArea,"No such virtual folder:"+commands.getFirst());
+                            
+                        }else{
+                            addToTextArea(textArea,"Listing "+VF.getAbsoluteDirectory()+"\n");
+                            for(ExtFile f:VF.getFilesCollection()){
+                                addToTextArea(textArea,f.getName()+"\n");
+                            }
+                        }
+                        
+                        return null;
+                        
+                    }else if(commands.getFirst().equalsIgnoreCase(commandAddToVirtual)){
+                        commands.removeFirst();
+                        VirtualFolder VF = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(commands.getFirst());
+                        if (VF == null){
+                            addToTextArea(textArea,"No such virtual folder:"+commands.getFirst());
+                            
+                        }else{
+                            for(String file:TaskFactory.getInstance().markedList){
+                                ExtFile f = LocationAPI.getInstance().getFileAndPopulate(file);
+                                VF.files.put(f.propertyName.get(), f);
+                                FileManagerLB.VirtualFolders.files.put(VF.getName(), VF);
+                            }
+                        }
+                        return null;
+                     
+                    }else if(commands.getFirst().equalsIgnoreCase(commandListRec)){
+                        String newCom = ExtStringUtils.replace(command, commands.getFirst()+" ","");
+                        ExtFile file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                        addToTextArea(textArea,"Listing:");
+                        for(ExtFile f:file.getListRecursive()){
+                                addToTextArea(textArea,f.getName()+"\n");
+                            }
+                        return null;
+                    }else if(commands.getFirst().equalsIgnoreCase(commandList)){
+                        String newCom = ExtStringUtils.replace(command, commands.getFirst()+" ","");
+                        ExtFile file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                        addToTextArea(textArea,"Listing:"+file.getAbsoluteDirectory()+"\n");
+                        if(file.getIdentity().equals(Identity.FOLDER)){
+                            ExtFolder folder = (ExtFolder) file;
+                            for(ExtFile f:folder.getFilesCollection()){
+                                addToTextArea(textArea,f.getName()+"\n");
+                            }
+                        }
+                        
+                        return null;
+                        
+                    }else if(commands.getFirst().equalsIgnoreCase(commandClear)){
+                        textArea.clear();
+                        return null;
                     }
+                    
                     ProcessBuilder builder = new ProcessBuilder(commands.toArray(new String[0]));
                     builder.redirectErrorStream(true);
-                    process = builder.start();
+                    Process process = builder.start();
                       
                     handleStream(process,textArea,setTextAfterwards,command);
                     return null;

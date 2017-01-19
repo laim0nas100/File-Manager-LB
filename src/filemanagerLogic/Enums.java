@@ -13,7 +13,8 @@ public class Enums {
     public static enum Identity{
         FILE("file"),
         FOLDER("folder"),
-        LINK("link");
+        LINK("link"),
+        VIRTUAL("virtual_folder");
         public String identity;
         Identity(String identity){
             this.identity = identity;

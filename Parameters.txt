@@ -1,14 +1,23 @@
-debug=false
+debug=true
 lookDepth=2//Populating folder depth
 logBackupCount=5//BUP folder subfolder size
 lang=EN//currently does nothing
+virtualPrefix=V//prefix for virtual folders access
+
 
 //regex.number=#
 //regex.originalName=?
 //regex.originalNameNoExtension=*
+code.clear=clear//clear screen
 code.name=<n>//replace with file name
 code.path=<p>//replace with file absolute path
 code.nameNoExtension=<nne>//replace with file name without extension
-code.truncateAfter=10000//truncate commnand text window after 
+code.truncateAfter=10000//truncate commnand text window after specified length
 code.commandGenerate=generate//command to generate script
 code.commandApply=apply//commnand to load script
+code.createVirtualFolder=virtual//command to create virtual folder
+code.listVirtualFolders=listVirtualFolders//command to list virtual folders
+code.list=list//list all files that have specified folder as parent
+code.listRec=listRec//recursive list
+
+

@@ -14,9 +14,11 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
+import filemanagerGUI.FileManagerLB;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.fileStructure.VirtualFolder;
 import java.util.Collection;
-import javafx.application.Platform;
 import utility.ErrorReport;
 
 /**
@@ -40,6 +42,10 @@ public class ManagingClass {
                
             }else if(file.isRoot()){
                 currentDir = (ExtFolder) ArtificialRoot.files.get(file.getAbsoluteDirectory());
+            }else if(FileManagerLB.VirtualFolders.files.containsKey(file.propertyName.get())){
+                //Found virtual folder
+                Log.write("Found Virtual Folder:"+file.getAbsoluteDirectory());
+                currentDir = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(file.propertyName.get());
             }else{
                 LocationInRoot location = new LocationInRoot(file.getAbsolutePath());      
                 if(!LocationAPI.getInstance().existByLocation(location)){
@@ -74,7 +80,7 @@ public class ManagingClass {
     public void changeToParent(){
         if(!currentDir.isAbsoluteRoot()){
             try {
-                if(currentDir.isRoot()){
+                if(currentDir.isRoot()||currentDir.getIdentity().equals(Identity.VIRTUAL)){
                     this.changeDirTo(ArtificialRoot);
                 }else{
                 LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());

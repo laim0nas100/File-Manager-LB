@@ -35,14 +35,14 @@ public class Snapshot implements Serializable{
     public Snapshot(ExtFolder folder){
         init();
         folder.update();
+        this.folderCreatedFrom = folder.getAbsoluteDirectory();
         Log.writeln("Folder size"+folder.files.size());
         folder.getListRecursive().forEach(file ->{
             String relPath = TaskFactory.resolveRelativePath(file, folder);
-            map.put(relPath, new Entry(file,relPath));
+            Entry entry = new Entry(file,relPath);
+            map.put(relPath, entry);
         });
         map.remove(folder.getAbsolutePath());
-
-        folderCreatedFrom = folder.getAbsoluteDirectory();
     }
 
     private void init(){
@@ -50,7 +50,6 @@ public class Snapshot implements Serializable{
         SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
         String format = dateFormat.format(date);
         dateCreated = format;
-        folderCreatedFrom = "";
         map = new LinkedHashMap<>();
     }
     public void reEvalueateFolder(String folderPath,ArrayList<Entry> list){
@@ -79,15 +78,12 @@ public class Snapshot implements Serializable{
             if(nonModifiedCount == list.size()){
                 map.get(folderPath).isModified = false;
             }
-        }
-       
-        
+        } 
     }
     
     @Override
     public String toString(){
-        String s = "Snapshot of: ";
-        s+=this.folderCreatedFrom+" ";
+        String s = "Snapshot ";
         s+=this.dateCreated;
         for(Entry val:map.values()){
             s+= "\n"+val.toString();
