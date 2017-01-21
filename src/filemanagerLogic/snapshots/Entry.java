@@ -25,7 +25,6 @@ public class Entry{
         
         public long lastModified;
         public long size;
-        public String pathPair;
         public String relativePath;
         public String absolutePath;
         public Entry(){}
@@ -40,7 +39,7 @@ public class Entry{
             isOlder = oldEntry.isOlder;
             isBigger = oldEntry.isBigger;
             isFolder = oldEntry.isFolder;
-            pathPair = oldEntry.pathPair;
+//            pathPair = oldEntry.pathPair;
         }
         public Entry(ExtFile file,String relPath){
             size = file.length();
@@ -52,7 +51,7 @@ public class Entry{
         @Override
         public String toString(){
             String s="";
-            s+= "'"+this.absolutePath+" | "+this.pathPair+"' ";
+            s+= "'"+this.absolutePath;
             s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/Enums.DATA_SIZE.KB.size;
             if(isNew){
                 s+=" new";

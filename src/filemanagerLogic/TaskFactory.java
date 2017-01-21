@@ -409,17 +409,6 @@ public class TaskFactory {
             }
         };
     }
-    
-    public ExtTask searchTask(String search, boolean useRegex){
-        return new ExtTask(){
-            @Override
-            protected Void call(){
-               
-                return null;
-            }
-        };
-    }
-    
     public Task<Snapshot> snapshotCreateTask(String folder){
         return new Task(){
             @Override
@@ -491,7 +480,7 @@ public class TaskFactory {
                     list.addAll(result.map.values());
                     
                     frame.snapshotTextDate.setText(sn.dateCreated);
-                    //frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
+                    frame.snapshotTextFolder.setText(sn.folderCreatedFrom);
                     frame.snapshotTextDate.setVisible(true);
                     frame.snapshotTextFolder.setVisible(true);
                     Platform.runLater(()->{
@@ -507,8 +496,7 @@ public class TaskFactory {
             }
   
         };
-    }
-    
+    }   
     public ExtTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
          return new ExtTask(){
             @Override
