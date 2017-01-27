@@ -4,20 +4,52 @@ logBackupCount=5//BUP folder subfolder size
 lang=EN//currently does nothing
 virtualPrefix=V//prefix for virtual folders access
 
+//Path string mangling
+//Current number in the list
+filter.number=#
 
-//regex.number=#
-//regex.originalName=?
-//regex.originalNameNoExtension=*
+//File name without extension
+filter.nameNoExtention=<nne>
+
+//File name with extension
+filter.name=<n>//replace with file name
+
+//File name extension
+filter.nameExtension=<ne>
+
+//All paths have no file separator at the end
+//File absolute path 
+filter.path=<ap>
+
+//File parent 1 level up
+filter.parent1=<p1>
+
+//File parent 2 level up
+filter.parent2=<p2>
+
+//Custom path (HAS FILE SEPERATOR AT THE END)
+filter.custom=<c>
+
+//Relative to custom path
+/*  Example:
+    custom = /folder1/folder2/
+    path = /folder1/folder2/folder3/file.txt
+    relativeCustom = folder3/file.txt
+    
+*/
+filter.relativeCustom=<rc>
+
+
+
+
 code.clear=clear//clear screen
-code.name=<n>//replace with file name
-code.path=<p>//replace with file absolute path
-code.nameNoExtension=<nne>//replace with file name without extension
-code.truncateAfter=10000//truncate commnand text window after specified length
+code.truncateAfter=10000//truncate command text window after specified length
 code.commandGenerate=generate//command to generate script
-code.commandApply=apply//commnand to load script
+code.commandApply=apply//command to load script
 code.createVirtualFolder=virtual//command to create virtual folder
 code.listVirtualFolders=listVirtualFolders//command to list virtual folders
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
+code.setCustom=setCustom//set custom path as first of marked list
 
 

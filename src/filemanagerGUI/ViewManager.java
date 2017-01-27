@@ -11,6 +11,7 @@ import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.DuplicateFinderController;
+import filemanagerGUI.dialog.ListController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.WebDialogController;
@@ -22,6 +23,7 @@ import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -154,7 +156,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    public void newAdvancedRenameDialog(ArrayList<String> list){
+    public void newAdvancedRenameDialog(Collection<String> list){
        
        
         ExtTask et = new ExtTask() {
@@ -302,6 +304,27 @@ public class ViewManager {
             }
             System.exit(0);
         }
+    }
+    
+    public void newListFrame(String description, Collection<String> list){
+        ExtTask et = new ExtTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+                Frame frame = newFrame(FrameTitle.LIST_FRAME);
+                ListController controller = (ListController) frame.getController();
+                controller.beforeShow(frame.getStage().getTitle(),description);
+                frame.getStage().show();
+                controller.afterShow(list);
+                frame.getStage().toFront();
+
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }    
+            return null;
+            }
+        };
+        Platform.runLater(et);
     }
     
     

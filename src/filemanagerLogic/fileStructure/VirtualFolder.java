@@ -26,8 +26,8 @@ public class VirtualFolder extends ExtFolder {
             index+=1;
             name = VIRTUAL_FOLDER_PREFIX+index;
         }
-        Files.createFile(Paths.get(FileManagerLB.VIRTUAL_FOLDERS_DIR_NAME+name));
-        VirtualFolder VF = new VirtualFolder(FileManagerLB.VIRTUAL_FOLDERS_DIR_NAME+name);
+        Files.createFile(Paths.get(FileManagerLB.VIRTUAL_FOLDERS_DIR+name));
+        VirtualFolder VF = new VirtualFolder(FileManagerLB.VIRTUAL_FOLDERS_DIR+name);
         FileManagerLB.VirtualFolders.files.put(name, VF);
     }
     private VirtualFolder(String src) {

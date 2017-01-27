@@ -11,7 +11,8 @@ package utility;
  */
 
 public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
-    private static final double PRECISION = 0.0001;
+//    private static final double PRECISION = 0.0001;
+    
     public static class FilterException extends Exception{
         public FilterException(String message){
             super(message);
@@ -57,22 +58,27 @@ public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
         }
         return trimEnd(newName);
     }
-    
-
     public static String parseSimple(String originalName, String lookFor, String replacement) {
         return originalName.replace(lookFor, replacement).trim();
     }
-
     public static String trimEnd(String string) {
         return string.replaceAll("\\s+$", "");
     }
-
     public static String simpleFormat(long number, int numberOfPositions) {
+        boolean positive = true;
+        if(number<0){
+            number*=-1;
+            positive=false;
+        }
         String result = String.valueOf(number);
         while (result.length() < numberOfPositions) {
             result = '0' + result;
         }
-        return result.trim();
+        result = result.trim();
+        if(!positive){
+            result="-"+result;
+        }
+        return result;
     }
     public static String extractNumber(Number number){
         String result = "";
@@ -108,4 +114,7 @@ public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
         }
         return true;
     }
+    
+    
+    
 }

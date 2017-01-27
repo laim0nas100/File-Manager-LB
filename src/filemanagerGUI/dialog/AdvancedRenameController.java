@@ -4,6 +4,9 @@
  * and open the template in the editor.
  */
 package filemanagerGUI.dialog;
+import LibraryLB.Parsing.Lexer;
+import LibraryLB.Parsing.Literal;
+import LibraryLB.Parsing.Token;
 import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
@@ -12,6 +15,7 @@ import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import javafx.application.Platform;
@@ -25,9 +29,13 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.util.Callback;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
+import static utility.ExtStringUtils.simpleFormat;
+import static utility.ExtStringUtils.trimEnd;
+import utility.PathStringCommands;
 
 /**
  * FXML Controller class
@@ -44,6 +52,8 @@ public class AdvancedRenameController extends BaseDialog {
 @FXML public TextField tfReplaceWith;
 @FXML public TextField tfFilter;
 @FXML public TextField tfStartingNumber;
+@FXML public TextField tfIncrement;
+
 
 @FXML public TableView table;
 
@@ -55,17 +65,22 @@ public class AdvancedRenameController extends BaseDialog {
 @FXML public Button buttonApply;
 
 
-private long startingNumber;
+private int startingNumber;
+private int increment;
 private LinkedList<TableItemObject> tableList;
 private ArrayList<ExtFolder> folders;
 private ArrayList<ExtFile> files;
 
-public void beforeShow(String title,ArrayList<String> fileList){
+public void beforeShow(String title,Collection<String> fileList){
     super.beforeShow(title);    
     this.setNumber();
     this.tableList = new LinkedList<>();
     this.files = new ArrayList<>();
     this.folders = new ArrayList<>();
+    Tooltip tp = new Tooltip();
+    tp.setText("Name ="+PathStringCommands.fileName+", Name without extension ="+PathStringCommands.nameNoExt+
+            ", Name extension only ="+PathStringCommands.extension+", Number (multi-digit if consecutive) ="+PathStringCommands.number);
+    this.tfFilter.setTooltip(tp);
     ArrayList<TableColumn> columns = new ArrayList<>();
     TableColumn<TableItemObject, String> nameCol1 = new TableColumn<>("Current Name");
     TableColumn<TableItemObject, String> nameCol2 = new TableColumn<>("Rename To");
@@ -181,8 +196,10 @@ public void previewSetting(){
         
         for(TableItemObject object:this.tableList){          
             try {
-                object.newName(ExtStringUtils.parseFilter(object.name1.get(), filter, number++));
-            } catch (Exception ex) {
+                
+                object.newName(parseFilter(object.name1.get(), filter, number));
+                number+=increment;
+            } catch (Lexer.NoSuchLexemeException | Lexer.StringNotTerminatedException ex) {
                 ErrorReport.report(ex);
             }
         }
@@ -209,12 +226,57 @@ public void update(){
     
 }
 
+
+public String parseFilter(String origName, String filter, long currentNumber) throws Lexer.NoSuchLexemeException, Lexer.StringNotTerminatedException{
+    Lexer lexer = new Lexer(filter);
+    lexer.skipWhitespace = false;
+    lexer.addToken(PathStringCommands.fileName,PathStringCommands.nameNoExt,PathStringCommands.extension,PathStringCommands.number);
+    int numerationAmmount = 0;
+    String newName = "";
+    PathStringCommands pathString = new PathStringCommands(origName);
+
+    boolean addingDigits = false;
+    Collection<Token> remainingTokens = lexer.getRemainingTokens();
+    for(Token token:remainingTokens){
+        if(token.id.equals(PathStringCommands.number)){
+            if(addingDigits){
+                numerationAmmount++;
+            }else{
+                numerationAmmount = 1;
+                addingDigits = true;
+            }
+        }else{
+            if(addingDigits){
+                addingDigits = false;
+                newName += simpleFormat(currentNumber,numerationAmmount);
+            }
+            if(token.id.equals(PathStringCommands.fileName)){
+                newName += pathString.getName(true);
+            }else if(token.id.equals(PathStringCommands.nameNoExt)){
+                newName += pathString.getName(false);
+            }else if(token.id.equals(PathStringCommands.extension)){
+                newName += pathString.getExtension();
+            }else{
+                Literal lit = (Literal)token;
+                newName += lit.value;
+            }
+            
+        }
+    }
+    if(addingDigits){
+        newName += simpleFormat(currentNumber,numerationAmmount);
+    }
+    return trimEnd(newName);
+}
 public void setNumber(){
     try{
         startingNumber = Integer.parseInt(this.tfStartingNumber.getText());
+        increment = Integer.parseInt(this.tfIncrement.getText());
     }catch(Exception ex){
         startingNumber = 0;
+        increment = 1;
         this.tfStartingNumber.setText(startingNumber+"");
+        this.tfIncrement.setText(increment+"");
         //reportError(ex);
     }
 }

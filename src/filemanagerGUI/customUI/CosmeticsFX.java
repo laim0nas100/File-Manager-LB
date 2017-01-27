@@ -135,6 +135,7 @@ public class CosmeticsFX {
                    
                     TableColumn c = (TableColumn) col;
                     changeListener(c);
+                    c.setPrefWidth(90);
                 });
             }catch(Exception e){
                 ErrorReport.report(e);

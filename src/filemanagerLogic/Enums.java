@@ -42,6 +42,7 @@ public class Enums {
         DUPLICATE_FINDER_DIALOG("Duplicate Finder","fxml/DuplicateFinder.fxml"),
         VIRTUAL_FOLDER_DIALOG("Virtual Folder","fxml/VirtualFolderDialog.fxml"),
         TASK_MANAGER_DIALOG("Task Manager","fxml/TaskManager.fxml"),
+        LIST_FRAME("List","fxml/List.fxml"),
         COMMAND_DIALOG("Command Dialog","fxml/CommandWindow.fxml");
         public final String recourse;
         private final String title;
