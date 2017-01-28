@@ -38,5 +38,8 @@ public class Frame {
     }
     public String getTitle(){
         return this.stage.getTitle();
-    } 
+    }
+    public String getID(){
+        return this.controller.getID();
+    }
 }

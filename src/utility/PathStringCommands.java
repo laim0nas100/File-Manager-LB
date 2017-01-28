@@ -10,7 +10,7 @@ import java.io.File;
 
 /**
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
 public class PathStringCommands {
     public static String fileName,nameNoExt,filePath,parent1,parent2,number,custom,relativeCustom,extension;

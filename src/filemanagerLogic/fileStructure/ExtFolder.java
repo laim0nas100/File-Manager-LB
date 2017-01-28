@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
+import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.Enums.Identity;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -180,7 +181,7 @@ public class ExtFolder extends ExtFile{
     @Override
     public String getAbsoluteDirectory(){
         if(isAbsoluteRoot()){
-            return "ROOT";
+            return ROOT_NAME;
         }
         String dir = this.getAbsolutePath();
         if(!dir.endsWith(File.separator)){

@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
+import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -19,9 +20,9 @@ import utility.CustomClock;
 /**
  * FXML Controller class
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
-public class ProgressDialogController extends BaseDialog {
+public class ProgressDialogController extends BaseController {
 
     @FXML public VBox base;
     

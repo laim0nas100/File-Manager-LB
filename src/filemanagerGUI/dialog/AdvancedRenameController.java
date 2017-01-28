@@ -7,6 +7,7 @@ package filemanagerGUI.dialog;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
+import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
@@ -42,7 +43,7 @@ import utility.PathStringCommands;
  *
  * @author Laimonas Beniušis
  */
-public class AdvancedRenameController extends BaseDialog {
+public class AdvancedRenameController extends BaseController {
 
     
 @FXML public Tab tbSpecificRename;

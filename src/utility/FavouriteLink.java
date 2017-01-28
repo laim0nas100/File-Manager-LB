@@ -5,6 +5,7 @@
  */
 package utility;
 
+import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 
@@ -18,7 +19,7 @@ public class FavouriteLink {
     public FavouriteLink(String name,String dir){
         propertyName = new SimpleStringProperty(name);
         if(dir.isEmpty()){
-            location = "ROOT";  
+            location = ROOT_NAME;  
         } else {
             location = dir;
         }

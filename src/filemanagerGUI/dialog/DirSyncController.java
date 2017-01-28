@@ -41,6 +41,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
+import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 
 /**
@@ -48,7 +49,7 @@ import filemanagerLogic.Enums;
  *
  * @author Laimonas Beniušis
  */
-public class DirSyncController extends BaseDialog {
+public class DirSyncController extends BaseController {
 
     @FXML public TextField directory0;
     @FXML public TextField directory1;

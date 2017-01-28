@@ -11,14 +11,15 @@ import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import utility.ErrorReport;
 import LibraryLB.Log;
+import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 
 /**
  * FXML Controller class
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
-public class WebDialogController extends BaseDialog{
+public class WebDialogController extends BaseController{
    @FXML public WebView browser;
    
 

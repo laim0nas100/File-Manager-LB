@@ -21,11 +21,17 @@ public abstract class BaseController implements Initializable{
     public void initialize(URL url, ResourceBundle rb) {}; 
     
     protected void beforeShow(String title){
-       this.windowID = title;
+    }
+    public String getID(){
+        return this.windowID;
     }
     protected void afterShow(){
         
     }
-    public abstract void exit();
+    
+    public void exit(){
+        ViewManager.getInstance().closeFrame(this.windowID);
+        ViewManager.getInstance().updateAllWindows();
+    }
     public abstract void update();
 }

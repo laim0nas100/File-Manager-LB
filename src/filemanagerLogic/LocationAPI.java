@@ -10,6 +10,7 @@ import filemanagerLogic.fileStructure.ExtFile;
 import filemanagerLogic.fileStructure.ExtFolder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
 import java.nio.file.Path;
@@ -35,10 +36,12 @@ public class LocationAPI {
     public ExtFile getFileAndPopulate(String pathl){
         ExtFile file = ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
+        pathl = pathl.trim();
         if(FileManagerLB.VirtualFolders.files.containsKey(pathl)){
                 return (VirtualFolder) FileManagerLB.VirtualFolders.files.get(pathl);
                 
-        }else if(!pathl.isEmpty()){
+        }else if(!pathl.isEmpty() && !pathl.startsWith(ROOT_NAME)){
+            
             try{
                 ExtFile tempFile = new ExtFile(pathl);
                 try{

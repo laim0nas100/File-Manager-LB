@@ -22,7 +22,6 @@ import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtFile;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +38,7 @@ import utility.ErrorReport;
 
 /**
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
 public class ViewManager {
     public SimpleBooleanProperty autoCloseProgressDialogs;
@@ -287,15 +286,17 @@ public class ViewManager {
         stage.setOnCloseRequest((WindowEvent we) -> {
             controller.exit();
         });
+        controller.windowID = title;
         Frame frame = new Frame(stage,controller);
-        this.frames.put(frame.getTitle(),frame); 
+        this.frames.put(frame.getTitle(),frame);
+        
         return frame;
        
     }
-    public void closeFrame(String title){
-        frames.get(title).getStage().close();
-        frames.remove(title);
-        windows.remove(title);
+    public void closeFrame(String windowID){
+        frames.get(windowID).getStage().close();
+        frames.remove(windowID);
+        windows.remove(windowID);
         if(windows.isEmpty()){
             try{
                 FileManagerLB.doOnExit();
@@ -314,6 +315,7 @@ public class ViewManager {
                 Frame frame = newFrame(FrameTitle.LIST_FRAME);
                 ListController controller = (ListController) frame.getController();
                 controller.beforeShow(frame.getStage().getTitle(),description);
+                
                 frame.getStage().show();
                 controller.afterShow(list);
                 frame.getStage().toFront();

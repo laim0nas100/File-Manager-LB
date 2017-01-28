@@ -131,11 +131,12 @@ public class CosmeticsFX {
         }
         public void prepareChangeListeners(){
             try{
-                    table.getColumns().forEach(col ->{
+                table.getColumns().forEach(col ->{
                    
                     TableColumn c = (TableColumn) col;
                     changeListener(c);
-                    c.setPrefWidth(90);
+                    c.setPrefWidth(90);//optional
+                    
                 });
             }catch(Exception e){
                 ErrorReport.report(e);
@@ -143,23 +144,18 @@ public class CosmeticsFX {
         }
         public void changeListener(final TableColumn listerColumn) {
         listerColumn.widthProperty().addListener(new ChangeListener<Number>() {
-
             @Override
             public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
 //                System.out.print(listerColumn.getText() + "  ");
 //                System.out.println(t1);
                 recentlyResized.set(true);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Thread.sleep(resizeTimeout);
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
-                        recentlyResized.set(false);
-                        
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(resizeTimeout);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }
+                    recentlyResized.set(false);
                 }).start();
             }
         });
@@ -203,7 +199,7 @@ public class CosmeticsFX {
         
         
     }
-    
+    /*
     public static ExtTableView wrapExFileTable(TableView table, Collection<ExtFile> files){
         TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
@@ -235,4 +231,5 @@ public class CosmeticsFX {
         table.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
         return new ExtTableView(table);
     }
+*/
 }

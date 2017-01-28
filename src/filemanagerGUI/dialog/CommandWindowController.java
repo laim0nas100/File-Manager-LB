@@ -9,6 +9,7 @@ import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
+import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
@@ -41,17 +42,17 @@ import utility.PathStringCommands;
 /**
  * FXML Controller class
  *
- * @author Lemmin
+ * @author Laimonas Beniušis
  */
-public class CommandWindowController extends BaseDialog {
+public class CommandWindowController extends BaseController {
     @FXML TextField textField;
     @FXML TextArea textArea;
     private Command command;
     private int executeQueue = 0;
-    private int maxExecutablesAtOnce = 10;
     
-    private int truncateAfter;
-    private String  commandGenerate,
+    public static int maxExecutablesAtOnce = 10;
+    public static int truncateAfter;
+    public static String  commandGenerate,
                     commandApply,
                     commandCreateVirtual,
                     commandListVirtualFolders,
@@ -69,19 +70,7 @@ public class CommandWindowController extends BaseDialog {
         this.commandSet = new HashSet<>();
        
         command = new Command(textField);
-        truncateAfter = (Integer) FileManagerLB.parameters.defaultGet("code.truncateAfter", 100000);
-        maxExecutablesAtOnce = (Integer) FileManagerLB.parameters.defaultGet("code.maxExecutables", 2);
-        commandGenerate = (String) FileManagerLB.parameters.defaultGet("code.commandGenerate", "generate");
-        commandApply = (String) FileManagerLB.parameters.defaultGet("code.commandApply", "apply");
-        commandCreateVirtual = (String) FileManagerLB.parameters.defaultGet("code.createVirtualFolder", "virtual");
-        commandListVirtualFolders = (String) FileManagerLB.parameters.defaultGet("code.listVirtualFolders", "listVirtualFolders");
-        commandListVirtual = (String) FileManagerLB.parameters.defaultGet("code.listVirtual", "listVirtual");
-        commandClear = (String) FileManagerLB.parameters.defaultGet("code.clear", "clear");
-        commandAddToVirtual = (String) FileManagerLB.parameters.defaultGet("code.addToVirtual", "add");
-        commandList = (String) FileManagerLB.parameters.defaultGet("code.list", "list");
-        commandListRec = (String) FileManagerLB.parameters.defaultGet("code.listRec", "listRec");
-        commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
-        commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
+        
 
         String[] coms = new String[]{
                     commandGenerate,
@@ -167,7 +156,7 @@ public class CommandWindowController extends BaseDialog {
                 submit(command);
             }
         }
-        public void generate(String command, String name){
+        public void generate(String command){
             try{
             
                 System.out.println(TaskFactory.getInstance().markedList);
@@ -211,7 +200,8 @@ public class CommandWindowController extends BaseDialog {
                     commands.add(commandToAdd);
                     Log.writeln(command+" => "+commandToAdd);
                 }
-                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.HOME_DIR+name, commands);
+                ViewManager.getInstance().newListFrame("Script generation", commands);
+//                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.HOME_DIR+name, commands);
             }catch(Exception ex){
                 ErrorReport.report(ex);
             }
@@ -232,9 +222,7 @@ public class CommandWindowController extends BaseDialog {
                 commands.removeFirst();
                 String newCom = fullCommand;
                 newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
-                String index = commands.removeFirst();
-                newCom = ExtStringUtils.replaceOnce(newCom, index+" ", "");
-                generate(newCom,index);
+                generate(newCom);
                 return true;
             }else if(firstWord.equalsIgnoreCase(commandApply)){
                 commands.removeFirst();

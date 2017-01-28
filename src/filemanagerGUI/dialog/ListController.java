@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
+import filemanagerGUI.BaseController;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -17,14 +18,14 @@ import javafx.scene.control.TextField;
 /**
  * FXML Controller class
  *
- * @author lemmin
+ * @author Laimonas Beniušis
  */
-public class ListController extends BaseDialog {
+public class ListController extends BaseController {
 
     @FXML public Label descriptionLabel;
     @FXML public ListView listView;
     @FXML public TextField pathToSave;
-    @FXML public TextField size;
+    @FXML public Label size;
     @Override
     public void update() {
     }

@@ -42,8 +42,10 @@ import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
+import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.FileAddressField;
+import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
@@ -166,7 +168,6 @@ public class MainController extends BaseController{
     
     @Override
     public void exit(){ 
-        Log.write("Closing internally " + windowID);
         ViewManager.getInstance().closeFrame(windowID); 
     }
 
@@ -180,7 +181,7 @@ public class MainController extends BaseController{
             this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
             this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
             if(MC.currentDir.isAbsoluteRoot()){
-                fileAddress.field.setText("ROOT");
+                fileAddress.field.setText(ROOT_NAME);
             }else if(MC.currentDir.getIdentity().equals(Identity.VIRTUAL)){
                 fileAddress.field.setText(MC.currentDir.getName());
             }else{
@@ -429,7 +430,7 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equalsIgnoreCase("ROOT")||possibleDir.isEmpty()){
+            if(possibleDir.equalsIgnoreCase(ROOT_NAME)||possibleDir.isEmpty()){
                 changeToDir(ArtificialRoot);
             }else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
@@ -956,7 +957,7 @@ public class MainController extends BaseController{
                         super.updateItem(t, bln);
                         if (t != null) {
                             setText(t.getPropertyName().get());
-                            if(!t.getPropertyName().get().equals("ROOT")){
+                            if(!t.getPropertyName().get().equals(ROOT_NAME)){
                                 setTooltip(t.getToolTip());
                             }
                         }else{

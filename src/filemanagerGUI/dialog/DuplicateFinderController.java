@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
+import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
@@ -29,7 +30,7 @@ import javafx.util.Callback;
  *
  * @author Laimonas Beniušis
  */
-public class DuplicateFinderController extends BaseDialog{
+public class DuplicateFinderController extends BaseController{
 
     @FXML public TableView list;
     @FXML public Text correlationRatio;
