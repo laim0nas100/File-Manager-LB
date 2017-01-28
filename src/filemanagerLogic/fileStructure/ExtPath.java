@@ -38,7 +38,7 @@ public class ExtPath {
     public StringProperty propertyType;
     public LongProperty propertySize;
     public LongProperty propertyLastModified;
-    
+    public String deleteMe;
     public StringProperty propertyDate;
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
