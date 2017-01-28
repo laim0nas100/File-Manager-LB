@@ -329,7 +329,7 @@ private static class TableItemObject{
         path2.set(newPath+s);
         //Log.write(path2,"  ",name2);
     }
-}
+    }
 private LinkedList<TableItemObject> applyFilters(LinkedList<TableItemObject> items){
     LinkedList<TableItemObject> list = new LinkedList<>();
     for(TableItemObject object:items){
