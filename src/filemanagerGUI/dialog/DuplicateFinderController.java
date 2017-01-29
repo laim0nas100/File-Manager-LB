@@ -9,7 +9,7 @@ import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -40,6 +40,7 @@ public class DuplicateFinderController extends BaseController{
     @FXML public ProgressBar progressBar;
     private MenuTree menuTree;
     private ExtFolder root;
+    private ExtTask task;
     public void beforeShow(String title,ExtFolder root) {
         super.beforeShow(title);
         this.root = root;
@@ -104,13 +105,14 @@ public class DuplicateFinderController extends BaseController{
         this.list.setContextMenu(menuTree.constructContextMenu());
     }
     public void search(){
-        searchButton.setDisable(true);
+        if(task!=null){
+            task.cancel();
+        }
         list.getItems().clear();
-        ExtTask task = TaskFactory.getInstance().duplicateFinderTask(root, scroll.valueProperty().divide(100).get(),list.getItems());
+        task = TaskFactory.getInstance().duplicateFinderTask(root, scroll.valueProperty().divide(100).get(),list.getItems());
         task.setOnSucceeded(eh ->{
-            
-            searchButton.setDisable(false);
-            this.progressBar.setProgress(1);
+//            this.progressBar.progressProperty().unbind();
+//            this.progressBar.setProgress(1);
         });
         this.progressBar.progressProperty().bind(task.progressProperty());
         Thread t = new Thread(task);
@@ -122,12 +124,20 @@ public class DuplicateFinderController extends BaseController{
     public void update() {
     }
     public static class SimpleTableItem{
-        public ExtFile f1;
-        public ExtFile f2;
-        public SimpleTableItem(ExtFile file1, ExtFile file2){
+        public ExtPath f1;
+        public ExtPath f2;
+        public SimpleTableItem(ExtPath file1, ExtPath file2){
             f1 = file1;
             f2 = file2;
         }
     }
+  
+
+    @Override
+    public void exit() {
+        task.cancel();
+        super.exit(); //To change body of generated methods, choose Tools | Templates.
+    }
+
 
 }

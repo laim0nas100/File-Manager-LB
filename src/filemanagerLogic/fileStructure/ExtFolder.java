@@ -28,14 +28,14 @@ import utility.ExtStringUtils;
  * @author Laimonas Beiušis
  * Extended Folder for custom actions
  */
-public class ExtFolder extends ExtFile{
+public class ExtFolder extends ExtPath{
 
 
     
     private boolean populated;
-    public ConcurrentHashMap <String,ExtFile> files;
+    public ConcurrentHashMap <String,ExtPath> files;
     
-    public Collection<ExtFile> getFilesCollection(){
+    public Collection<ExtPath> getFilesCollection(){
         return this.files.values();
     }
 
@@ -44,27 +44,16 @@ public class ExtFolder extends ExtFile{
     public Identity getIdentity(){
         return Identity.FOLDER;
     }
-    
-    @Override
-    protected void setDefaultValues(){
-        this.files = new ConcurrentHashMap<>(2,0.75f,25);
-        this.populated = false;
-        super.setDefaultValues();
-    }
     public ExtFolder(String src){
         super(src);
-        setDefaultValues();
+        this.files = new ConcurrentHashMap<>(2,0.75f,25);
+        this.populated = false;
     }
     
-    public ExtFolder(File src){
-        super(src.getAbsolutePath());
-        setDefaultValues();
-        
-    }
     
     public void populateFolder(){
         try{
-            if(null != this.list()){
+            if(Files.isDirectory(this.toPath())){
                 String parent = this.getAbsoluteDirectory();
                 
                 Iterator<Path> iterator = Files.newDirectoryStream(Paths.get(parent)).iterator();
@@ -76,13 +65,13 @@ public class ExtFolder extends ExtFile{
                         if(!Files.exists(f)){
                             continue;
                         }
-                        ExtFile file;
+                        ExtPath file;
                         if(Files.isDirectory(f)){
                             file = new ExtFolder(filePathStr);             
                         }else if(Files.isSymbolicLink(f)){
                             file = new ExtLink(filePathStr);
                         }else{
-                            file = new ExtFile(filePathStr);
+                            file = new ExtPath(filePathStr);
                         }
                         files.put(file.propertyName.get(), file);
                     }
@@ -101,14 +90,14 @@ public class ExtFolder extends ExtFile{
         Log.writeln("Iteration "+fold.getAbsoluteDirectory());
         for(ExtFolder folder:fold.getFoldersFromFiles()){
             folder.populateRecursiveInner(folder);
-            fold.files.replace(folder.getName(), folder);  
+            fold.files.replace(folder.propertyName.get(), folder);  
         }
         this.populated = true;
         
     };
     public Collection<ExtFolder> getFoldersFromFiles(){
         LinkedList<ExtFolder> folders = new LinkedList<>();
-        for(ExtFile file:this.getFilesCollection()){
+        for(ExtPath file:this.getFilesCollection()){
             if(file.getIdentity().equals(Identity.FOLDER)){
                 ExtFolder fold = (ExtFolder) file;
                 folders.add(fold);
@@ -117,20 +106,20 @@ public class ExtFolder extends ExtFile{
         return folders;   
     }
     @Override
-    public Collection<ExtFile> getListRecursive(){
-        LinkedList<ExtFile> list = new LinkedList<>();
+    public Collection<ExtPath> getListRecursive(){
+        LinkedList<ExtPath> list = new LinkedList<>();
         list.add(this);
         getRootList(list,this);
-        Iterator<ExtFile> iterator = list.iterator();
+        Iterator<ExtPath> iterator = list.iterator();
         while(iterator.hasNext()){
-            ExtFile next = iterator.next();
+            ExtPath next = iterator.next();
             if(next.isDisabled.get()){
                 iterator.remove();
             }
         }
         return list; 
     }
-    private void getRootList(Collection<ExtFile> list,ExtFolder folder){
+    private void getRootList(Collection<ExtPath> list,ExtFolder folder){
         folder.update();
         if(!folder.isDisabled.get()){
             list.addAll(folder.getFilesCollection());
@@ -145,7 +134,7 @@ public class ExtFolder extends ExtFile{
         }
         if(this.isPopulated()){
             Log.writeln("Update:"+this.getAbsolutePath());
-            for(ExtFile file:this.getFilesCollection()){
+            for(ExtPath file:this.getFilesCollection()){
                 if(!Files.exists(file.toPath())){
                     Log.writeln(file+" dont exist");
                     LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
@@ -155,7 +144,7 @@ public class ExtFolder extends ExtFile{
         }
         this.populateFolder();
     }
-    public ExtFile getIgnoreCase(String name){
+    public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){
             String request = getKey(name);
             return files.get(request);
@@ -183,11 +172,7 @@ public class ExtFolder extends ExtFile{
         if(isAbsoluteRoot()){
             return ROOT_NAME;
         }
-        String dir = this.getAbsolutePath();
-        if(!dir.endsWith(File.separator)){
-            dir+=File.separator;
-        }
-        return dir;
+        return this.getAbsolutePath()+File.separator;
     }
     
     

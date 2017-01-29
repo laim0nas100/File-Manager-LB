@@ -19,7 +19,7 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
@@ -131,7 +131,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    public void newRenameDialog(ExtFolder folder,ExtFile itemToRename){
+    public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
         ExtTask et = new ExtTask() {
             @Override
             protected Void call() throws Exception {

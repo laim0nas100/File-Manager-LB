@@ -6,8 +6,9 @@
 package filemanagerGUI.dialog;
 
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
+import java.nio.file.Files;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -28,12 +29,12 @@ public class RenameDialogController extends TextInputDialogController {
     @FXML public Label nameAvailable;
    
     
-    private ExtFile itemToRename;
+    private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
     
     
-    public void afterShow(ExtFolder folder,ExtFile itemToRename){
+    public void afterShow(ExtFolder folder,ExtPath itemToRename){
         
         this.description.setText("Rename "+itemToRename.propertyName.get());
         this.itemToRename = itemToRename;
@@ -49,12 +50,12 @@ public class RenameDialogController extends TextInputDialogController {
     }
     @Override
     public void checkAvailable(){
-        if(!itemToRename.exists()){
+        if(!Files.exists(itemToRename.toPath())){
             exit();
         }
         listToCheck.clear();
         folder.update();
-        for(ExtFile file:folder.getFilesCollection()){
+        for(ExtPath file:folder.getFilesCollection()){
             listToCheck.add(file.propertyName.get());
         }
         stringToCheck = textField.getText();
@@ -70,7 +71,7 @@ public class RenameDialogController extends TextInputDialogController {
     public void apply(){
         if(nameIsAvailable.get()){
             try {
-                String fallback = TaskFactory.resolveAvailableName(folder, itemToRename.propertyName.get()).trim();
+                String fallback = TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim();
                 fallback = ExtStringUtils.replaceOnce(fallback, folder.getAbsoluteDirectory(), "");
                 TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),stringToCheck.trim(),fallback);
                 exit();

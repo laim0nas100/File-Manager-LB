@@ -9,6 +9,7 @@ import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import javafx.beans.property.BooleanProperty;
@@ -25,53 +27,87 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
+import utility.ExtStringUtils;
 
 /**
  *
  * @author Lemmin
  */
-public class ExtPath {
-    public Path path;
+public class ExtPath{
+    public static final Comparator<String> COMPARE_SIZE_STRING = (String f1, String f2) -> {
+        if (f1.isEmpty() || f2.isEmpty()) {
+            return f1.compareTo(f2);
+        }
+        return ExtPath.extractSize(f1).compareTo(ExtPath.extractSize(f2));
+    };
+    public static Double extractSize(String s) {
+        Long multiplier = Enums.DATA_SIZE.B.size;
+        if (s.startsWith("(B)")) {
+            s = s.replace("(B) ", "");
+        } else if (s.startsWith("(KB)")) {
+            s = s.replace("(KB) ", "");
+            multiplier = Enums.DATA_SIZE.KB.size;
+        } else if (s.startsWith("(MB)")) {
+            s = s.replace("(MB) ", "");
+            multiplier = Enums.DATA_SIZE.MB.size;
+        } else if (s.startsWith("(GB)")) {
+            s = s.replace("(GB) ", "");
+            multiplier = Enums.DATA_SIZE.GB.size;
+        }
+        return Double.parseDouble(s) * multiplier;
+    }
+    
+    private Path path;
+    private final String absolutePath;
+    private long size = -1;
+    private long lastModified = -1;
     public BooleanProperty isAbsoluteRoot;
     public BooleanProperty isDisabled;
     public StringProperty propertyName;
     public StringProperty propertyType;
     public LongProperty propertySize;
     public LongProperty propertyLastModified;
-    public String deleteMe;
     public StringProperty propertyDate;
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
-    protected final Enums.Identity identity = Enums.Identity.FILE;
-    private long size = -1;
-    private long lastModified = -1;
+    
     private Task getSizeTask = new Task<Void>(){
             @Override
             protected Void call() throws Exception {
-                size =  Files.size(path);
+                size =  Files.size(toPath());
                 return null;
             }
         };
     private Task getDateTask = new Task<Void>(){
             @Override
             protected Void call() throws Exception {
-                lastModified =  Files.getLastModifiedTime(path).toMillis();
+                lastModified =  Files.getLastModifiedTime(toPath()).toMillis();
                 return null;
             }
         };
     public ExtPath(String str){
-        this(Paths.get(str));
+        str = str.trim();
+        if(str.endsWith(File.separator)){
+            str = str.substring(0,str.length()-1);
+        }
+        this.absolutePath = str;
+        init();
     }
-    public ExtPath(Path p){
-        this.path = p;
+    public Path toPath(){
+        if(this.path == null){
+            this.path = Paths.get(absolutePath);
+        }
+        return this.path;
+    }
+    private void init(){
         this.getSizeTask.setOnSucceeded(event->{
             this.propertySize.set(size);
         });
         this.getDateTask.setOnSucceeded(event->{
             this.propertyLastModified.set(lastModified);
         });
-        this.propertyName = new SimpleStringProperty(this.path.getFileName().toString());
-        this.propertyType = new SimpleStringProperty(this.identity.toString());
+        this.propertyName = new SimpleStringProperty(this.getName(true));
+        this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
         this.isDisabled = new SimpleBooleanProperty(false);
         this.propertySize = new SimpleLongProperty(){
             @Override
@@ -129,9 +165,7 @@ public class ExtPath {
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
         this.isAbsoluteRoot.set(false);
-        
     }
-    
     public Collection<ExtPath> getListRecursive(){
         ArrayList<ExtPath> list = new ArrayList<>();
         if(!this.isDisabled.get()){
@@ -150,12 +184,105 @@ public class ExtPath {
         return false;
     }
     public String getAbsoluteDirectory(){
-        return this.path.toString();
+        return this.getAbsolutePath();
+    }
+    public String getAbsolutePath(){
+        return absolutePath;
     }
     public LocationInRoot getMapping(){
         return LocationAPI.getInstance().getLocationMapping(getAbsoluteDirectory());
     }
     public Enums.Identity getIdentity(){
-        return this.identity;
+        return Enums.Identity.FILE;
+    }
+    public void setIsAbsoluteRoot(boolean b){
+        this.isAbsoluteRoot.set(b);
+    }
+    public boolean isAbsoluteRoot(){
+        return this.isAbsoluteRoot.get();
+    }
+    public long size(){
+        long get = this.propertySize.get();
+        if(get==-1){
+            this.getSizeTask.run();
+        }
+        return this.size;
+    }
+    public long lastModified(){
+        long get = this.propertyLastModified.get();
+        if(get==-1){
+            this.getDateTask.run();
+        }
+        return this.lastModified;
+    }
+
+    public String getName(boolean extension){
+        String name = this.getName(absolutePath);
+        
+        if(!extension){
+            if(name.contains(".")){
+                int index = ExtStringUtils.lastIndexOf(name, ".");
+                name = name.substring(0,index);
+            }
+        }
+        return name;
+    }
+    private String getName(String path){
+        if(path.endsWith(File.separator)){
+            path = path.substring(0,path.length()-1);
+        }
+        int index = ExtStringUtils.lastIndexOf(path, File.separator)+1;
+        path = path.substring(index);
+        return path;
+    }
+    public String getExtension(){
+        String name = this.getName(true);
+        if(name.contains(".")){
+            int index = ExtStringUtils.lastIndexOf(name, ".")-1;
+            if(index>=0){
+                name = name.substring(index);
+            }else{
+                return "";
+            }
+        }else{
+            return "";
+        }
+        return name;
+    }
+    public String getParent(int timesToGoUp){
+        String current = this.absolutePath;
+        while(timesToGoUp>0){
+            current = this.goUp(current);
+            timesToGoUp--;
+        }
+        return current;
+    }
+    private String goUp(String current){
+        int index = ExtStringUtils.lastIndexOf(current, this.getName(current))-1;
+        if(index<0){
+            index = 0;
+        }
+        current = current.substring(0, index);
+        if(current.length()==0){
+            current = File.separator;
+        }
+        return current;
+       
+    }
+    public String relativeFrom(String possibleParent){
+        String strPath = absolutePath+File.separator;
+        if(!strPath.contains(possibleParent) || strPath.equalsIgnoreCase(possibleParent)){
+            return absolutePath;
+        }else{
+            return ExtStringUtils.replaceOnce(strPath, possibleParent, "");
+        }
+    }
+    public String relativeTo(String possibleChild){
+        String strPath = absolutePath+File.separator;
+        if(!possibleChild.contains(strPath) || possibleChild.equalsIgnoreCase(strPath)){
+            return absolutePath;
+        }else{
+            return ExtStringUtils.replaceOnce(possibleChild, strPath, "");
+        }
     }
 }

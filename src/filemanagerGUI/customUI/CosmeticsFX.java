@@ -6,7 +6,7 @@
 package filemanagerGUI.customUI;
 
 import filemanagerLogic.Enums;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -200,22 +200,22 @@ public class CosmeticsFX {
         
     }
     /*
-    public static ExtTableView wrapExFileTable(TableView table, Collection<ExtFile> files){
-        TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
-        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+    public static ExtTableView wrapExFileTable(TableView table, Collection<ExtPath> files){
+        TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
+        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
             @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
                 return cellData.getValue().propertyName;
             }
         });
         
-        TableColumn<ExtFile, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyType);
+        TableColumn<ExtPath, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyType);
 
-        TableColumn<ExtFile, String> sizeCol = new TableColumn<>("Size Auto");
-        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+        TableColumn<ExtPath, String> sizeCol = new TableColumn<>("Size Auto");
+        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
             @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
                 if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
                     return new SimpleStringProperty("");
                 }else{
@@ -224,9 +224,9 @@ public class CosmeticsFX {
      
         }});
         
-        sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
-        TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
-        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
+        sizeCol.setComparator(ExtPath.COMPARE_SIZE_STRING);
+        TableColumn<ExtPath, String> dateCol = new TableColumn<>("Last Modified");
+        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyDate);
         table.getColumns().clear();
         table.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
         return new ExtTableView(table);

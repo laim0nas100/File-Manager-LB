@@ -5,7 +5,7 @@
  */
 package filemanagerLogic;
 
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -97,16 +97,16 @@ public class ManagingClass {
             } 
         }
     }
-    public Collection<ExtFile> getCurrentContents(){
+    public Collection<ExtPath> getCurrentContents(){
         return currentDir.getFilesCollection();       
     }
-    public ObservableList<ExtFile> getAllContents(){
-        ObservableList<ExtFile> list = FXCollections.observableArrayList();
+    public ObservableList<ExtPath> getAllContents(){
+        ObservableList<ExtPath> list = FXCollections.observableArrayList();
         list.addAll(ArtificialRoot.getListRecursive());
         return list;  
     }
     public void printAllContents(){
-        for(ExtFile file:ArtificialRoot.getListRecursive()){
+        for(ExtPath file:ArtificialRoot.getListRecursive()){
             Log.writeln(file.getAbsolutePath());
         }
     }
@@ -130,7 +130,7 @@ public class ManagingClass {
     
     public void createNewFolder() throws IOException{
         String newName = "New Folder";
-        newName = TaskFactory.resolveAvailableName(currentDir, newName);
+        newName = TaskFactory.resolveAvailablePath(currentDir, newName);
         Files.createDirectory(Paths.get(newName));
         ExtFolder folder = new ExtFolder(newName);
         LocationInRoot location = new LocationInRoot(newName);
@@ -138,9 +138,9 @@ public class ManagingClass {
     }
     public void createNewFile() throws IOException{
         String newName = "New File";
-        newName = TaskFactory.resolveAvailableName(currentDir, newName);
+        newName = TaskFactory.resolveAvailablePath(currentDir, newName);
         Files.createFile(Paths.get(newName));
-        ExtFile file = new ExtFile(newName);
+        ExtPath file = new ExtPath(newName);
         LocationInRoot location = new LocationInRoot(newName);
         LocationAPI.getInstance().putByLocation(location, file);
     }

@@ -38,7 +38,8 @@ public class Snapshot implements Serializable{
         this.folderCreatedFrom = folder.getAbsoluteDirectory();
         Log.writeln("Folder size"+folder.files.size());
         folder.getListRecursive().forEach(file ->{
-            String relPath = TaskFactory.resolveRelativePath(file, folder);
+            String relPath = file.relativeFrom(folder.getAbsolutePath());
+//            String relPath = TaskFactory.resolveRelativePath(file, folder);
             Entry entry = new Entry(file,relPath);
             map.put(relPath, entry);
         });

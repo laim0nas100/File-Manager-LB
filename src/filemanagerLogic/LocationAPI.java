@@ -6,13 +6,14 @@
 package filemanagerLogic;
 
 import filemanagerGUI.FileManagerLB;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ArtificialRoot;
 import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import utility.ErrorReport;
@@ -33,8 +34,8 @@ public class LocationAPI {
     public LocationInRoot getLocationMapping(String path){
         return new LocationInRoot(path);
     }
-    public ExtFile getFileAndPopulate(String pathl){
-        ExtFile file = ArtificialRoot;
+    public ExtPath getFileAndPopulate(String pathl){
+        ExtPath file = ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
         pathl = pathl.trim();
         if(FileManagerLB.VirtualFolders.files.containsKey(pathl)){
@@ -43,11 +44,11 @@ public class LocationAPI {
         }else if(!pathl.isEmpty() && !pathl.startsWith(ROOT_NAME)){
             
             try{
-                ExtFile tempFile = new ExtFile(pathl);
+                ExtPath tempFile = new ExtPath(pathl);
                 try{
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
-                        tempFile = new ExtFile(path.toAbsolutePath().toString());
+                        tempFile = new ExtPath(path.toAbsolutePath().toString());
                         if(!tempFile.isRoot()){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 ArtificialRoot.update();
@@ -58,7 +59,7 @@ public class LocationAPI {
                     //ErrorReport.report(new Exception("windows auto pathing exception"));
                 }
                 //loc = tempFile.getMapping();
-                if(tempFile.isDirectory()){
+                if(Files.isDirectory(tempFile.toPath())){
                     tempFile = new ExtFolder(tempFile.getAbsoluteDirectory());
                 }
                 LocationInRoot loc = tempFile.getMapping();
@@ -100,7 +101,7 @@ public class LocationAPI {
         folder.files.remove(key);
     }
 
-    public void putByLocation(LocationInRoot location, ExtFile file) {
+    public void putByLocation(LocationInRoot location, ExtPath file) {
         int i = 0;
         ExtFolder folder = ArtificialRoot;
         //Log.writeln("Put by location:"+location.toString());
@@ -110,7 +111,7 @@ public class LocationAPI {
         }
         folder.files.put(file.propertyName.get(), file);
     }
-    public void putByLocationRecursive(LocationInRoot location, ExtFile file) {
+    public void putByLocationRecursive(LocationInRoot location, ExtPath file) {
         int i = 0;
         ExtFolder folder = ArtificialRoot;
         
@@ -139,13 +140,13 @@ public class LocationAPI {
             
         }
     }
-    public ExtFile getFileByLocation(LocationInRoot location) {
+    public ExtPath getFileByLocation(LocationInRoot location) {
         if(location.length()==0){
             return ArtificialRoot;
         }
         try{
             ExtFolder folder = ArtificialRoot;
-            ExtFile file = ArtificialRoot;
+            ExtPath file = ArtificialRoot;
             //Log.writeln("Request:" + location.toString());
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){
@@ -168,12 +169,12 @@ public class LocationAPI {
         }
        
     }
-    public ExtFile getClosestFileByLocation(LocationInRoot location){
+    public ExtPath getClosestFileByLocation(LocationInRoot location){
         if(location.length()==0){
             return ArtificialRoot;
         }
         ExtFolder folder = ArtificialRoot;
-        ExtFile file = ArtificialRoot;
+        ExtPath file = ArtificialRoot;
         try{
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){

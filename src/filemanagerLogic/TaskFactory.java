@@ -6,7 +6,7 @@
 package filemanagerLogic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.io.IOException;
@@ -25,11 +25,14 @@ import filemanagerLogic.fileStructure.ActionFile;
 import filemanagerLogic.snapshots.ExtEntry;
 import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
 import utility.FileNameException;
@@ -43,9 +46,9 @@ import utility.FileNameException;
 //
 public class TaskFactory {
     
-    public  ObservableList<ExtFile> dragList;
+    public  ObservableList<ExtPath> dragList;
     public  ObservableList<String> markedList;
-    public  ArrayList<ExtFile> actionList;
+    public  ArrayList<ExtPath> actionList;
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory INSTANCE = new TaskFactory();
     private static final int TRY_LIMIT = 5;
@@ -88,34 +91,20 @@ public class TaskFactory {
             }
         }
         LocationInRoot location  = new LocationInRoot(fileToRename);
-        ExtFile file = LocationAPI.getInstance().getFileByLocation(location);
+        ExtPath file = LocationAPI.getInstance().getFileByLocation(location);
         ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
         
         String path1 = file.getAbsolutePath();
         String path2 = parent.getAbsoluteDirectory()+newName;
         String fPath = parent.getAbsoluteDirectory()+fallbackName;
         
-        Log.writeln("Rename:",path1,"New Name:"+newName,"Fallback:"+fallbackName);
+        Log.write("Rename:",path1,"New Name:"+newName,"Fallback:"+fallbackName);
         if(path1.equalsIgnoreCase(path2)){
-            Files.move(new File(path1).toPath(),new File(fPath).toPath());
+            Files.move(Paths.get(path1),Paths.get(fPath));
             parent.update();
-            Files.move(new File(fPath).toPath(), new File(path2).toPath());
+            Files.move(Paths.get(fPath), Paths.get(path2));
         }else{
-            Files.move(new File(path1).toPath(), new File(path2).toPath());
-        }
-    }
-    public void renameRootKeys(ExtFolder root,LocationInRoot newLoc,LocationInRoot oldLoc ){
-        
-        ExtFile file = LocationAPI.getInstance().getFileByLocation(oldLoc);
-        if(file.getIdentity().equals(Enums.Identity.FILE)){
-            ExtFile newFile = new ExtFile(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
-            LocationAPI.getInstance().removeByLocation(oldLoc);
-            LocationAPI.getInstance().putByLocation(newLoc, newFile);
-        }else if(file.getIdentity().equals(Enums.Identity.FOLDER)){
-            ExtFolder newFile = new ExtFolder(file.getParentFile().getAbsolutePath()+File.separatorChar+newLoc.getName());
-            newFile.populateRecursive();
-            LocationAPI.getInstance().removeByLocation(oldLoc);
-            LocationAPI.getInstance().putByLocation(newLoc, newFile);
+            Files.move(Paths.get(path1), Paths.get(path2));
         }
     }
     
@@ -130,14 +119,14 @@ public class TaskFactory {
         
         
     }
-    public Collection<ExtFile> populateExtFileList(Collection<String> filelist){
-        Collection<ExtFile> collection = FXCollections.observableArrayList();
+    public Collection<ExtPath> populateExtPathList(Collection<String> filelist){
+        Collection<ExtPath> collection = FXCollections.observableArrayList();
         filelist.forEach(item ->{
             collection.add(LocationAPI.getInstance().getFileAndPopulate(item));
         });
         return collection;
     }
-    public Collection<String> populateStringFileList(Collection<ExtFile> filelist){
+    public Collection<String> populateStringFileList(Collection<ExtPath> filelist){
         Collection<String> collection = FXCollections.observableArrayList();
         filelist.forEach(item ->{
             collection.add(item.getAbsoluteDirectory());
@@ -145,18 +134,18 @@ public class TaskFactory {
         return collection;
     }
     
-    private ActionFile[] prepareForCopy(Collection<ExtFile> fileList, ExtFile dest){
+    private ActionFile[] prepareForCopy(Collection<ExtPath> fileList, ExtPath dest){
         Log.writeln("List recieved in task");
         
-        for(ExtFile file:fileList){
+        for(ExtPath file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
-        for(ExtFile file:fileList){
-            Collection<ExtFile> listRecursive = file.getListRecursive();
-            ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
-            for(ExtFile f:listRecursive){
-                String relativePath = resolveRelativePath(f, (ExtFolder) parentFile);
+        for(ExtPath file:fileList){
+            Collection<ExtPath> listRecursive = file.getListRecursive();
+            ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            for(ExtPath f:listRecursive){
+                String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
                 list.add(new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath));
             }
            
@@ -172,15 +161,15 @@ public class TaskFactory {
         return array;
         
     }   
-    private ActionFile[] prepareForDelete(Collection<ExtFile> fileList){
+    private ActionFile[] prepareForDelete(Collection<ExtPath> fileList){
         Log.writeln("List recieved in task");
-        for(ExtFile file:fileList){
+        for(ExtPath file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
-        for(ExtFile file:fileList){
-            Collection<ExtFile> listRecursive = file.getListRecursive();
-            for(ExtFile f:listRecursive){
+        for(ExtPath file:fileList){
+            Collection<ExtPath> listRecursive = file.getListRecursive();
+            for(ExtPath f:listRecursive){
                 list.add(new ActionFile(f.getAbsolutePath()));
             }
         }
@@ -194,19 +183,19 @@ public class TaskFactory {
         return array;
         
     } 
-    private ActionFile[] prepareForMove(Collection<ExtFile> fileList,ExtFile dest){
+    private ActionFile[] prepareForMove(Collection<ExtPath> fileList,ExtPath dest){
         Log.writeln("List recieved in task");
         
-        for(ExtFile file:fileList){
+        for(ExtPath file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
-        for(ExtFile file:fileList){
-            Collection<ExtFile> listRecursive = file.getListRecursive();
-            ExtFile parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
-            for(ExtFile f:listRecursive){
+        for(ExtPath file:fileList){
+            Collection<ExtPath> listRecursive = file.getListRecursive();
+            ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            for(ExtPath f:listRecursive){
                 try{
-                String relativePath = resolveRelativePath(f, (ExtFolder) parentFile);
+                String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
                 //Log.write("RelativePath: ",relativePath);
                 ActionFile AF = new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath);
                 //Log.write("ActionFile: ",AF);
@@ -229,12 +218,12 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public ExtTask copyFiles(Collection<String> fileList, ExtFile dest){  
+    public ExtTask copyFiles(Collection<String> fileList, ExtPath dest){  
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
-                ActionFile[] list = prepareForCopy(populateExtFileList(fileList),dest);
+                ActionFile[] list = prepareForCopy(populateExtPathList(fileList),dest);
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -265,13 +254,13 @@ public class TaskFactory {
             }
         };
     }
-    public ExtTask moveFiles(Collection<String> fileList, ExtFile dest){
+    public ExtTask moveFiles(Collection<String> fileList, ExtPath dest){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
                 updateMessage("Populating list for move");
-                ActionFile[] list = prepareForMove(populateExtFileList(fileList),dest);
+                ActionFile[] list = prepareForMove(populateExtPathList(fileList),dest);
                 updateMessage("Begin");
                 int index1 = 0;
                 for(; index1<list.length; index1++){
@@ -330,7 +319,7 @@ public class TaskFactory {
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
-                ActionFile[] list = prepareForDelete(populateExtFileList(fileList));
+                ActionFile[] list = prepareForDelete(populateExtPathList(fileList));
                 for(int i=0; i<list.length; i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
@@ -359,36 +348,28 @@ public class TaskFactory {
             }
         };
     } 
-    private void populateRecursiveParallelInner(ExtFolder folder, int level, final int MAX_DEPTH){
+    private void populateRecursiveParallelInner(ExtFolder folder,int depth){
         
-        if(level<MAX_DEPTH){
-            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsoluteDirectory());
+        if(0<depth){
+//            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsoluteDirectory());
             folder.update();
             
             for(ExtFolder fold:folder.getFoldersFromFiles()){
-                populateRecursiveParallelInner(fold, level+1,MAX_DEPTH);
+                new Thread(populateRecursiveParallel(fold, depth-1)).start();
             }
         }
     }
-    public ExtTask populateRecursiveParallel(ExtFolder folder, final int MAX_DEPTH){
+    public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
         return new ExtTask(){
             @Override protected Void call() throws Exception {
-                int level = 0;
-                populateRecursiveParallelInner(folder,level,MAX_DEPTH);
+                populateRecursiveParallelInner(folder,depth);
             return null;
             }
         };
     }
     
  //MISC
-    public static String resolveRelativePath(ExtFile f1, ExtFolder f2){
-
-        String parentFolder = f2.getAbsoluteDirectory();
-        String path1 = f1.getAbsolutePath();
-        String result = org.apache.commons.lang3.StringUtils.replaceOnce(path1, parentFolder, "");
-        return result;
-    }
-    public static String resolveAvailableName(ExtFolder folder,String name){
+    public static String resolveAvailablePath(ExtFolder folder,String name){
         String path = folder.getAbsoluteDirectory();
         String newName = name;
         int i=0;
@@ -570,17 +551,101 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
+    public ExtTask duplicateFinderTaskOld(ExtFolder folder,double ratio,ObservableList list){
+        return new ExtTask(){
+            @Override
+            protected Void call() throws Exception{
+                ExtPath[] array = new ExtPath[0];
+                Log.write(ratio);
+                array = folder.getListRecursive().toArray(array);
+                long progress = 0;
+                long len = array.length*array.length;
+                    for(int i=0; i<array.length;i++){
+                        progress+=i+1;
+                        for(int j=i+1; j<array.length;j++){
+                            if(this.isCancelled()){
+                                Log.write("Duplicate finder was canceled");
+                                return null;
+                            }
+                            ExtPath file = array[i];
+                            ExtPath file1 = array[j];
+                            
+                            double rat = StringOperations.correlationRatio(file.propertyName.get(),file1.propertyName.get());
+                            
+                            if(rat>=ratio){
+                                Log.write("Found:",file.getAbsoluteDirectory()+" | ",file1.getAbsoluteDirectory()+" "+rat);
+//                                Platform.runLater(()->{
+                                    list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
+//                                });
+                            }
+                            
+                            this.updateProgress(progress++, len);
+//                            Log.write(progress," ",len);
+                        }
+                        this.updateProgress(progress, len);
+                        Log.write(progress," ",len);
+                    }
+                    
+                return null;
+            };
+        };
+        
+    }
     public ExtTask duplicateFinderTask(ExtFolder folder,double ratio,ObservableList list){
         return new ExtTask(){
             @Override
             protected Void call() throws Exception{
-                ExtFile[] array = new ExtFile[0];
+                ExtPath[] array = new ExtPath[0];
                 Log.write(ratio);
                 array = folder.getListRecursive().toArray(array);
+                final SimpleLongProperty progress = new SimpleLongProperty();
+                ArrayDeque<Task> tasks = new ArrayDeque<>();
+                final long len = array.length+array.length;
                     for(int i=0; i<array.length;i++){
-                        for(int j=i+1; j<array.length;j++){
-                            ExtFile file = array[i];
-                            ExtFile file1 = array[j];
+                        progress.set(progress.get()+i+1);
+                        
+                            if(this.isCancelled()){
+                                Log.write("Duplicate finder was canceled");
+                                tasks.forEach(task->{
+                                    task.cancel();
+                                });
+                                return null;
+                            }
+                            Task<Long> task = duplicateCompareTask(i,array,ratio,list);
+                            task.setOnCancelled(event ->{
+                                progress.set(progress.get()+task.getValue());
+                                updateProgress(progress.get(),len);
+                            });
+                            task.setOnSucceeded( event -> {
+                                progress.set(progress.get()+task.getValue());
+                                updateProgress(progress.get(),len);
+                            });
+                            tasks.add(task);
+                            Thread t = new Thread(task);
+                            t.setDaemon(true);
+                            t.start();
+                        
+
+                    }
+                    
+                return null;
+            };
+        };
+        
+    }
+    public Task<Long> duplicateCompareTask(int index,ExtPath[] array,double ratio,ObservableList list){
+        return new Task<Long>(){
+            @Override
+            protected Long call() throws Exception{
+                long progress = index+1;
+                        for(int j=index+1; j<array.length;j++){
+                            progress++;
+                            if(this.isCancelled()){
+                                Log.write("Duplicate finder was canceled");
+                                return progress;
+                            }
+                            ExtPath file = array[index];
+                            ExtPath file1 = array[j];
                             
                             double rat = StringOperations.correlationRatio(file.propertyName.get(),file1.propertyName.get());
                             
@@ -589,15 +654,10 @@ public class TaskFactory {
                                 Platform.runLater(()->{
                                     list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
                                 });
-                            }                        
+                            }
                         }
-                        this.updateProgress(i, array.length);
-                    }
-                    this.updateProgress(1,1);
-                return null;
+                return progress;
             };
         };
-        
     }
-    
 }

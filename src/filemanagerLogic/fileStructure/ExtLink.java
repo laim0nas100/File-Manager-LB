@@ -15,7 +15,7 @@ import java.nio.file.Path;
  *
  * @author Laimonas Beniušis
  */
-public class ExtLink extends ExtFile{
+public class ExtLink extends ExtPath{
     private boolean pointsToDirectory;
 
     

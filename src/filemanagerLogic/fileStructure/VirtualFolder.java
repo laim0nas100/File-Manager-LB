@@ -36,10 +36,10 @@ public class VirtualFolder extends ExtFolder {
     
     @Override
     public void update(){
-        Collection<ExtFile> filesCol = this.getFilesCollection();
-        for(ExtFile file:filesCol){
+        Collection<ExtPath> filesCol = this.getFilesCollection();
+        for(ExtPath file:filesCol){
             if(!Files.exists(file.toPath())){
-                this.files.remove(file.getName());
+                this.files.remove(file.propertyName.get());
             }
         }
         Collection<ExtFolder> folders = this.getFoldersFromFiles();
@@ -48,8 +48,8 @@ public class VirtualFolder extends ExtFolder {
         }
         
     }
-    public Collection<ExtFile> getListRecursive(){
-        Collection<ExtFile> listRecursive = super.getListRecursive();
+    public Collection<ExtPath> getListRecursive(){
+        Collection<ExtPath> listRecursive = super.getListRecursive();
         listRecursive.remove(this);
         return listRecursive;
     }

@@ -12,7 +12,7 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ private int startingNumber;
 private int increment;
 private LinkedList<TableItemObject> tableList;
 private ArrayList<ExtFolder> folders;
-private ArrayList<ExtFile> files;
+private ArrayList<ExtPath> files;
 
 public void beforeShow(String title,Collection<String> fileList){
     super.beforeShow(title);    
@@ -123,7 +123,7 @@ public void beforeShow(String title,Collection<String> fileList){
             return cellData.getValue().date;
         }
     });
-    sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
+    sizeCol.setComparator(ExtPath.COMPARE_SIZE_STRING);
     
     columns.add(nameCol1);
     columns.add(nameCol2);
@@ -133,7 +133,7 @@ public void beforeShow(String title,Collection<String> fileList){
 
     this.table.getItems().addAll(tableList);
     fileList.forEach(file ->{
-        ExtFile fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
+        ExtPath fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
         if(fileAndPopulate.getIdentity().equals(Enums.Identity.FOLDER)){
             folders.add((ExtFolder) fileAndPopulate);
         }else{
@@ -155,9 +155,9 @@ public void updateLists(){
         }
     }}
     
-    Iterator<ExtFile> iterator = files.iterator();
+    Iterator<ExtPath> iterator = files.iterator();
     while(iterator.hasNext()){
-        ExtFile next = iterator.next();
+        ExtPath next = iterator.next();
         if(!Files.exists(next.toPath())){
             iterator.remove();
         }else{
@@ -169,12 +169,12 @@ public void updateLists(){
     for(ExtFolder folder:folders){
         ArrayList<String> locArray = new ArrayList<>();
         if(recursive.selectedProperty().get()){
-            for(ExtFile file:folder.getListRecursive()){
+            for(ExtPath file:folder.getListRecursive()){
                 locArray.add(file.getAbsolutePath());                
             }
         locArray.remove(0);
         }else{
-            for(ExtFile file:folder.getFilesCollection()){
+            for(ExtPath file:folder.getFilesCollection()){
                 locArray.add(file.getAbsolutePath()); 
             } 
         }
@@ -286,7 +286,7 @@ public void apply(){
         TableItemObject ob = (TableItemObject) object;
         try {
             ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.get()).getParentLocation());
-            String fallback = TaskFactory.resolveAvailableName(parent, ob.name1.get());
+            String fallback = TaskFactory.resolveAvailablePath(parent, ob.name1.get());
             fallback = ExtStringUtils.replaceOnce(fallback, parent.getAbsoluteDirectory(), "");
             TaskFactory.getInstance().renameTo(ob.path1.get(),ob.name2.get(),fallback);
         } catch (Exception ex) {
@@ -312,9 +312,9 @@ private static class TableItemObject{
     
     public TableItemObject(String s){
         LocationInRoot mapping = LocationAPI.getInstance().getLocationMapping(s);
-        ExtFile file = LocationAPI.getInstance().getFileByLocation(mapping);
-        this.date = new SimpleStringProperty(file.propertyDate.get());
-        this.size = new SimpleLongProperty(file.propertySize.get());
+        ExtPath file = LocationAPI.getInstance().getFileByLocation(mapping);
+        this.date = new SimpleStringProperty(file.lastModified()+"");
+        this.size = new SimpleLongProperty(file.size());
         this.path1 = new SimpleStringProperty(file.getAbsoluteDirectory());
         this.name1 = new SimpleStringProperty(file.propertyName.get());
         this.path2 = new SimpleStringProperty(file.getAbsoluteDirectory());

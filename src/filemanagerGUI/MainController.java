@@ -5,7 +5,7 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.LocationInRoot;
@@ -72,7 +72,7 @@ public class MainController extends BaseController{
     @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
-    private ObservableList<ExtFile> selectedList = FXCollections.observableArrayList();
+    private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
     
     
     
@@ -183,7 +183,7 @@ public class MainController extends BaseController{
             if(MC.currentDir.isAbsoluteRoot()){
                 fileAddress.field.setText(ROOT_NAME);
             }else if(MC.currentDir.getIdentity().equals(Identity.VIRTUAL)){
-                fileAddress.field.setText(MC.currentDir.getName());
+                fileAddress.field.setText(MC.currentDir.propertyName.get());
             }else{
                 fileAddress.field.setText(MC.currentDir.getAbsoluteDirectory());
             }
@@ -203,49 +203,11 @@ public class MainController extends BaseController{
             
             propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
             propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
-            
-            Runnable r = () -> {
-                long count = 0;
-                long tryCount = 0;
-                long tryLimit = 5;
-                while(count<extTableView.table.getItems().size()){
-                    count = 0;
-                    for(Object f:extTableView.table.getItems()){
-                        ExtFile file = (ExtFile) f;
-                        count+=file.readyToUpdate.get();
-                    }
-                    Platform.runLater(()->{
-                        MC.currentDir.update();
-                        extTableView.updateContentsAndSort(MC.getCurrentContents());  
-                    });
-                    try {
-                        Thread.sleep(1500);
-                    } catch (InterruptedException ex) {
-                        ErrorReport.report(ex);
-                    }
-                    tryCount+=1;
-                    if(tryCount>=tryLimit){
-                        break;
-                    }
-                    
-                }
-                Platform.runLater(()->{
-                    MC.currentDir.update();
-                    extTableView.updateContentsAndSort(MC.getCurrentContents());  
-                });
-                
-            };
-            
-            
             Platform.runLater(()->{
                 MC.currentDir.update();
                 extTableView.updateContentsAndSort(MC.getCurrentContents());
             });
-            
-            
         });
-        
-        
         
     }
     public void closeAllWindows(){
@@ -272,6 +234,7 @@ public class MainController extends BaseController{
     }
     
     public void test() throws IOException{
+        Log.write("TEST");
 //        VirtualFolder.createVirtualFolder();
 //        VirtualFolder vf = (VirtualFolder) FileManagerLB.VirtualFolders.files.get("V0");
 //        vf.files.put("0", LocationAPI.getInstance().getFileAndPopulate("/mnt/Extra-Space/Dev/dest/"));
@@ -333,7 +296,7 @@ public class MainController extends BaseController{
                     }
                 }else{
                     try {
-                        for(ExtFile file:ArtificialRoot.getFilesCollection()){
+                        for(ExtPath file:ArtificialRoot.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
                         }
                     } catch (Exception ex) {
@@ -373,7 +336,7 @@ public class MainController extends BaseController{
         }
         this.snapshotView.getItems().add("Creating snapshot at "+MC.currentDir.getAbsoluteDirectory());
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
-        File file = new File(TaskFactory.resolveAvailableName(MC.currentDir, possibleSnapshot));
+        File file = new File(TaskFactory.resolveAvailablePath(MC.currentDir, possibleSnapshot));
         new Thread(TaskFactory.getInstance().snapshotCreateWriteTask(windowID,MC.currentDir, file)).start();
         
     }
@@ -405,7 +368,7 @@ public class MainController extends BaseController{
         sm.selectAll();
         array.stream().forEach(sm::clearSelection);
     }
-    private void handleOpen(ExtFile file){
+    private void handleOpen(ExtPath file){
         if(file.getIdentity().equals(Enums.Identity.FOLDER)){
             Log.write("Change to dir "+file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
@@ -418,10 +381,10 @@ public class MainController extends BaseController{
                     if(link.isPointsToDirectory()){
                         changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
                     }else{
-                        DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location));
+                        DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location).toPath().toFile());
                     }
                 }else if(file.getIdentity().equals(Enums.Identity.FILE)){
-                    DesktopApi.open(file);
+                    DesktopApi.open(file.toPath().toFile());
                 }
             }catch(Exception x){
                 ErrorReport.report(x);
@@ -594,7 +557,7 @@ public class MainController extends BaseController{
         });
         contextMenuItems[18] = new MenuItem("Open");
         contextMenuItems[18].setOnAction(eh ->{
-            ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+            ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
             this.handleOpen(file);
         });
         
@@ -672,23 +635,23 @@ public class MainController extends BaseController{
     private void setUpTableView(){
         //TABLE VIEW SETUP
         
-        TableColumn<ExtFile, String> nameCol = new TableColumn<>("File Name");
-        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+        TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
+        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
             @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
                 return cellData.getValue().propertyName;
             }
         });
         nameCol.setSortType(TableColumn.SortType.ASCENDING);
         
-        TableColumn<ExtFile, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyType);
+        TableColumn<ExtPath, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyType);
 
-        TableColumn<ExtFile, String> sizeCol = new TableColumn<>();
+        TableColumn<ExtPath, String> sizeCol = new TableColumn<>();
         sizeCol.textProperty().bind(this.propertyUnitSizeName);
-        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtFile, String>, ObservableValue<String>>() {
+        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
             @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtFile, String> cellData) {
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
                 
                 if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
                     return new SimpleStringProperty("");
@@ -706,11 +669,11 @@ public class MainController extends BaseController{
                 }
             }
         });
-        sizeCol.setComparator(ExtFile.COMPARE_SIZE_STRING);
-        TableColumn<ExtFile, String> dateCol = new TableColumn<>("Last Modified");
-        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().propertyDate);
-        TableColumn<ExtFile, String> disabledCol = new TableColumn<>("Disabled");
-        disabledCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtFile, String> cellData) -> cellData.getValue().isDisabled.asString());
+        sizeCol.setComparator(ExtPath.COMPARE_SIZE_STRING);
+        TableColumn<ExtPath, String> dateCol = new TableColumn<>("Last Modified");
+        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyDate);
+        TableColumn<ExtPath, String> disabledCol = new TableColumn<>("Disabled");
+        disabledCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().isDisabled.asString());
         tableView.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol,disabledCol);
 
         
@@ -726,7 +689,7 @@ public class MainController extends BaseController{
             if (event.isSecondaryButtonDown()) {
                 if (itemCount1 == 1) {
                         tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
-                        ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+                        ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
                         if(file.getIdentity().equals(Enums.Identity.FOLDER)){
                             tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
                         }
@@ -785,7 +748,7 @@ public class MainController extends BaseController{
             } else if(event.isPrimaryButtonDown()){
                 if(!tableView.getSelectionModel().isEmpty()){
                     if(event.getClickCount() >1){
-                        ExtFile file = (ExtFile) tableView.getSelectionModel().getSelectedItem();
+                        ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
                         handleOpen(file);
                     }else{
                         selectedList = tableView.getSelectionModel().getSelectedItems();
@@ -917,7 +880,7 @@ public class MainController extends BaseController{
             Dragboard db = event.getDragboard();
             boolean success = false;
             if (!TaskFactory.getInstance().dragList.isEmpty()) {
-                for(ExtFile f:TaskFactory.getInstance().dragList){
+                for(ExtPath f:TaskFactory.getInstance().dragList){
                     TaskFactory.getInstance().addToMarked(f.getAbsoluteDirectory());
                 }
                 success = true;
@@ -1088,7 +1051,7 @@ public class MainController extends BaseController{
         }   
         
         Log.writeln("Invoke rename dialog");
-        ExtFile path = (ExtFile)tableView.getSelectionModel().getSelectedItem();
+        ExtPath path = (ExtPath)tableView.getSelectionModel().getSelectedItem();
         ViewManager.getInstance().newRenameDialog(MC.currentDir,path);
         //Invoke text input dialog
         

@@ -11,7 +11,7 @@ import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.io.FileInputStream;
@@ -105,7 +105,7 @@ public class FileManagerLB extends Application {
                 CommandWindowController.commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
                 CommandWindowController.commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
             try{
-                for(ExtFile f:VirtualFolders.getFilesCollection()){
+                for(ExtPath f:VirtualFolders.getFilesCollection()){
                     Files.deleteIfExists(f.toPath());
                 }
                 Files.deleteIfExists(VirtualFolders.toPath());
@@ -113,7 +113,7 @@ public class FileManagerLB extends Application {
                 Files.deleteIfExists(ArtificialRoot.toPath());
                 Files.createFile(ArtificialRoot.toPath());
                 
-                GlobalLock = new RandomAccessFile(ArtificialRoot,"rw").getChannel().tryLock();
+                GlobalLock = new RandomAccessFile(ArtificialRoot.toPath().toFile(),"rw").getChannel().tryLock();
                 
                 Log.writeln("Locked "+GlobalLock.toString());
 
@@ -126,9 +126,12 @@ public class FileManagerLB extends Application {
             ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
             ViewManager.getInstance().updateAllWindows();
         });
-        if(DEBUG.not().get()){
-            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-        }
+        Platform.runLater(()->{
+            if(DEBUG.not().get()){
+                ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+            }
+        });
+        
         
     } 
     public static void main(String[] args) {
@@ -137,7 +140,7 @@ public class FileManagerLB extends Application {
     public static void remount(){
         
         File[] roots = File.listRoots();
-        for(ExtFile f:ArtificialRoot.getFilesCollection()){
+        for(ExtPath f:ArtificialRoot.getFilesCollection()){
             if(!Files.isDirectory(f.toPath())){
                 ArtificialRoot.files.remove(f.propertyName.get());
             }
@@ -172,40 +175,42 @@ public class FileManagerLB extends Application {
         }
         return result;
     }
-    public static boolean folderIsVirtual(ExtFile fileToCheck){
+    public static boolean folderIsVirtual(ExtPath fileToCheck){
         ExtFolder baseFolder = FileManagerLB.VirtualFolders;
         HashSet<String> set = new HashSet<>();
-        for(ExtFile file:baseFolder.files.values()){
+        for(ExtPath file:baseFolder.files.values()){
             set.add(file.getAbsoluteDirectory());
         }
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
     public static Set<String> getRootSet(){
         HashSet<String> set = new HashSet<>();
-        for(ExtFile file:ArtificialRoot.files.values()){
+        for(ExtPath file:ArtificialRoot.files.values()){
             set.add(file.propertyName.get());
         }
         return set;
         
     }
     public static void doOnExit(){
-        try {
-            GlobalLock.release();
-            GlobalLock.channel().close();
+        try {           
             LibraryLB.FileManaging.FileReader.writeToFile(HOME_DIR+"Log.txt", Log.getInstance().list);
-            VirtualFolders.populateFolder();
-            for(ExtFile f:VirtualFolders.getFilesCollection()){
-                    Files.deleteIfExists(f.toPath());
-                }
-            Files.deleteIfExists(VirtualFolders.toPath());
-            
-            Files.deleteIfExists(ArtificialRoot.toPath());
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,HOME_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(HOME_DIR+"Log.txt");
             makeNewCopy.forEach(th ->{
                 th.run();
             });
             BM.cleanUp().run();
+            
+            
+            GlobalLock.release();
+            GlobalLock.channel().close();
+            VirtualFolders.populateFolder();
+            for(ExtPath f:VirtualFolders.getFilesCollection()){
+                    Files.deleteIfExists(f.toPath());
+                }
+            Files.deleteIfExists(VirtualFolders.toPath());
+            Files.deleteIfExists(ArtificialRoot.toPath());
+            
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }

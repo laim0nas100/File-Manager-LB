@@ -16,7 +16,7 @@ import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.BufferedReader;
@@ -233,7 +233,7 @@ public class CommandWindowController extends BaseController {
                 return true;
             }else if(firstWord.equalsIgnoreCase(commandListVirtualFolders)){
                 
-                for(ExtFile f:FileManagerLB.VirtualFolders.files.values()){
+                for(ExtPath f:FileManagerLB.VirtualFolders.files.values()){
                     deque.add(f.getAbsoluteDirectory());
                 }
                 ViewManager.getInstance().newListFrame("Virtual Folders", deque);
@@ -245,8 +245,8 @@ public class CommandWindowController extends BaseController {
                     addToTextArea(textArea,"No such virtual folder:"+commands.getFirst());
                 }else{
                     String desc = "Listing "+VF.getAbsoluteDirectory();
-                    for(ExtFile f:VF.getFilesCollection()){
-                        deque.add(f.getName());
+                    for(ExtPath f:VF.getFilesCollection()){
+                        deque.add(f.propertyName.get());
                     }
                     ViewManager.getInstance().newListFrame(desc, deque);
                 }
@@ -260,17 +260,17 @@ public class CommandWindowController extends BaseController {
 
                 }else{
                     for(String file:TaskFactory.getInstance().markedList){
-                        ExtFile f = LocationAPI.getInstance().getFileAndPopulate(file);
+                        ExtPath f = LocationAPI.getInstance().getFileAndPopulate(file);
                         VF.files.put(f.propertyName.get(), f);
-                        FileManagerLB.VirtualFolders.files.put(VF.getName(), VF);
+                        FileManagerLB.VirtualFolders.files.put(VF.propertyName.get(), VF);
                     }
                 }
                 return true;
 
             }else if(firstWord.equalsIgnoreCase(commandListRec)){
                 String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-                ExtFile file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-                for(ExtFile f:file.getListRecursive()){    
+                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                for(ExtPath f:file.getListRecursive()){    
                     deque.add(f.getAbsoluteDirectory());
                 }
                 String desc = "Listing recursive:"+deque.remove(0);
@@ -278,12 +278,12 @@ public class CommandWindowController extends BaseController {
                 return true;
             }else if(firstWord.equalsIgnoreCase(commandList)){
                 String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-                ExtFile file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
                 if(file.getIdentity().equals(Identity.FOLDER)){
                     String desc = "Listing:"+file.getAbsoluteDirectory();
 
                     ExtFolder folder = (ExtFolder) file;
-                    for(ExtFile f:folder.getFilesCollection()){
+                    for(ExtPath f:folder.getFilesCollection()){
                         deque.add(f.getAbsoluteDirectory());
                     }
                     System.out.println(deque);

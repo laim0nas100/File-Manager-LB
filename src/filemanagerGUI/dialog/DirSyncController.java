@@ -10,7 +10,7 @@ import filemanagerGUI.ViewManager;
 import filemanagerLogic.ExtTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFile;
+import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.snapshots.Entry;
 import filemanagerLogic.snapshots.ExtEntry;
 import filemanagerLogic.snapshots.Snapshot;
@@ -78,8 +78,8 @@ public class DirSyncController extends BaseController {
     private Snapshot snapshot0;
     private Snapshot snapshot1;
     private Snapshot result;
-    private ExtFile file0;
-    private ExtFile file1;
+    private ExtPath file0;
+    private ExtPath file1;
     private ObservableList<TableColumn<ExtEntry,String>> tableColumns; 
     
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
