@@ -47,6 +47,7 @@ public class FileManagerLB extends Application {
     public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR+"VIRTUAL_FOLDERS"+File.separator;
     public static final String ARTIFICIAL_ROOT = HOME_DIR+"ARTIFICIAL_ROOT";
     public static String ROOT_NAME = "ROOT";
+    public static int MAX_THREADS_FOR_TASK = 1;
     public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT);
     public static ExtFolder VirtualFolders = new ExtFolder(VIRTUAL_FOLDERS_DIR);
     public static FileLock GlobalLock;
@@ -76,12 +77,13 @@ public class FileManagerLB extends Application {
             catch(Exception e){
                 ErrorReport.report(e);                
             }
-                parameters = new ParametersMap(list);
+                parameters = new ParametersMap(list,"=");
                 Log.writeln("Parameters",parameters);
                 DEBUG.set((boolean) parameters.defaultGet("debug",false));
                 DEPTH = (int) parameters.defaultGet("lookDepth",2);
                 LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
                 ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
+                MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
                 PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
                 PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
                 PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
@@ -124,7 +126,7 @@ public class FileManagerLB extends Application {
             ArtificialRoot.propertyName.set(ROOT_NAME);
             links.add(new FavouriteLink(ROOT_NAME,""));
             ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
-            ViewManager.getInstance().updateAllWindows();
+//            ViewManager.getInstance().updateAllWindows();
         });
         Platform.runLater(()->{
             if(DEBUG.not().get()){
@@ -202,13 +204,15 @@ public class FileManagerLB extends Application {
             BM.cleanUp().run();
             
             
-            GlobalLock.release();
-            GlobalLock.channel().close();
+            
             VirtualFolders.populateFolder();
             for(ExtPath f:VirtualFolders.getFilesCollection()){
                     Files.deleteIfExists(f.toPath());
                 }
             Files.deleteIfExists(VirtualFolders.toPath());
+            
+            GlobalLock.release();
+            GlobalLock.channel().close();
             Files.deleteIfExists(ArtificialRoot.toPath());
             
         } catch (Exception ex) {

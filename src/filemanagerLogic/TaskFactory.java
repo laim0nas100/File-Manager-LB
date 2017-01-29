@@ -5,6 +5,7 @@
  */
 package filemanagerLogic;
 
+import LibraryLB.ExtTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -18,6 +19,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import LibraryLB.StringOperations;
+import LibraryLB.TaskExecutor;
+import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerGUI.dialog.DuplicateFinderController;
@@ -218,8 +221,8 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public ExtTask copyFiles(Collection<String> fileList, ExtPath dest){  
-        return new ExtTask(){
+    public SimpleTask copyFiles(Collection<String> fileList, ExtPath dest){  
+        return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
@@ -254,8 +257,8 @@ public class TaskFactory {
             }
         };
     }
-    public ExtTask moveFiles(Collection<String> fileList, ExtPath dest){
-        return new ExtTask(){
+    public SimpleTask moveFiles(Collection<String> fileList, ExtPath dest){
+        return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
@@ -314,8 +317,8 @@ public class TaskFactory {
             
         };
     }
-    public ExtTask deleteFiles(Collection<String> fileList){
-        return new ExtTask(){
+    public SimpleTask deleteFiles(Collection<String> fileList){
+        return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
@@ -359,8 +362,8 @@ public class TaskFactory {
             }
         }
     }
-    public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
-        return new ExtTask(){
+    public SimpleTask populateRecursiveParallel(ExtFolder folder, int depth){
+        return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 populateRecursiveParallelInner(folder,depth);
             return null;
@@ -379,8 +382,8 @@ public class TaskFactory {
         return path+newName;
     }
     
-    public ExtTask markFiles(List<String> list){
-        return new ExtTask(){
+    public SimpleTask markFiles(List<String> list){
+        return new SimpleTask(){
             @Override
             protected Void call(){
                 list.forEach(file ->{
@@ -399,12 +402,12 @@ public class TaskFactory {
   
         };
     }
-    public ExtTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
-        return new ExtTask(){
+    public SimpleTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
+        return new SimpleTask(){
             @Override
             protected Void call() throws Exception {
 
-                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    SimpleTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
                     Thread thread = new Thread(populateRecursiveParallel);
                     thread.setDaemon(true);
                     thread.start();
@@ -433,8 +436,8 @@ public class TaskFactory {
   
         };
     }
-    public ExtTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
-        return new ExtTask(){
+    public SimpleTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
+        return new SimpleTask(){
             @Override
             protected Void call() throws Exception {
                     
@@ -444,7 +447,7 @@ public class TaskFactory {
                         frame.snapshotView.getItems().clear();
                         frame.snapshotView.getItems().add("Snapshot Loading");
                     });
-                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    SimpleTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
                     Thread thread = new Thread(populateRecursiveParallel);
                     thread.setDaemon(true);
                     thread.start();
@@ -478,8 +481,8 @@ public class TaskFactory {
   
         };
     }   
-    public ExtTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
-         return new ExtTask(){
+    public SimpleTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
+         return new SimpleTask(){
             @Override
             protected Void call() throws InterruptedException{
                 
@@ -518,11 +521,11 @@ public class TaskFactory {
             
             case(1):{
                 try{
-                    Files.copy(action.paths[1], action.paths[0],StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(action.paths[1], action.paths[0],StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
                 }catch(Exception e){
                     ErrorReport.report(e);
                     if(Files.isDirectory(action.paths[0])){
-                        Files.setLastModifiedTime(action.paths[0], Files.getLastModifiedTime(action.paths[1]));
+//                        Files.setLastModifiedTime(action.paths[0], Files.getLastModifiedTime(action.paths[1]));
                         entry.isModified = false;
                     }
                      
@@ -530,11 +533,11 @@ public class TaskFactory {
                 break;
             }case(2):{
                 try{
-                    Files.copy(action.paths[0], action.paths[1], StandardCopyOption.REPLACE_EXISTING);  
+                    Files.copy(action.paths[0], action.paths[1], StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
                 }catch(Exception e){
                     ErrorReport.report(e);
                     if(Files.isDirectory(action.paths[1])){
-                        Files.setLastModifiedTime(action.paths[1], Files.getLastModifiedTime(action.paths[0]));
+//                        Files.setLastModifiedTime(action.paths[1], Files.getLastModifiedTime(action.paths[0]));
                         entry.isModified = false;
                     }
                 }
@@ -551,8 +554,8 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    public ExtTask duplicateFinderTaskOld(ExtFolder folder,double ratio,ObservableList list){
-        return new ExtTask(){
+    public SimpleTask duplicateFinderTaskOld(ExtFolder folder,double ratio,ObservableList list){
+        return new SimpleTask(){
             @Override
             protected Void call() throws Exception{
                 ExtPath[] array = new ExtPath[0];
@@ -592,52 +595,23 @@ public class TaskFactory {
         
     }
     public ExtTask duplicateFinderTask(ExtFolder folder,double ratio,ObservableList list){
-        return new ExtTask(){
-            @Override
-            protected Void call() throws Exception{
-                ExtPath[] array = new ExtPath[0];
-                Log.write(ratio);
-                array = folder.getListRecursive().toArray(array);
-                final SimpleLongProperty progress = new SimpleLongProperty();
-                ArrayDeque<Task> tasks = new ArrayDeque<>();
-                final long len = array.length+array.length;
-                    for(int i=0; i<array.length;i++){
-                        progress.set(progress.get()+i+1);
-                        
-                            if(this.isCancelled()){
-                                Log.write("Duplicate finder was canceled");
-                                tasks.forEach(task->{
-                                    task.cancel();
-                                });
-                                return null;
-                            }
-                            Task<Long> task = duplicateCompareTask(i,array,ratio,list);
-                            task.setOnCancelled(event ->{
-                                progress.set(progress.get()+task.getValue());
-                                updateProgress(progress.get(),len);
-                            });
-                            task.setOnSucceeded( event -> {
-                                progress.set(progress.get()+task.getValue());
-                                updateProgress(progress.get(),len);
-                            });
-                            tasks.add(task);
-                            Thread t = new Thread(task);
-                            t.setDaemon(true);
-                            t.start();
-                        
-
-                    }
+        ExtPath[] array = new ExtPath[0];
+        Log.write(ratio);
+        array = folder.getListRecursive().toArray(array);
+        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,500);
+            for(int i=0; i<array.length;i++){
+                Task<Long> task = duplicateCompareTask(i,array,ratio,list);
+                executor.addTask(task);
+            }
+        return executor;
                     
-                return null;
-            };
-        };
         
     }
     public Task<Long> duplicateCompareTask(int index,ExtPath[] array,double ratio,ObservableList list){
         return new Task<Long>(){
             @Override
             protected Long call() throws Exception{
-                long progress = index+1;
+                long progress = index;
                         for(int j=index+1; j<array.length;j++){
                             progress++;
                             if(this.isCancelled()){
@@ -651,9 +625,9 @@ public class TaskFactory {
                             
                             if(rat>=ratio){
                                 Log.write("Found:",file.getAbsoluteDirectory()+" | ",file1.getAbsoluteDirectory()+" "+rat);
-                                Platform.runLater(()->{
+//                                Platform.runLater(()->{
                                     list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
-                                });
+//                                });
                             }
                         }
                 return progress;

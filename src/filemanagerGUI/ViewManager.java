@@ -17,8 +17,8 @@ import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtFolder;
-import filemanagerLogic.ExtTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
 import java.net.URL;
@@ -68,7 +68,7 @@ public class ViewManager {
     
 // WINDOW ACTIONS
     public void newWindow(ExtFolder rootFolder,ExtFolder currentFolder){
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -106,9 +106,9 @@ public class ViewManager {
     }
     
 //DIALOG ACTIONS
-    public void newProgressDialog(ExtTask task){
+    public void newProgressDialog(SimpleTask task){
         
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -132,7 +132,7 @@ public class ViewManager {
         Platform.runLater(et);
     }
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -158,7 +158,7 @@ public class ViewManager {
     public void newAdvancedRenameDialog(Collection<String> list){
        
        
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -178,7 +178,7 @@ public class ViewManager {
     }
     public void newDirSyncDialog(){
         
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -202,7 +202,7 @@ public class ViewManager {
     public void newDuplicateFinderDialog(ExtFolder root){
       
       
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                try {
@@ -223,7 +223,7 @@ public class ViewManager {
    }
     public void newWebDialog(Enums.WebDialog info){     
 
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
         @Override
             protected Void call() throws Exception {
                 try {
@@ -243,7 +243,7 @@ public class ViewManager {
         Platform.runLater(et);
     } 
     public void newCommandDialog(){
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -308,7 +308,7 @@ public class ViewManager {
     }
     
     public void newListFrame(String description, Collection<String> list){
-        ExtTask et = new ExtTask() {
+        SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {

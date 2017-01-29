@@ -7,7 +7,7 @@ package filemanagerGUI.dialog;
 
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
-import filemanagerLogic.ExtTask;
+import LibraryLB.ExtTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -135,7 +135,9 @@ public class DuplicateFinderController extends BaseController{
 
     @Override
     public void exit() {
-        task.cancel();
+        if(task!=null){
+            task.cancel();
+        }
         super.exit(); //To change body of generated methods, choose Tools | Templates.
     }
 

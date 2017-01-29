@@ -1,9 +1,24 @@
 debug=true
-lookDepth=2//Populating folder depth
-logBackupCount=5//BUP folder subfolder size
-lang=EN//currently does nothing
-virtualPrefix=V//prefix for virtual folders access
+
+//Populating folder depth
+lookDepth=2
+
+//BUP folder subfolder size
+logBackupCount=5
+
+//currently does nothing
+lang=EN
+
+//prefix for virtual folders access
+virtualPrefix=V
+
+//Name of root directory
 ROOT_NAME=\
+
+//Multithreading load for specific tasks
+maxThreadsForTask=15
+
+
 //Path string mangling
 //Current number in the list
 filter.number=#

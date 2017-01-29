@@ -7,7 +7,7 @@ package filemanagerGUI.dialog;
 
 
 import filemanagerGUI.ViewManager;
-import filemanagerLogic.ExtTask;
+import LibraryLB.ExtTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -42,7 +42,11 @@ import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
 import filemanagerGUI.BaseController;
+import filemanagerGUI.customUI.CosmeticsFX;
+import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
+import filemanagerLogic.SimpleTask;
+import javafx.scene.control.MenuItem;
 
 /**
  * FXML Controller class
@@ -182,6 +186,21 @@ public class DirSyncController extends BaseController {
                 return cellData.getValue().actionCompleted.asString();
             }
         });
+        MenuTree menuTree = new MenuTree(null);
+        for(int i=0;i<5;i++){
+            final int action = i;
+            MenuItem item = new MenuItem("Set Action " +action);
+            
+            item.setOnAction(eh ->{
+                ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
+                for(Object ob:selectedItems){
+                    ExtEntry entry = (ExtEntry) ob;
+                    entry.setAction(action);
+                }
+            });
+            menuTree.addMenuItem(item, item.getText());
+        }
+        this.table.setContextMenu(menuTree.constructContextMenu());
 
         
     });
@@ -392,7 +411,7 @@ public class DirSyncController extends BaseController {
         }
         listDelete.sort(cmpAsc.reversed());
         list.sort(cmpAsc);
-        ExtTask task;
+        SimpleTask task;
         
         
         if(checkDeleteFirst.selectedProperty().get()){
@@ -407,6 +426,7 @@ public class DirSyncController extends BaseController {
         task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom,this.snapshot1.folderCreatedFrom,list);
 
         task.setTaskDescription("Synchronization");
+        
         ViewManager.getInstance().newProgressDialog(task);
         
 
