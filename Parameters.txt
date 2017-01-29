@@ -16,7 +16,7 @@ virtualPrefix=V
 ROOT_NAME=\
 
 //Multithreading load for specific tasks
-maxThreadsForTask=15
+maxThreadsForTask=50
 
 
 //Path string mangling

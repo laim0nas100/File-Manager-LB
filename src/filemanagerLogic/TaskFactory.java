@@ -34,11 +34,13 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
 import utility.FileNameException;
+import utility.PathStringCommands;
 
 /**
  *  
@@ -554,82 +556,83 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    public SimpleTask duplicateFinderTaskOld(ExtFolder folder,double ratio,ObservableList list){
-        return new SimpleTask(){
-            @Override
-            protected Void call() throws Exception{
-                ExtPath[] array = new ExtPath[0];
-                Log.write(ratio);
-                array = folder.getListRecursive().toArray(array);
-                long progress = 0;
-                long len = array.length*array.length;
-                    for(int i=0; i<array.length;i++){
-                        progress+=i+1;
-                        for(int j=i+1; j<array.length;j++){
-                            if(this.isCancelled()){
-                                Log.write("Duplicate finder was canceled");
-                                return null;
-                            }
-                            ExtPath file = array[i];
-                            ExtPath file1 = array[j];
-                            
-                            double rat = StringOperations.correlationRatio(file.propertyName.get(),file1.propertyName.get());
-                            
-                            if(rat>=ratio){
-                                Log.write("Found:",file.getAbsoluteDirectory()+" | ",file1.getAbsoluteDirectory()+" "+rat);
-//                                Platform.runLater(()->{
-                                    list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
-//                                });
-                            }
-                            
-                            this.updateProgress(progress++, len);
-//                            Log.write(progress," ",len);
-                        }
-                        this.updateProgress(progress, len);
-                        Log.write(progress," ",len);
-                    }
-                    
-                return null;
-            };
-        };
-        
-    }
-    public ExtTask duplicateFinderTask(ExtFolder folder,double ratio,ObservableList list){
-        ExtPath[] array = new ExtPath[0];
-        Log.write(ratio);
-        array = folder.getListRecursive().toArray(array);
-        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,500);
-            for(int i=0; i<array.length;i++){
-                Task<Long> task = duplicateCompareTask(i,array,ratio,list);
+    public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,ObservableList list,Map map){
+        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,100);
+            for(int i=0; i<array.size();i++){
+                
+                Task<Long> task;
+                if(map==null){
+                    task = duplicateCompareTask(i,array,ratio,list);
+                }else{
+                    task = duplicateCompareTaskLookUp(i,array,ratio,list,map);
+
+                }
                 executor.addTask(task);
             }
         return executor;
                     
         
     }
-    public Task<Long> duplicateCompareTask(int index,ExtPath[] array,double ratio,ObservableList list){
+    public Task<Long> duplicateCompareTaskLookUp(int index,ArrayList<PathStringCommands>array,double ratio,ObservableList list,Map map){
         return new Task<Long>(){
             @Override
             protected Long call() throws Exception{
                 long progress = index;
-                        for(int j=index+1; j<array.length;j++){
-                            progress++;
-                            if(this.isCancelled()){
-                                Log.write("Duplicate finder was canceled");
-                                return progress;
-                            }
-                            ExtPath file = array[index];
-                            ExtPath file1 = array[j];
-                            
-                            double rat = StringOperations.correlationRatio(file.propertyName.get(),file1.propertyName.get());
-                            
-                            if(rat>=ratio){
-                                Log.write("Found:",file.getAbsoluteDirectory()+" | ",file1.getAbsoluteDirectory()+" "+rat);
-//                                Platform.runLater(()->{
-                                    list.add(new DuplicateFinderController.SimpleTableItem(file,file1));
-//                                });
-                            }
+                PathStringCommands file = array.get(index);
+                String name = file.getName(true);
+                for(int j=index+1; j<array.size();j++){
+                    progress++;
+                    if(this.isCancelled()){
+                        Log.write("Duplicate finder was canceled");
+                        return progress;
+                    }
+
+                    PathStringCommands file1 = array.get(j);
+                    if(map.containsKey(file.getPath()+"/$/"+file1.getPath())){
+                        DuplicateFinderController.SimpleTableItem item = (DuplicateFinderController.SimpleTableItem) map.get(file.getPath()+"/$/"+file1.getPath());
+                        if(item.ratio>=ratio){
+                            list.add(item);
+                            Log.write("Look up:",file.getPath()+" | ",file1.getPath()+" "+item.ratio);
+
                         }
+                    }else{
+                        double rat = StringOperations.correlationRatio(name,file1.getName(true));
+                        DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
+                        map.put(file.getPath()+"/$/"+file1.getPath(), item);
+                        if(rat>=ratio){
+                            Log.write("Found:",file.getPath()+" | ",file1.getPath()+" "+rat);
+                            list.add(item);
+                        }
+                    }
+                }
+                return progress;
+            };
+        };
+    }
+
+    public Task<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,ObservableList list){
+        return new Task<Long>(){
+            @Override
+            protected Long call() throws Exception{
+                long progress = index;
+                PathStringCommands file = array.get(index);
+                String name = file.getName(true);
+                for(int j=index+1; j<array.size();j++){
+                    progress++;
+                    if(this.isCancelled()){
+                        Log.write("Duplicate finder was canceled");
+                        return progress;
+                    }
+
+                    PathStringCommands file1 = array.get(j);
+                    double rat = StringOperations.correlationRatio(name,file1.getName(true));
+                    DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
+                    if(rat>=ratio){
+                        Log.write("Found:",file.getPath()+" | ",file1.getPath()+" "+rat);
+                        list.add(item);
+                    }
+                    
+                }
                 return progress;
             };
         };
