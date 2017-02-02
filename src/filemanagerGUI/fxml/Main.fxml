@@ -52,12 +52,18 @@
                     <items>
                         <Menu mnemonicParsing="false" text="Advanced Rename">
                           <items>
-                              <MenuItem fx:id="miAdvancedRename" mnemonicParsing="false" onAction="#advancedRenameFolder" text="Current Folder" />
-                              <MenuItem mnemonicParsing="false" onAction="#advancedRenameMarked" text="Marked Items" />
+                              <MenuItem fx:id="miAdvancedRenameFolder" mnemonicParsing="false" onAction="#advancedRenameFolder" text="Current Folder" />
+                              <MenuItem fx:id="miAdvancedRenameMarked" mnemonicParsing="false" onAction="#advancedRenameMarked" text="Marked Items" />
+                          </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Duplicate Finder">
+                          <items>
+                            <MenuItem fx:id="miDuplicateFinderFolder" mnemonicParsing="false" onAction="#duplicateFinderFolder" text="Current Folder" />
+                              <MenuItem fx:id="miDuplicateFinderMarked" mnemonicParsing="false" onAction="#duplicateFinderMarked" text="Marked Items" />
                           </items>
                         </Menu>
                         <MenuItem mnemonicParsing="false" onAction="#dirSync" text="Directory Sync" />
-                        <MenuItem mnemonicParsing="false" onAction="#duplicateFind" text="Duplicate Finder" />
+                        <MenuItem mnemonicParsing="false" onAction="#mediaPlayer" text="Media Player" />
                         <MenuItem mnemonicParsing="false" onAction="#commandWindow" text="Command Window" />
                     </items>
                   </Menu>
@@ -191,7 +197,7 @@
                         </AnchorPane>
                     </content>
                   </Tab>
-                  <Tab closable="false" text="Snapshot">
+                  <Tab text="Snapshot">
                     <content>
                         <AnchorPane>
                            <children>

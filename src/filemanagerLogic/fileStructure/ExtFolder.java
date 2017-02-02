@@ -44,9 +44,9 @@ public class ExtFolder extends ExtPath{
     public Identity getIdentity(){
         return Identity.FOLDER;
     }
-    public ExtFolder(String src){
-        super(src);
-        this.files = new ConcurrentHashMap<>(2,0.75f,25);
+    public ExtFolder(String src,Object...optional){
+        super(src,optional);
+        this.files = new ConcurrentHashMap<>(1,0.75f);
         this.populated = false;
     }
     
@@ -67,11 +67,11 @@ public class ExtFolder extends ExtPath{
                         }
                         ExtPath file;
                         if(Files.isDirectory(f)){
-                            file = new ExtFolder(filePathStr);             
+                            file = new ExtFolder(filePathStr,f);             
                         }else if(Files.isSymbolicLink(f)){
-                            file = new ExtLink(filePathStr);
+                            file = new ExtLink(filePathStr,f);
                         }else{
-                            file = new ExtPath(filePathStr);
+                            file = new ExtPath(filePathStr,f);
                         }
                         files.put(file.propertyName.get(), file);
                     }
@@ -136,7 +136,7 @@ public class ExtFolder extends ExtPath{
             Log.writeln("Update:"+this.getAbsolutePath());
             for(ExtPath file:this.getFilesCollection()){
                 if(!Files.exists(file.toPath())){
-                    Log.writeln(file+" dont exist");
+                    Log.writeln(file.getAbsolutePath()+" dont exist");
                     LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
                     LocationAPI.getInstance().removeByLocation(location);
                 }
@@ -174,7 +174,10 @@ public class ExtFolder extends ExtPath{
         }
         return this.getAbsolutePath()+File.separator;
     }
-    
+    @Override
+    public boolean isAbsoluteRoot(){
+        return this.getIdentity().equals(Identity.VIRTUAL)||super.isAbsoluteRoot();
+    }
     
     //GETTERS & SETTERS
     

@@ -21,6 +21,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import LibraryLB.Parsing.CustomRegex;
 import utility.ExtStringUtils;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.normalize;
+import utility.PathStringCommands;
 
 /**
  *
@@ -59,6 +62,17 @@ public class NewEmptyJUnitTest {
             System.out.println(line);
         }
     }
+    
+    @Test
+    public void test1(){
+        print(mod(5,5));
+        print(mod(0.055,0.05));
+        print(normalize(123.55555,2));
+        PathStringCommands path = new PathStringCommands("C:\\");
+        print(path.getName(true));
+        
+    }
+ 
     public static void print(Object...o){
         for(Object ob:o){
             System.out.println(ob);

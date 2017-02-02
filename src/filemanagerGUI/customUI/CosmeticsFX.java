@@ -112,6 +112,7 @@ public class CosmeticsFX {
         public ArrayList<SortType> sortTypes;
         public ArrayList<TableColumn> sortColumns;
         public int sortByColumn;
+        public boolean sortable = true;
         public TableView table;
         public SimpleBooleanProperty recentlyResized;
         public ExtTableView(TableView table){
@@ -121,10 +122,11 @@ public class CosmeticsFX {
         }
         public ExtTableView(){
             defaultValues();
-            sortTypes = new ArrayList<>();
-            sortColumns = new ArrayList<>();
+            
         }
         private void defaultValues(){
+            sortTypes = new ArrayList<>();
+            sortColumns = new ArrayList<>();
             sortByColumn = 0;
             recentlyResized = new SimpleBooleanProperty();
             
@@ -161,6 +163,9 @@ public class CosmeticsFX {
         });
     }
         public void saveSortPrefereces(){
+            if(!this.sortable){
+                return;
+            }
             sortColumns = new ArrayList<>();
             sortTypes = new ArrayList<>();
             if (!table.getSortOrder().isEmpty()) {
@@ -173,6 +178,7 @@ public class CosmeticsFX {
             }
         }
         public void setSortPreferences(){
+            
             if (!sortColumns.isEmpty()) {
                 table.getSortOrder().clear();
                 for(int i=0;i<sortColumns.size();i++){
@@ -199,37 +205,5 @@ public class CosmeticsFX {
         
         
     }
-    /*
-    public static ExtTableView wrapExFileTable(TableView table, Collection<ExtPath> files){
-        TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
-        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
-                return cellData.getValue().propertyName;
-            }
-        });
-        
-        TableColumn<ExtPath, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyType);
 
-        TableColumn<ExtPath, String> sizeCol = new TableColumn<>("Size Auto");
-        sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
-                if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
-                    return new SimpleStringProperty("");
-                }else{
-                    return cellData.getValue().propertySizeAuto;
-            }
-     
-        }});
-        
-        sizeCol.setComparator(ExtPath.COMPARE_SIZE_STRING);
-        TableColumn<ExtPath, String> dateCol = new TableColumn<>("Last Modified");
-        dateCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyDate);
-        table.getColumns().clear();
-        table.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol);
-        return new ExtTableView(table);
-    }
-*/
 }

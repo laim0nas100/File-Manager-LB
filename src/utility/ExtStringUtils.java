@@ -114,7 +114,59 @@ public class ExtStringUtils extends org.apache.commons.lang3.StringUtils {
         }
         return true;
     }
-    
+    public static double mod(double number,double mod){
+        if(Math.abs(mod)<=Double.MIN_NORMAL){
+            return 0;
+        }
+        if(number<0){
+            return mod(number + mod,mod);
+        }else if(number>=mod){
+            return mod(number - mod,mod);
+        }else{
+            return number;
+        }
+    }
+    public static int mod(int number,int mod){
+        if(mod<=0){
+            return 0;
+        }
+        if(number<0){
+            return mod(number + mod,mod);
+        }else if(number>=mod){
+            return mod(number - mod,mod);
+        }else{
+            return number;
+        }
+    }
+    public static double normalize(double number,int digitsAfterSign){
+        double pow = Math.pow(10, digitsAfterSign);
+        boolean isNegative = number<0;
+        number = Math.abs(number);
+        long intPart = (long) number;
+        number = number - intPart;
+        long doublePart = (long)(number * pow);
+        if(isNegative){
+            intPart*=-1;
+        }
+        return (double) intPart + ((double)doublePart/pow);
+//        return Double.parseDouble(intPart+"."+doublePart);
+//        String numb = String.valueOf(number);
+//        int dotIndex = numb.indexOf(".");
+//        
+//        String intValue = numb.substring(0,dotIndex);
+//        numb= numb.substring(dotIndex+1);
+//        String realValue = "";
+//        for(int i=0; i<digitsAfterSign;i++){
+//            if(i>=numb.length()){
+//                break;
+//            }
+//            realValue +=numb.charAt(i);
+//        }
+//        if(realValue.length()==0){
+//            realValue+="0";
+//        }
+//        return Double.p
+    }
     
     
 }

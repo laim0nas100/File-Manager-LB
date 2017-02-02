@@ -8,6 +8,7 @@ package filemanagerGUI.dialog;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import LibraryLB.ExtTask;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -39,10 +40,11 @@ public class ProgressDialogController extends BaseController {
     private ExtTask task;
     private SimpleBooleanProperty paused;
     
-    public void afterShow(ExtTask newTask){
+    public void afterShow(ExtTask newTask,boolean pause){
         super.afterShow();
-        paused = new SimpleBooleanProperty(false);
+        paused = new SimpleBooleanProperty(pause);
         this.task = newTask;
+        task.paused.bind(paused);
         bar.progressProperty().bind(task.progressProperty());
         indicator.progressProperty().bind(bar.progressProperty());
         cancelButton.disableProperty().bind(task.runningProperty().not());
@@ -52,12 +54,12 @@ public class ProgressDialogController extends BaseController {
         text.textProperty().bind(task.messageProperty());
         taskDescription.setText(task.getTaskDescription());
         
-        Thread t = new Thread(this.task);
+        Thread t = new Thread(task);
         clock = new CustomClock();
         t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
-        t.start();
+        
         task.setOnSucceeded((e)->{
             clock.stopTimer();
             if(task.childTask!=null){
@@ -67,6 +69,16 @@ public class ProgressDialogController extends BaseController {
                 this.exit();
             }
         });
+        
+        if(pause){
+            pauseButton.setText("CONTINUE");
+            paused.set(true);
+        }
+        Platform.runLater(()->{
+            t.start();
+            
+        });
+        //t.start();
         
         
     }
@@ -82,10 +94,8 @@ public class ProgressDialogController extends BaseController {
         if(task.isPaused()&&task.isRunning()){
             pauseButton.setText("PAUSE");
             paused.set(false);
-            task.paused.set(false);
         }else if(!task.isPaused()&&task.isRunning()){
             pauseButton.setText("CONTINUE");
-            task.paused.set(true);
             paused.set(true);
         }
     }

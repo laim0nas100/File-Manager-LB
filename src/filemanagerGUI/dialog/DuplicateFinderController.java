@@ -9,13 +9,13 @@ import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import LibraryLB.ExtTask;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -26,6 +26,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.text.Text;
@@ -41,21 +42,24 @@ public class DuplicateFinderController extends BaseController{
 
     @FXML public TableView list;
     @FXML public Text correlationRatio;
-    @FXML public ScrollBar scroll;
+    @FXML public Slider slider;
     @FXML public Button searchButton;
     @FXML public Text textRootFolder;
     @FXML public ProgressBar progressBar;
     @FXML public CheckBox checkUseHash;
-    private HashMap<String,SimpleTableItem> map = new HashMap<>();
+    private HashMap<String,Double> map = new HashMap<>();
+    
+    private Double ratio;
     private MenuTree menuTree;
     private ExtFolder root;
     private ExtTask task;
     public void beforeShow(String title,ExtFolder root) {
         super.beforeShow(title);
         this.root = root;
+        
         list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         textRootFolder.setText(root.getAbsoluteDirectory());
-        correlationRatio.textProperty().bind(scroll.valueProperty().divide(100).asString());
+        correlationRatio.textProperty().bind(slider.valueProperty().divide(100).asString());
         TableColumn<SimpleTableItem, String> nameCol1 = new TableColumn<>("Name 1");
         nameCol1.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<SimpleTableItem, String>, ObservableValue<String>>() {
             @Override
@@ -120,28 +124,33 @@ public class DuplicateFinderController extends BaseController{
         this.list.setContextMenu(menuTree.constructContextMenu());
     }
     public void search(){
-        if(task!=null){
-            task.cancel();
-        }
-        list.getItems().clear();
-        ArrayList<PathStringCommands> array = new ArrayList<>();
-        root.getListRecursive().stream().forEach(item->{
-            array.add(new PathStringCommands(item.getAbsolutePath()));
-        });
-        if(this.checkUseHash.selectedProperty().get()){
-            task = TaskFactory.getInstance().duplicateFinderTask(array, scroll.valueProperty().divide(100).get(),list.getItems(),map);
-        }else{
-            task = TaskFactory.getInstance().duplicateFinderTask(array, scroll.valueProperty().divide(100).get(),list.getItems(),null);
+        ratio = slider.valueProperty().divide(100).get();
+        Platform.runLater(()->{
+           if(task!=null){
+                task.cancel();
+            }
+            list.getItems().clear();
+            List synchronizedList = Collections.synchronizedList(list.getItems());
+            ArrayList<PathStringCommands> array = new ArrayList<>();
+            root.getListRecursive().stream().forEach(item->{
+                array.add(new PathStringCommands(item.getAbsolutePath()));
+            });
+            if(this.checkUseHash.selectedProperty().get()){
+                task = TaskFactory.getInstance().duplicateFinderTask(array, ratio,synchronizedList,map);
+            }else{
+                task = TaskFactory.getInstance().duplicateFinderTask(array, ratio,synchronizedList,null);
 
-        }
-        task.setOnSucceeded(eh ->{
-//            this.progressBar.progressProperty().unbind();
-//            this.progressBar.setProgress(1);
+            }
+            task.setOnSucceeded(eh ->{
+    //            this.progressBar.progressProperty().unbind();
+    //            this.progressBar.setProgress(1);
+            });
+            this.progressBar.progressProperty().bind(task.progressProperty());
+            Thread t = new Thread(task);
+            t.setDaemon(true);
+            t.start(); 
         });
-        this.progressBar.progressProperty().bind(task.progressProperty());
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        
     }
 
     @Override
@@ -161,8 +170,6 @@ public class DuplicateFinderController extends BaseController{
 
     @Override
     public void exit() {
-        map.clear();
-        list.getItems().clear();
         if(task!=null){
             task.cancel();
         }

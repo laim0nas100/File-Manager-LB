@@ -36,6 +36,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
@@ -54,9 +57,9 @@ public class TaskFactory {
     public  ObservableList<ExtPath> dragList;
     public  ObservableList<String> markedList;
     public  ArrayList<ExtPath> actionList;
+    public SimpleIntegerProperty propertyMarkedSize;
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory INSTANCE = new TaskFactory();
-    private static final int TRY_LIMIT = 5;
     public static String dragInitWindowID ="";
     public static TaskFactory getInstance(){
         
@@ -79,6 +82,8 @@ public class TaskFactory {
         dragList = FXCollections.observableArrayList();
         markedList = FXCollections.observableArrayList();
         actionList = new ArrayList<>();
+        propertyMarkedSize = new SimpleIntegerProperty();
+        propertyMarkedSize.bind(Bindings.size(this.markedList));
     }
         
     private static final Comparator<ActionFile> cmpDesc = (ActionFile f1, ActionFile f2) -> {
@@ -98,7 +103,6 @@ public class TaskFactory {
         LocationInRoot location  = new LocationInRoot(fileToRename);
         ExtPath file = LocationAPI.getInstance().getFileByLocation(location);
         ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
-        
         String path1 = file.getAbsolutePath();
         String path2 = parent.getAbsoluteDirectory()+newName;
         String fPath = parent.getAbsoluteDirectory()+fallbackName;
@@ -287,9 +291,10 @@ public class TaskFactory {
                         if(Files.isDirectory(list[index1].paths[0])){
                             leftFolders.add(list[index1]);
                             Files.createDirectory(list[index1].paths[1]);
-                            Log.writeln("Added to flders:"+list[index1].paths[1]);
+                            Log.writeln("Added to folders:"+list[index1].paths[1]);
                         }else{
                             Files.move(list[index1].paths[0],list[index1].paths[1]);
+                            
                             Log.writeln("OK:"+list[index1]);
                         }
                     }catch(Exception e){
@@ -556,8 +561,8 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,ObservableList list,Map map){
-        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,100);
+    public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
+        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,10);
             for(int i=0; i<array.size();i++){
                 
                 Task<Long> task;
@@ -573,7 +578,7 @@ public class TaskFactory {
                     
         
     }
-    public Task<Long> duplicateCompareTaskLookUp(int index,ArrayList<PathStringCommands>array,double ratio,ObservableList list,Map map){
+    public Task<Long> duplicateCompareTaskLookUp(int index,ArrayList<PathStringCommands>array,double ratio,List list,Map map){
         return new Task<Long>(){
             @Override
             protected Long call() throws Exception{
@@ -583,34 +588,29 @@ public class TaskFactory {
                 for(int j=index+1; j<array.size();j++){
                     progress++;
                     if(this.isCancelled()){
-                        Log.write("Duplicate finder was canceled");
                         return progress;
                     }
 
                     PathStringCommands file1 = array.get(j);
-                    if(map.containsKey(file.getPath()+"/$/"+file1.getPath())){
-                        DuplicateFinderController.SimpleTableItem item = (DuplicateFinderController.SimpleTableItem) map.get(file.getPath()+"/$/"+file1.getPath());
-                        if(item.ratio>=ratio){
-                            list.add(item);
-                            Log.write("Look up:",file.getPath()+" | ",file1.getPath()+" "+item.ratio);
-
-                        }
+                    String key = name+"/$/"+file1.getName(true);
+                    DuplicateFinderController.SimpleTableItem item;
+                    Double rat;
+                    if(map.containsKey(key)){
+                        rat = (Double) map.get(key);
+                        
                     }else{
-                        double rat = StringOperations.correlationRatio(name,file1.getName(true));
-                        DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
-                        map.put(file.getPath()+"/$/"+file1.getPath(), item);
-                        if(rat>=ratio){
-                            Log.write("Found:",file.getPath()+" | ",file1.getPath()+" "+rat);
-                            list.add(item);
-                        }
+                        rat = StringOperations.correlationRatio(name,file1.getName(true));                
+                        map.put(key,rat);
                     }
+                    item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
+                    list.add(item);
                 }
                 return progress;
             };
         };
     }
 
-    public Task<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,ObservableList list){
+    public Task<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,List list){
         return new Task<Long>(){
             @Override
             protected Long call() throws Exception{
@@ -620,7 +620,6 @@ public class TaskFactory {
                 for(int j=index+1; j<array.size();j++){
                     progress++;
                     if(this.isCancelled()){
-                        Log.write("Duplicate finder was canceled");
                         return progress;
                     }
 
@@ -628,8 +627,7 @@ public class TaskFactory {
                     double rat = StringOperations.correlationRatio(name,file1.getName(true));
                     DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
                     if(rat>=ratio){
-                        Log.write("Found:",file.getPath()+" | ",file1.getPath()+" "+rat);
-                        list.add(item);
+                        list.add(item); 
                     }
                     
                 }

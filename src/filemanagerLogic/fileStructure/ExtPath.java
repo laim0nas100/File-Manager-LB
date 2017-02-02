@@ -7,6 +7,7 @@ package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
+import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
@@ -20,6 +21,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Objects;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -28,6 +30,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import utility.ExtStringUtils;
+import utility.PathStringCommands;
 
 /**
  *
@@ -53,6 +56,8 @@ public class ExtPath{
         } else if (s.startsWith("(GB)")) {
             s = s.replace("(GB) ", "");
             multiplier = Enums.DATA_SIZE.GB.size;
+        } else{
+            return (double)0;
         }
         return Double.parseDouble(s) * multiplier;
     }
@@ -85,13 +90,17 @@ public class ExtPath{
                 return null;
             }
         };
-    public ExtPath(String str){
+    public ExtPath(String str,Object...optional){
         str = str.trim();
         if(str.endsWith(File.separator)){
             str = str.substring(0,str.length()-1);
         }
         this.absolutePath = str;
         init();
+        if(optional.length>0){
+            this.path = (Path) optional[0];
+        }
+        
     }
     public Path toPath(){
         if(this.path == null){
@@ -164,7 +173,6 @@ public class ExtPath{
 
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
-        this.isAbsoluteRoot.set(false);
     }
     public Collection<ExtPath> getListRecursive(){
         ArrayList<ExtPath> list = new ArrayList<>();
@@ -216,8 +224,28 @@ public class ExtPath{
         return this.lastModified;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 17 * hash + Objects.hashCode(this.absolutePath);
+        return hash;
+    }
+    
+    @Override
+    public boolean equals(Object e){
+        if(e==null){
+            return false;
+        }
+        if(!( e instanceof ExtPath)){
+            return false;
+        }else{
+            ExtPath p = (ExtPath) e;
+            return this.absolutePath.equals(p.getAbsolutePath());
+        }
+        
+    }
     public String getName(boolean extension){
-        String name = this.getName(absolutePath);
+        String name = PathStringCommands.getName(absolutePath);
         
         if(!extension){
             if(name.contains(".")){
@@ -227,14 +255,7 @@ public class ExtPath{
         }
         return name;
     }
-    private String getName(String path){
-        if(path.endsWith(File.separator)){
-            path = path.substring(0,path.length()-1);
-        }
-        int index = ExtStringUtils.lastIndexOf(path, File.separator)+1;
-        path = path.substring(index);
-        return path;
-    }
+
     public String getExtension(){
         String name = this.getName(true);
         if(name.contains(".")){
@@ -252,22 +273,10 @@ public class ExtPath{
     public String getParent(int timesToGoUp){
         String current = this.absolutePath;
         while(timesToGoUp>0){
-            current = this.goUp(current);
+            current = PathStringCommands.goUp(current);
             timesToGoUp--;
         }
         return current;
-    }
-    private String goUp(String current){
-        int index = ExtStringUtils.lastIndexOf(current, this.getName(current))-1;
-        if(index<0){
-            index = 0;
-        }
-        current = current.substring(0, index);
-        if(current.length()==0){
-            current = File.separator;
-        }
-        return current;
-       
     }
     public String relativeFrom(String possibleParent){
         String strPath = absolutePath+File.separator;

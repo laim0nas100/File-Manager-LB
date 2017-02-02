@@ -16,15 +16,9 @@ import java.nio.file.Path;
  * @author Laimonas Beniušis
  */
 public class ExtLink extends ExtPath{
-    private boolean pointsToDirectory;
-
     
-    public ExtLink(String link){
-        super(link);
-        try{
-            Path path = Files.readSymbolicLink(this.toPath());
-            this.pointsToDirectory = Files.isDirectory(path);
-        }catch(Exception x){}
+    public ExtLink(String link,Object...optional){
+        super(link,optional);
         
     }
     public String getTargetDir() throws IOException {
@@ -32,7 +26,7 @@ public class ExtLink extends ExtPath{
     }
     
     public boolean isPointsToDirectory() {
-        return pointsToDirectory;
+        return Files.isDirectory(this.toPath());
     }
     
     @Override

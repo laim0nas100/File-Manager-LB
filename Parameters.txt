@@ -9,10 +9,9 @@ logBackupCount=5
 //currently does nothing
 lang=EN
 
-//prefix for virtual folders access
-virtualPrefix=V
 
-//Name of root directory
+
+//Name of root directory (don't set to an actual path in your system or you wont be able to access it via address field)
 ROOT_NAME=\
 
 //Multithreading load for specific tasks
@@ -44,9 +43,11 @@ filter.parent2=<p2>
 
 //Custom path (HAS FILE SEPERATOR AT THE END)
 filter.custom=<c>
-
-//Relative to custom path
-/*  Example:
+//set custom path as first of marked list
+code.setCustom=setCustom
+/*  
+    Relative to custom path
+    Example:
     custom = /folder1/folder2/
     path = /folder1/folder2/folder3/file.txt
     relativeCustom = folder3/file.txt
@@ -61,10 +62,21 @@ code.clear=clear//clear screen
 code.truncateAfter=10000//truncate command text window after specified length
 code.commandGenerate=generate//command to generate script
 code.commandApply=apply//command to load script
-code.createVirtualFolder=virtual//command to create virtual folder
-code.listVirtualFolders=listVirtualFolders//command to list virtual folders
+
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
-code.setCustom=setCustom//set custom path as first of marked list
 
 
+//Virtual folders
+//prefix for virtual folders access
+/*  
+    Write [virtualPrefix][number] in address bar to access 
+    if virtualPrefix is V and you have 3 virtual folders
+    write: V0
+    to access the first one
+    or V2 to access the third one
+*/
+virtualPrefix=V
+code.addToVirtual=add
+code.createVirtualFolder=virtual//create virtual folder
+code.listVirtualFolders=listVirtualFolders//list virtual folders

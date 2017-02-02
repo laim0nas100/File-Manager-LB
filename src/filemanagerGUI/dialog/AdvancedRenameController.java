@@ -14,6 +14,8 @@ import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
+import filemanagerLogic.fileStructure.VirtualFolder;
+import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,15 +71,13 @@ public class AdvancedRenameController extends BaseController {
 private int startingNumber;
 private int increment;
 private LinkedList<TableItemObject> tableList;
-private ArrayList<ExtFolder> folders;
-private ArrayList<ExtPath> files;
+private VirtualFolder virtual;
 
-public void beforeShow(String title,Collection<String> fileList){
+public void beforeShow(String title,VirtualFolder virtual){
     super.beforeShow(title);    
     this.setNumber();
     this.tableList = new LinkedList<>();
-    this.files = new ArrayList<>();
-    this.folders = new ArrayList<>();
+    this.virtual = virtual;
     Tooltip tp = new Tooltip();
     tp.setText("Name ="+PathStringCommands.fileName+", Name without extension ="+PathStringCommands.nameNoExt+
             ", Name extension only ="+PathStringCommands.extension+", Number (multi-digit if consecutive) ="+PathStringCommands.number);
@@ -90,25 +90,25 @@ public void beforeShow(String title,Collection<String> fileList){
     nameCol1.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<TableItemObject, String>, ObservableValue<String>>() {
         @Override
         public ObservableValue<String> call(TableColumn.CellDataFeatures<TableItemObject, String> cellData) {
-            SimpleStringProperty result;
+            String result;
             if(showFullPath.selectedProperty().get()){
-                result = cellData.getValue().path1;
+                result = cellData.getValue().path1.getPath();
             }else{
-                result = cellData.getValue().name1;
+                result = cellData.getValue().path1.getName(true);
             }
-            return result;
+            return new SimpleStringProperty(result);
         }
     });
     nameCol2.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<TableItemObject, String>, ObservableValue<String>>() {
         @Override
         public ObservableValue<String> call(TableColumn.CellDataFeatures<TableItemObject, String> cellData) {
-            SimpleStringProperty result;
+            String result;
             if(showFullPath.selectedProperty().get()){
-                result = cellData.getValue().path2;
+                result = cellData.getValue().path2.getPath();
             }else{
-                result = cellData.getValue().name2;
+                result = cellData.getValue().path2.getName(true);
             }
-            return result;
+            return new SimpleStringProperty(result);
         }
     });
     sizeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<TableItemObject, String>, ObservableValue<String>>() {
@@ -132,56 +132,22 @@ public void beforeShow(String title,Collection<String> fileList){
     this.table.getColumns().setAll(columns);
 
     this.table.getItems().addAll(tableList);
-    fileList.forEach(file ->{
-        ExtPath fileAndPopulate = LocationAPI.getInstance().getFileAndPopulate(file);
-        if(fileAndPopulate.getIdentity().equals(Enums.Identity.FOLDER)){
-            folders.add((ExtFolder) fileAndPopulate);
-        }else{
-            files.add(fileAndPopulate);
-        }
-    });
     updateLists();
 }
 public void updateLists(){
     
-    {
-    Iterator<ExtFolder> iterator = folders.iterator();
-    while(iterator.hasNext()){
-        ExtFolder next = iterator.next();
-        if(!Files.exists(next.toPath())){
-            iterator.remove();
-        }else{
-            next.update();
-        }
-    }}
-    
-    Iterator<ExtPath> iterator = files.iterator();
-    while(iterator.hasNext()){
-        ExtPath next = iterator.next();
-        if(!Files.exists(next.toPath())){
-            iterator.remove();
-        }else{
-            ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(next.getMapping().getParentLocation());
-            folder.update();
-        }
-    }
-    ArrayList<String> array = new ArrayList<>();
-    for(ExtFolder folder:folders){
-        ArrayList<String> locArray = new ArrayList<>();
-        if(recursive.selectedProperty().get()){
-            for(ExtPath file:folder.getListRecursive()){
-                locArray.add(file.getAbsolutePath());                
-            }
-        locArray.remove(0);
-        }else{
-            for(ExtPath file:folder.getFilesCollection()){
-                locArray.add(file.getAbsolutePath()); 
-            } 
-        }
-        array.addAll(locArray);
+    ArrayList<ExtPath> array = new ArrayList<>();
+    if(recursive.selectedProperty().get()){
+        this.virtual.getListRecursive().stream().forEach(file->{
+            array.add(file);
+        });
+    }else{
+        this.virtual.getFilesCollection().stream().forEach(file->{
+            array.add(file);
+        });
     }
     tableList.clear();
-    for(String s:array){
+    for(ExtPath s:array){
        tableList.add(new TableItemObject(s));
     }
     setTableItems(tableList);
@@ -198,7 +164,7 @@ public void previewSetting(){
         for(TableItemObject object:this.tableList){          
             try {
                 
-                object.newName(parseFilter(object.name1.get(), filter, number));
+                object.newName(parseFilter(object.path1.getName(true), filter, number));
                 number+=increment;
             } catch (Lexer.NoSuchLexemeException | Lexer.StringNotTerminatedException ex) {
                 ErrorReport.report(ex);
@@ -209,11 +175,11 @@ public void previewSetting(){
         String replacement =""+ this.tfReplaceWith.getText();
         if(useRegex.isSelected()){
             for(TableItemObject object:this.tableList){
-                object.newName(ExtStringUtils.parseRegex(object.name1.get(), strRegex, replacement));
+                object.newName(ExtStringUtils.parseRegex(object.path1.getName(true), strRegex, replacement));
             }
         }else{
            for(TableItemObject object:this.tableList){
-                object.newName(ExtStringUtils.parseSimple(object.name1.get(), strRegex, replacement)); 
+                object.newName(ExtStringUtils.parseSimple(object.path1.getName(true), strRegex, replacement)); 
            } 
         }
     }
@@ -284,11 +250,12 @@ public void setNumber(){
 public void apply(){
     for(Object object:table.getItems()){
         TableItemObject ob = (TableItemObject) object;
+        
         try {
-            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.get()).getParentLocation());
-            String fallback = TaskFactory.resolveAvailablePath(parent, ob.name1.get());
-            fallback = ExtStringUtils.replaceOnce(fallback, parent.getAbsoluteDirectory(), "");
-            TaskFactory.getInstance().renameTo(ob.path1.get(),ob.name2.get(),fallback);
+//            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(ob.path1.getParent(1));
+//            String fallback = TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true));
+//            fallback = ExtStringUtils.replaceOnce(fallback, parent.getAbsoluteDirectory(), "");
+            TaskFactory.getInstance().renameTo(ob.path1.getPath(),ob.path2.getName(true),Math.random()+""+Math.random());
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
@@ -300,36 +267,28 @@ public void apply(){
     
 }
 private static class TableItemObject{
-    public SimpleStringProperty path1;
-    public SimpleStringProperty name1;
-    public SimpleStringProperty path2;
-    public SimpleStringProperty name2;
+    public PathStringCommands path1;
+    public PathStringCommands path2;
     public SimpleStringProperty date;
     public SimpleLongProperty size;
     public boolean excludeMe;
     public boolean isFolder;
     
     
-    public TableItemObject(String s){
-        LocationInRoot mapping = LocationAPI.getInstance().getLocationMapping(s);
-        ExtPath file = LocationAPI.getInstance().getFileByLocation(mapping);
+    public TableItemObject(ExtPath file){
         this.date = new SimpleStringProperty(file.lastModified()+"");
         this.size = new SimpleLongProperty(file.size());
-        this.path1 = new SimpleStringProperty(file.getAbsoluteDirectory());
-        this.name1 = new SimpleStringProperty(file.propertyName.get());
-        this.path2 = new SimpleStringProperty(file.getAbsoluteDirectory());
-        this.name2 = new SimpleStringProperty(file.propertyName.get());
+        this.path1 = new PathStringCommands(file.getAbsolutePath());
+        this.path2 = new PathStringCommands(file.getAbsolutePath());
         this.isFolder = file.getIdentity().equals(Enums.Identity.FOLDER);
     }
     public void newName(String s){
-        String oldName = name2.get();
-        name2.set(s);
-        int length = oldName.length();
-        String newPath = path2.get().substring(0, path2.get().length()-length);
-        path2.set(newPath+s);
-        //Log.write(path2,"  ",name2);
+        
+        
+        String parent = this.path2.getParent(1);
+        this.path2.setPath(parent+File.separator+s);
     }
-    }
+}
 private LinkedList<TableItemObject> applyFilters(LinkedList<TableItemObject> items){
     LinkedList<TableItemObject> list = new LinkedList<>();
     for(TableItemObject object:items){
@@ -339,7 +298,7 @@ private LinkedList<TableItemObject> applyFilters(LinkedList<TableItemObject> ite
             }
         }
         if(this.showOnlyDifferences.selectedProperty().get()){
-            if(object.name1.get().equals(object.name2.get())){
+            if(object.path1.getName(true).equals(object.path2.getName(true))){
                 object.excludeMe = true;
             }
         }

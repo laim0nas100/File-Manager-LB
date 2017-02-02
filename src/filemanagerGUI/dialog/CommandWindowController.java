@@ -15,12 +15,12 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
+import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
@@ -260,7 +260,7 @@ public class CommandWindowController extends BaseController {
 
                 }else{
                     for(String file:TaskFactory.getInstance().markedList){
-                        ExtPath f = LocationAPI.getInstance().getFileAndPopulate(file);
+                        ExtPath f = LocationAPI.getInstance().getFileByLocation(new LocationInRoot(file));
                         VF.files.put(f.propertyName.get(), f);
                         FileManagerLB.VirtualFolders.files.put(VF.propertyName.get(), VF);
                     }

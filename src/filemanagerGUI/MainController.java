@@ -40,18 +40,17 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
-import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.FileAddressField;
-import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
+import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -102,7 +101,11 @@ public class MainController extends BaseController{
     @FXML public ListView snapshotView;
     
     @FXML public Menu menuSizeUnits;
-    @FXML public MenuItem miAdvancedRename;
+    
+    @FXML public MenuItem miAdvancedRenameFolder;
+    @FXML public MenuItem miAdvancedRenameMarked;
+    @FXML public MenuItem miDuplicateFinderFolder;
+    @FXML public MenuItem miDuplicateFinderMarked;
     
     @FXML public MenuItem menuItemAbout;
     @FXML public MenuItem menuItemTest;
@@ -133,7 +136,7 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty propertyRenameCondition;
     private IntegerBinding selectedSize;
     private Task searchTask;
-    private ExtTableView extTableView;
+    public ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder root,ExtFolder currentDir){
         
         super.beforeShow(title);
@@ -163,8 +166,18 @@ public class MainController extends BaseController{
         selectedSize = Bindings.size(this.selectedList);
         Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
         extTableView = new ExtTableView(tableView);
+        extTableView.sortable = true;
         extTableView.prepareChangeListeners();
+        
         changeToDir(currentDir);
+        TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
+        TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
+        typeCol.setSortType(TableColumn.SortType.DESCENDING);
+        nameCol.setSortType(TableColumn.SortType.ASCENDING);
+        tableView.getSortOrder().add(typeCol);
+        tableView.getSortOrder().add(nameCol);
+
+        update();
     }
     
     @Override
@@ -176,13 +189,26 @@ public class MainController extends BaseController{
     public void update(){
         
         Platform.runLater(()->{
-            
+            Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
+            while(iterator.hasNext()){
+                try{
+                    if(!Files.exists(Paths.get(iterator.next()))){
+                        iterator.remove();
+                    }
+                }catch(Exception e){}
+            }
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
-            this.buttonParent.setDisable(MC.currentDir.isAbsoluteRoot());
-            this.miAdvancedRename.setDisable(MC.currentDir.isAbsoluteRoot());
-            if(MC.currentDir.isAbsoluteRoot()){
-                fileAddress.field.setText(ROOT_NAME);
+            this.buttonParent.setDisable(!MC.hasParent());
+            this.miAdvancedRenameFolder.setDisable(!MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
+            this.miDuplicateFinderFolder.setDisable(!MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
+            this.miAdvancedRenameMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
+            this.miDuplicateFinderMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
+            
+
+            
+            if(MC.currentDir.isAbsoluteRoot.get()){
+                fileAddress.field.setText(FileManagerLB.ROOT_NAME);
             }else if(MC.currentDir.getIdentity().equals(Identity.VIRTUAL)){
                 fileAddress.field.setText(MC.currentDir.propertyName.get());
             }else{
@@ -193,20 +219,11 @@ public class MainController extends BaseController{
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
 
-            Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
-            while(iterator.hasNext()){
-                try{
-                    if(!Files.exists(Paths.get(iterator.next()))){
-                        iterator.remove();
-                    }
-                }catch(Exception e){}
-            }
+            
             
             propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
             propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
             Platform.runLater(()->{
-//                MC.currentDir.update();
-
                 extTableView.updateContentsAndSort(MC.getCurrentContents());
             });
         });
@@ -216,31 +233,45 @@ public class MainController extends BaseController{
         FileManagerLB.doOnExit();
     }
     public void createNewWindow(){
-        ViewManager.getInstance().newWindow(ArtificialRoot,MC.currentDir);
+        ViewManager.getInstance().newWindow(FileManagerLB.ArtificialRoot,MC.currentDir);
     }
     public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot()){
-            ArrayList<String> list = new ArrayList<>();
-            list.add(MC.currentDir.getAbsolutePath());
-            ViewManager.getInstance().newAdvancedRenameDialog(list);
+            VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
+            folder.addAll(MC.currentDir.getFilesCollection());
+            ViewManager.getInstance().newAdvancedRenameDialog(folder);
         }
     }
     public void advancedRenameMarked(){
         if(!MC.currentDir.isAbsoluteRoot()){
-            ArrayList<String> list = new ArrayList<>();
-            this.markedView.getItems().forEach(file ->{
-                list.add(file.toString());
-            });
-            ViewManager.getInstance().newAdvancedRenameDialog(list);
+            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
+            VirtualFolder folder = new VirtualFolder("Marked Files");
+            folder.addAll(populateExtPathList);
+            ViewManager.getInstance().newAdvancedRenameDialog(folder);
         }
     }
-    
+    public void duplicateFinderMarked(){
+        if(!MC.currentDir.isAbsoluteRoot()){
+            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
+            VirtualFolder folder = new VirtualFolder("Marked Files");
+            folder.addAll(populateExtPathList);
+            ViewManager.getInstance().newDuplicateFinderDialog(folder);
+        }
+    }
+    public void duplicateFinderFolder(){
+        if(!MC.currentDir.isAbsoluteRoot()){
+            VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
+            folder.addAll(MC.currentDir.getFilesCollection());
+            ViewManager.getInstance().newAdvancedRenameDialog(folder);
+        }    
+    }
+    public void mediaPlayer(){
+        ViewManager.getInstance().newMusicPlayer(TaskFactory.getInstance().markedList);
+
+    }
     public void test() throws IOException{
         Log.write("TEST");
-//        VirtualFolder.createVirtualFolder();
-//        VirtualFolder vf = (VirtualFolder) FileManagerLB.VirtualFolders.files.get("V0");
-//        vf.files.put("0", LocationAPI.getInstance().getFileAndPopulate("/mnt/Extra-Space/Dev/dest/"));
-//        Log.write(vf.getListRecursive());
+        ViewManager.getInstance().newMusicPlayer(new ArrayList<>(TaskFactory.getInstance().markedList));
     }
 
     
@@ -295,7 +326,7 @@ public class MainController extends BaseController{
                     }
                 }else{
                     try {
-                        for(ExtPath file:ArtificialRoot.getFilesCollection()){
+                        for(ExtPath file:FileManagerLB.ArtificialRoot.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
                         }
                     } catch (Exception ex) {
@@ -353,9 +384,6 @@ public class MainController extends BaseController{
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         });
     }
-    public void duplicateFind(){
-        ViewManager.getInstance().newDuplicateFinderDialog(MC.currentDir);
-    }
     public void commandWindow(){
         ViewManager.getInstance().newCommandDialog();
     }
@@ -368,7 +396,7 @@ public class MainController extends BaseController{
         array.stream().forEach(sm::clearSelection);
     }
     private void handleOpen(ExtPath file){
-        if(file.getIdentity().equals(Enums.Identity.FOLDER)){
+        if(file instanceof ExtFolder){
             Log.write("Change to dir "+file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
         }else {
@@ -392,8 +420,8 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equalsIgnoreCase(ROOT_NAME)||possibleDir.isEmpty()){
-                changeToDir(ArtificialRoot);
+            if(possibleDir.equalsIgnoreCase(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
+                changeToDir(FileManagerLB.ArtificialRoot);
             }else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
                 if(fileAndPopulate!=null){
@@ -505,7 +533,11 @@ public class MainController extends BaseController{
             TaskFactory.getInstance().actionList.addAll(TaskFactory.getInstance().dragList);
             SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(TaskFactory.getInstance().actionList),MC.currentDir);
             task.setTaskDescription("Move Dragged files");
-            ViewManager.getInstance().newProgressDialog(task);
+            boolean paused = false;
+            if(TaskFactory.dragInitWindowID.equals(MediaPlayerController.ID)){
+                    paused = true;
+            }
+            ViewManager.getInstance().newProgressDialog(task,paused);
         });
         contextMenuItems[11] = new MenuItem("Copy here selected");
         contextMenuItems[11].setOnAction(eh ->{        
@@ -552,7 +584,7 @@ public class MainController extends BaseController{
         });
         contextMenuItems[17] = new MenuItem("Open in new window");
         contextMenuItems[17].setOnAction(eh ->{
-            ViewManager.getInstance().newWindow(ArtificialRoot, (ExtFolder) tableView.getSelectionModel().getSelectedItem());
+            ViewManager.getInstance().newWindow(FileManagerLB.ArtificialRoot, (ExtFolder) tableView.getSelectionModel().getSelectedItem());
         });
         contextMenuItems[18] = new MenuItem("Open");
         contextMenuItems[18].setOnAction(eh ->{
@@ -689,7 +721,7 @@ public class MainController extends BaseController{
                 if (itemCount1 == 1) {
                         tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
                         ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-                        if(file.getIdentity().equals(Enums.Identity.FOLDER)){
+                        if(file instanceof ExtFolder){
                             tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
                         }
                         
@@ -919,7 +951,7 @@ public class MainController extends BaseController{
                         super.updateItem(t, bln);
                         if (t != null) {
                             setText(t.getPropertyName().get());
-                            if(!t.getPropertyName().get().equals(ROOT_NAME)){
+                            if(!t.getPropertyName().get().equals(FileManagerLB.ROOT_NAME)){
                                 setTooltip(t.getToolTip());
                             }
                         }else{

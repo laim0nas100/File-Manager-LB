@@ -11,22 +11,20 @@ import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
+import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
+import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -45,14 +43,14 @@ import utility.PathStringCommands;
 public class FileManagerLB extends Application {
     public static final String HOME_DIR  = System.getProperty("user.dir")+File.separator;
     public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR+"VIRTUAL_FOLDERS"+File.separator;
-    public static final String ARTIFICIAL_ROOT = HOME_DIR+"ARTIFICIAL_ROOT";
+    public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR+"ARTIFICIAL_ROOT";
     public static String ROOT_NAME = "ROOT";
     public static int MAX_THREADS_FOR_TASK = 1;
-    public static ExtFolder ArtificialRoot = new ExtFolder(ARTIFICIAL_ROOT);
-    public static ExtFolder VirtualFolders = new ExtFolder(VIRTUAL_FOLDERS_DIR);
+    public static VirtualFolder ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
+    public static VirtualFolder VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
     public static FileLock GlobalLock;
-    public static ObservableList<FavouriteLink> links;
-    public static ObservableList<ErrorReport> errorLog;
+    public static ObservableList<FavouriteLink> links = FXCollections.observableArrayList();
+    public static ObservableList<ErrorReport> errorLog = FXCollections.observableArrayList();
     public static int DEPTH;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount;
@@ -62,23 +60,17 @@ public class FileManagerLB extends Application {
     public void start(Stage primaryStage) {
         
         Platform.runLater(()->{
-            
-            links = FXCollections.observableArrayList();
-            errorLog = FXCollections.observableArrayList();
-            ArtificialRoot.setPopulated(true);
-            ArtificialRoot.setIsAbsoluteRoot(true);
-            VirtualFolders.setPopulated(true);
-            VirtualFolders.populateFolder();
-            ArrayDeque<String> list = new ArrayDeque<>();
+            ArrayDeque<String> list = new ArrayDeque<>();         
             try{
                 //Log.changeStream('f', new File(DIR+"Log.txt"));
-                list = new ArrayDeque(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
+                list.addAll(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
             }
             catch(Exception e){
                 ErrorReport.report(e);                
             }
                 parameters = new ParametersMap(list,"=");
                 Log.writeln("Parameters",parameters);
+                VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) FileManagerLB.parameters.defaultGet("virtualPrefix", "V");
                 DEBUG.set((boolean) parameters.defaultGet("debug",false));
                 DEPTH = (int) parameters.defaultGet("lookDepth",2);
                 LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
@@ -106,12 +98,21 @@ public class FileManagerLB extends Application {
                 CommandWindowController.commandListRec = (String) FileManagerLB.parameters.defaultGet("code.listRec", "listRec");
                 CommandWindowController.commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
                 CommandWindowController.commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
+            
+                
+                ArtificialRoot.setPopulated(true);
+                ArtificialRoot.setIsAbsoluteRoot(true);
+                ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
+                VirtualFolders.setPopulated(true);
             try{
-                for(ExtPath f:VirtualFolders.getFilesCollection()){
-                    Files.deleteIfExists(f.toPath());
-                }
-                Files.deleteIfExists(VirtualFolders.toPath());
-                Files.createDirectory(VirtualFolders.toPath());
+//                for(ExtPath f:VirtualFolders.getFilesCollection()){
+//                    Files.deleteIfExists(f.toPath());
+//                }
+//                Files.deleteIfExists(VirtualFolders.toPath());
+//                Files.createDirectory(VirtualFolders.toPath());
+                
+//                Files.deleteIfExists(VirtualFolders.toPath());
+//                Files.createFile(V)
                 Files.deleteIfExists(ArtificialRoot.toPath());
                 Files.createFile(ArtificialRoot.toPath());
                 
@@ -132,6 +133,11 @@ public class FileManagerLB extends Application {
             if(DEBUG.not().get()){
                 ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
             }
+//            if(DEBUG.get()){
+//                ArrayList<String> list = new ArrayList<>();
+//                list.add(FileManagerLB.HOME_DIR+"Big Gigantic - The Little Things (Kasbo remix).mp3");
+//                ViewManager.getInstance().newMusicPlayer(list);
+//            }
         });
         
         
@@ -143,7 +149,7 @@ public class FileManagerLB extends Application {
         
         File[] roots = File.listRoots();
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
-            if(!Files.isDirectory(f.toPath())){
+            if((!Files.isDirectory(f.toPath()))&&!(f.getIdentity().equals(Identity.VIRTUAL))){
                 ArtificialRoot.files.remove(f.propertyName.get());
             }
         }
@@ -202,14 +208,6 @@ public class FileManagerLB extends Application {
                 th.run();
             });
             BM.cleanUp().run();
-            
-            
-            
-            VirtualFolders.populateFolder();
-            for(ExtPath f:VirtualFolders.getFilesCollection()){
-                    Files.deleteIfExists(f.toPath());
-                }
-            Files.deleteIfExists(VirtualFolders.toPath());
             
             GlobalLock.release();
             GlobalLock.channel().close();

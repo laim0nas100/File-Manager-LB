@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" prefWidth="664.0" xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.RenameDialogController">
+<VBox alignment="CENTER" prefWidth="664.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.RenameDialogController">
    <children>
       <Label fx:id="description" alignment="CENTER" contentDisplay="CENTER" text="Label" />
       <HBox alignment="CENTER" prefHeight="35.0" prefWidth="638.0">
@@ -15,7 +15,7 @@
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
          </VBox.margin>
          <children>
-            <TextField fx:id="textField" onAction="#apply" onKeyPressed="#checkAvailable" onKeyReleased="#checkAvailable" onKeyTyped="#checkAvailable" HBox.hgrow="ALWAYS">
+            <TextField fx:id="textField" onAction="#apply" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </HBox.margin>

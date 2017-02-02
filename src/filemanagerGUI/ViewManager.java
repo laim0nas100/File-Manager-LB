@@ -9,7 +9,6 @@ package filemanagerGUI;
 import LibraryLB.Log;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
-import filemanagerGUI.dialog.DirSyncController;
 import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ListController;
 import filemanagerGUI.dialog.ProgressDialogController;
@@ -20,6 +19,7 @@ import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
+import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
@@ -32,6 +32,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TableColumn;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import utility.ErrorReport;
@@ -87,12 +88,12 @@ public class ViewManager {
         
     }
     public void updateAllWindows(){
-        Platform.runLater(()->{
+//        Platform.runLater(()->{
             for(String s:windows){
                 MainController controller = (MainController) frames.get(s).getController();
                 controller.update();
             }
-        }); 
+//        }); 
     }
     public void updateAllFrames(){
         Platform.runLater(()->{
@@ -106,7 +107,7 @@ public class ViewManager {
     }
     
 //DIALOG ACTIONS
-    public void newProgressDialog(SimpleTask task){
+    public void newProgressDialog(SimpleTask task,Object...params){
         
         SimpleTask et = new SimpleTask() {
             @Override
@@ -120,7 +121,11 @@ public class ViewManager {
                 frame.getStage().setMinHeight(250);
                 frame.getStage().setMinWidth(400);
                 frame.getStage().show();
-                controller.afterShow(task);
+                if(params.length>0){
+                    controller.afterShow(task,(boolean)params[0]);
+                }else{
+                    controller.afterShow(task,false);
+                }
                 frame.getStage().requestFocus();
                 frame.getStage().toFront();         
             } catch (Exception ex) {
@@ -155,7 +160,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    public void newAdvancedRenameDialog(Collection<String> list){
+    public void newAdvancedRenameDialog(VirtualFolder folder){
        
        
         SimpleTask et = new SimpleTask() {
@@ -164,7 +169,7 @@ public class ViewManager {
             try {
                 Frame frame = newFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
                 AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle(),list);
+                controller.beforeShow(frame.getStage().getTitle(),folder);
                 frame.getStage().show();
                 controller.afterShow();
                 frame.getStage().toFront();      
@@ -262,6 +267,50 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
+    public void newListFrame(String description, Collection<String> list){
+        SimpleTask et = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+                Frame frame = newFrame(FrameTitle.LIST_FRAME);
+                ListController controller = (ListController) frame.getController();
+                controller.beforeShow(frame.getStage().getTitle(),description);
+                
+                frame.getStage().show();
+                controller.afterShow(list);
+                frame.getStage().toFront();
+
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }    
+            return null;
+            }
+        };
+        Platform.runLater(et);
+    }
+    
+    public void newMusicPlayer(Collection<String> list){
+        SimpleTask et = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+                Frame frame = newFrame(FrameTitle.MUSIC_PLAYER);
+                MediaPlayerController controller = (MediaPlayerController) frame.getController();
+                controller.beforeShow(list);
+                frame.getStage().show();
+                frame.getStage().toFront();
+                controller.afterShow();
+                
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }    
+            return null;
+            }
+        };
+        Platform.runLater(et);
+    }
+
+    
     private Frame newFrame(FrameTitle info,Object...params) throws IOException, Exception{
         Boolean frameIsSingleton = false;
         if(params.length>0){
@@ -305,29 +354,9 @@ public class ViewManager {
             }
             System.exit(0);
         }
+        System.gc();
     }
     
-    public void newListFrame(String description, Collection<String> list){
-        SimpleTask et = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.LIST_FRAME);
-                ListController controller = (ListController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle(),description);
-                
-                frame.getStage().show();
-                controller.afterShow(list);
-                frame.getStage().toFront();
-
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }    
-            return null;
-            }
-        };
-        Platform.runLater(et);
-    }
     
     
 }

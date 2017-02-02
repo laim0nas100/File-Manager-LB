@@ -43,6 +43,7 @@ public class Enums {
         VIRTUAL_FOLDER_DIALOG("Virtual Folder","fxml/VirtualFolderDialog.fxml"),
         TASK_MANAGER_DIALOG("Task Manager","fxml/TaskManager.fxml"),
         LIST_FRAME("List","fxml/List.fxml"),
+        MUSIC_PLAYER("Media Payer","fxml/MediaPlayer.fxml"),
         COMMAND_DIALOG("Command Dialog","fxml/CommandWindow.fxml");
         public final String recourse;
         private final String title;

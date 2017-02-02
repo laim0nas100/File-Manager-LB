@@ -9,8 +9,6 @@ import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import LibraryLB.Log;
-import static filemanagerGUI.FileManagerLB.ArtificialRoot;
-import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
 import java.nio.file.Files;
@@ -35,13 +33,13 @@ public class LocationAPI {
         return new LocationInRoot(path);
     }
     public ExtPath getFileAndPopulate(String pathl){
-        ExtPath file = ArtificialRoot;
+        ExtPath file = FileManagerLB.ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
         pathl = pathl.trim();
         if(FileManagerLB.VirtualFolders.files.containsKey(pathl)){
                 return (VirtualFolder) FileManagerLB.VirtualFolders.files.get(pathl);
                 
-        }else if(!pathl.isEmpty() && !pathl.startsWith(ROOT_NAME)){
+        }else if(!pathl.isEmpty() && !pathl.startsWith(FileManagerLB.ROOT_NAME)){
             
             try{
                 ExtPath tempFile = new ExtPath(pathl);
@@ -51,7 +49,7 @@ public class LocationAPI {
                         tempFile = new ExtPath(path.toAbsolutePath().toString());
                         if(!tempFile.isRoot()){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
-                                ArtificialRoot.update();
+                                FileManagerLB.ArtificialRoot.update();
                             }
                         }
                     }
@@ -78,7 +76,7 @@ public class LocationAPI {
     }
     public boolean existByLocation(LocationInRoot location) {
         int i = 0;
-        ExtFolder folder = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
         //Log.writeln(location.toString());
         while (i< location.length()-1) {
             if (folder.hasFileIgnoreCase(location.at(i))) {
@@ -93,7 +91,7 @@ public class LocationAPI {
     
     public void removeByLocation(LocationInRoot location) {
         int i = 0;
-        ExtFolder folder = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
         }
@@ -103,7 +101,7 @@ public class LocationAPI {
 
     public void putByLocation(LocationInRoot location, ExtPath file) {
         int i = 0;
-        ExtFolder folder = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
         //Log.writeln("Put by location:"+location.toString());
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
@@ -113,7 +111,7 @@ public class LocationAPI {
     }
     public void putByLocationRecursive(LocationInRoot location, ExtPath file) {
         int i = 0;
-        ExtFolder folder = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
         
         while (i < location.length() - 1) {
             folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
@@ -124,7 +122,7 @@ public class LocationAPI {
     }
     private void populateByLocation(LocationInRoot location){
         int i = 0;
-        ExtFolder folder = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
         Log.writeln("Populate by location",location);
         //folder.update();
         for(String s:location.coordinates) {
@@ -142,11 +140,11 @@ public class LocationAPI {
     }
     public ExtPath getFileByLocation(LocationInRoot location) {
         if(location.length()==0){
-            return ArtificialRoot;
+            return FileManagerLB.ArtificialRoot;
         }
         try{
-            ExtFolder folder = ArtificialRoot;
-            ExtPath file = ArtificialRoot;
+            ExtFolder folder = FileManagerLB.ArtificialRoot;
+            ExtPath file = FileManagerLB.ArtificialRoot;
             //Log.writeln("Request:" + location.toString());
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){
@@ -171,10 +169,10 @@ public class LocationAPI {
     }
     public ExtPath getClosestFileByLocation(LocationInRoot location){
         if(location.length()==0){
-            return ArtificialRoot;
+            return FileManagerLB.ArtificialRoot;
         }
-        ExtFolder folder = ArtificialRoot;
-        ExtPath file = ArtificialRoot;
+        ExtFolder folder = FileManagerLB.ArtificialRoot;
+        ExtPath file = FileManagerLB.ArtificialRoot;
         try{
             for (String s:location.coordinates) {
                 if(folder.hasFileIgnoreCase(s)){
