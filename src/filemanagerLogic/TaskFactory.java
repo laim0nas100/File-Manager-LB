@@ -361,12 +361,13 @@ public class TaskFactory {
     private void populateRecursiveParallelInner(ExtFolder folder,int depth){
         
         if(0<depth){
-//            Log.writeln("Folder Iteration "+level+"::"+folder.getAbsoluteDirectory());
-            folder.update();
+            Log.writeln("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
+            folder.updateTask.cancel();
+            folder.startUpdateTask();
             
-            for(ExtFolder fold:folder.getFoldersFromFiles()){
-                new Thread(populateRecursiveParallel(fold, depth-1)).start();
-            }
+            folder.getFoldersFromFiles().stream().forEach((fold) -> {
+                populateRecursiveParallelInner(fold, depth-1);
+            });
         }
     }
     public SimpleTask populateRecursiveParallel(ExtFolder folder, int depth){
@@ -487,7 +488,8 @@ public class TaskFactory {
             }
   
         };
-    }   
+    }  
+    
     public SimpleTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
          return new SimpleTask(){
             @Override
@@ -561,6 +563,8 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
+    
+    
     public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
         TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,10);
             for(int i=0; i<array.size();i++){
@@ -609,7 +613,6 @@ public class TaskFactory {
             };
         };
     }
-
     public Task<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,List list){
         return new Task<Long>(){
             @Override

@@ -32,7 +32,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.TableColumn;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import utility.ErrorReport;

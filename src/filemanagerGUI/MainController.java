@@ -200,8 +200,8 @@ public class MainController extends BaseController{
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
             this.buttonParent.setDisable(!MC.hasParent());
-            this.miAdvancedRenameFolder.setDisable(!MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
-            this.miDuplicateFinderFolder.setDisable(!MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
+            this.miAdvancedRenameFolder.setDisable(MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
+            this.miDuplicateFinderFolder.setDisable(MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
             this.miAdvancedRenameMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
             this.miDuplicateFinderMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
             

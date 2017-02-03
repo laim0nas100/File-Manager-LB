@@ -1,7 +1,7 @@
-debug=true
+debug=false
 
 //Populating folder depth
-lookDepth=2
+lookDepth=0
 
 //BUP folder subfolder size
 logBackupCount=5

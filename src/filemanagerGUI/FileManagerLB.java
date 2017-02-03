@@ -46,8 +46,8 @@ public class FileManagerLB extends Application {
     public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR+"ARTIFICIAL_ROOT";
     public static String ROOT_NAME = "ROOT";
     public static int MAX_THREADS_FOR_TASK = 1;
-    public static VirtualFolder ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
-    public static VirtualFolder VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
+    public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
+    public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
     public static FileLock GlobalLock;
     public static ObservableList<FavouriteLink> links = FXCollections.observableArrayList();
     public static ObservableList<ErrorReport> errorLog = FXCollections.observableArrayList();
@@ -58,8 +58,10 @@ public class FileManagerLB extends Application {
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     @Override
     public void start(Stage primaryStage) {
-        
+        ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
+        VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         Platform.runLater(()->{
+            
             ArrayDeque<String> list = new ArrayDeque<>();         
             try{
                 //Log.changeStream('f', new File(DIR+"Log.txt"));

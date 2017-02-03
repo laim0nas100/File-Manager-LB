@@ -28,6 +28,7 @@ import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -52,6 +53,12 @@ import utility.ExtStringUtils;
 import static utility.ExtStringUtils.mod;
 import static utility.ExtStringUtils.normalize;
 import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
 
 /**
  * FXML Controller class
@@ -71,6 +78,8 @@ public class MediaPlayerController extends BaseController {
     @FXML public TableView table;
     @FXML public CheckBox showVideo;
     @FXML public ChoiceBox playType;
+    @FXML public Button buttonPlayPrev;
+    @FXML public Button buttonPlayNext;
     
     
     private EmbeddedMediaPlayerComponent component;
@@ -181,7 +190,12 @@ public class MediaPlayerController extends BaseController {
             table.getItems().add(new ExtPath(file));
         });
         setUpTable();
-        
+        buttonPlayPrev.setOnAction(event ->{
+            playNext(-1);
+        });
+        buttonPlayNext.setOnAction(event ->{
+            playNext(1);
+        });
         
         Platform.runLater(()->{
             timer.scheduleAtFixedRate(timerTask, 0, 10);
