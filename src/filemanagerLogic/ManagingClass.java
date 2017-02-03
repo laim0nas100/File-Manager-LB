@@ -122,7 +122,7 @@ public class ManagingClass {
             folderCache.clear();
             folderCache.addAll(saveList);
         }
-        if(folder.isAbsoluteRoot()){
+        if(folder.isAbsoluteRoot.get()){
             folderCache.add(FileManagerLB.ArtificialRoot);
         }else{            
             folderCache.add(folder);

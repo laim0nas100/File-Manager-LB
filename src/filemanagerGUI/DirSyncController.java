@@ -221,10 +221,10 @@ public class DirSyncController extends BaseController {
         status1.setText("BAD");
         
         file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
-        cond0 = (!file0.isAbsoluteRoot()&&file0.getIdentity().equals(Enums.Identity.FOLDER));
+        cond0 = file0.getIdentity().equals(Enums.Identity.FOLDER);
 
         file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
-        cond1 = (!file1.isAbsoluteRoot()&&file1.getIdentity().equals(Enums.Identity.FOLDER));
+        cond1 = file1.getIdentity().equals(Enums.Identity.FOLDER);
 
         if(cond0){
             status0.setText("OK");
@@ -237,12 +237,12 @@ public class DirSyncController extends BaseController {
         }
     }
     public void setDirs(){
-        if(!file0.isAbsoluteRoot()){
+        if(!file0.isAbsoluteOrVirtualFolders()){
             directory0.setText(file0.getAbsoluteDirectory());
         }else{
             directory0.setText("");
         }
-        if(!file1.isAbsoluteRoot()){
+        if(!file1.isAbsoluteOrVirtualFolders()){
             directory1.setText(file1.getAbsoluteDirectory());
         }else{
             directory1.setText("");

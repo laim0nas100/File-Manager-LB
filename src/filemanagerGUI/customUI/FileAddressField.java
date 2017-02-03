@@ -12,6 +12,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import utility.ExtStringUtils;
 import LibraryLB.Containers.LoopingList;
+import filemanagerLogic.Enums.Identity;
 
 /**
  *
@@ -53,7 +54,7 @@ public class FileAddressField{
                     if(ExtStringUtils.startsWithIgnoreCase(s, name)){
                         Platform.runLater(()->{
                             f = name;
-                            if(folder.isAbsoluteRoot()){
+                            if(folder.getIdentity().equals(Identity.VIRTUAL)){
                                 field.setText(s);
                             }else{
                                 field.setText(folder.getAbsoluteDirectory()+s);

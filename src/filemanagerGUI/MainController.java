@@ -236,14 +236,14 @@ public class MainController extends BaseController{
         ViewManager.getInstance().newWindow(FileManagerLB.ArtificialRoot,MC.currentDir);
     }
     public void advancedRenameFolder(){
-        if(!MC.currentDir.isAbsoluteRoot()){
+        if(!MC.currentDir.isAbsoluteRoot.get()){
             VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
             folder.addAll(MC.currentDir.getFilesCollection());
             ViewManager.getInstance().newAdvancedRenameDialog(folder);
         }
     }
     public void advancedRenameMarked(){
-        if(!MC.currentDir.isAbsoluteRoot()){
+        if(!MC.currentDir.isAbsoluteRoot.get()){
             Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
             VirtualFolder folder = new VirtualFolder("Marked Files");
             folder.addAll(populateExtPathList);
@@ -251,7 +251,7 @@ public class MainController extends BaseController{
         }
     }
     public void duplicateFinderMarked(){
-        if(!MC.currentDir.isAbsoluteRoot()){
+        if(!MC.currentDir.isAbsoluteRoot.get()){
             Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
             VirtualFolder folder = new VirtualFolder("Marked Files");
             folder.addAll(populateExtPathList);
@@ -259,7 +259,7 @@ public class MainController extends BaseController{
         }
     }
     public void duplicateFinderFolder(){
-        if(!MC.currentDir.isAbsoluteRoot()){
+        if(!MC.currentDir.isAbsoluteRoot.get()){
             VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
             folder.addAll(MC.currentDir.getFilesCollection());
             ViewManager.getInstance().newAdvancedRenameDialog(folder);
@@ -317,7 +317,7 @@ public class MainController extends BaseController{
                 protected Void call() throws Exception {
                 finder.newTask(pattern);
                 
-                if(!MC.currentDir.isAbsoluteRoot()){
+                if(!MC.currentDir.isAbsoluteRoot.get()){
                     try {
                         Files.walkFileTree(MC.currentDir.toPath(), finder);
                         
@@ -360,7 +360,7 @@ public class MainController extends BaseController{
         }
     }
     public void createSnapshot(){
-        if(MC.currentDir.isAbsoluteRoot()){
+        if(MC.currentDir.isAbsoluteRoot.get()){
             ErrorReport.report(new Exception("Cannot create stapshots at "+ FileManagerLB.ROOT_NAME));
             return;
         }
@@ -727,7 +727,7 @@ public class MainController extends BaseController{
                         
                 }
                 boolean con = false;
-                if (!MC.currentDir.isAbsoluteRoot()) {
+                if (!MC.currentDir.isAbsoluteRoot.get()) {
                     
                     if (markedSize1==0 && itemCount1 >= 1) {
                         submenuMarked.getItems().setAll(
@@ -796,7 +796,7 @@ public class MainController extends BaseController{
             }
         });
         tableView.setOnDragDetected((MouseEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             TaskFactory.dragInitWindowID = this.windowID;
@@ -817,7 +817,7 @@ public class MainController extends BaseController{
         }); //drag
 
         tableView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
@@ -834,7 +834,7 @@ public class MainController extends BaseController{
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
@@ -874,7 +874,7 @@ public class MainController extends BaseController{
             }
         });
         markedView.setOnDragDetected((MouseEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             // drag was detected, start drag-and-drop gesture
@@ -891,7 +891,7 @@ public class MainController extends BaseController{
         }); //drag
         
         markedView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             // data is dragged over the target
@@ -905,7 +905,7 @@ public class MainController extends BaseController{
         });
 
         markedView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot()){
+            if(MC.currentDir.isAbsoluteRoot.get()){
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -973,7 +973,7 @@ public class MainController extends BaseController{
                     linksContextMenu.getItems().setAll(contextMenuItems[14]);
                 }
             }
-            if(!MC.currentDir.isAbsoluteRoot()){
+            if(!MC.currentDir.isAbsoluteRoot.get()){
                 linksContextMenu.getItems().add(0,contextMenuItems[13]);
             }
             if(eh.isPrimaryButtonDown()){

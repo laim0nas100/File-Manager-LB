@@ -209,6 +209,9 @@ public class ExtPath{
     public boolean isAbsoluteRoot(){
         return this.isAbsoluteRoot.get();
     }
+    public boolean isAbsoluteOrVirtualFolders(){
+        return (this.isDisabled.get()||(this.equals(FileManagerLB.VIRTUAL_FOLDERS_DIR)));
+    }
     public long size(){
         long get = this.propertySize.get();
         if(get==-1){

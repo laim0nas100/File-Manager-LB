@@ -19,6 +19,7 @@ import utility.ErrorReport;
 import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.SimpleTask;
 import java.util.Iterator;
 import java.util.LinkedList;
 import utility.ExtStringUtils;
@@ -31,7 +32,57 @@ import utility.ExtStringUtils;
 public class ExtFolder extends ExtPath{
 
 
-    
+    protected SimpleTask updateTask = new SimpleTask() {
+        @Override
+        protected Void call() throws Exception {
+            if(isAbsoluteRoot.get()){
+                FileManagerLB.remount();
+            }
+            if(isPopulated()){
+                Log.writeln("Update:"+getAbsolutePath());
+                for(ExtPath file:getFilesCollection()){
+                    if(this.isCancelled()){
+                        return null;
+                    }
+                    if(!Files.exists(file.toPath())){
+                        Log.writeln(file.getAbsolutePath()+" dont exist");
+                        LocationInRoot location = new LocationInRoot(file.getAbsolutePath());
+                        LocationAPI.getInstance().removeByLocation(location);
+                    }
+                }   
+            }
+            try{
+                if(Files.isDirectory(toPath())){
+                    String parent = getAbsoluteDirectory();
+                    populated = true;
+                    Iterator<Path> iterator = Files.newDirectoryStream(Paths.get(parent)).iterator();
+                    while(iterator.hasNext()){
+                        if(this.isCancelled()){
+                            return null;
+                        }
+                        Path f = iterator.next();
+                        String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
+                        String filePathStr = f.toString();
+                        if((!Files.exists(f))&&(!files.containsKey(name))){
+                            
+                            ExtPath file;
+                            if(Files.isDirectory(f)){
+                                file = new ExtFolder(filePathStr,f);             
+                            }else if(Files.isSymbolicLink(f)){
+                                file = new ExtLink(filePathStr,f);
+                            }else{
+                                file = new ExtPath(filePathStr,f);
+                            }
+                            files.put(file.propertyName.get(), file);
+                        }
+                    }
+                }
+            }catch(Exception e){
+                ErrorReport.report(e);
+            }
+            return null;
+        }
+    };
     private boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
     
@@ -129,7 +180,7 @@ public class ExtFolder extends ExtPath{
         }
     }
     public void update(){
-        if(isAbsoluteRoot()){
+        if(isAbsoluteRoot.get()){
             FileManagerLB.remount();
         }
         if(this.isPopulated()){
@@ -169,16 +220,14 @@ public class ExtFolder extends ExtPath{
     }
     @Override
     public String getAbsoluteDirectory(){
-        if(isAbsoluteRoot()){
+        if(isAbsoluteRoot.get()){
             return ROOT_NAME;
         }
         return this.getAbsolutePath()+File.separator;
     }
-    @Override
-    public boolean isAbsoluteRoot(){
-        return this.getIdentity().equals(Identity.VIRTUAL)||super.isAbsoluteRoot();
-    }
+
     
+
     //GETTERS & SETTERS
     
     public boolean isPopulated(){
