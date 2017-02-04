@@ -5,7 +5,6 @@
  */
 package filemanagerLogic.snapshots;
 
-import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -39,7 +38,6 @@ public class Snapshot implements Serializable{
         Log.writeln("Folder size"+folder.files.size());
         folder.getListRecursive().forEach(file ->{
             String relPath = file.relativeFrom(folder.getAbsolutePath());
-//            String relPath = TaskFactory.resolveRelativePath(file, folder);
             Entry entry = new Entry(file,relPath);
             map.put(relPath, entry);
         });
@@ -75,7 +73,7 @@ public class Snapshot implements Serializable{
                     nonModifiedCount++;
                 }
             }
-            Log.write(folderPath," ",nonModifiedCount,"  ",list.size());
+            Log.write(folderPath,nonModifiedCount,list.size());
             if(nonModifiedCount == list.size()){
                 map.get(folderPath).isModified = false;
             }

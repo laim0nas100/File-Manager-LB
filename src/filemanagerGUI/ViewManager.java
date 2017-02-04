@@ -286,8 +286,7 @@ public class ViewManager {
             }
         };
         Platform.runLater(et);
-    }
-    
+    } 
     public void newMusicPlayer(Collection<String> list){
         SimpleTask et = new SimpleTask() {
             @Override
@@ -354,6 +353,15 @@ public class ViewManager {
             System.exit(0);
         }
         System.gc();
+    }
+    public void closeAllFramesNoExit(){
+        frames.keySet().forEach(key->{
+            frames.get(key).getStage().close();
+            frames.remove(key);
+            windows.remove(key);
+        });
+        System.gc();
+        
     }
     
     

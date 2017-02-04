@@ -43,7 +43,7 @@ import utility.PathStringCommands;
 /**
  *  
  * @author Laimonas Beniušis
- * Produces Tasks (ready to use threads)
+ * Produces Tasks 
  */
 
 //

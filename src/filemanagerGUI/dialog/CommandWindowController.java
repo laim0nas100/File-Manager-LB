@@ -54,10 +54,11 @@ public class CommandWindowController extends BaseController {
                     commandApply,
                     commandList,
                     commandListRec,
-                    commandClear,
-                    commandHelp,
                     commandListParams,
-                    commandSetCustom;
+                    commandInit,
+                    commandSetCustom,
+                    commandClear,
+                    commandHelp;
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
@@ -74,6 +75,9 @@ public class CommandWindowController extends BaseController {
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandApply+" ", "");
                 command.apply(newCom);
+        });
+        command.addCommand(commandInit, (Object... params)->{
+                FileManagerLB.reInit();
         });
         command.addCommand(commandListRec, (Object... params)->{
                 ArrayDeque<String> deque = new ArrayDeque<>();

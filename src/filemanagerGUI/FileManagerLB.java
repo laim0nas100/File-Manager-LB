@@ -22,12 +22,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.stage.Stage;
 import utility.ErrorReport;
 import utility.FavouriteLink;
@@ -45,85 +47,20 @@ public class FileManagerLB extends Application {
     public static int MAX_THREADS_FOR_TASK = 1;
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-    public static FileLock GlobalLock;
     
-    public static int DEPTH;
+    public static int DEPTH = 1;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
-    public static int LogBackupCount;
+    public static int LogBackupCount = 1;
     public static ParametersMap parameters;
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     @Override
     public void start(Stage primaryStage) {
-        ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
-        VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-        Platform.runLater(()->{
-            
-            ArrayDeque<String> list = new ArrayDeque<>();         
-            try{
-                //Log.changeStream('f', new File(DIR+"Log.txt"));
-                list.addAll(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
-            }
-            catch(Exception e){
-                ErrorReport.report(e);                
-            }
-                parameters = new ParametersMap(list,"=");
-                Log.writeln("Parameters",parameters);
-                VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) FileManagerLB.parameters.defaultGet("virtualPrefix", "V");
-                DEBUG.set((boolean) parameters.defaultGet("debug",false));
-                DEPTH = (int) parameters.defaultGet("lookDepth",2);
-                LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
-                ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
-                MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
-                PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
-                PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
-                PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
-                PathStringCommands.filePath = (String) parameters.defaultGet("filter.path", "<ap>");
-                PathStringCommands.extension = (String) parameters.defaultGet("filter.nameExtension", "<ne>");
-                PathStringCommands.parent1 = (String) parameters.defaultGet("filter.parent1", "<p1>");
-                PathStringCommands.parent2 = (String) parameters.defaultGet("filter.parent2", "<p2>");
-                PathStringCommands.custom = (String) parameters.defaultGet("filter.custom", "<c>");
-                PathStringCommands.relativeCustom = (String) parameters.defaultGet("filter.relativeCustom", "<rc>");
-                CommandWindowController.truncateAfter = (Integer) FileManagerLB.parameters.defaultGet("code.truncateAfter", 100000);
-                CommandWindowController.maxExecutablesAtOnce = (Integer) FileManagerLB.parameters.defaultGet("code.maxExecutables", 2);
-                CommandWindowController.commandGenerate = (String) FileManagerLB.parameters.defaultGet("code.commandGenerate", "generate");
-                CommandWindowController.commandApply = (String) FileManagerLB.parameters.defaultGet("code.commandApply", "apply");
-                CommandWindowController.commandClear = (String) FileManagerLB.parameters.defaultGet("code.clear", "clear");
-                CommandWindowController.commandList = (String) FileManagerLB.parameters.defaultGet("code.list", "list");
-                CommandWindowController.commandListRec = (String) FileManagerLB.parameters.defaultGet("code.listRec", "listRec");
-                CommandWindowController.commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
-                CommandWindowController.commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
-                CommandWindowController.commandListParams = (String) FileManagerLB.parameters.defaultGet("code.listParameters", "listParams");
-                CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("maxThreadsForCommand", 5);
-                ArtificialRoot.setPopulated(true);
-                ArtificialRoot.setIsAbsoluteRoot(true);
-                ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
-                VirtualFolders.setPopulated(true);
-            try{
-                Files.deleteIfExists(ArtificialRoot.toPath());
-                Files.createFile(ArtificialRoot.toPath());
-                
-                GlobalLock = new RandomAccessFile(ArtificialRoot.toPath().toFile(),"rw").getChannel().tryLock();
-                
-                Log.writeln("Locked "+GlobalLock.toString());
-
-            }catch(Exception e){
-                
-                ErrorReport.report(e);
-            }
-            ArtificialRoot.propertyName.set(ROOT_NAME);
-            MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
-            ViewManager.getInstance().newWindow(ArtificialRoot);
-//            ViewManager.getInstance().updateAllWindows();
-        });
+        reInit();
+        
         Platform.runLater(()->{
             if(DEBUG.not().get()){
                 ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
             }
-//            if(DEBUG.get()){
-//                ArrayList<String> list = new ArrayList<>();
-//                list.add(FileManagerLB.HOME_DIR+"Big Gigantic - The Little Things (Kasbo remix).mp3");
-//                ViewManager.getInstance().newMusicPlayer(list);
-//            }
         });
         
         
@@ -194,9 +131,6 @@ public class FileManagerLB extends Application {
                 th.run();
             });
             BM.cleanUp().run();
-            
-            GlobalLock.release();
-            GlobalLock.channel().close();
             Files.deleteIfExists(ArtificialRoot.toPath());
             
         } catch (Exception ex) {
@@ -204,6 +138,75 @@ public class FileManagerLB extends Application {
         }
         
         System.exit(0);
+    }
+    public static void reInit(){
+        ViewManager.getInstance().closeAllFramesNoExit();
+        MediaPlayerController.VLCfound = false;
+        MainController.actionList = new ArrayList<>();
+        MainController.dragList = FXCollections.observableArrayList();
+        MainController.errorLog = FXCollections.observableArrayList();
+        MainController.links = FXCollections.observableArrayList();
+        MainController.markedList = FXCollections.observableArrayList();
+        ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
+        VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
+        ArtificialRoot.setPopulated(true);
+        ArtificialRoot.setIsAbsoluteRoot(true);
+        ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
+        VirtualFolders.setPopulated(true);
+        readParameters();
+        Platform.runLater(()->{
+            try{
+                Files.deleteIfExists(ArtificialRoot.toPath());
+                Files.createFile(ArtificialRoot.toPath());
+               
+            }catch(Exception e){
+                
+                ErrorReport.report(e);
+            }
+            ArtificialRoot.propertyName.set(ROOT_NAME);
+            MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
+            ViewManager.getInstance().newWindow(ArtificialRoot);
+        });
+    }
+    public static void readParameters(){
+        ArrayDeque<String> list = new ArrayDeque<>();         
+        try{
+            //Log.changeStream('f', new File(DIR+"Log.txt"));
+            list.addAll(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
+        }
+        catch(Exception e){
+            ErrorReport.report(e);                
+        }
+        parameters = new ParametersMap(list,"=");
+        Log.writeln("Parameters",parameters);
+        VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
+        DEBUG.set((boolean) parameters.defaultGet("debug",false));
+        DEPTH = (int) parameters.defaultGet("lookDepth",2);
+        LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
+        ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
+        MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
+        PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
+        PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
+        PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
+        PathStringCommands.filePath = (String) parameters.defaultGet("filter.path", "<ap>");
+        PathStringCommands.extension = (String) parameters.defaultGet("filter.nameExtension", "<ne>");
+        PathStringCommands.parent1 = (String) parameters.defaultGet("filter.parent1", "<p1>");
+        PathStringCommands.parent2 = (String) parameters.defaultGet("filter.parent2", "<p2>");
+        PathStringCommands.custom = (String) parameters.defaultGet("filter.custom", "<c>");
+        PathStringCommands.relativeCustom = (String) parameters.defaultGet("filter.relativeCustom", "<rc>");
+        CommandWindowController.commandInit = (String) parameters.defaultGet("code.init", "init");
+        CommandWindowController.truncateAfter = (Integer) parameters.defaultGet("code.truncateAfter", 100000);
+        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxExecutables", 2);
+        CommandWindowController.commandGenerate = (String) parameters.defaultGet("code.commandGenerate", "generate");
+        CommandWindowController.commandApply = (String) parameters.defaultGet("code.commandApply", "apply");
+        CommandWindowController.commandClear = (String) parameters.defaultGet("code.clear", "clear");
+        CommandWindowController.commandList = (String) parameters.defaultGet("code.list", "list");
+        CommandWindowController.commandListRec = (String) parameters.defaultGet("code.listRec", "listRec");
+        CommandWindowController.commandSetCustom = (String) parameters.defaultGet("code.setCustom", "setCustom");
+        CommandWindowController.commandHelp = (String) parameters.defaultGet("code.help", "help");
+        CommandWindowController.commandListParams = (String) parameters.defaultGet("code.listParameters", "listParams");
+        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", 5);
+        
     }
     
 }

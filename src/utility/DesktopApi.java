@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  *
- * @author MightPork
+ * @author http://stackoverflow.com/users/2180189/mightypork
  */
 
 

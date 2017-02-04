@@ -8,9 +8,7 @@ package filemanagerLogic.fileStructure;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -27,7 +25,6 @@ public class VirtualFolder extends ExtFolder {
             index+=1;
             name = VIRTUAL_FOLDER_PREFIX+index;
         }
-//        Files.createFile(Paths.get(FileManagerLB.VIRTUAL_FOLDERS_DIR+name));
         VirtualFolder VF = new VirtualFolder(FileManagerLB.VIRTUAL_FOLDERS_DIR+name);
         FileManagerLB.VirtualFolders.files.put(name, VF);
     }

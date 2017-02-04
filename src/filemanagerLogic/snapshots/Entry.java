@@ -7,7 +7,6 @@ package filemanagerLogic.snapshots;
 
 import filemanagerLogic.Enums;
 import filemanagerLogic.fileStructure.ExtPath;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -40,7 +39,6 @@ public class Entry{
             isOlder = oldEntry.isOlder;
             isBigger = oldEntry.isBigger;
             isFolder = oldEntry.isFolder;
-//            pathPair = oldEntry.pathPair;
         }
         public Entry(ExtPath file,String relPath){
             size = file.size();

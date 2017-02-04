@@ -1,4 +1,4 @@
-debug=false
+debug=true
 
 //Populating folder depth
 lookDepth=0
@@ -15,10 +15,9 @@ lang=EN
 ROOT_NAME=\
 
 //Multi-threading load for specific tasks
-maxThreadsForTask=50
+maxThreadsForTask=20
 
-//Multi-threading for commands-line tasks
-maxThreadsForCommand=5
+
 
 //Path string mangling
 //Current number in the list
@@ -33,7 +32,7 @@ filter.name=<n>//replace with file name
 //File name extension
 filter.nameExtension=<ne>
 
-//All path filters have no file separator at the end (1 exception)
+//All path filters have no file separator at the end
 //File absolute path 
 filter.path=<ap>
 
@@ -45,20 +44,21 @@ filter.parent2=<p2>
 
 filter.relativeCustom=<rc>
 
-//Custom path (HAS FILE SEPERATOR AT THE END)
+//Custom path
 filter.custom=<c>
-//set custom path as first of marked list
+
 code.setCustom=setCustom
 /*  
     Relative to custom path
     Example:
-    custom = /folder1/folder2/
-    path = /folder1/folder2/folder3/file.txt
+    custom = folder1/folder2
+    path = folder1/folder2/folder3/file.txt
     relativeCustom = folder3/file.txt
     
 */
 
-
+//Multi-threading for commands-line tasks
+code.maxThreadsForCommand=5
 
 
 code.listParameters=listParams
@@ -66,7 +66,7 @@ code.clear=clear//clear screen
 code.truncateAfter=10000//truncate command text window after specified length
 code.commandGenerate=generate//command to generate script
 code.commandApply=apply//command to load script
-
+code.init=init//reinitialize application
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
 

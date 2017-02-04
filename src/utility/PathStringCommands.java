@@ -81,14 +81,11 @@ public class PathStringCommands {
         return current;
     }
     public static String goUp(String current){
-        int index = ExtStringUtils.lastIndexOf(current, PathStringCommands.getName(current))-1;
-        if(index<0){
-            index = 0;
-        }
+        int index = Math.max(ExtStringUtils.lastIndexOf(current, PathStringCommands.getName(current))-1,0);
         current = current.substring(0, index);
-        if(current.length()==0){
-            current = File.separator;
-        }
+        if(!ExtStringUtils.contains(current, File.separator)){
+            current+=File.separator;
+        } 
         return current;
        
     }

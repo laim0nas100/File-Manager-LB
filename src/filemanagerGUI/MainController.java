@@ -72,11 +72,11 @@ public class MainController extends BaseController{
     @FXML public TableView tableView;
     private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
     
-    public static ObservableList<FavouriteLink> links = FXCollections.observableArrayList();
-    public static ObservableList<ErrorReport> errorLog = FXCollections.observableArrayList();
-    public static ObservableList<ExtPath> dragList = FXCollections.observableArrayList();
-    public static ObservableList<String> markedList = FXCollections.observableArrayList();
-    public static ArrayList<ExtPath> actionList = new ArrayList<>();
+    public static ObservableList<FavouriteLink> links;
+    public static ObservableList<ErrorReport> errorLog;
+    public static ObservableList<ExtPath> dragList;
+    public static ObservableList<String> markedList;
+    public static ArrayList<ExtPath> actionList;
     
     
     @FXML public CheckBox useRegex;
@@ -276,7 +276,7 @@ public class MainController extends BaseController{
         if(!MC.currentDir.isAbsoluteRoot.get()){
             VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
             folder.addAll(MC.currentDir.getFilesCollection());
-            ViewManager.getInstance().newAdvancedRenameDialog(folder);
+            ViewManager.getInstance().newDuplicateFinderDialog(folder);
         }    
     }
     public void mediaPlayer(){
@@ -285,7 +285,7 @@ public class MainController extends BaseController{
     }
     public void test() throws IOException{
         Log.write("TEST");
-        ViewManager.getInstance().newMusicPlayer(new ArrayList<>(MainController.markedList));
+        FileManagerLB.reInit();
     }
 
     

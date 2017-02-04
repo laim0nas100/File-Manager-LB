@@ -29,7 +29,6 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
-import utility.ExtStringUtils;
 import utility.PathStringCommands;
 
 /**
@@ -213,9 +212,6 @@ public class ExtPath{
     public void setIsAbsoluteRoot(boolean b){
         this.isAbsoluteRoot.set(b);
     }
-//    public boolean isAbsoluteRoot(){
-//        return this.isAbsoluteRoot.get();
-//    }
     public boolean isAbsoluteOrVirtualFolders(){
         return (this.isAbsoluteRoot.get()||(this.equals(FileManagerLB.VirtualFolders)));
     }
@@ -255,53 +251,19 @@ public class ExtPath{
         
     }
     public String getName(boolean extension){
-        String name = PathStringCommands.getName(absolutePath);
-        
-        if(!extension){
-            if(name.contains(".")){
-                int index = ExtStringUtils.lastIndexOf(name, ".");
-                name = name.substring(0,index);
-            }
-        }
-        return name;
+        return new PathStringCommands(this.absolutePath).getName(extension);
     }
 
     public String getExtension(){
-        String name = this.getName(true);
-        if(name.contains(".")){
-            int index = ExtStringUtils.lastIndexOf(name, ".")-1;
-            if(index>=0){
-                name = name.substring(index);
-            }else{
-                return "";
-            }
-        }else{
-            return "";
-        }
-        return name;
+        return new PathStringCommands(this.absolutePath).getExtension();
     }
     public String getParent(int timesToGoUp){
-        String current = this.absolutePath;
-        while(timesToGoUp>0){
-            current = PathStringCommands.goUp(current);
-            timesToGoUp--;
-        }
-        return current;
+        return new PathStringCommands(this.absolutePath).getParent(timesToGoUp);
     }
     public String relativeFrom(String possibleParent){
-        String strPath = absolutePath+File.separator;
-        if(!strPath.contains(possibleParent) || strPath.equalsIgnoreCase(possibleParent)){
-            return absolutePath;
-        }else{
-            return ExtStringUtils.replaceOnce(strPath, possibleParent, "");
-        }
+        return new PathStringCommands(absolutePath).relativeFrom(possibleParent);
     }
     public String relativeTo(String possibleChild){
-        String strPath = absolutePath+File.separator;
-        if(!possibleChild.contains(strPath) || possibleChild.equalsIgnoreCase(strPath)){
-            return absolutePath;
-        }else{
-            return ExtStringUtils.replaceOnce(possibleChild, strPath, "");
-        }
+        return new PathStringCommands(absolutePath).relativeTo(possibleChild);
     }
 }
