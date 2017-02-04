@@ -5,30 +5,28 @@
  */
 package filemanagerGUI.dialog;
 
+import LibraryLB.Containers.ParametersMap;
 import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
+import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
-import filemanagerLogic.LocationInRoot;
-import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
-import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Set;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -47,50 +45,88 @@ import utility.PathStringCommands;
 public class CommandWindowController extends BaseController {
     @FXML TextField textField;
     @FXML TextArea textArea;
-    private Command command;
+    private Commander command;
     private int executeQueue = 0;
     
     public static int maxExecutablesAtOnce = 10;
     public static int truncateAfter;
     public static String  commandGenerate,
                     commandApply,
-                    commandCreateVirtual,
-                    commandListVirtualFolders,
-                    commandListVirtual,
                     commandList,
                     commandListRec,
                     commandClear,
                     commandHelp,
-                    commandAddToVirtual,
+                    commandListParams,
                     commandSetCustom;
-    private HashSet<String> commandSet;
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
-        this.commandSet = new HashSet<>();
-       
-        command = new Command(textField);
         
+        command = new Commander(textField);
+        command.addCommand(commandGenerate, (Object... params) -> {
+                String newCom = (String) params[0];
+                newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
+                command.generate(newCom);
+        });
+        
+        command.addCommand(commandApply, (Object... params)->{
+                String newCom = (String) params[0];
+                newCom = ExtStringUtils.replaceOnce(newCom, commandApply+" ", "");
+                command.apply(newCom);
+        });
+        command.addCommand(commandListRec, (Object... params)->{
+                ArrayDeque<String> deque = new ArrayDeque<>();
+                String newCom = (String) params[0];
+                newCom = ExtStringUtils.replaceOnce(newCom, commandListRec+" ", "");
+                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                
+                for(ExtPath f:file.getListRecursive()){    
+                    deque.add(f.getAbsoluteDirectory());
+                }
+                String desc = "Listing recursive:"+deque.removeFirst();
+                ViewManager.getInstance().newListFrame(desc, deque);
+        });
+        command.addCommand(commandList, (Object... params)->{
+                ArrayDeque<String> deque = new ArrayDeque<>();
+                String newCom = (String) params[0];
+                newCom = ExtStringUtils.replaceOnce(newCom, commandList+" ", "");
+                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+                if(file.getIdentity().equals(Identity.FOLDER)){
+                    String desc = "Listing:"+file.getAbsoluteDirectory();
 
-        String[] coms = new String[]{
-                    commandGenerate,
-                    commandApply,
-                    commandCreateVirtual,
-                    commandListVirtualFolders,
-                    commandListVirtual,
-                    commandList,
-                    commandListRec,
-                    commandClear,
-                    commandHelp,
-                    commandAddToVirtual,
-                    commandSetCustom
-        };
-        commandSet.addAll(Arrays.asList(coms));
+                    ExtFolder folder = (ExtFolder) file;
+                    for(ExtPath f:folder.getFilesCollection()){
+                        deque.add(f.getAbsoluteDirectory());
+                    }
+                    ViewManager.getInstance().newListFrame(desc, deque);
+                }
+        });
+        command.addCommand(commandSetCustom, (Object... params)->{
+                String newCom = (String) params[0];
+                newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom+" ", "");
+                FileManagerLB.customPath.setPath(newCom);
+        });
+        command.addCommand(commandClear, (Object... params)->{
+                textArea.clear();
+        });
+        command.addCommand(commandHelp, (Object... params)->{
+                command.addToTextArea(textArea,"Read Parameters.txt file for info\n");
+        });
+        command.addCommand(commandListParams, (Object... params)->{
+            ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
+            Collections.sort(list);
+            list.forEach(key->{
+                ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
+                command.addToTextArea(textArea, parameter.toString()+"\n");
+            });
+        });
+        
+        
     }
     
-    public class Command extends AbstractCommandField{
+    public class Commander extends AbstractCommandField{
         private boolean setTextAfterwards = false;
-        public Command(TextField tf) {
+        public Commander(TextField tf) {
             super(tf);
         }
         public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
@@ -109,7 +145,6 @@ public class CommandWindowController extends BaseController {
                 }
                 line = reader.readLine();
             }
-            truncateTextArea(textArea,truncateAfter);
             final int errorCode = process.exitValue();
             if(setTextAfterwards){
                     lines.add("Error Code:"+errorCode+"\n\n");
@@ -123,7 +158,6 @@ public class CommandWindowController extends BaseController {
                         main+=ln.trim()+"\n";
                     }
                     addToTextArea(textArea,main);
-                    truncateTextArea(textArea,truncateAfter);
                 });
             }
             executeQueue--;
@@ -131,20 +165,21 @@ public class CommandWindowController extends BaseController {
         }
         public void addToTextArea(TextArea textA,String text){
             Platform.runLater(()->{
-            textA.setText(textA.getText()+text);
-            textA.positionCaret(textA.getLength());   
+                String newString = textA.getText()+text;
+                textA.setText(newString.substring(0,Math.min(truncateAfter,newString.length())));
+                textA.positionCaret(textA.getLength());
             });
             
         }
-        public void truncateTextArea(TextArea textA,int length){
-            Platform.runLater(()->{
-            if(textA.getLength()>length){
-               textA.setText(textA.getText().substring(textA.getLength()-length));
-               textA.positionCaret(textA.getLength());
-            }
-            });
-            
-        }
+//        public void truncateTextArea(TextArea textA,int length){
+//            Platform.runLater(()->{
+//                if(textA.getLength()>length){
+//                   textA.setText(textA.getText().substring(textA.getLength()-length));
+//                   textA.positionCaret(textA.getLength());
+//                }
+//            });
+//            
+//        }
         public void apply(String name) throws IOException, InterruptedException{
             LinkedList<String> readFromFile = new LinkedList(LibraryLB.FileManaging.FileReader.readFromFile(name));
             this.setTextAfterwards = true;
@@ -159,10 +194,10 @@ public class CommandWindowController extends BaseController {
         public void generate(String command){
             try{
             
-                System.out.println(TaskFactory.getInstance().markedList);
+                System.out.println(MainController.markedList);
                 LinkedList<String> l = new LinkedList<>();
-                l.addAll(TaskFactory.getInstance().markedList);
-                LinkedList<String> commands = new LinkedList<>();
+                l.addAll(MainController.markedList);
+                LinkedList<String> allCommands = new LinkedList<>();
                 Lexer lexer = new Lexer(command);
                 lexer.skipWhitespace = false;
                 lexer.addToken(PathStringCommands.returnDefinedKeys());
@@ -197,115 +232,71 @@ public class CommandWindowController extends BaseController {
                         }
                         
                     }
-                    commands.add(commandToAdd);
+                    allCommands.add(commandToAdd);
                     Log.writeln(command+" => "+commandToAdd);
                 }
-                ViewManager.getInstance().newListFrame("Script generation", commands);
+                ViewManager.getInstance().newListFrame("Script generation", allCommands);
 //                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.HOME_DIR+name, commands);
             }catch(Exception ex){
                 ErrorReport.report(ex);
             }
         }
-        public String reconstruct(Collection<String> list){
-            String original = "";
-            for(String s:list){
-                original+=" "+s;
-            }
-            if(original.length()>0){
-                original = original.substring(1);
-            }
-            return original;
-        }
         public boolean customCommand(String firstWord,String fullCommand,LinkedList<String> commands) throws IOException, InterruptedException{
-            ArrayList<String> deque = new ArrayList<>();
-            if(firstWord.equalsIgnoreCase(commandGenerate)){
-                commands.removeFirst();
-                String newCom = fullCommand;
-                newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
-                generate(newCom);
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandApply)){
-                commands.removeFirst();
-                apply(commands.removeFirst());
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandCreateVirtual)){
-                VirtualFolder.createVirtualFolder();
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandListVirtualFolders)){
-                
-                for(ExtPath f:FileManagerLB.VirtualFolders.files.values()){
-                    deque.add(f.getAbsoluteDirectory());
-                }
-                ViewManager.getInstance().newListFrame("Virtual Folders", deque);
-                return true;
-             }else if(firstWord.equalsIgnoreCase(commandListVirtual)){
-                commands.removeFirst();
-                VirtualFolder VF = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(commands.getFirst());
-                if (VF == null){
-                    addToTextArea(textArea,"No such virtual folder:"+commands.getFirst());
-                }else{
-                    String desc = "Listing "+VF.getAbsoluteDirectory();
-                    for(ExtPath f:VF.getFilesCollection()){
-                        deque.add(f.propertyName.get());
-                    }
-                    ViewManager.getInstance().newListFrame(desc, deque);
-                }
-                return true;
-
-            }else if(firstWord.equalsIgnoreCase(commandAddToVirtual)){
-                commands.removeFirst();
-                VirtualFolder VF = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(commands.getFirst());
-                if (VF == null){
-                    addToTextArea(textArea,"No such virtual folder:"+commands.getFirst());
-
-                }else{
-                    for(String file:TaskFactory.getInstance().markedList){
-                        ExtPath f = LocationAPI.getInstance().getFileByLocation(new LocationInRoot(file));
-                        VF.files.put(f.propertyName.get(), f);
-                        FileManagerLB.VirtualFolders.files.put(VF.propertyName.get(), VF);
-                    }
-                }
-                return true;
-
-            }else if(firstWord.equalsIgnoreCase(commandListRec)){
-                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-                for(ExtPath f:file.getListRecursive()){    
-                    deque.add(f.getAbsoluteDirectory());
-                }
-                String desc = "Listing recursive:"+deque.remove(0);
-                ViewManager.getInstance().newListFrame(desc, deque);
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandList)){
-                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-                if(file.getIdentity().equals(Identity.FOLDER)){
-                    String desc = "Listing:"+file.getAbsoluteDirectory();
-
-                    ExtFolder folder = (ExtFolder) file;
-                    for(ExtPath f:folder.getFilesCollection()){
-                        deque.add(f.getAbsoluteDirectory());
-                    }
-                    System.out.println(deque);
-                    ViewManager.getInstance().newListFrame(desc, deque);
-                }
-                
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandSetCustom)){
-                if(TaskFactory.getInstance().markedList.isEmpty()){
-                    return true;
-                }
-                String get = TaskFactory.getInstance().markedList.get(0);
-                FileManagerLB.customPath.setPath(get);
-                return true;
-            
-            }else if(firstWord.equalsIgnoreCase(commandHelp)){
-                addToTextArea(textArea,"Read Parameters.txt file for info\n");
-                return true;
-            }else if(firstWord.equalsIgnoreCase(commandClear)){
-                textArea.clear();
-                return true;
-            }
+//            ArrayList<String> deque = new ArrayList<>();
+//            if(firstWord.equalsIgnoreCase(commandGenerate)){
+//                commands.removeFirst();
+//                String newCom = fullCommand;
+//                newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
+//                generate(newCom);
+//                return true;
+//            }else 
+//            if(firstWord.equalsIgnoreCase(commandApply)){
+//                commands.removeFirst();
+//                apply(commands.removeFirst());
+//                return true;
+//            }else
+//            if(firstWord.equalsIgnoreCase(commandListRec)){
+//                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
+//                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+//                for(ExtPath f:file.getListRecursive()){    
+//                    deque.add(f.getAbsoluteDirectory());
+//                }
+//                String desc = "Listing recursive:"+deque.remove(0);
+//                ViewManager.getInstance().newListFrame(desc, deque);
+//                return true;
+//            }else 
+//            if(firstWord.equalsIgnoreCase(commandList)){
+//                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
+//                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+//                if(file.getIdentity().equals(Identity.FOLDER)){
+//                    String desc = "Listing:"+file.getAbsoluteDirectory();
+//
+//                    ExtFolder folder = (ExtFolder) file;
+//                    for(ExtPath f:folder.getFilesCollection()){
+//                        deque.add(f.getAbsoluteDirectory());
+//                    }
+//                    System.out.println(deque);
+//                    ViewManager.getInstance().newListFrame(desc, deque);
+//                }
+//                
+//                return true;
+//            }else
+//            if(firstWord.equalsIgnoreCase(commandSetCustom)){
+//                if(MainController.markedList.isEmpty()){
+//                    return true;
+//                }
+//                String get = MainController.markedList.get(0);
+//                FileManagerLB.customPath.setPath(get);
+//                return true;
+//            
+//            }else 
+//            if(firstWord.equalsIgnoreCase(commandHelp)){
+//                addToTextArea(textArea,"Read Parameters.txt file for info\n");
+//                return true;
+//            }else if(firstWord.equalsIgnoreCase(commandClear)){
+//                textArea.clear();
+//                return true;
+//            }
             return false;
         }
         @Override
@@ -318,8 +309,7 @@ public class CommandWindowController extends BaseController {
                     for(String s:command.split(" ")){
                         if(s.length()>0) commands.add(s);
                     }
-                    if(commandSet.contains(commands.getFirst())){
-                        customCommand(commands.getFirst(),command,commands);
+                    if(runCommand(commands.getFirst(),command)){
                         return null;
                     }
                     executeQueue++;

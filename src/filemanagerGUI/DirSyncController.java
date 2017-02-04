@@ -6,8 +6,6 @@
 package filemanagerGUI;
 
 
-import filemanagerGUI.ViewManager;
-import LibraryLB.ExtTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -41,8 +39,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
-import filemanagerGUI.BaseController;
-import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
 import filemanagerLogic.SimpleTask;

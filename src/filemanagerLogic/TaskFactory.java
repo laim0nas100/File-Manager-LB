@@ -30,16 +30,13 @@ import filemanagerLogic.snapshots.Snapshot;
 import filemanagerLogic.snapshots.SnapshotAPI;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
 import utility.FileNameException;
@@ -54,10 +51,7 @@ import utility.PathStringCommands;
 //
 public class TaskFactory {
     
-    public  ObservableList<ExtPath> dragList;
-    public  ObservableList<String> markedList;
-    public  ArrayList<ExtPath> actionList;
-    public SimpleIntegerProperty propertyMarkedSize;
+    
     private final HashSet<Character> illegalCharacters;
     private static final TaskFactory INSTANCE = new TaskFactory();
     public static String dragInitWindowID ="";
@@ -79,11 +73,6 @@ public class TaskFactory {
                 '\"'
             };
             illegalCharacters.addAll(Arrays.asList(array));
-        dragList = FXCollections.observableArrayList();
-        markedList = FXCollections.observableArrayList();
-        actionList = new ArrayList<>();
-        propertyMarkedSize = new SimpleIntegerProperty();
-        propertyMarkedSize.bind(Bindings.size(this.markedList));
     }
         
     private static final Comparator<ActionFile> cmpDesc = (ActionFile f1, ActionFile f2) -> {
@@ -121,8 +110,8 @@ public class TaskFactory {
 
     public void addToMarked(String file){
         Platform.runLater(()->{
-            if(file!=null&&!markedList.contains(file)){
-                markedList.add(file);
+            if(file!=null&&!MainController.markedList.contains(file)){
+                MainController.markedList.add(file);
             } 
         });
         
@@ -596,18 +585,21 @@ public class TaskFactory {
                     }
 
                     PathStringCommands file1 = array.get(j);
-                    String key = name+"/$/"+file1.getName(true);
+                    String otherName = file1.getName(true);
+                    String key = name+"/$/"+otherName;
                     DuplicateFinderController.SimpleTableItem item;
                     Double rat;
                     if(map.containsKey(key)){
                         rat = (Double) map.get(key);
                         
                     }else{
-                        rat = StringOperations.correlationRatio(name,file1.getName(true));                
+                        rat = StringOperations.correlationRatio(name,otherName);                
                         map.put(key,rat);
                     }
-                    item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
-                    list.add(item);
+                    if(rat>=ratio){
+                        item = new DuplicateFinderController.SimpleTableItem(file,file1,rat);
+                        list.add(item);
+                    }
                 }
                 return progress;
             };

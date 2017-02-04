@@ -5,7 +5,8 @@
  */
 package utility;
 
-import static filemanagerGUI.FileManagerLB.ROOT_NAME;
+import filemanagerLogic.fileStructure.ExtPath;
+import java.util.Objects;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 
@@ -15,22 +16,30 @@ import javafx.scene.control.Tooltip;
  */
 public class FavouriteLink {
     private final SimpleStringProperty propertyName;
-    private final String location;
-    public FavouriteLink(String name,String dir){
+    public final ExtPath location;
+    public FavouriteLink(String name,ExtPath dir){
         propertyName = new SimpleStringProperty(name);
-        if(dir.isEmpty()){
-            location = ROOT_NAME;  
-        } else {
-            location = dir;
-        }
+        location = dir;
     }
 
-    public String getDirectory(){
-        return location;
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + Objects.hashCode(this.location);
+        return hash;
     }
+    @Override
+    public boolean equals(Object other){
+        if(other instanceof FavouriteLink){
+            FavouriteLink link = (FavouriteLink) other;
+            return location.equals(link.location);
+        }
+        return false;
+    }
+
     public Tooltip getToolTip(){
         Tooltip tltp = new Tooltip();
-        tltp.setText(this.getDirectory());
+        tltp.setText(this.location.getAbsoluteDirectory());
         return tltp;
     }
     public SimpleStringProperty getPropertyName(){

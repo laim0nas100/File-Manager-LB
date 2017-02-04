@@ -70,6 +70,7 @@ public class NewEmptyJUnitTest {
         print(normalize(123.55555,2));
         PathStringCommands path = new PathStringCommands("C:\\");
         print(path.getName(true));
+//        print("123".substring(0, 10));
         
     }
  

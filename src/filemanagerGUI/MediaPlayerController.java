@@ -24,6 +24,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
@@ -44,20 +45,14 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javax.swing.JFrame;
+import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
-import utility.ExtStringUtils;
-import static utility.ExtStringUtils.mod;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 import static utility.ExtStringUtils.normalize;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
 import static utility.ExtStringUtils.mod;
 
 /**
@@ -68,7 +63,7 @@ import static utility.ExtStringUtils.mod;
 public class MediaPlayerController extends BaseController {
     public final static String ID = "MUSIC_PLAYER";
     public final static String PLAY_SYMBOL = "✓";
-    
+    public static boolean VLCfound = false;
     
     @FXML public Label labelCurrent;
     @FXML public Label labelTimePassed;
@@ -95,9 +90,10 @@ public class MediaPlayerController extends BaseController {
     private boolean released = false;
     private boolean stopping = false;
     private boolean playTaskComplete = false;
-    private String typeLoopSong = "Loop song";
+    private String typeLoopSong = "Loop file";
     private String typeLoopList = "Loop list";
     private String typeRandom = "Random";
+    private String typeStopAfterFinish = "Don't loop list";
     private ExtTableView extTableView;
     private ExtPath filePlaying;
 
@@ -125,11 +121,14 @@ public class MediaPlayerController extends BaseController {
         };
     
     public void beforeShow(Collection<String> files){
-        
-        new NativeDiscovery().discover();
+        if(!VLCfound){
+            new NativeDiscovery().discover();
+            
+        }
+        Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
         component  = new EmbeddedMediaPlayerComponent();
         Platform.runLater(()->{
-            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom);
+            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
             playType.getSelectionModel().select(0);
         });
         videoFrame = new JFrame("VIDEO");
@@ -138,7 +137,15 @@ public class MediaPlayerController extends BaseController {
         showVideo.selectedProperty().addListener(listener->{
             videoFrame.setVisible(showVideo.selectedProperty().get());
         });
+        
         videoFrame.setVisible(true);
+        videoFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        videoFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                showVideo.setSelected(false);
+            }
+        });
         player = component.getMediaPlayer();
         player.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
             @Override
@@ -151,7 +158,7 @@ public class MediaPlayerController extends BaseController {
                 Log.write("Finished",filePlaying.toPath());
                 Platform.runLater(()->{
                     if(playTaskComplete)
-                    playNext(1); 
+                        playNext(1,false); 
                 });
                 
             }
@@ -159,13 +166,20 @@ public class MediaPlayerController extends BaseController {
             @Override
             public void error(MediaPlayer mediaPlayer) {
                 Log.write("Error at",filePlaying.toPath());
-                Platform.runLater(()->{
-                    if(playTaskComplete)
-                    playNext(1); 
-                });
+                SimpleTask task = new SimpleTask() {
+                    @Override
+                    protected Void call() throws Exception {
+                        if(playTaskComplete){
+                            Thread.sleep(1000);
+                                playNext(1,false);                     
+                        }
+                        return null;
+                    }
+                
+                };
+                Platform.runLater(task);
             }
         });
-        
         volumeSlider.valueProperty().addListener(listener->{
             
             player.setVolume((int) Math.round(volumeSlider.getValue()*2));
@@ -191,23 +205,24 @@ public class MediaPlayerController extends BaseController {
         });
         setUpTable();
         buttonPlayPrev.setOnAction(event ->{
-            playNext(-1);
+            playNext(-1,true);
         });
         buttonPlayNext.setOnAction(event ->{
-            playNext(1);
+            playNext(1,true);
         });
         
-        Platform.runLater(()->{
-            timer.scheduleAtFixedRate(timerTask, 0, 10);
-            videoFrame.setVisible(showVideo.selectedProperty().get());
-
-            try {
+        SimpleTask task = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+                timer.scheduleAtFixedRate(timerTask, 0, 500);
+                videoFrame.setVisible(showVideo.selectedProperty().get());
                 Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(MediaPlayerController.class.getName()).log(Level.SEVERE, null, ex);
+
+                update();
+                return null;
             }
-            update();
-        });
+        };
+        Platform.runLater(task);
         
     }
     public void setUpTable(){
@@ -246,9 +261,9 @@ public class MediaPlayerController extends BaseController {
             if(this.extTableView.recentlyResized.get()){
                 return;
             }
-            TaskFactory.getInstance().dragList = table.getSelectionModel().getSelectedItems();
+            MainController.dragList = table.getSelectionModel().getSelectedItems();
             TaskFactory.dragInitWindowID = ID;
-            if(!TaskFactory.getInstance().dragList.isEmpty()){
+            if(!MainController.dragList.isEmpty()){
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
@@ -268,9 +283,9 @@ public class MediaPlayerController extends BaseController {
         table.setOnDragDropped((DragEvent event)-> {
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!TaskFactory.getInstance().dragList.isEmpty()) {
+            if (!MainController.dragList.isEmpty()) {
                 ArrayDeque<ExtPath> list = new ArrayDeque<>();
-                TaskFactory.getInstance().dragList.forEach(item->{
+                MainController.dragList.forEach(item->{
                     list.add(item);
                 });
                 list.forEach(item->{
@@ -319,18 +334,20 @@ public class MediaPlayerController extends BaseController {
             });
             update();
         });
+        remove.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         MenuItem addMarked = new MenuItem("Add marked");
         addMarked.setOnAction(event->{
-            TaskFactory.getInstance().markedList.forEach(item->{
+            MainController.markedList.forEach(item->{
                 LocationInRoot locationMapping = LocationAPI.getInstance().getLocationMapping(item);
                 addIfAbsent(LocationAPI.getInstance().getFileByLocation(locationMapping));
             });
         });
+        addMarked.visibleProperty().bind(Bindings.size(MainController.markedList).greaterThan(0));
         Menu marked = new Menu("Marked:");
         tree.addMenuItem(marked, marked.getText());
         tree.addMenuItem(addToMarked, marked.getText(),addToMarked.getText());
         tree.addMenuItem(addMarked, marked.getText(),addMarked.getText());
-
+        marked.visibleProperty().bind(remove.visibleProperty().or(addMarked.visibleProperty()));
         tree.addMenuItem(remove, remove.getText());
         table.setContextMenu(tree.constructContextMenu());
         extTableView.prepareChangeListeners();
@@ -393,7 +410,7 @@ public class MediaPlayerController extends BaseController {
         if(player.isPlayable()){
             player.pause();
         }else{
-            playNext(0);
+            playNext(0,false);
         }
     }
     @Override
@@ -406,7 +423,7 @@ public class MediaPlayerController extends BaseController {
         videoFrame.setVisible(false);
         super.exit();
     }
-    public void playNext(int increment){
+    public void playNext(int increment,boolean disregard){
         Platform.runLater(()->{
             if(table.getItems().isEmpty()){
                 return;
@@ -419,16 +436,23 @@ public class MediaPlayerController extends BaseController {
                     index = potIndex;
                 }
             }
-            
-            if(playType.getSelectionModel().getSelectedItem().equals(typeRandom)){
-                index = (int) (Math.random() * table.getItems().size());
-            }
-            if(playType.getSelectionModel().getSelectedItem().equals(typeLoopSong)){
-                if(increment==1){
-                    index--;
+            if(!disregard){
+                if(playType.getSelectionModel().getSelectedItem().equals(typeRandom)){
+                    index = (int) (Math.random() * table.getItems().size());
+                }else if(playType.getSelectionModel().getSelectedItem().equals(typeLoopSong)){
+                    if(increment==1){
+                        index--;
+                    }
+                }else if(playType.getSelectionModel().getSelectedItem().equals(typeStopAfterFinish)){
+                    if(index + increment == table.getItems().size()){
+                        player.stop();
+                        filePlaying = null;
+                        update();
+                        return;
+                    }
                 }
             }
-            //default loop song
+                //default loop song
 
             index = mod((index + increment ), table.getItems().size());
             ExtPath item = (ExtPath) table.getItems().get(index);

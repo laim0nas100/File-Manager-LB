@@ -15,10 +15,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import filemanagerGUI.FileManagerLB;
-import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.fileStructure.VirtualFolder;
-import java.io.File;
 import java.util.Collection;
+import javafx.beans.property.SimpleBooleanProperty;
 import utility.ErrorReport;
 
 /**
@@ -27,13 +26,18 @@ import utility.ErrorReport;
  */
 public class ManagingClass {
     
-    
+    public SimpleBooleanProperty isVirtual = new SimpleBooleanProperty(false);
+    public SimpleBooleanProperty isAbsoluteRoot = new SimpleBooleanProperty(false);
     private final ArrayList<ExtPath> folderCache;
     private int cacheIndex;
     public ExtFolder currentDir;
-    public ManagingClass(ExtFolder root){
+    public ManagingClass(ExtFolder dir){
         folderCache = new ArrayList<>();
         cacheIndex = 0;
+        currentDir = dir;
+        isVirtual.bind(currentDir.isVirtual);
+        isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
+        
     }
     public void changeDirTo(ExtFolder file){
 /*
@@ -59,6 +63,8 @@ public class ManagingClass {
         //Log.writeln(cacheIndex+" : "+folderCache);
 */
         currentDir = file;
+        isVirtual.bind(currentDir.isVirtual);
+        isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
         addCacheNode(currentDir);
         
     }

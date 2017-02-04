@@ -9,7 +9,6 @@ import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import LibraryLB.Log;
-import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +20,6 @@ import utility.ErrorReport;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
-    private static class LocationException extends Exception{
-        
-    }
     private static final LocationAPI INSTANCE = new LocationAPI();
     protected LocationAPI() {};
     public static LocationAPI getInstance(){
@@ -36,10 +32,7 @@ public class LocationAPI {
         ExtPath file = FileManagerLB.ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
         pathl = pathl.trim();
-        if(FileManagerLB.VirtualFolders.files.containsKey(pathl)){
-                return (VirtualFolder) FileManagerLB.VirtualFolders.files.get(pathl);
-                
-        }else if(!pathl.isEmpty() && !pathl.startsWith(FileManagerLB.ROOT_NAME)){
+        if(!pathl.isEmpty() && !pathl.startsWith(FileManagerLB.ROOT_NAME)){
             
             try{
                 ExtPath tempFile = new ExtPath(pathl);

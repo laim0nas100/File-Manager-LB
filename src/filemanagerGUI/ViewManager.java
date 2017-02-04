@@ -67,7 +67,7 @@ public class ViewManager {
     }
     
 // WINDOW ACTIONS
-    public void newWindow(ExtFolder rootFolder,ExtFolder currentFolder){
+    public void newWindow(ExtFolder currentFolder){
         SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -75,7 +75,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = (MainController) frame.getController();
                     windows.add(frame.getTitle());
-                    controller.beforeShow(frame.getTitle(),rootFolder,currentFolder);
+                    controller.beforeShow(frame.getTitle(),currentFolder);
                     frame.getStage().show();
                 } catch (IOException ex) {
                     ErrorReport.report(ex);

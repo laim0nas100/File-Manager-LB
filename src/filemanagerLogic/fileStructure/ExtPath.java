@@ -66,6 +66,7 @@ public class ExtPath{
     private final String absolutePath;
     private long size = -1;
     private long lastModified = -1;
+    public BooleanProperty isVirtual;
     public BooleanProperty isAbsoluteRoot;
     public BooleanProperty isDisabled;
     public StringProperty propertyName;
@@ -173,6 +174,12 @@ public class ExtPath{
 
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
+        this.isVirtual = new SimpleBooleanProperty(){
+            @Override
+            public boolean get(){
+                return getIdentity().equals(Identity.VIRTUAL);
+            };
+        };
     }
     public Collection<ExtPath> getListRecursive(){
         ArrayList<ExtPath> list = new ArrayList<>();
@@ -206,11 +213,11 @@ public class ExtPath{
     public void setIsAbsoluteRoot(boolean b){
         this.isAbsoluteRoot.set(b);
     }
-    public boolean isAbsoluteRoot(){
-        return this.isAbsoluteRoot.get();
-    }
+//    public boolean isAbsoluteRoot(){
+//        return this.isAbsoluteRoot.get();
+//    }
     public boolean isAbsoluteOrVirtualFolders(){
-        return (this.isDisabled.get()||(this.equals(FileManagerLB.VIRTUAL_FOLDERS_DIR)));
+        return (this.isAbsoluteRoot.get()||(this.equals(FileManagerLB.VirtualFolders)));
     }
     public long size(){
         long get = this.propertySize.get();

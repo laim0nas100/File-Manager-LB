@@ -22,9 +22,11 @@ import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
 import java.nio.file.DirectoryStream;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import utility.ExtStringUtils;
 
 /**
@@ -42,7 +44,7 @@ public class ExtFolder extends ExtPath{
     };
     private boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
-//    public HashMap <String,ExtPath> files;
+//    public Map <String,ExtPath> files;
 
     
 
@@ -51,7 +53,9 @@ public class ExtFolder extends ExtPath{
     public ExtFolder(String src,Object...optional){
         super(src,optional);
         files = new ConcurrentHashMap<>(1,0.75f);
-//        files = new HashMap<>(1,0.75f);
+//        files = new HashMap<>(1,0.75f);files = Collections.synchronizedMap(files);
+        
+        
         populated = false;
     }
     public Collection<ExtPath> getFilesCollection(){

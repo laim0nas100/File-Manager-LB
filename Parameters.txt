@@ -31,7 +31,7 @@ filter.name=<n>//replace with file name
 //File name extension
 filter.nameExtension=<ne>
 
-//All paths have no file separator at the end
+//All path filters have no file separator at the end (1 exception)
 //File absolute path 
 filter.path=<ap>
 
@@ -40,6 +40,8 @@ filter.parent1=<p1>
 
 //File parent 2 level up
 filter.parent2=<p2>
+
+filter.relativeCustom=<rc>
 
 //Custom path (HAS FILE SEPERATOR AT THE END)
 filter.custom=<c>
@@ -53,11 +55,11 @@ code.setCustom=setCustom
     relativeCustom = folder3/file.txt
     
 */
-filter.relativeCustom=<rc>
 
 
 
 
+code.listParameters=listParams
 code.clear=clear//clear screen
 code.truncateAfter=10000//truncate command text window after specified length
 code.commandGenerate=generate//command to generate script
@@ -66,17 +68,5 @@ code.commandApply=apply//command to load script
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
 
-
-//Virtual folders
-//prefix for virtual folders access
-/*  
-    Write [virtualPrefix][number] in address bar to access 
-    if virtualPrefix is V and you have 3 virtual folders
-    write: V0
-    to access the first one
-    or V2 to access the third one
-*/
 virtualPrefix=V
-code.addToVirtual=add
-code.createVirtualFolder=virtual//create virtual folder
-code.listVirtualFolders=listVirtualFolders//list virtual folders
+

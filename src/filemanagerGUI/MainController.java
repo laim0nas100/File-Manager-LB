@@ -18,8 +18,6 @@ import javafx.fxml.FXML;
 import javafx.util.Callback;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import static filemanagerGUI.FileManagerLB.errorLog;
-import static filemanagerGUI.FileManagerLB.links;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtLink;
 import java.nio.file.Path;
@@ -54,6 +52,7 @@ import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import javafx.scene.input.KeyCode;
@@ -74,6 +73,11 @@ public class MainController extends BaseController{
     @FXML public TableView tableView;
     private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
     
+    public static ObservableList<FavouriteLink> links = FXCollections.observableArrayList();
+    public static ObservableList<ErrorReport> errorLog = FXCollections.observableArrayList();
+    public static ObservableList<ExtPath> dragList = FXCollections.observableArrayList();
+    public static ObservableList<String> markedList = FXCollections.observableArrayList();
+    public static ArrayList<ExtPath> actionList = new ArrayList<>();
     
     
     @FXML public CheckBox useRegex;
@@ -134,10 +138,13 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty propertyReadyToSearch;
     private SimpleBooleanProperty propertyDeleteCondition;
     private SimpleBooleanProperty propertyRenameCondition;
-    private IntegerBinding selectedSize;
+    private SimpleBooleanProperty propertyIsVirtualFolders;
+    private SimpleIntegerProperty propertyMarkedSize;
+    private SimpleIntegerProperty propertySelectedSize;
+    private SimpleIntegerProperty propertyMarkedSelectedSize;
     private Task searchTask;
     public ExtTableView extTableView;
-    public void beforeShow(String title,ExtFolder root,ExtFolder currentDir){
+    public void beforeShow(String title,ExtFolder currentDir){
         
         super.beforeShow(title);
         
@@ -149,6 +156,10 @@ public class MainController extends BaseController{
         propertyReadyToSearch = new SimpleBooleanProperty(true);
         propertyDeleteCondition = new SimpleBooleanProperty(false);
         propertyRenameCondition = new SimpleBooleanProperty(false);
+        propertyIsVirtualFolders = new SimpleBooleanProperty(false);
+        propertyMarkedSelectedSize = new SimpleIntegerProperty(0);
+        propertyMarkedSize = new SimpleIntegerProperty(0);
+        propertySelectedSize = new SimpleIntegerProperty(0);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
 
         finder = new Finder("",useRegex.selectedProperty());
@@ -156,14 +167,14 @@ public class MainController extends BaseController{
         finder.isCanceled.bind(this.propertyReadyToSearch);
 
         itemCount.textProperty().bind(Bindings.size(finder.list).asString());
-        MC = new ManagingClass(root);
+        MC = new ManagingClass(currentDir);
         
         LOAD();
         fileAddress = new FileAddressField(currentDirText);
-        
-        
-        
-        selectedSize = Bindings.size(this.selectedList);
+        propertyMarkedSize.bind(Bindings.size(MainController.markedList));
+        propertyIsVirtualFolders.bind(MC.isAbsoluteRoot.not().and(miAdvancedRenameFolder.disableProperty()));
+        propertySelectedSize.bind(Bindings.size(selectedList));
+        propertyMarkedSelectedSize.bind(Bindings.size(markedView.getSelectionModel().getSelectedItems()));
         Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
         extTableView = new ExtTableView(tableView);
         extTableView.sortable = true;
@@ -189,7 +200,7 @@ public class MainController extends BaseController{
     public void update(){
         
         Platform.runLater(()->{
-            Iterator<String> iterator = TaskFactory.getInstance().markedList.iterator();
+            Iterator<String> iterator = MainController.markedList.iterator();
             while(iterator.hasNext()){
                 try{
                     if(!Files.exists(Paths.get(iterator.next()))){
@@ -200,10 +211,10 @@ public class MainController extends BaseController{
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
             this.buttonParent.setDisable(!MC.hasParent());
-            this.miAdvancedRenameFolder.setDisable(MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
-            this.miDuplicateFinderFolder.setDisable(MC.currentDir.isAbsoluteRoot.get() || MC.currentDir.equals(FileManagerLB.VirtualFolders));
-            this.miAdvancedRenameMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
-            this.miDuplicateFinderMarked.disableProperty().bind(TaskFactory.getInstance().propertyMarkedSize.isEqualTo(0));
+            this.miAdvancedRenameFolder.setDisable(MC.currentDir.isAbsoluteOrVirtualFolders());
+            this.miDuplicateFinderFolder.disableProperty().bind(miAdvancedRenameFolder.disableProperty());
+            this.miAdvancedRenameMarked.disableProperty().bind(Bindings.size(MainController.markedList).isEqualTo(0));
+            this.miDuplicateFinderMarked.disableProperty().bind(miAdvancedRenameMarked.disableProperty());
             
 
             
@@ -221,8 +232,8 @@ public class MainController extends BaseController{
 
             
             
-            propertyDeleteCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.greaterThan(0)));
-            propertyRenameCondition.bind(MC.currentDir.isAbsoluteRoot.not().and(selectedSize.isEqualTo(1)));
+            propertyDeleteCondition.bind(MC.isVirtual.not().and(propertySelectedSize.greaterThan(0)));
+            propertyRenameCondition.bind(MC.isVirtual.not().and(propertySelectedSize.isEqualTo(1)));
             Platform.runLater(()->{
                 extTableView.updateContentsAndSort(MC.getCurrentContents());
             });
@@ -233,7 +244,7 @@ public class MainController extends BaseController{
         FileManagerLB.doOnExit();
     }
     public void createNewWindow(){
-        ViewManager.getInstance().newWindow(FileManagerLB.ArtificialRoot,MC.currentDir);
+        ViewManager.getInstance().newWindow(MC.currentDir);
     }
     public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
@@ -244,7 +255,7 @@ public class MainController extends BaseController{
     }
     public void advancedRenameMarked(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
-            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
+            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(MainController.markedList);
             VirtualFolder folder = new VirtualFolder("Marked Files");
             folder.addAll(populateExtPathList);
             ViewManager.getInstance().newAdvancedRenameDialog(folder);
@@ -252,7 +263,7 @@ public class MainController extends BaseController{
     }
     public void duplicateFinderMarked(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
-            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(TaskFactory.getInstance().markedList);
+            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(MainController.markedList);
             VirtualFolder folder = new VirtualFolder("Marked Files");
             folder.addAll(populateExtPathList);
             ViewManager.getInstance().newDuplicateFinderDialog(folder);
@@ -266,12 +277,12 @@ public class MainController extends BaseController{
         }    
     }
     public void mediaPlayer(){
-        ViewManager.getInstance().newMusicPlayer(TaskFactory.getInstance().markedList);
+        ViewManager.getInstance().newMusicPlayer(MainController.markedList);
 
     }
     public void test() throws IOException{
         Log.write("TEST");
-        ViewManager.getInstance().newMusicPlayer(new ArrayList<>(TaskFactory.getInstance().markedList));
+        ViewManager.getInstance().newMusicPlayer(new ArrayList<>(MainController.markedList));
     }
 
     
@@ -317,7 +328,7 @@ public class MainController extends BaseController{
                 protected Void call() throws Exception {
                 finder.newTask(pattern);
                 
-                if(!MC.currentDir.isAbsoluteRoot.get()){
+                if(!MC.currentDir.isAbsoluteOrVirtualFolders()){
                     try {
                         Files.walkFileTree(MC.currentDir.toPath(), finder);
                         
@@ -360,8 +371,8 @@ public class MainController extends BaseController{
         }
     }
     public void createSnapshot(){
-        if(MC.currentDir.isAbsoluteRoot.get()){
-            ErrorReport.report(new Exception("Cannot create stapshots at "+ FileManagerLB.ROOT_NAME));
+        if(MC.currentDir.isVirtual.get()){
+            ErrorReport.report(new Exception("Cannot create stapshots from virtual folders"));
             return;
         }
         this.snapshotView.getItems().add("Creating snapshot at "+MC.currentDir.getAbsoluteDirectory());
@@ -420,14 +431,14 @@ public class MainController extends BaseController{
     }
     private void changeToCustomDir(String possibleDir){
         try{
-            if(possibleDir.equalsIgnoreCase(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
+            if(possibleDir.equals(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
                 changeToDir(FileManagerLB.ArtificialRoot);
             }else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
                 if(fileAndPopulate!=null){
                     this.changeToDir(fileAndPopulate);
                 }else{
-                    update();
+                    update();//never should happen
                 }
                 
             }
@@ -454,6 +465,7 @@ public class MainController extends BaseController{
         searchContextMenu = new ContextMenu();
         linksContextMenu = new ContextMenu();
         errorContextMenu = new ContextMenu();
+        
         contextMenuItems[0] = new MenuItem("Create New Folder");
         contextMenuItems[0].setOnAction((eh) -> {
             Log.writeln("Create new folder");
@@ -464,33 +476,41 @@ public class MainController extends BaseController{
                 ErrorReport.report(ex);
             }
         });
+        contextMenuItems[0].visibleProperty().bind(MC.isVirtual.not());
         
         contextMenuItems[1] = new MenuItem("Rename");
         contextMenuItems[1].setOnAction((eh)->{
             rename();
         });
+        contextMenuItems[1].visibleProperty().bind(propertyRenameCondition);
         
         contextMenuItems[2] = new MenuItem("Delete");
         contextMenuItems[2].setOnAction((eh)->{
             delete();
         });
-        
+        contextMenuItems[2].visibleProperty().bind(propertyDeleteCondition);
+                
+                
         contextMenuItems[3] = new MenuItem("Copy Here");
         contextMenuItems[3].setOnAction((eh)->{
             Log.writeln("Copy Marked");
             
-            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().markedList,MC.currentDir);
+            SimpleTask task = TaskFactory.getInstance().copyFiles(MainController.markedList,MC.currentDir);
             task.setTaskDescription("Copy marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
+        contextMenuItems[3].visibleProperty().bind(propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not()));
+                
         contextMenuItems[4] = new MenuItem("Move Here");
         contextMenuItems[4].setOnAction((eh)->{
             Log.writeln("Move Marked");
-            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().markedList,MC.currentDir);
+            SimpleTask task = TaskFactory.getInstance().moveFiles(MainController.markedList,MC.currentDir);
             task.setTaskDescription("Move marked files");
             ViewManager.getInstance().newProgressDialog(task);
-        
         });
+        contextMenuItems[4].visibleProperty().bind(contextMenuItems[3].visibleProperty());
+
+        
         contextMenuItems[5] = new MenuItem("Create New File");
         contextMenuItems[5].setOnAction((eh)->{
             Log.writeln("Create new file");
@@ -501,37 +521,50 @@ public class MainController extends BaseController{
                 ErrorReport.report(ex);
             }
         });
+        contextMenuItems[5].visibleProperty().bind(MC.isVirtual.not());
+        
+        
         contextMenuItems[6] = new MenuItem("Add to marked");
         contextMenuItems[6].setOnAction((eh)->{
             selectedList.stream().forEach((file) -> {
                 TaskFactory.getInstance().addToMarked(file.getAbsoluteDirectory());
             });  
         });
+        contextMenuItems[6].visibleProperty().bind(miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0)));
+        
         contextMenuItems[7] = new MenuItem("Clean this list");
         contextMenuItems[7].setOnAction((e)->{
-            //TaskFactory.getInstance().markedList.clear();
+            //MainController.markedList.clear();
             this.markedView.getItems().clear();
         });
         
-        contextMenuItems[8] = new MenuItem("Remove this item");
+        contextMenuItems[7].visibleProperty().bind(propertyMarkedSize.greaterThan(0).and(Bindings.size(markedView.getSelectionModel().getSelectedItems()).greaterThan(0)));
+        
+        contextMenuItems[8] = new MenuItem("Remove selected");
         contextMenuItems[8].setOnAction(eh ->{        
-            String selectedItem = (String) markedView.getSelectionModel().getSelectedItem();
-            TaskFactory.getInstance().markedList.remove(selectedItem);
+            ObservableList selectedItems = markedView.getSelectionModel().getSelectedItems();
+            MainController.markedList.removeAll(selectedItems);
         });
+        contextMenuItems[8].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).and(Bindings.size(markedView.getSelectionModel().getSelectedItems()).greaterThan(0)));
+        
         
         contextMenuItems[9] = new MenuItem("Delete all marked");
         contextMenuItems[9].setOnAction(eh ->{
             SimpleTask task = TaskFactory.getInstance().deleteFiles(
-                    TaskFactory.getInstance().markedList);
+                    MainController.markedList);
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
             
         });
+        contextMenuItems[9].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0));
+        
+        
+        //DRAG
         contextMenuItems[10] = new MenuItem("Move here selected");
         contextMenuItems[10].setOnAction(eh ->{   
-            TaskFactory.getInstance().actionList.clear();
-            TaskFactory.getInstance().actionList.addAll(TaskFactory.getInstance().dragList);
-            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(TaskFactory.getInstance().actionList),MC.currentDir);
+            MainController.actionList.clear();
+            MainController.actionList.addAll(MainController.dragList);
+            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
             task.setTaskDescription("Move Dragged files");
             boolean paused = false;
             if(TaskFactory.dragInitWindowID.equals(MediaPlayerController.ID)){
@@ -542,12 +575,13 @@ public class MainController extends BaseController{
         contextMenuItems[11] = new MenuItem("Copy here selected");
         contextMenuItems[11].setOnAction(eh ->{        
             //Log.writeln("Copy Dragger");
-             TaskFactory.getInstance().actionList.clear();
-            TaskFactory.getInstance().actionList.addAll(TaskFactory.getInstance().dragList);
-            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(TaskFactory.getInstance().actionList),MC.currentDir);
+             MainController.actionList.clear();
+            MainController.actionList.addAll(MainController.dragList);
+            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
             task.setTaskDescription("Copy Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
+        
         contextMenuItems[12] = new MenuItem("Go to");
         contextMenuItems[12].setOnAction((ActionEvent eh) -> {
             String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
@@ -562,54 +596,77 @@ public class MainController extends BaseController{
                 ErrorReport.report(ex);
             }
         });
+        contextMenuItems[12].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).isEqualTo(1));
         
         contextMenuItems[13] = new MenuItem("Add current directory as link");
         contextMenuItems[13].setOnAction(eh ->{
-            String dir = MC.currentDir.getAbsolutePath();
-            FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(),dir);
-            links.add(link);
+            FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(),MC.currentDir);
+            if(!links.contains(link)){
+               links.add(link); 
+            }
+            
             
         });
+//        contextMenuItems[13].visibleProperty().bind(Bindings.size(this.linkView.getSelectionModel().getSelectedIndices()).greaterThan(0));
+        
         contextMenuItems[14] = new MenuItem("Remove this link");
         contextMenuItems[14].setOnAction(eh ->{
             links.remove(linkView.getSelectionModel().getSelectedIndex());
         });
+        contextMenuItems[14].visibleProperty().bind(Bindings.size(this.linkView.getSelectionModel().getSelectedItems()).greaterThan(0));
+
         contextMenuItems[15] = new MenuItem("Remove this entry");
         contextMenuItems[15].setOnAction(eh ->{
             errorLog.remove(errorView.getSelectionModel().getSelectedIndex());
         });
+        contextMenuItems[15].visibleProperty().bind(Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0));
+
+        
         contextMenuItems[16] = new MenuItem("Clean this list");
         contextMenuItems[16].setOnAction(eh ->{
             errorLog.clear();
         });
+        contextMenuItems[16].visibleProperty().bind(contextMenuItems[15].visibleProperty());
+        
+        //Manual
         contextMenuItems[17] = new MenuItem("Open in new window");
         contextMenuItems[17].setOnAction(eh ->{
-            ViewManager.getInstance().newWindow(FileManagerLB.ArtificialRoot, (ExtFolder) tableView.getSelectionModel().getSelectedItem());
+            ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
         });
+        
         contextMenuItems[18] = new MenuItem("Open");
         contextMenuItems[18].setOnAction(eh ->{
             ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-            this.handleOpen(file);
+            handleOpen(file);
         });
+        contextMenuItems[18].visibleProperty().bind(propertySelectedSize.isEqualTo(1));
         
         //For search View
-        contextMenuItems[19] = new MenuItem("All");
-        contextMenuItems[19].setOnAction(eh ->{
-            searchView.getSelectionModel().selectAll();
-        });
+//        contextMenuItems[19] = new MenuItem("All");
+//        contextMenuItems[19].setOnAction(eh ->{
+//            searchView.getSelectionModel().selectAll();
+//        });
+//        contextMenuItems[19].visibleProperty().bind(Bindings.size(searchView.getItems()).greaterThan(0));
+//        
         contextMenuItems[20] = new MenuItem("Invert Selection");
         contextMenuItems[20].setOnAction(eh ->{
-            this.selectInverted(searchView.getSelectionModel());
+            selectInverted(searchView.getSelectionModel());
         });
+        contextMenuItems[20].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
+        
         //For table View
-        contextMenuItems[21] = new MenuItem("All");
-        contextMenuItems[21].setOnAction(eh ->{
-            tableView.getSelectionModel().selectAll();
-        });
+//        contextMenuItems[21] = new MenuItem("All");
+//        contextMenuItems[21].setOnAction(eh ->{
+//            tableView.getSelectionModel().selectAll();
+//        });
+//        contextMenuItems[21].visibleProperty().bind(Bindings.size(tableView.getItems()).greaterThan(0));
+//        
         contextMenuItems[22] = new MenuItem("Invert Selection");
         contextMenuItems[22].setOnAction(eh ->{
-            this.selectInverted(tableView.getSelectionModel());
+            selectInverted(tableView.getSelectionModel());
         });
+        contextMenuItems[22].visibleProperty().bind(propertySelectedSize.greaterThan(0));
+        
         contextMenuItems[23] = new MenuItem("Mark selected");
         contextMenuItems[23].setOnAction(eh ->{
             Platform.runLater(()->{
@@ -620,46 +677,126 @@ public class MainController extends BaseController{
             });
                        
         });
+        contextMenuItems[23].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
+        
         contextMenuItems[24] = new MenuItem("Copy Absolute Path");
         contextMenuItems[24].setOnAction(eh ->{
-            String absolutePath = this.selectedList.get(0).getAbsolutePath();
+            String absolutePath = selectedList.get(0).getAbsolutePath();
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
         });
+        contextMenuItems[24].visibleProperty().bind(this.propertyRenameCondition);
         
         contextMenuItems[25] = new MenuItem("Toggle Enable/Disable");
         contextMenuItems[25].setOnAction(eh ->{
             Platform.runLater(()->{
-                
-                this.selectedList.stream().forEach(c ->{
+                selectedList.stream().forEach(c ->{
                     c.isDisabled.setValue(c.isDisabled.not().get());
                 });
             });
         });
+        contextMenuItems[25].visibleProperty().bind(this.propertyDeleteCondition);
         
-        submenuSelectSearch = new Menu("Select...");
-        submenuSelectSearch.getItems().setAll(
-                contextMenuItems[19],
-                contextMenuItems[20]
-        );
+        contextMenuItems[26] = new MenuItem("Create Virtual Folder");
+        contextMenuItems[26].setOnAction(eh ->{
+            Platform.runLater(()->{
+                VirtualFolder.createVirtualFolder();
+                update();
+            });
+        });
+        contextMenuItems[26].visibleProperty().bind(propertyIsVirtualFolders);
+
+          
+        contextMenuItems[27] = new MenuItem("Add Marked to Virtual Folder");
+        contextMenuItems[27].setOnAction(eh ->{
+            Platform.runLater(()->{
+                for(String file:MainController.markedList){
+                        ExtPath f = LocationAPI.getInstance().getFileByLocation(new LocationInRoot(file));
+                        MC.currentDir.files.put(f.propertyName.get(), f);
+                    }
+                update();
+            });
+        });
+        
+        contextMenuItems[27].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).and(propertyIsVirtualFolders.not()).and(MC.isAbsoluteRoot.not()).and(MC.isVirtual));
+        
+        
+        contextMenuItems[28] = new MenuItem("Remove Selected Virtual Folders");
+        contextMenuItems[28].setOnAction(eh ->{
+            Platform.runLater(()->{
+                ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
+                for(ExtPath item:selectedItems){
+                    FileManagerLB.VirtualFolders.files.remove(item.propertyName.get());
+                }
+                update();
+            });
+        });
+        contextMenuItems[28].visibleProperty().bind(this.propertyIsVirtualFolders.and(propertySelectedSize.greaterThan(0)));
+        
+        
+        
+        
         submenuSelectTable = new Menu("Select...");
         submenuSelectTable.getItems().setAll(
-                contextMenuItems[21],
-                contextMenuItems[22],
-                contextMenuItems[24]
+                contextMenuItems[22]
         );
+        submenuSelectTable.visibleProperty().bind(miDuplicateFinderFolder.disableProperty().not());
+        
         submenuMarked = new Menu("Marked...");
+        submenuMarked.getItems().setAll(
+                contextMenuItems[6],        //Add to marked
+                contextMenuItems[3],        //Copy
+                contextMenuItems[4],        //Move
+                contextMenuItems[9]        //Delete marked
+        );
+//        submenuMarked.visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).or(this.propertySelectedSize.greaterThan(0)));
+        submenuMarked.visibleProperty().bind(contextMenuItems[6].visibleProperty().or(
+                contextMenuItems[3].visibleProperty()).or(contextMenuItems[4].visibleProperty()).or(contextMenuItems[9].visibleProperty()));
         submenuCreate = new Menu("Create...");
         submenuCreate.getItems().setAll(
                 contextMenuItems[0],
                 contextMenuItems[5]
         );
+        submenuCreate.visibleProperty().bind(MC.isVirtual.not());
+         
         
+       
         searchContextMenu.getItems().setAll(
-                contextMenuItems[12]
+                contextMenuItems[12],
+                contextMenuItems[23],
+                contextMenuItems[20]
+        );
+        
+        errorContextMenu.getItems().setAll(
+                contextMenuItems[15],
+                contextMenuItems[16]
+        
+        );
+        linksContextMenu.getItems().setAll(
+                contextMenuItems[13],
+                contextMenuItems[14]
+        );
+        markedContextMenu.getItems().setAll(
+                contextMenuItems[7],
+                contextMenuItems[8]
+        
         );
         tableDragContextMenu.getItems().setAll(
                 contextMenuItems[10],
                 contextMenuItems[11]
+        );
+        tableContextMenu.getItems().setAll(
+                contextMenuItems[18],       //Open
+                contextMenuItems[17],       //Open in new window
+                submenuCreate,
+                contextMenuItems[1],    //Rename dialog
+                contextMenuItems[2],     //Delete dialog
+                contextMenuItems[22],
+                contextMenuItems[24],
+                contextMenuItems[25],
+                contextMenuItems[26],
+                contextMenuItems[27], //Add marked
+                contextMenuItems[28],
+                submenuMarked
         );
         
     }
@@ -684,7 +821,7 @@ public class MainController extends BaseController{
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
                 
-                if(cellData.getValue().getIdentity().equals(Enums.Identity.FOLDER)){
+                if(cellData.getValue() instanceof ExtFolder){
                     return new SimpleStringProperty("");
                 }else if(propertyUnitSizeAuto.get()){
                     return cellData.getValue().propertySizeAuto;
@@ -714,68 +851,14 @@ public class MainController extends BaseController{
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tableView.setOnMousePressed((MouseEvent event) -> {
             hideAllContextMenus();
-            tableContextMenu.getItems().clear();
-            int itemCount1 = tableView.getSelectionModel().getSelectedItems().size();
-            int markedSize1 = TaskFactory.getInstance().markedList.size();
             if (event.isSecondaryButtonDown()) {
-                if (itemCount1 == 1) {
-                        tableContextMenu.getItems().add(contextMenuItems[18]);  //Open
-                        ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-                        if(file instanceof ExtFolder){
-                            tableContextMenu.getItems().add(contextMenuItems[17]);  //Open in new window
-                        }
-                        
+                if(propertySelectedSize.greaterThan(0).get()){
+                    ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
+                    contextMenuItems[17].setVisible(file instanceof ExtFolder && propertySelectedSize.isEqualTo(1).get());
+                }else{
+                    contextMenuItems[17].setVisible(false);
                 }
-                boolean con = false;
-                if (!MC.currentDir.isAbsoluteRoot.get()) {
-                    
-                    if (markedSize1==0 && itemCount1 >= 1) {
-                        submenuMarked.getItems().setAll(
-                                contextMenuItems[6]         //Add to marked
-                                //contextMenuItems[3],      //Copy
-                                //contextMenuItems[4],      //Move
-                                //contextMenuItems[9]       //Delete marked
-                        );
-                    } else if (markedSize1>0 && itemCount1 >= 1) {
-                        submenuMarked.getItems().setAll(
-                                contextMenuItems[6],        //Add to marked
-                                contextMenuItems[3],        //Copy
-                                contextMenuItems[4],        //Move
-                                contextMenuItems[9]        //Delete marked
-                                
-                        );
-                    } else if (markedSize1>0 && itemCount1 == 0) {
-                        submenuMarked.getItems().setAll(
-                                //contextMenuItems[6]       //Add to marked
-                                contextMenuItems[3],        //Copy
-                                contextMenuItems[4],        //Move
-                                contextMenuItems[9]        //Delete marked
-                                
-                        );
-                    }else{
-                        con = true;
-                    }
-
-                    if (itemCount1 == 1) {
-                        
-                        tableContextMenu.getItems().addAll(
-//                                submenuCreate,
-                                contextMenuItems[1],    //Rename dialog
-                                contextMenuItems[2],     //Delete dialog
-                                contextMenuItems[25]        //Toggle Enable
-                        );
-                    } else if (itemCount1 > 1) {
-                        tableContextMenu.getItems().addAll(
-//                                submenuCreate,
-                                //contextMenuItems[1],  //Rename dialog
-                                contextMenuItems[2],     //Delete dialog
-                                contextMenuItems[25]        //Toggle Enable
-                        );
-                    }
-                    tableContextMenu.getItems().addAll(submenuCreate,submenuSelectTable,submenuMarked);
-                    if(con)
-                        tableContextMenu.getItems().remove(submenuMarked);
-                }
+                
             } else if(event.isPrimaryButtonDown()){
                 if(!tableView.getSelectionModel().isEmpty()){
                     if(event.getClickCount() >1){
@@ -796,7 +879,7 @@ public class MainController extends BaseController{
             }
         });
         tableView.setOnDragDetected((MouseEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             TaskFactory.dragInitWindowID = this.windowID;
@@ -804,8 +887,8 @@ public class MainController extends BaseController{
                 return;
             }
             // drag was detected, start drag-and-drop gesture
-            TaskFactory.getInstance().dragList = selectedList;
-            if(!TaskFactory.getInstance().dragList.isEmpty()){
+            MainController.dragList = selectedList;
+            if(!MainController.dragList.isEmpty()){
                 Dragboard db = tableView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
@@ -816,8 +899,9 @@ public class MainController extends BaseController{
             }
         }); //drag
 
+        
         tableView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
@@ -834,7 +918,7 @@ public class MainController extends BaseController{
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
@@ -842,7 +926,7 @@ public class MainController extends BaseController{
             }
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!TaskFactory.getInstance().dragList.isEmpty()) {
+            if (!MainController.dragList.isEmpty()) {
                 
                 tableDragContextMenu.show(tableView,event.getScreenX(),event.getScreenY());
                 tableDragContextMenu.getOwnerNode().requestFocus();
@@ -859,27 +943,27 @@ public class MainController extends BaseController{
         //***************************************
         //Marked View
         markedView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        markedView.setItems(TaskFactory.getInstance().markedList);
+        markedView.setItems(MainController.markedList);
         IntegerBinding size = Bindings.size(markedView.getItems());
         this.markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
-        markedView.setOnMousePressed((eh) ->{ 
-            if((markedView.getSelectionModel().getSelectedItem()!= null)&&(TaskFactory.getInstance().markedList.size()>0)){
-                    markedContextMenu.getItems().setAll(
-                        contextMenuItems[7],
-                        contextMenuItems[8]
-                    );
-            }else{
-               markedContextMenu.getItems().clear();
-            }
-        });
+//        markedView.setOnMousePressed((eh) ->{ 
+//            if((markedView.getSelectionModel().getSelectedItem()!= null)&&(MainController.markedList.size()>0)){
+//                    markedContextMenu.getItems().setAll(
+//                        contextMenuItems[7],
+//                        contextMenuItems[8]
+//                    );
+//            }else{
+//               markedContextMenu.getItems().clear();
+//            }
+//        });
         markedView.setOnDragDetected((MouseEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             // drag was detected, start drag-and-drop gesture
-            TaskFactory.getInstance().dragList = markedView.getSelectionModel().getSelectedItems();
-            if(!TaskFactory.getInstance().dragList.isEmpty()){
+            MainController.dragList = markedView.getSelectionModel().getSelectedItems();
+            if(!MainController.dragList.isEmpty()){
                 Dragboard db = tableView.startDragAndDrop(TransferMode.ANY);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
@@ -891,7 +975,7 @@ public class MainController extends BaseController{
         }); //drag
         
         markedView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             // data is dragged over the target
@@ -905,13 +989,13 @@ public class MainController extends BaseController{
         });
 
         markedView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteRoot.get()){
+            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!TaskFactory.getInstance().dragList.isEmpty()) {
-                for(ExtPath f:TaskFactory.getInstance().dragList){
+            if (!MainController.dragList.isEmpty()) {
+                for(ExtPath f:MainController.dragList){
                     TaskFactory.getInstance().addToMarked(f.getAbsoluteDirectory());
                 }
                 success = true;
@@ -926,22 +1010,11 @@ public class MainController extends BaseController{
         searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
-        searchView.setOnMousePressed((MouseEvent eh) ->{
-            searchContextMenu.getItems().clear();
-            if(!searchView.getItems().isEmpty()){
-                searchContextMenu.getItems().addAll(
-                        submenuSelectSearch,
-                        contextMenuItems[23]);
-                if(searchView.getSelectionModel().getSelectedItems().size()==1){
-                    searchContextMenu.getItems().add(contextMenuItems[12]);
-                }
-            }
-        });
         //***************************************
         //Link View
         
         linkView.setContextMenu(linksContextMenu);
-        linkView.setItems(FileManagerLB.links);
+        linkView.setItems(links);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){
             @Override
             public ListCell<FavouriteLink> call(ListView<FavouriteLink> p) {  
@@ -965,21 +1038,10 @@ public class MainController extends BaseController{
             }
         });
         linkView.setOnMousePressed((MouseEvent eh) ->{
-            int itemcount = linkView.getItems().size();
-            linksContextMenu.getItems().clear();
-            if(itemcount !=0){
-                
-                if((linkView.getSelectionModel().getSelectedIndex()!=0)&&(!linkView.getSelectionModel().isEmpty())){
-                    linksContextMenu.getItems().setAll(contextMenuItems[14]);
-                }
-            }
-            if(!MC.currentDir.isAbsoluteRoot.get()){
-                linksContextMenu.getItems().add(0,contextMenuItems[13]);
-            }
             if(eh.isPrimaryButtonDown()){
                 if(eh.getClickCount()>1){
                     FavouriteLink selectedItem = (FavouriteLink) linkView.getSelectionModel().getSelectedItem();
-                    changeToCustomDir(selectedItem.getDirectory());
+                    changeToDir((ExtFolder) selectedItem.location);
                 }
             }
         });
@@ -1010,14 +1072,6 @@ public class MainController extends BaseController{
                 };
                 
                 return cell;
-            }
-        });
-        
-        errorView.setOnMousePressed((MouseEvent eh) ->{
-            int itemcount = errorView.getItems().size();
-            errorContextMenu.getItems().clear();
-            if(itemcount !=0){
-                errorContextMenu.getItems().setAll(contextMenuItems[15],contextMenuItems[16]);
             }
         });
         

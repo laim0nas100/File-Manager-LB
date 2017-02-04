@@ -20,7 +20,7 @@ import java.util.Collection;
  */
 public class VirtualFolder extends ExtFolder {
     public static String VIRTUAL_FOLDER_PREFIX = "V";
-    public static void createVirtualFolder() throws IOException{
+    public static void createVirtualFolder(){
         int index = 0;
         String name = VIRTUAL_FOLDER_PREFIX+index;
         while(FileManagerLB.VirtualFolders.files.containsKey(name)){

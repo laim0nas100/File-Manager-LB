@@ -7,6 +7,7 @@ package utility;
 
 import filemanagerGUI.FileManagerLB;
 import static filemanagerGUI.FileManagerLB.DEBUG;
+import filemanagerGUI.MainController;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -25,7 +26,7 @@ public class ErrorReport {
         if(DEBUG.get()){
             ex.printStackTrace();
         }
-        FileManagerLB.errorLog.add(0, error);
+        MainController.errorLog.add(0, error);
     }
     private final SimpleStringProperty errorName;
     private final Exception errorCause;

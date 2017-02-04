@@ -22,15 +22,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import utility.ErrorReport;
 import utility.FavouriteLink;
@@ -49,8 +46,7 @@ public class FileManagerLB extends Application {
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
     public static FileLock GlobalLock;
-    public static ObservableList<FavouriteLink> links = FXCollections.observableArrayList();
-    public static ObservableList<ErrorReport> errorLog = FXCollections.observableArrayList();
+    
     public static int DEPTH;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount;
@@ -91,16 +87,12 @@ public class FileManagerLB extends Application {
                 CommandWindowController.maxExecutablesAtOnce = (Integer) FileManagerLB.parameters.defaultGet("code.maxExecutables", 2);
                 CommandWindowController.commandGenerate = (String) FileManagerLB.parameters.defaultGet("code.commandGenerate", "generate");
                 CommandWindowController.commandApply = (String) FileManagerLB.parameters.defaultGet("code.commandApply", "apply");
-                CommandWindowController.commandCreateVirtual = (String) FileManagerLB.parameters.defaultGet("code.createVirtualFolder", "virtual");
-                CommandWindowController.commandListVirtualFolders = (String) FileManagerLB.parameters.defaultGet("code.listVirtualFolders", "listVirtualFolders");
-                CommandWindowController.commandListVirtual = (String) FileManagerLB.parameters.defaultGet("code.listVirtual", "listVirtual");
                 CommandWindowController.commandClear = (String) FileManagerLB.parameters.defaultGet("code.clear", "clear");
-                CommandWindowController.commandAddToVirtual = (String) FileManagerLB.parameters.defaultGet("code.addToVirtual", "add");
                 CommandWindowController.commandList = (String) FileManagerLB.parameters.defaultGet("code.list", "list");
                 CommandWindowController.commandListRec = (String) FileManagerLB.parameters.defaultGet("code.listRec", "listRec");
                 CommandWindowController.commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
                 CommandWindowController.commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
-            
+                CommandWindowController.commandListParams = (String) FileManagerLB.parameters.defaultGet("code.listParameters", "listParams");
                 
                 ArtificialRoot.setPopulated(true);
                 ArtificialRoot.setIsAbsoluteRoot(true);
@@ -127,8 +119,8 @@ public class FileManagerLB extends Application {
                 ErrorReport.report(e);
             }
             ArtificialRoot.propertyName.set(ROOT_NAME);
-            links.add(new FavouriteLink(ROOT_NAME,""));
-            ViewManager.getInstance().newWindow(ArtificialRoot, ArtificialRoot);
+            MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
+            ViewManager.getInstance().newWindow(ArtificialRoot);
 //            ViewManager.getInstance().updateAllWindows();
         });
         Platform.runLater(()->{
