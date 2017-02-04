@@ -10,6 +10,7 @@ import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
+import LibraryLB.TaskExecutor;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -17,6 +18,7 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.BufferedReader;
@@ -26,7 +28,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Set;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -46,9 +47,8 @@ public class CommandWindowController extends BaseController {
     @FXML TextField textField;
     @FXML TextArea textArea;
     private Commander command;
-    private int executeQueue = 0;
-    
-    public static int maxExecutablesAtOnce = 10;
+    public TaskExecutor executor;
+    public static int maxExecutablesAtOnce;
     public static int truncateAfter;
     public static String  commandGenerate,
                     commandApply,
@@ -61,7 +61,8 @@ public class CommandWindowController extends BaseController {
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
-        
+        executor = new TaskExecutor(maxExecutablesAtOnce,10);
+        executor.neverStop = true;
         command = new Commander(textField);
         command.addCommand(commandGenerate, (Object... params) -> {
                 String newCom = (String) params[0];
@@ -110,26 +111,31 @@ public class CommandWindowController extends BaseController {
                 textArea.clear();
         });
         command.addCommand(commandHelp, (Object... params)->{
-                command.addToTextArea(textArea,"Read Parameters.txt file for info\n");
+                addToTextArea(textArea,"Read Parameters.txt file for info\n");
         });
         command.addCommand(commandListParams, (Object... params)->{
             ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
             Collections.sort(list);
             list.forEach(key->{
                 ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
-                command.addToTextArea(textArea, parameter.toString()+"\n");
+                addToTextArea(textArea, parameter.toString()+"\n");
             });
         });
+        Thread t = new Thread(this.executor);
+        t.setDaemon(true);
+        t.start();
         
         
     }
-    
-    public class Commander extends AbstractCommandField{
-        private boolean setTextAfterwards = false;
-        public Commander(TextField tf) {
-            super(tf);
-        }
-        public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
+    public void addToTextArea(TextArea textA,String text){
+            Platform.runLater(()->{
+                String newString = textA.getText()+text;
+                textA.setText(newString.substring(Math.max(newString.length()-truncateAfter,0)));
+                textA.positionCaret(textA.getLength());
+            });
+            
+        } 
+    public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = reader.readLine();
             LinkedList<String> lines = new LinkedList<>();
@@ -160,34 +166,20 @@ public class CommandWindowController extends BaseController {
                     addToTextArea(textArea,main);
                 });
             }
-            executeQueue--;
             
         }
-        public void addToTextArea(TextArea textA,String text){
-            Platform.runLater(()->{
-                String newString = textA.getText()+text;
-                textA.setText(newString.substring(0,Math.min(truncateAfter,newString.length())));
-                textA.positionCaret(textA.getLength());
-            });
-            
+    public class Commander extends AbstractCommandField{
+        private boolean setTextAfterwards = false;
+        public Commander(TextField tf) {
+            super(tf);
         }
-//        public void truncateTextArea(TextArea textA,int length){
-//            Platform.runLater(()->{
-//                if(textA.getLength()>length){
-//                   textA.setText(textA.getText().substring(textA.getLength()-length));
-//                   textA.positionCaret(textA.getLength());
-//                }
-//            });
-//            
-//        }
+       
         public void apply(String name) throws IOException, InterruptedException{
             LinkedList<String> readFromFile = new LinkedList(LibraryLB.FileManaging.FileReader.readFromFile(name));
             this.setTextAfterwards = true;
+            
+            
             for(String command:readFromFile){
-                do{
-                        Thread.sleep(500);
-                    }while(executeQueue>maxExecutablesAtOnce);
-                Log.writeln(command);
                 submit(command);
             }
         }
@@ -301,6 +293,7 @@ public class CommandWindowController extends BaseController {
         }
         @Override
         public void submit(String command) {
+            Log.writeln(command);
             Task<Void> task = new Task<Void>(){
                 @Override
                 protected Void call() throws Exception {
@@ -312,18 +305,15 @@ public class CommandWindowController extends BaseController {
                     if(runCommand(commands.getFirst(),command)){
                         return null;
                     }
-                    executeQueue++;
-                    Log.write("Queue:"+executeQueue+" "+command+"\n");
-                    ProcessBuilder builder = new ProcessBuilder(commands.toArray(new String[0]));
+                    ProcessBuilder builder = new ProcessBuilder(commands.toArray(new String[1]));
                     builder.redirectErrorStream(true);
                     Process process = builder.start();
+                    
                     handleStream(process,textArea,setTextAfterwards,command);
                     return null;
                 }                
             };
-            Thread t = new Thread(task);
-            t.setDaemon(true);
-            t.start();
+            executor.addTask(task);
         }
         
     }
@@ -335,7 +325,12 @@ public class CommandWindowController extends BaseController {
         command.setTextAfterwards = false;
         command.submit(this.textField.getText());
     }
-
+    @Override
+    public void exit(){
+        this.executor.cancel();
+        super.exit();
+        
+    }
  
     
 }

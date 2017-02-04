@@ -14,9 +14,11 @@ lang=EN
 //Name of root directory (don't set to an actual path in your system or you wont be able to access it via address field)
 ROOT_NAME=\
 
-//Multithreading load for specific tasks
+//Multi-threading load for specific tasks
 maxThreadsForTask=50
 
+//Multi-threading for commands-line tasks
+maxThreadsForCommand=5
 
 //Path string mangling
 //Current number in the list

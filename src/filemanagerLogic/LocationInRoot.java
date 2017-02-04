@@ -21,11 +21,10 @@ import utility.ExtStringUtils;
  */
 public class LocationInRoot {
 
-    public LinkedList<String> coordinates;
+    public LinkedList<String> coordinates =  new LinkedList<>();
     
     
     public LocationInRoot(String filePath){
-        coordinates = new LinkedList<>();
         String rootLoc = "";
         if(!filePath.isEmpty()){
             for(String s:FileManagerLB.getRootSet()){

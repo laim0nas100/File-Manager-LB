@@ -93,20 +93,12 @@ public class FileManagerLB extends Application {
                 CommandWindowController.commandSetCustom = (String) FileManagerLB.parameters.defaultGet("code.setCustom", "setCustom");
                 CommandWindowController.commandHelp = (String) FileManagerLB.parameters.defaultGet("code.help", "help");
                 CommandWindowController.commandListParams = (String) FileManagerLB.parameters.defaultGet("code.listParameters", "listParams");
-                
+                CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("maxThreadsForCommand", 5);
                 ArtificialRoot.setPopulated(true);
                 ArtificialRoot.setIsAbsoluteRoot(true);
                 ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
                 VirtualFolders.setPopulated(true);
             try{
-//                for(ExtPath f:VirtualFolders.getFilesCollection()){
-//                    Files.deleteIfExists(f.toPath());
-//                }
-//                Files.deleteIfExists(VirtualFolders.toPath());
-//                Files.createDirectory(VirtualFolders.toPath());
-                
-//                Files.deleteIfExists(VirtualFolders.toPath());
-//                Files.createFile(V)
                 Files.deleteIfExists(ArtificialRoot.toPath());
                 Files.createFile(ArtificialRoot.toPath());
                 

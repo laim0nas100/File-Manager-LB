@@ -35,8 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.concurrent.Task;
 import utility.ErrorReport;
 import utility.FileNameException;
@@ -555,7 +553,7 @@ public class TaskFactory {
     
     
     public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
-        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,10);
+        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,1);
             for(int i=0; i<array.size();i++){
                 
                 Task<Long> task;

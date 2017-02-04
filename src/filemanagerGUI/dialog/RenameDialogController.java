@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 import utility.FileNameException;
+import utility.PathStringCommands;
 
 /**
  * FXML Controller class
@@ -55,15 +56,12 @@ public class RenameDialogController extends TextInputDialogController {
         if(!Files.exists(itemToRename.toPath())){
             exit();
         }
-        update();
-        
-        
+        update(); 
         if(listToCheck.contains(textField.getText()) ||textField.getText().length()<1){
             nameIsAvailable.set(false);
             nameAvailable.setText("Taken");
         }else{
-            nameAvailable.setText("Available");
-            
+            nameAvailable.setText("Available");   
             nameIsAvailable.set(true);
         }
     }
@@ -71,9 +69,8 @@ public class RenameDialogController extends TextInputDialogController {
     public void apply(){
         if(nameIsAvailable.get()){
             try {
-//                String fallback = TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim();
-//                fallback = ExtStringUtils.replaceOnce(fallback, folder.getAbsoluteDirectory(), "");
-                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),Math.random()+"."+Math.random());
+                PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
+                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),fallback.getName(true));
                 exit();
                 update();
             }catch(FileNameException ex){

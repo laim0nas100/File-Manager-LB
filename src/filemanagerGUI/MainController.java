@@ -48,7 +48,6 @@ import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -123,10 +122,7 @@ public class MainController extends BaseController{
     private ContextMenu errorContextMenu;
     private MenuItem[] contextMenuItems;
     private Menu submenuMarked;
-    private Menu submenuCreate;
-    private Menu submenuSelectSearch;
-    private Menu submenuSelectTable;
-    
+    private Menu submenuCreate;    
     
     private FileAddressField fileAddress;
     private ManagingClass MC;
@@ -147,6 +143,7 @@ public class MainController extends BaseController{
     public void beforeShow(String title,ExtFolder currentDir){
         
         super.beforeShow(title);
+        MC = new ManagingClass(currentDir);
         
         menuItemTest.visibleProperty().bind(FileManagerLB.DEBUG);
         unitSize = DATA_SIZE.KB;
@@ -161,13 +158,17 @@ public class MainController extends BaseController{
         propertyMarkedSize = new SimpleIntegerProperty(0);
         propertySelectedSize = new SimpleIntegerProperty(0);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
+        
+        propertyDeleteCondition.bind(MC.isVirtual.not().and(propertySelectedSize.greaterThan(0)));
+        propertyRenameCondition.bind(MC.isVirtual.not().and(propertySelectedSize.isEqualTo(1)));
+        
 
         finder = new Finder("",useRegex.selectedProperty());
         Bindings.bindContentBidirectional(finder.list, searchView.getItems());
         finder.isCanceled.bind(this.propertyReadyToSearch);
 
         itemCount.textProperty().bind(Bindings.size(finder.list).asString());
-        MC = new ManagingClass(currentDir);
+        
         
         LOAD();
         fileAddress = new FileAddressField(currentDirText);
@@ -232,8 +233,7 @@ public class MainController extends BaseController{
 
             
             
-            propertyDeleteCondition.bind(MC.isVirtual.not().and(propertySelectedSize.greaterThan(0)));
-            propertyRenameCondition.bind(MC.isVirtual.not().and(propertySelectedSize.isEqualTo(1)));
+            
             Platform.runLater(()->{
                 extTableView.updateContentsAndSort(MC.getCurrentContents());
             });
@@ -254,20 +254,23 @@ public class MainController extends BaseController{
         }
     }
     public void advancedRenameMarked(){
-        if(!MC.currentDir.isAbsoluteRoot.get()){
-            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(MainController.markedList);
-            VirtualFolder folder = new VirtualFolder("Marked Files");
-            folder.addAll(populateExtPathList);
-            ViewManager.getInstance().newAdvancedRenameDialog(folder);
-        }
+        ArrayList<ExtPath> populateExtPathList = new ArrayList<>();
+        markedList.forEach(item ->{
+            populateExtPathList.add(LocationAPI.getInstance().getFileUnsecure(item));
+        });
+        VirtualFolder folder = new VirtualFolder("Marked Files");
+        folder.addAll(populateExtPathList);
+        ViewManager.getInstance().newAdvancedRenameDialog(folder);
+        
     }
     public void duplicateFinderMarked(){
-        if(!MC.currentDir.isAbsoluteRoot.get()){
-            Collection<ExtPath> populateExtPathList = TaskFactory.getInstance().populateExtPathList(MainController.markedList);
-            VirtualFolder folder = new VirtualFolder("Marked Files");
-            folder.addAll(populateExtPathList);
-            ViewManager.getInstance().newDuplicateFinderDialog(folder);
-        }
+        ArrayList<ExtPath> populateExtPathList = new ArrayList<>();
+        markedList.forEach(item ->{
+            populateExtPathList.add(LocationAPI.getInstance().getFileUnsecure(item));
+        });
+        VirtualFolder folder = new VirtualFolder("Marked Files");
+        folder.addAll(populateExtPathList);
+        ViewManager.getInstance().newDuplicateFinderDialog(folder);
     }
     public void duplicateFinderFolder(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
@@ -642,12 +645,6 @@ public class MainController extends BaseController{
         contextMenuItems[18].visibleProperty().bind(propertySelectedSize.isEqualTo(1));
         
         //For search View
-//        contextMenuItems[19] = new MenuItem("All");
-//        contextMenuItems[19].setOnAction(eh ->{
-//            searchView.getSelectionModel().selectAll();
-//        });
-//        contextMenuItems[19].visibleProperty().bind(Bindings.size(searchView.getItems()).greaterThan(0));
-//        
         contextMenuItems[20] = new MenuItem("Invert Selection");
         contextMenuItems[20].setOnAction(eh ->{
             selectInverted(searchView.getSelectionModel());
@@ -655,12 +652,6 @@ public class MainController extends BaseController{
         contextMenuItems[20].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
         
         //For table View
-//        contextMenuItems[21] = new MenuItem("All");
-//        contextMenuItems[21].setOnAction(eh ->{
-//            tableView.getSelectionModel().selectAll();
-//        });
-//        contextMenuItems[21].visibleProperty().bind(Bindings.size(tableView.getItems()).greaterThan(0));
-//        
         contextMenuItems[22] = new MenuItem("Invert Selection");
         contextMenuItems[22].setOnAction(eh ->{
             selectInverted(tableView.getSelectionModel());
@@ -720,37 +711,32 @@ public class MainController extends BaseController{
         contextMenuItems[27].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).and(propertyIsVirtualFolders.not()).and(MC.isAbsoluteRoot.not()).and(MC.isVirtual));
         
         
-        contextMenuItems[28] = new MenuItem("Remove Selected Virtual Folders");
+        contextMenuItems[28] = new MenuItem("Remove selected from Virtual Folder");
         contextMenuItems[28].setOnAction(eh ->{
             Platform.runLater(()->{
                 ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
                 for(ExtPath item:selectedItems){
-                    FileManagerLB.VirtualFolders.files.remove(item.propertyName.get());
+                    MC.currentDir.files.remove(item.propertyName.get());
                 }
                 update();
             });
         });
-        contextMenuItems[28].visibleProperty().bind(this.propertyIsVirtualFolders.and(propertySelectedSize.greaterThan(0)));
+        contextMenuItems[28].visibleProperty().bind(MC.isVirtual.and(propertySelectedSize.greaterThan(0)).and(MC.isAbsoluteRoot.not()));
         
         
-        
-        
-        submenuSelectTable = new Menu("Select...");
-        submenuSelectTable.getItems().setAll(
-                contextMenuItems[22]
-        );
-        submenuSelectTable.visibleProperty().bind(miDuplicateFinderFolder.disableProperty().not());
         
         submenuMarked = new Menu("Marked...");
         submenuMarked.getItems().setAll(
                 contextMenuItems[6],        //Add to marked
                 contextMenuItems[3],        //Copy
                 contextMenuItems[4],        //Move
-                contextMenuItems[9]        //Delete marked
+                contextMenuItems[9],        //Delete marked
+                contextMenuItems[27]        //Add Marked to virtual
         );
 //        submenuMarked.visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).or(this.propertySelectedSize.greaterThan(0)));
         submenuMarked.visibleProperty().bind(contextMenuItems[6].visibleProperty().or(
-                contextMenuItems[3].visibleProperty()).or(contextMenuItems[4].visibleProperty()).or(contextMenuItems[9].visibleProperty()));
+                contextMenuItems[3].visibleProperty()).or(contextMenuItems[4].visibleProperty()).or(
+                        contextMenuItems[9].visibleProperty()).or(contextMenuItems[27].visibleProperty()));
         submenuCreate = new Menu("Create...");
         submenuCreate.getItems().setAll(
                 contextMenuItems[0],
@@ -794,7 +780,6 @@ public class MainController extends BaseController{
                 contextMenuItems[24],
                 contextMenuItems[25],
                 contextMenuItems[26],
-                contextMenuItems[27], //Add marked
                 contextMenuItems[28],
                 submenuMarked
         );

@@ -114,7 +114,7 @@ public class LocationAPI {
         folder.files.put(file.propertyName.get(), file);
     }
     private void populateByLocation(LocationInRoot location){
-        int i = 0;
+//        int i = 0;
         ExtFolder folder = FileManagerLB.ArtificialRoot;
         Log.writeln("Populate by location",location);
         //folder.update();
@@ -184,5 +184,7 @@ public class LocationAPI {
         }
         return file;
     }
-    
+    public ExtPath getFileUnsecure(String path){
+        return getFileByLocation(new LocationInRoot(path));
+    }
 }

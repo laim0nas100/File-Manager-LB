@@ -9,7 +9,10 @@ import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
+import filemanagerLogic.LocationAPI;
+import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.TaskFactory;
+import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
@@ -247,10 +250,9 @@ public void apply(){
         TableItemObject ob = (TableItemObject) object;
         
         try {
-//            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(ob.path1.getParent(1));
-//            String fallback = TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true));
-//            fallback = ExtStringUtils.replaceOnce(fallback, parent.getAbsoluteDirectory(), "");
-            TaskFactory.getInstance().renameTo(ob.path1.getPath(),ob.path2.getName(true),Math.random()+""+Math.random());
+            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.getParent(1)));
+            PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
+            TaskFactory.getInstance().renameTo(ob.path1.getPath(),ob.path2.getName(true),fallback.getName(true));
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }

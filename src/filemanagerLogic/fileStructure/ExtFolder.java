@@ -43,7 +43,7 @@ public class ExtFolder extends ExtPath{
         }
     };
     private boolean populated;
-    public ConcurrentHashMap <String,ExtPath> files;
+    public Map <String,ExtPath> files;
 //    public Map <String,ExtPath> files;
 
     
