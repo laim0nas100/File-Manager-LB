@@ -8,11 +8,15 @@
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/Frame.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/fxml/DirSync.fxml</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/RenameDialogController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/PathStringCommands.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/CustomClock.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/MediaPlayerController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/SimpleTask.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/snapshots/SnapshotAPI.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/fileStructure/ExtFolder.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/customUI/CosmeticsFX.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/DirSyncController.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/snapshots/ExtEntry.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/TextInputDialogController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/TextInputDialogEssentials.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/ManagingClass.java</file>
@@ -23,8 +27,12 @@
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/customUI/FileAddressField.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/FileManagerLB.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/ErrorReport.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/fileStructure/ActionFile.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/FavouriteLink.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/customUI/AbstractCommandField.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/snapshots/Snapshot.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/DesktopApi.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/snapshots/Entry.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/LocationAPI.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/CommandWindowController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/BaseController.java</file>
@@ -36,6 +44,7 @@
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/WebDialogController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/TaskFactory.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/test/testPackage/NewEmptyJUnitTest.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/fileStructure/ExtLink.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerLogic/fileStructure/ExtPath.java</file>
         </group>
     </open-files>

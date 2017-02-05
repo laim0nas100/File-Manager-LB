@@ -106,7 +106,7 @@ public class TaskFactory {
     
 //PREPARE FOR TASKS
 
-    public void addToMarked(String file){
+    public void addToMarked(ExtPath file){
         Platform.runLater(()->{
             if(file!=null&&!MainController.markedList.contains(file)){
                 MainController.markedList.add(file);
@@ -382,7 +382,7 @@ public class TaskFactory {
             @Override
             protected Void call(){
                 list.forEach(file ->{
-                    addToMarked(file);
+                    addToMarked(LocationAPI.getInstance().getFileUnsecure(file));
                 });
                 return null;
             }

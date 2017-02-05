@@ -75,7 +75,7 @@ public class MainController extends BaseController{
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static ObservableList<ExtPath> dragList;
-    public static ObservableList<String> markedList;
+    public static ObservableList<ExtPath> markedList;
     public static ArrayList<ExtPath> actionList;
     
     
@@ -201,13 +201,16 @@ public class MainController extends BaseController{
     public void update(){
         
         Platform.runLater(()->{
-            Iterator<String> iterator = MainController.markedList.iterator();
+            Iterator<ExtPath> iterator = MainController.markedList.iterator();
             while(iterator.hasNext()){
                 try{
-                    if(!Files.exists(Paths.get(iterator.next()))){
+                    Path toPath = iterator.next().toPath();
+                    if(!Files.exists(toPath)){
                         iterator.remove();
                     }
-                }catch(Exception e){}
+                }catch(Exception e){
+                    iterator.remove();
+                }
             }
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
@@ -254,22 +257,14 @@ public class MainController extends BaseController{
         }
     }
     public void advancedRenameMarked(){
-        ArrayList<ExtPath> populateExtPathList = new ArrayList<>();
-        markedList.forEach(item ->{
-            populateExtPathList.add(LocationAPI.getInstance().getFileUnsecure(item));
-        });
         VirtualFolder folder = new VirtualFolder("Marked Files");
-        folder.addAll(populateExtPathList);
+        folder.addAll(markedList);
         ViewManager.getInstance().newAdvancedRenameDialog(folder);
         
     }
     public void duplicateFinderMarked(){
-        ArrayList<ExtPath> populateExtPathList = new ArrayList<>();
-        markedList.forEach(item ->{
-            populateExtPathList.add(LocationAPI.getInstance().getFileUnsecure(item));
-        });
         VirtualFolder folder = new VirtualFolder("Marked Files");
-        folder.addAll(populateExtPathList);
+        folder.addAll(markedList);
         ViewManager.getInstance().newDuplicateFinderDialog(folder);
     }
     public void duplicateFinderFolder(){
@@ -498,7 +493,7 @@ public class MainController extends BaseController{
         contextMenuItems[3].setOnAction((eh)->{
             Log.writeln("Copy Marked");
             
-            SimpleTask task = TaskFactory.getInstance().copyFiles(MainController.markedList,MC.currentDir);
+            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
             task.setTaskDescription("Copy marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -507,7 +502,7 @@ public class MainController extends BaseController{
         contextMenuItems[4] = new MenuItem("Move Here");
         contextMenuItems[4].setOnAction((eh)->{
             Log.writeln("Move Marked");
-            SimpleTask task = TaskFactory.getInstance().moveFiles(MainController.markedList,MC.currentDir);
+            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
             task.setTaskDescription("Move marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -530,7 +525,7 @@ public class MainController extends BaseController{
         contextMenuItems[6] = new MenuItem("Add to marked");
         contextMenuItems[6].setOnAction((eh)->{
             selectedList.stream().forEach((file) -> {
-                TaskFactory.getInstance().addToMarked(file.getAbsoluteDirectory());
+                TaskFactory.getInstance().addToMarked(file);
             });  
         });
         contextMenuItems[6].visibleProperty().bind(miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0)));
@@ -541,7 +536,7 @@ public class MainController extends BaseController{
             this.markedView.getItems().clear();
         });
         
-        contextMenuItems[7].visibleProperty().bind(propertyMarkedSize.greaterThan(0).and(Bindings.size(markedView.getSelectionModel().getSelectedItems()).greaterThan(0)));
+        contextMenuItems[7].visibleProperty().bind(propertyMarkedSize.greaterThan(0));
         
         contextMenuItems[8] = new MenuItem("Remove selected");
         contextMenuItems[8].setOnAction(eh ->{        
@@ -554,7 +549,7 @@ public class MainController extends BaseController{
         contextMenuItems[9] = new MenuItem("Delete all marked");
         contextMenuItems[9].setOnAction(eh ->{
             SimpleTask task = TaskFactory.getInstance().deleteFiles(
-                    MainController.markedList);
+                    TaskFactory.getInstance().populateStringFileList(markedList));
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
             
@@ -644,6 +639,15 @@ public class MainController extends BaseController{
         });
         contextMenuItems[18].visibleProperty().bind(propertySelectedSize.isEqualTo(1));
         
+        contextMenuItems[19] = new MenuItem("Delete selected");
+        contextMenuItems[19].setOnAction(eh ->{
+            SimpleTask task = TaskFactory.getInstance().deleteFiles(
+                    TaskFactory.getInstance().populateStringFileList(markedView.getSelectionModel().getSelectedItems()));
+            task.setTaskDescription("Delete marked files");
+            ViewManager.getInstance().newProgressDialog(task);
+        });
+        contextMenuItems[19].visibleProperty().bind(contextMenuItems[8].visibleProperty());
+        
         //For search View
         contextMenuItems[20] = new MenuItem("Invert Selection");
         contextMenuItems[20].setOnAction(eh ->{
@@ -700,8 +704,7 @@ public class MainController extends BaseController{
         contextMenuItems[27] = new MenuItem("Add Marked to Virtual Folder");
         contextMenuItems[27].setOnAction(eh ->{
             Platform.runLater(()->{
-                for(String file:MainController.markedList){
-                        ExtPath f = LocationAPI.getInstance().getFileByLocation(new LocationInRoot(file));
+                for(ExtPath f:MainController.markedList){
                         MC.currentDir.files.put(f.propertyName.get(), f);
                     }
                 update();
@@ -763,7 +766,8 @@ public class MainController extends BaseController{
         );
         markedContextMenu.getItems().setAll(
                 contextMenuItems[7],
-                contextMenuItems[8]
+                contextMenuItems[8],
+                contextMenuItems[19]
         
         );
         tableDragContextMenu.getItems().setAll(
@@ -932,24 +936,16 @@ public class MainController extends BaseController{
         IntegerBinding size = Bindings.size(markedView.getItems());
         this.markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
-//        markedView.setOnMousePressed((eh) ->{ 
-//            if((markedView.getSelectionModel().getSelectedItem()!= null)&&(MainController.markedList.size()>0)){
-//                    markedContextMenu.getItems().setAll(
-//                        contextMenuItems[7],
-//                        contextMenuItems[8]
-//                    );
-//            }else{
-//               markedContextMenu.getItems().clear();
-//            }
-//        });
         markedView.setOnDragDetected((MouseEvent event) -> {
+            TaskFactory.dragInitWindowID = "MARKED";
             if(MC.currentDir.isAbsoluteOrVirtualFolders()){
                 return;
             }
+            
             // drag was detected, start drag-and-drop gesture
-            MainController.dragList = markedView.getSelectionModel().getSelectedItems();
+            dragList = markedView.getSelectionModel().getSelectedItems();
             if(!MainController.dragList.isEmpty()){
-                Dragboard db = tableView.startDragAndDrop(TransferMode.ANY);
+                Dragboard db = markedView.startDragAndDrop(TransferMode.ANY);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
                 content.putString("Ready");
@@ -981,7 +977,7 @@ public class MainController extends BaseController{
             boolean success = false;
             if (!MainController.dragList.isEmpty()) {
                 for(ExtPath f:MainController.dragList){
-                    TaskFactory.getInstance().addToMarked(f.getAbsoluteDirectory());
+                    TaskFactory.getInstance().addToMarked(f);
                 }
                 success = true;
             }

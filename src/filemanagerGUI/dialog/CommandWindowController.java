@@ -192,7 +192,9 @@ public class CommandWindowController extends BaseController {
             
                 System.out.println(MainController.markedList);
                 LinkedList<String> l = new LinkedList<>();
-                l.addAll(MainController.markedList);
+                MainController.markedList.forEach(item ->{
+                    l.add(item.getAbsolutePath());
+                });
                 LinkedList<String> allCommands = new LinkedList<>();
                 Lexer lexer = new Lexer(command);
                 lexer.skipWhitespace = false;

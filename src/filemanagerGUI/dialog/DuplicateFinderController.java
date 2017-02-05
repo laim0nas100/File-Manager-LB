@@ -8,6 +8,7 @@ package filemanagerGUI.dialog;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import LibraryLB.ExtTask;
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.File;
@@ -107,7 +108,7 @@ public class DuplicateFinderController extends BaseController{
             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
             for(Object ob:selectedItems){
                 SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(item.f1.getPath()+File.separator);
+                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileUnsecure(item.f1.getPath()));
             }
         });
         MenuItem markPath2 = new MenuItem("Mark Path 2");
@@ -115,7 +116,7 @@ public class DuplicateFinderController extends BaseController{
             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
             for(Object ob:selectedItems){
                 SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(item.f2.getPath()+File.separator);
+                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileUnsecure(item.f2.getPath()));
             }
         });
         menuTree.addMenuItem(markPath1, markPath1.getText());

@@ -5,22 +5,17 @@
  */
 package testPackage;
 
-import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import LibraryLB.Parsing.CustomRegex;
-import utility.ExtStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static utility.ExtStringUtils.mod;
 import static utility.ExtStringUtils.normalize;
 import utility.PathStringCommands;
@@ -30,8 +25,9 @@ import utility.PathStringCommands;
  * @author Laimonas Beniušis
  */
 public class NewEmptyJUnitTest {
-
+    Logger logger;
     public NewEmptyJUnitTest() {
+        this.logger = LoggerFactory.getLogger(NewEmptyJUnitTest.class );
     }
     
     @BeforeClass
@@ -62,6 +58,7 @@ public class NewEmptyJUnitTest {
             System.out.println(line);
         }
     }
+    
     
     @Test
     public void test1(){

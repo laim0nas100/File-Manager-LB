@@ -287,7 +287,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     } 
-    public void newMusicPlayer(Collection<String> list){
+    public void newMusicPlayer(Collection<ExtPath> list){
         SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {

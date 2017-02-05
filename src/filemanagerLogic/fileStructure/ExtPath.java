@@ -266,4 +266,8 @@ public class ExtPath{
     public String relativeTo(String possibleChild){
         return new PathStringCommands(absolutePath).relativeTo(possibleChild);
     }
+    @Override
+    public String toString(){
+        return this.getAbsolutePath();
+    }
 }
