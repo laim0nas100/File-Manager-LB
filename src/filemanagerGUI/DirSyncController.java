@@ -42,7 +42,6 @@ import javafx.util.Callback;
 import LibraryLB.Log;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
-import filemanagerLogic.SimpleTask;
 import javafx.scene.control.MenuItem;
 
 /**

@@ -6,11 +6,8 @@
 package filemanagerLogic.fileStructure;
 
 import filemanagerGUI.FileManagerLB;
-import filemanagerLogic.LocationAPI;
-import filemanagerLogic.LocationInRoot;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,10 +17,7 @@ import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
-import java.nio.file.DirectoryStream;
 import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;

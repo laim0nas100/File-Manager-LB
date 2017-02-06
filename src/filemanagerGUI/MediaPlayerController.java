@@ -17,14 +17,10 @@ import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -680,10 +676,3 @@ public class MediaPlayerController extends BaseController {
     }
     
 }
-
-
-/*
-
-/mnt/Extra-Space/FileZZZ/General Music Folder/The Eden Project/
-
-*/

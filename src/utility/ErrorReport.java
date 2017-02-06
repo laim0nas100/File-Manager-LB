@@ -5,7 +5,6 @@
  */
 package utility;
 
-import filemanagerGUI.FileManagerLB;
 import static filemanagerGUI.FileManagerLB.DEBUG;
 import filemanagerGUI.MainController;
 import java.text.SimpleDateFormat;
@@ -22,8 +21,9 @@ public class ErrorReport {
     
     public static void report(Exception ex) {
         ErrorReport error = new ErrorReport(ex);
-        System.err.println(ex.getMessage());
+        
         if(DEBUG.get()){
+            System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
         MainController.errorLog.add(0, error);

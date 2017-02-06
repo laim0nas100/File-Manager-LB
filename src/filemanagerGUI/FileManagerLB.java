@@ -16,8 +16,6 @@ import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

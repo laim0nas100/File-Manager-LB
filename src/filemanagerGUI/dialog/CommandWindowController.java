@@ -18,7 +18,6 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
-import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.BufferedReader;

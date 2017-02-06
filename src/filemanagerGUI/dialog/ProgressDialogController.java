@@ -8,7 +8,6 @@ package filemanagerGUI.dialog;
 import LibraryLB.ExtTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
-import java.util.ArrayList;
 import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
