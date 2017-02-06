@@ -5,13 +5,13 @@
  */
 package filemanagerGUI.dialog;
 
+import LibraryLB.ExtTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
-import LibraryLB.ExtTask;
 import filemanagerLogic.LocationAPI;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SelectionMode;
@@ -47,6 +48,7 @@ public class DuplicateFinderController extends BaseController{
     @FXML public Text textRootFolder;
     @FXML public ProgressBar progressBar;
     @FXML public CheckBox checkUseHash;
+    @FXML public Label labelProgress;
     private HashMap<String,Double> map = new HashMap<>();
     
     private Double ratio;
@@ -54,12 +56,14 @@ public class DuplicateFinderController extends BaseController{
     private ExtFolder root;
     private ExtTask task;
     public void beforeShow(String title,ExtFolder root) {
+        task = SimpleTask.temp();
         super.beforeShow(title);
         this.root = root;
         
         list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         textRootFolder.setText(root.getAbsoluteDirectory());
-        correlationRatio.textProperty().bind(slider.valueProperty().divide(100).asString());
+        this.labelProgress.textProperty().bind(this.progressBar.progressProperty().multiply(100).asString("%1$.2f").concat("%"));
+        correlationRatio.textProperty().bind(slider.valueProperty().divide(100).asString("%1.3f"));
         TableColumn<SimpleTableItem, String> nameCol1 = new TableColumn<>("Name 1");
         nameCol1.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<SimpleTableItem, String>, ObservableValue<String>>() {
             @Override
@@ -126,9 +130,7 @@ public class DuplicateFinderController extends BaseController{
     public void search(){
         ratio = slider.valueProperty().divide(100).get();
         Platform.runLater(()->{
-           if(task!=null){
-                task.cancel();
-            }
+            cancel();
             list.getItems().clear();
             List synchronizedList = Collections.synchronizedList(list.getItems());
             ArrayList<PathStringCommands> array = new ArrayList<>();
@@ -141,11 +143,8 @@ public class DuplicateFinderController extends BaseController{
                 task = TaskFactory.getInstance().duplicateFinderTask(array, ratio,synchronizedList,null);
 
             }
-            task.setOnSucceeded(eh ->{
-    //            this.progressBar.progressProperty().unbind();
-    //            this.progressBar.setProgress(1);
-            });
             this.progressBar.progressProperty().bind(task.progressProperty());
+            
             Thread t = new Thread(task);
             t.setDaemon(true);
             t.start(); 
@@ -155,6 +154,11 @@ public class DuplicateFinderController extends BaseController{
 
     @Override
     public void update() {
+    }
+    public void cancel(){
+        if(task!=null){
+            task.cancel();
+        }
     }
     public static class SimpleTableItem{
         public PathStringCommands f1;
@@ -170,9 +174,7 @@ public class DuplicateFinderController extends BaseController{
 
     @Override
     public void exit() {
-        if(task!=null){
-            task.cancel();
-        }
+        cancel();
         super.exit(); //To change body of generated methods, choose Tools | Templates.
     }
 

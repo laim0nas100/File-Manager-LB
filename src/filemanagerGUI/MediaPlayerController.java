@@ -6,6 +6,7 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums.Identity;
@@ -15,12 +16,18 @@ import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleFloatProperty;
@@ -37,6 +44,7 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -50,6 +58,7 @@ import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import utility.ErrorReport;
 import static utility.ExtStringUtils.normalize;
 import static utility.ExtStringUtils.mod;
 
@@ -66,6 +75,7 @@ public class MediaPlayerController extends BaseController {
     @FXML public Label labelCurrent;
     @FXML public Label labelTimePassed;
     @FXML public Label labelDuration;
+    @FXML public Label labelStatus;
     @FXML public Slider volumeSlider;
     @FXML public Slider seekSlider;
     @FXML public TableView table;
@@ -73,7 +83,9 @@ public class MediaPlayerController extends BaseController {
     @FXML public ChoiceBox playType;
     @FXML public Button buttonPlayPrev;
     @FXML public Button buttonPlayNext;
-    
+    @FXML public TextField loadState;
+    @FXML public TextField saveState;
+
     
     private EmbeddedMediaPlayerComponent component;
     private EmbeddedMediaPlayer  player;
@@ -94,54 +106,49 @@ public class MediaPlayerController extends BaseController {
     private String typeStopAfterFinish = "Don't loop list";
     private ExtTableView extTableView;
     private ExtPath filePlaying;
+    
 
     private SimpleFloatProperty valueToSet = new SimpleFloatProperty(0f);
-    private Timer timer = new Timer();
-    private TimerTask timerTask = new TimerTask(){
-        @Override
-        public void run() {
-            if(stopping){
-                return;
-            }
-            Platform.runLater(()->{
-                
-                updateSeek();
-            });
-            
-        }
+    ScheduledExecutorService execService = Executors.newScheduledThreadPool(1);
         
-    };
     private SimpleTask endDrag = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 return null;
             }
         };
-    
-    public void beforeShow(Collection<ExtPath> files){
-        if(!VLCfound){
-            new NativeDiscovery().discover();
-            
+    public class VLCNotFoundException extends Exception{
+        VLCNotFoundException(String str){
+            super(str);
+        }
+    }
+    public void discover() throws InterruptedException, VLCNotFoundException{
+        
+        int tries=0;
+        while(!VLCfound){
+
+            VLCfound = new NativeDiscovery().discover();
+            Thread.sleep(500);
+            tries++;
+            if(tries>5){
+                throw new VLCNotFoundException("Could not locate VLC");
+            }
         }
         Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
-        component  = new EmbeddedMediaPlayerComponent();
-        Platform.runLater(()->{
-            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
-            playType.getSelectionModel().select(0);
-        });
-        videoFrame = new JFrame("VIDEO");
-        videoFrame.setSize(800, 480);
-        videoFrame.setContentPane(component);
-        showVideo.selectedProperty().addListener(listener->{
-            
-            videoFrame.setVisible(showVideo.selectedProperty().get());
-            if(showVideo.selectedProperty().get() && !startedWithVideo){
-                relaunch();
-            }
-            
-        });
         
+    }
+    
+    public void beforeShow(Collection<ExtPath> files){
+        
+        
+        videoFrame = new JFrame("VIDEO");
+        videoFrame.toBack();
+        videoFrame.setSize(800, 480);
         videoFrame.setVisible(true);
+        
+        component  = new EmbeddedMediaPlayerComponent();              
+        videoFrame.add(component);
+        videoFrame.setVisible(false);
         videoFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         videoFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -163,7 +170,7 @@ public class MediaPlayerController extends BaseController {
                     if(playTaskComplete)
                         playNext(1,false); 
                 });
-                
+
             }
 
             @Override
@@ -178,7 +185,7 @@ public class MediaPlayerController extends BaseController {
                         }
                         return null;
                     }
-                
+
                 };
                 Platform.runLater(task);
             }
@@ -204,7 +211,7 @@ public class MediaPlayerController extends BaseController {
             this.released = true;
         });
         files.forEach(file->{
-            table.getItems().add(file);
+            addIfAbsent(file);
         });
         setUpTable();
         buttonPlayPrev.setOnAction(event ->{
@@ -214,18 +221,27 @@ public class MediaPlayerController extends BaseController {
             playNext(1,true);
         });
         
-        SimpleTask task = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                timer.scheduleAtFixedRate(timerTask, 0, 500);
+        Platform.runLater(()->{
+            execService.scheduleAtFixedRate(()->{
+                Platform.runLater(()->{
+                    updateSeek();
+                });
+            
+        }, 1000, 300, TimeUnit.MILLISECONDS);
+            update();
+        });
+        Platform.runLater(()->{
+            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
+            playType.getSelectionModel().select(0);
+            showVideo.selectedProperty().addListener(listener->{
+            
                 videoFrame.setVisible(showVideo.selectedProperty().get());
-                Thread.sleep(1000);
+                if(showVideo.selectedProperty().get() && !startedWithVideo){
+                    relaunch();
+                }
 
-                update();
-                return null;
-            }
-        };
-        Platform.runLater(task);
+            });
+        });
         
     }
     public void setUpTable(){
@@ -270,12 +286,13 @@ public class MediaPlayerController extends BaseController {
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                content.putString("Ready");
+//                content.putString("Ready");
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
             }
         });
+        
         table.setOnDragOver((DragEvent event)-> {
             Dragboard db = event.getDragboard();
             if (event.getDragboard().hasString()){
@@ -317,13 +334,15 @@ public class MediaPlayerController extends BaseController {
         });
         MenuItem remove = new MenuItem("Remove");
         remove.setOnAction(event ->{
-            ObservableList<ExtPath> selectedItems = table.getSelectionModel().getSelectedItems();
-            selectedItems.forEach(item->{
+            ArrayList<ExtPath> full = new ArrayList<>(table.getItems());
+            ArrayList<ExtPath> selected = new ArrayList<>(table.getSelectionModel().getSelectedItems());
+            selected.forEach(item->{
                 if(item.equals(filePlaying)){
                     index--;
                 }
-                table.getItems().remove(item);
+                full.remove(item);   
             });
+            extTableView.updateContents(full);
             update();
         });
         remove.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
@@ -356,22 +375,18 @@ public class MediaPlayerController extends BaseController {
                     if(inDrag>0){
                         inDrag--;
                     }
-                    Thread.sleep(50);
+                    Thread.sleep(20);
                 }
                 if(Math.abs(delta-valueToSet.get())>minDelta){
                     float val = (float) normalize(valueToSet.doubleValue(),3);
                     player.setPosition(val);
                     
                 }
-//                Log.write(delta,valueToSet.get(),minDelta);
-                
                 return null;
             }
         };
         endDrag.setOnSucceeded(event->{
             freeze = false;
-//            if(!player.isPlaying())
-//                player.play();
         });
         new Thread(endDrag).start();
     }
@@ -431,8 +446,7 @@ public class MediaPlayerController extends BaseController {
     @Override
     public void exit(){
         stopping = true;
-        timerTask.cancel();
-        timer.cancel();
+        this.execService.shutdownNow();
         player.stop();
         component.release();
         videoFrame.setVisible(false);
@@ -581,6 +595,90 @@ public class MediaPlayerController extends BaseController {
         return table.getItems().indexOf(path);
 
     }
+    
+    public static class PlaylistState{
+        public ArrayList<String> list;
+        public Integer index;
+        public String type;
+        public PlaylistState(){};
+        
+    }
+    public PlaylistState getState(){
+        PlaylistState state = new PlaylistState();
+        state.index = this.getIndex(filePlaying);
+        state.type = (String) this.playType.getSelectionModel().getSelectedItem();
+        state.list = new ArrayList<>();
+        new ArrayList<ExtPath>(this.table.getItems()).forEach(item ->{
+            ExtPath path = (ExtPath) item;
+            state.list.add(path.getAbsolutePath());
+        });
+        return state;
+    }
+    
+    public void loadState(PlaylistState state){
+        this.stop();
+        this.table.getItems().clear();
+        state.list.forEach(item ->{
+            ExtPath file;
+            LocationInRoot locationMapping = LocationAPI.getInstance().getLocationMapping(item);
+            if(!LocationAPI.getInstance().existByLocation(locationMapping.getParentLocation())){
+                Log.write("Dont exist",locationMapping.getParentLocation());
+                file = LocationAPI.getInstance().getFileAndPopulate(item);
+            }else{
+                file = LocationAPI.getInstance().getFileByLocation(locationMapping);
+            }
+            if(item.equals(file.getAbsolutePath())){
+                addIfAbsent(file);
+            }
+        });
+        Platform.runLater(()->{
+            this.playType.getSelectionModel().select(state.type);
+        });
+        this.index = state.index;
+        if(table.getItems().size()>index){
+            this.filePlaying = (ExtPath) table.getItems().get(index);
+        }
+        
+    }
+    public void saveState(){
+        ObjectMapper mapper = new ObjectMapper();
+        String path = FileManagerLB.HOME_DIR + saveState.getText().trim();
+        try{
+            mapper.writeValue(Paths.get(path).toFile(), getState());
+        }catch(Exception e){
+            ErrorReport.report(e);
+        }
+
+    }
+    public void loadState(){
+        labelStatus.setText("Busy");
+        SimpleTask task = new SimpleTask(){
+            @Override
+            protected Void call() throws Exception {
+                ObjectMapper mapper = new ObjectMapper();
+                String path = FileManagerLB.HOME_DIR + loadState.getText().trim();
+                try{
+                    loadState(mapper.readValue(Paths.get(path).toFile(), PlaylistState.class));
+                    update();
+                }catch(Exception e){
+                    ErrorReport.report(e);
+                }
+                return null;
+            };
+            
+        };
+        task.setOnSucceeded(value ->{
+                labelStatus.setText("Ready");
+        });
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+        
+    }
+    public void shuffle(){
+        Collections.shuffle(table.getItems());
+    }
+    
 }
 
 

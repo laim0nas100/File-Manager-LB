@@ -5,6 +5,7 @@
  */
 package filemanagerGUI;
 
+import LibraryLB.ExtTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.LocationInRoot;
@@ -280,7 +281,7 @@ public class MainController extends BaseController{
     }
     public void test() throws IOException{
         Log.write("TEST");
-        FileManagerLB.reInit();
+        ViewManager.getInstance().newProgressDialog(SimpleTask.temp(),true);
     }
 
     
@@ -493,7 +494,7 @@ public class MainController extends BaseController{
         contextMenuItems[3].setOnAction((eh)->{
             Log.writeln("Copy Marked");
             
-            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
             task.setTaskDescription("Copy marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -502,7 +503,7 @@ public class MainController extends BaseController{
         contextMenuItems[4] = new MenuItem("Move Here");
         contextMenuItems[4].setOnAction((eh)->{
             Log.writeln("Move Marked");
-            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
             task.setTaskDescription("Move marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -548,7 +549,7 @@ public class MainController extends BaseController{
         
         contextMenuItems[9] = new MenuItem("Delete all marked");
         contextMenuItems[9].setOnAction(eh ->{
-            SimpleTask task = TaskFactory.getInstance().deleteFiles(
+            ExtTask task = TaskFactory.getInstance().deleteFiles(
                     TaskFactory.getInstance().populateStringFileList(markedList));
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
@@ -562,7 +563,7 @@ public class MainController extends BaseController{
         contextMenuItems[10].setOnAction(eh ->{   
             MainController.actionList.clear();
             MainController.actionList.addAll(MainController.dragList);
-            SimpleTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
             task.setTaskDescription("Move Dragged files");
             boolean paused = false;
             if(TaskFactory.dragInitWindowID.equals(MediaPlayerController.ID)){
@@ -575,7 +576,7 @@ public class MainController extends BaseController{
             //Log.writeln("Copy Dragger");
              MainController.actionList.clear();
             MainController.actionList.addAll(MainController.dragList);
-            SimpleTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
             task.setTaskDescription("Copy Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -641,7 +642,7 @@ public class MainController extends BaseController{
         
         contextMenuItems[19] = new MenuItem("Delete selected");
         contextMenuItems[19].setOnAction(eh ->{
-            SimpleTask task = TaskFactory.getInstance().deleteFiles(
+            ExtTask task = TaskFactory.getInstance().deleteFiles(
                     TaskFactory.getInstance().populateStringFileList(markedView.getSelectionModel().getSelectedItems()));
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
@@ -667,7 +668,7 @@ public class MainController extends BaseController{
             Platform.runLater(()->{
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(searchView.getSelectionModel().getSelectedItems());
-                SimpleTask markFiles = TaskFactory.getInstance().markFiles(list);
+                ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
                 new Thread(markFiles).start();
             });
                        
@@ -1107,7 +1108,7 @@ public class MainController extends BaseController{
             return;
         }
         Log.writeln("Deleting");
-        SimpleTask task = TaskFactory.getInstance().deleteFiles(TaskFactory.getInstance().populateStringFileList(selectedList));
+        ExtTask task = TaskFactory.getInstance().deleteFiles(TaskFactory.getInstance().populateStringFileList(selectedList));
         task.setTaskDescription("Delete selected files");
         ViewManager.getInstance().newProgressDialog(task);
     }

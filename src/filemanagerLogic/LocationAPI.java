@@ -79,7 +79,7 @@ public class LocationAPI {
                 return false;
             }
         }
-        return folder.files.containsKey(location.getName());
+        return folder.hasFileIgnoreCase(location.getName());
     }
     
     public void removeByLocation(LocationInRoot location) {

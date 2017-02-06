@@ -6,6 +6,7 @@
 package filemanagerGUI;
 
 
+import LibraryLB.ExtTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -407,7 +408,7 @@ public class DirSyncController extends BaseController {
         }
         listDelete.sort(cmpAsc.reversed());
         list.sort(cmpAsc);
-        SimpleTask task;
+        ExtTask task;
         
         
         if(checkDeleteFirst.selectedProperty().get()){

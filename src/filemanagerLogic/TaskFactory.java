@@ -214,9 +214,9 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public SimpleTask copyFiles(Collection<String> fileList, ExtPath dest){  
+    public ExtTask copyFiles(Collection<String> fileList, ExtPath dest){  
         return new SimpleTask(){
-            @Override protected Void call() throws Exception {
+            protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
                 ActionFile[] list = prepareForCopy(populateExtPathList(fileList),dest);
@@ -250,7 +250,7 @@ public class TaskFactory {
             }
         };
     }
-    public SimpleTask moveFiles(Collection<String> fileList, ExtPath dest){
+    public ExtTask moveFiles(Collection<String> fileList, ExtPath dest){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
@@ -311,7 +311,7 @@ public class TaskFactory {
             
         };
     }
-    public SimpleTask deleteFiles(Collection<String> fileList){
+    public ExtTask deleteFiles(Collection<String> fileList){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 String str;
@@ -327,7 +327,7 @@ public class TaskFactory {
                     if(this.isCancelled()){
                         return null;
                     }
-                    str = "Deleting: \t"+list[i];
+                    str = "Deleting: \t"+list[i].paths[0];
                     updateMessage(str);
                     updateProgress(i+0.5, list.length);
                     try{
@@ -357,7 +357,7 @@ public class TaskFactory {
             });
         }
     }
-    public SimpleTask populateRecursiveParallel(ExtFolder folder, int depth){
+    public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 populateRecursiveParallelInner(folder,depth);
@@ -377,7 +377,7 @@ public class TaskFactory {
         return path+newName;
     }
     
-    public SimpleTask markFiles(List<String> list){
+    public ExtTask markFiles(List<String> list){
         return new SimpleTask(){
             @Override
             protected Void call(){
@@ -397,12 +397,12 @@ public class TaskFactory {
   
         };
     }
-    public SimpleTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
+    public ExtTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
         return new SimpleTask(){
             @Override
             protected Void call() throws Exception {
 
-                    SimpleTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
                     Thread thread = new Thread(populateRecursiveParallel);
                     thread.setDaemon(true);
                     thread.start();
@@ -431,7 +431,7 @@ public class TaskFactory {
   
         };
     }
-    public SimpleTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
+    public ExtTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
         return new SimpleTask(){
             @Override
             protected Void call() throws Exception {
@@ -442,7 +442,7 @@ public class TaskFactory {
                         frame.snapshotView.getItems().clear();
                         frame.snapshotView.getItems().add("Snapshot Loading");
                     });
-                    SimpleTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
+                    ExtTask populateRecursiveParallel = TaskFactory.getInstance().populateRecursiveParallel(folder, 50);
                     Thread thread = new Thread(populateRecursiveParallel);
                     thread.setDaemon(true);
                     thread.start();
@@ -477,7 +477,7 @@ public class TaskFactory {
         };
     }  
     
-    public SimpleTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
+    public ExtTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
          return new SimpleTask(){
             @Override
             protected Void call() throws InterruptedException{

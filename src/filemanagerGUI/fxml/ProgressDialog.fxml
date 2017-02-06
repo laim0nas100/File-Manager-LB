@@ -4,79 +4,84 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="base" alignment="CENTER" maxHeight="250.0" maxWidth="1.7976931348623157E308" minHeight="190.0" minWidth="400.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.ProgressDialogController">
+<VBox prefHeight="144.0" prefWidth="578.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.ProgressDialogController">
    <children>
-      <Label fx:id="taskDescription" text="Label" />
-      <HBox alignment="CENTER_LEFT" prefHeight="79.0" prefWidth="451.0" VBox.vgrow="ALWAYS">
+      <HBox alignment="CENTER">
          <children>
-            <Label fx:id="text" alignment="CENTER" text="Computing task" HBox.hgrow="ALWAYS">
+            <VBox fx:id="base" alignment="CENTER">
+               <children>
+                  <Label fx:id="taskDescription" text="Label" />
+                  <HBox alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="text" alignment="CENTER" text="Computing task" HBox.hgrow="ALWAYS">
+                           <opaqueInsets>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </opaqueInsets>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+                           <HBox.margin>
+                              <Insets left="10.0" />
+                           </HBox.margin>
+                        </Label>
+                     </children>
+                     <opaqueInsets>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                     </opaqueInsets>
+                  </HBox>
+                  <StackPane>
+                     <children>
+                        <ProgressBar fx:id="progressBar" prefHeight="38.0" prefWidth="449.0" progress="0.0" StackPane.alignment="CENTER">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </ProgressBar>
+                        <Label fx:id="labelProgress" text=" " StackPane.alignment="CENTER" />
+                     </children>
+                  </StackPane>
+                  <HBox alignment="CENTER">
+                     <children>
+                        <Label fx:id="timeWasted" text="time" />
+                        <Button fx:id="okButton" mnemonicParsing="false" onAction="#exit" text="OK">
+                           <padding>
+                              <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
+                           </padding>
+                           <HBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </HBox.margin>
+                        </Button>
+                        <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseTask" text="PAUSE">
+                           <HBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </HBox.margin>
+                           <padding>
+                              <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
+                           </padding>
+                        </Button>
+                        <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#cancelTask" text="Cancel">
+                           <padding>
+                              <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
+                           </padding>
+                           <HBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </HBox.margin>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#showFullText" text="Show text" />
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+               </children>
                <opaqueInsets>
-                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </opaqueInsets>
-               <padding>
-                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-               </padding>
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin>
-            </Label>
+            </VBox>
          </children>
-         <opaqueInsets>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-         </opaqueInsets>
-      </HBox>
-      <HBox alignment="CENTER">
-         <children>
-            <ProgressBar fx:id="bar" prefHeight="38.0" prefWidth="303.0" progress="0.0">
-               <padding>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </padding>
-            </ProgressBar>
-            <ProgressIndicator fx:id="indicator" prefHeight="105.0" prefWidth="71.0" progress="0.0">
-               <padding>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </padding>
-            </ProgressIndicator>
-         </children>
-      </HBox>
-      <HBox alignment="CENTER">
-         <children>
-            <Button fx:id="okButton" mnemonicParsing="false" onAction="#exit" text="OK">
-               <padding>
-                  <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
-               </padding>
-               <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </HBox.margin>
-            </Button>
-            <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseTask" text="PAUSE">
-               <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </HBox.margin>
-               <padding>
-                  <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
-               </padding>
-            </Button>
-            <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#cancelTask" text="Cancel">
-               <padding>
-                  <Insets bottom="5.0" left="25.0" right="25.0" top="5.0" />
-               </padding>
-               <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </HBox.margin>
-            </Button>
-            <Label fx:id="timeWasted" text="Label" />
-         </children>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
       </HBox>
    </children>
-   <opaqueInsets>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-   </opaqueInsets>
 </VBox>

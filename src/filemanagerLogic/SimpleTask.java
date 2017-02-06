@@ -21,5 +21,14 @@ public abstract class SimpleTask extends ExtTask{
     public void report(Exception e) {
         ErrorReport.report(e);
     }
+    public SimpleTask(){};
+    public static SimpleTask temp(){
+        return new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+                return null;
+            };
+        };
+    }
     
 }

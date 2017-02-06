@@ -6,6 +6,7 @@
 package filemanagerGUI;
 
 
+import LibraryLB.ExtTask;
 import LibraryLB.Log;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
@@ -106,7 +107,7 @@ public class ViewManager {
     }
     
 //DIALOG ACTIONS
-    public void newProgressDialog(SimpleTask task,Object...params){
+    public void newProgressDialog(ExtTask task,Object...params){
         
         SimpleTask et = new SimpleTask() {
             @Override
@@ -288,12 +289,17 @@ public class ViewManager {
         Platform.runLater(et);
     } 
     public void newMusicPlayer(Collection<ExtPath> list){
+        
         SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
             try {
-                Frame frame = newFrame(FrameTitle.MUSIC_PLAYER);
+                
+                
+                Frame frame = newFrame(FrameTitle.MEDIA_PLAYER);
                 MediaPlayerController controller = (MediaPlayerController) frame.getController();
+                
+                controller.discover();
                 controller.beforeShow(list);
                 frame.getStage().show();
                 frame.getStage().toFront();
@@ -301,7 +307,7 @@ public class ViewManager {
                 
             } catch (Exception ex) {
                 ErrorReport.report(ex);
-            }    
+            }
             return null;
             }
         };
