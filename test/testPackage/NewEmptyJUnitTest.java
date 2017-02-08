@@ -5,9 +5,12 @@
  */
 package testPackage;
 
+import filemanagerLogic.LocationInRootNode;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -61,14 +64,17 @@ public class NewEmptyJUnitTest {
     
     
     @Test
-    public void test1(){
-        print(mod(5,5));
-        print(mod(0.055,0.05));
-        print(normalize(123.55555,2));
-        PathStringCommands path = new PathStringCommands("C:\\");
-        print(path.getName(true));
+    public void test1() throws FileNotFoundException, IOException{
+//        print(mod(5,5));
+//        print(mod(0.055,0.05));
+//        print(normalize(123.55555,2));
+//        PathStringCommands path = new PathStringCommands("C:\\");
+//        print(path.getName(true));
 //        print("123".substring(0, 10));
-        
+        Collection<String> createFromFile = LocationInRootNode.createFromFile(LibraryLB.FileManaging.FileReader.readFromFile("file"));
+        createFromFile.forEach(f->{
+            print(f);
+        });
     }
  
     public static void print(Object...o){

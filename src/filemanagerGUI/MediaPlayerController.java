@@ -16,8 +16,10 @@ import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -88,12 +90,8 @@ public class MediaPlayerController extends BaseController {
     @FXML public TextField saveState;
 
     
-//    private EmbeddedMediaPlayerComponent component;
     private MediaPlayerFactory factory;
-    private MediaPlayer  player;
     private MediaPlayer oldplayer;
-    private JFrame videoFrame;
-    private JFrame oldVideoFrame;
     private boolean startedWithVideo = false;
     private int index = 0;
     private Float minDelta = 0.005f;
@@ -110,11 +108,18 @@ public class MediaPlayerController extends BaseController {
     private String typeStopAfterFinish = "Don't loop list";
     private ExtTableView extTableView;
     private ExtPath filePlaying;
-    private boolean canPlayNext = true;
+    private ArrayDeque<JFrame> frames = new ArrayDeque<>();
+    private ArrayDeque<MediaPlayer> players = new ArrayDeque<>();
 
     private SimpleFloatProperty valueToSet = new SimpleFloatProperty(0f);
     ScheduledExecutorService execService = Executors.newScheduledThreadPool(1);
-        
+       
+    private MediaPlayer getCurrentPlayer(){
+        return this.players.getLast();
+    }
+    private JFrame getCurrentFrame(){
+        return this.frames.getLast();
+    }
     private SimpleTask endDrag = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -144,24 +149,34 @@ public class MediaPlayerController extends BaseController {
     
     public MediaPlayer getPreparedMediaPlayer(){
         EmbeddedMediaPlayer newPlayer = factory.newEmbeddedMediaPlayer();
+//        Log.write("Inside: newPlayer");
         Canvas canvas = new Canvas();
         CanvasVideoSurface newVideoSurface = factory.newVideoSurface(canvas);
         newPlayer.setVideoSurface(newVideoSurface);
-        if(videoFrame!=null)
-            videoFrame.setVisible(false);
-        videoFrame = new JFrame("VIDEO");
-        videoFrame.toBack();
-        videoFrame.setSize(800, 480);
-        videoFrame.setVisible(true);
-        videoFrame.add(canvas);
-        videoFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        videoFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+//        Log.write("Inside: done with surface");
+//        
+//        if(getCurrentFrame()!=null)
+//            videoFrame.setVisible(false);
+//        Log.write("New JFrame");
+//        videoFrame = new JFrame("VIDEO");
+        JFrame jframe = new JFrame();
+        jframe.setBackground(Color.black);
+        frames.add(jframe);
+//        Log.write("New JFrame done");
+        getCurrentFrame().toBack();
+        getCurrentFrame().setSize(800, 480);
+        getCurrentFrame().setVisible(true);
+//        Log.write("Set visible");
+        getCurrentFrame().add(canvas);
+        getCurrentFrame().setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getCurrentFrame().addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 showVideo.setSelected(false);
             }
         });
-        videoFrame.setVisible(showVideo.selectedProperty().get());
+//        Log.write("Inside: done with frame");
+        getCurrentFrame().setVisible(showVideo.selectedProperty().get());
         newPlayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
@@ -202,20 +217,24 @@ public class MediaPlayerController extends BaseController {
         return newPlayer;
     };
     public void beforeShow(Collection<ExtPath> files){
-         
+        JFrame tempFrame = new JFrame();
+        frames.add(tempFrame); 
+        getCurrentFrame().setVisible(false);
         factory = new MediaPlayerFactory();
-        player = getPreparedMediaPlayer();
-        oldplayer = factory.newEmbeddedMediaPlayer();
+//        Log.write("Factory");
+        players.add(getPreparedMediaPlayer());
+        frames.pollFirst().setVisible(false);
+//        Log.write("Player INIT");
         volumeSlider.valueProperty().addListener(listener->{
             
-            player.setVolume((int) Math.round(volumeSlider.getValue()*2));
+            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()*2));
         });
         this.volumeSlider.setValue(50);
         
         valueToSet.bind(seekSlider.valueProperty().divide(100f));
         seekSlider.setOnMousePressed(event->{
             this.inDrag = 10;
-            this.delta = player.getPosition();
+            this.delta = getCurrentPlayer().getPosition();
             this.released = false;
             startThread();
         });
@@ -226,10 +245,12 @@ public class MediaPlayerController extends BaseController {
         seekSlider.setOnMouseReleased(event->{
             this.released = true;
         });
+        setUpTable();
+        
         files.forEach(file->{
             addIfAbsent(file);
         });
-        setUpTable();
+        
         buttonPlayPrev.setOnAction(event ->{
             playNext(-1,true);
         });
@@ -240,18 +261,26 @@ public class MediaPlayerController extends BaseController {
         Platform.runLater(()->{
             execService.scheduleAtFixedRate(()->{
                 Platform.runLater(()->{
-                    updateSeek();
+                    if(!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                        updateSeek();
+                }
                 });
-            
-        }, 1000, 300, TimeUnit.MILLISECONDS);
-            update();
+                }, 1000, 300, TimeUnit.MILLISECONDS);
         });
+            execService.scheduleAtFixedRate(()->{
+                if(!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                    volumeSlider.setValue(getCurrentPlayer().getVolume()/2);
+                }
+            update();
+            }, 1, 3, TimeUnit.SECONDS);
+            
+        
         Platform.runLater(()->{
             playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
             playType.getSelectionModel().select(0);
             showVideo.selectedProperty().addListener(listener->{
             
-                videoFrame.setVisible(showVideo.selectedProperty().get());
+                getCurrentFrame().setVisible(showVideo.selectedProperty().get());
                 if(showVideo.selectedProperty().get() && !startedWithVideo){
                     relaunch();
                 }
@@ -396,7 +425,7 @@ public class MediaPlayerController extends BaseController {
                 }
                 if(Math.abs(delta-valueToSet.get())>minDelta){
                     float val = (float) normalize(valueToSet.doubleValue(),3);
-                    player.setPosition(val);
+                    getCurrentPlayer().setPosition(val);
                     
                 }
                 return null;
@@ -412,10 +441,10 @@ public class MediaPlayerController extends BaseController {
         if(stopping){
             return;
         }
-        if(!player.isSeekable()){
+        if(!getCurrentPlayer().isSeekable()){
             position = 0f;
         }else{
-            position = player.getPosition();
+            position = getCurrentPlayer().getPosition();
         }
         
         long millisPassed = (long)(this.currentLength*position);
@@ -423,10 +452,11 @@ public class MediaPlayerController extends BaseController {
         if(!freeze){
             this.seekSlider.valueProperty().set(position*100);
         }
-        currentLength = player.getLength();
+        
+        currentLength = getCurrentPlayer().getLength();
         labelDuration.setText("/ "+formatToMinutesAndSeconds(currentLength));
         double secondsLeft = (this.currentLength - millisPassed) /1000;
-        if((secondsLeft>2)&&(secondsLeft <10) && seamless.selectedProperty().get()&&canPlayNext){
+        if((secondsLeft>2)&&(secondsLeft <10) && seamless.selectedProperty().get()){
             playNext(1,false,true,this.currentLength - millisPassed);
             
         }
@@ -435,22 +465,22 @@ public class MediaPlayerController extends BaseController {
     }
     
     public void playOrPause(){
-        if(player.isPlayable()){
-            player.pause();
+        if(getCurrentPlayer().isPlayable()){
+            getCurrentPlayer().pause();
         }else{
             playNext(0,true);
         }
     }
     public void stop(){
-        if(player.isPlaying()){
-            player.pause();
-            player.setPosition(0);
+        if(getCurrentPlayer().isPlaying()){
+            getCurrentPlayer().stop();
+//            getCurrentPlayer().setPosition(0);
             
         }
     }
     public void relaunch(){
         Log.write("Relaunch");
-        relaunch(player.getPosition());
+        relaunch(getCurrentPlayer().getPosition());
     }
     private void relaunch(float position){
         stop();
@@ -462,7 +492,7 @@ public class MediaPlayerController extends BaseController {
                 do{
                     Thread.sleep(10);
                 }while(!playTaskComplete);
-                player.setPosition(position);
+                getCurrentPlayer().setPosition(position);
                 Log.write("Play task over");
                 return null;
             }
@@ -474,20 +504,19 @@ public class MediaPlayerController extends BaseController {
     public void exit(){
         stopping = true;
         this.execService.shutdownNow();
-        player.stop();
-        if(oldplayer!=null){
-            oldplayer.stop();
-        }
-            
-//        factory.release();
-//        component.release(true);
-        videoFrame.setVisible(false);
+        players.forEach(player ->{
+            player.stop();
+            player.release();
+        });
+        frames.forEach(frame->{
+            frame.setVisible(false);
+        });
         super.exit();
     }
     public void playNext(int increment,Object... opt){
-        if(!canPlayNext){
-            return;
-        }
+//        if(!canPlayNext){
+//            return;
+//        }
         Platform.runLater(()->{
             if(table.getItems().isEmpty()){
                 playTaskComplete = true;
@@ -511,7 +540,7 @@ public class MediaPlayerController extends BaseController {
                     }
                 }else if(playType.getSelectionModel().getSelectedItem().equals(typeStopAfterFinish)){
                     if(index + increment == table.getItems().size()){
-                        player.stop();
+                        getCurrentPlayer().stop();
                         filePlaying = null;
                         update();
                         playTaskComplete = true;
@@ -567,8 +596,9 @@ public class MediaPlayerController extends BaseController {
             playTaskComplete = true;
             return;
         }
-        if(player.isPlaying()){
-            player.stop();
+        if(getCurrentPlayer().isPlaying()){
+            getCurrentPlayer().stop();
+            getCurrentPlayer().setVolume(getCurrentPlayer().getVolume());
             
         }
         filePlaying = item;
@@ -576,22 +606,22 @@ public class MediaPlayerController extends BaseController {
         SimpleTask playTask = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                    if(player.isPlaying()){
-                       player.stop();
+                    if(getCurrentPlayer().isPlaying()){
+                       getCurrentPlayer().stop();
                     }
                     
                     do{
                         
                         Thread.sleep(10);
-                    }while(player.isPlaying());
-                    videoFrame.setTitle(filePlaying.getName(true));
-                    startedWithVideo = videoFrame.isVisible();
-                    boolean playable = player.prepareMedia(filePlaying.getAbsolutePath(),getOptions());
+                    }while(getCurrentPlayer().isPlaying());
+                    getCurrentFrame().setTitle(filePlaying.getName(true));
+                    startedWithVideo = getCurrentFrame().isVisible();
+                    boolean playable = getCurrentPlayer().prepareMedia(filePlaying.getAbsolutePath(),getOptions());
                     if(!playable){
                         table.getItems().remove(filePlaying);
                         
                     }else{
-                        player.start();
+                        getCurrentPlayer().start();
                     }
                 Platform.runLater(()->{
                         labelCurrent.setText(filePlaying.getAbsolutePath());
@@ -608,27 +638,32 @@ public class MediaPlayerController extends BaseController {
     }
 
     private void playSeemless(ExtPath item,final long millisLeft){
-        if(oldplayer!=null&&oldplayer.isPlaying()){
-            oldplayer.stop();
-        }
-        oldplayer = player;
+        oldplayer = getCurrentPlayer();
         oldplayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
                         @Override
                         public void finished(MediaPlayer mediaPlayer) {
                             Log.write("Finished old player");
-                            oldVideoFrame.setVisible(false);
+                            int i = 1;
+                            while(frames.size()>1){
+                                frames.pollFirst().setVisible(false);
+                                players.pollFirst();
+                                Log.write("Frame/Player collected" + i++);
+                            }
+                            
                         }
                         @Override
                         public void stopped(MediaPlayer mediaPlayer) {
                             Log.write("Finished old player");
-                            oldVideoFrame.setVisible(false);
+                            int i = 1;
+                            while(frames.size()>1){
+                                frames.pollFirst().setVisible(false);
+                                players.pollFirst();
+                                Log.write("Frame/Player collected" + i++);
+                            }
                         }
                     });
-        oldVideoFrame = videoFrame;
-//        videoFrame = new JFrame();
-        
-        canPlayNext = false;
-        player = getPreparedMediaPlayer();
+
+        players.add(getPreparedMediaPlayer());
         SimpleTask volumeChangeTask = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -641,19 +676,19 @@ public class MediaPlayerController extends BaseController {
                     inc = 1 * ratio;
                 }
                 long millis = millisLeft;
-                player.setVolume(0);
+                getCurrentPlayer().setVolume(0);
                 
                 while(oldVolume-difference>1 && millis>2000){
                     oldplayer.setVolume((int) (oldVolume-difference));
-                    player.setVolume((int)difference);
+                    getCurrentPlayer().setVolume((int)difference);
                     difference+=inc;
                     Thread.sleep(100);
                     millis-=100;
-                    Log.write("End volume task");
+                    
                 }
-                player.setVolume((int)oldVolume);
+                Log.write("End volume resize task");
+                getCurrentPlayer().setVolume((int)oldVolume);
                 oldplayer.stop();
-                canPlayNext = true;
                 return null;
             }
         };

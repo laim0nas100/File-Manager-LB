@@ -12,6 +12,7 @@ import LibraryLB.Containers.ParametersMap;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javafx.application.Application;
@@ -55,11 +57,11 @@ public class FileManagerLB extends Application {
     public void start(Stage primaryStage) {
         reInit();
         
-        Platform.runLater(()->{
+//        Platform.runLater(()->{
             if(DEBUG.not().get()){
                 ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
             }
-        });
+//        });
         
         
     } 

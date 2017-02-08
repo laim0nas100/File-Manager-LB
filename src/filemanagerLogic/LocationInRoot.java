@@ -20,11 +20,13 @@ import utility.ExtStringUtils;
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
-
+    
     public LinkedList<String> coordinates =  new LinkedList<>();
     
-    
-    public LocationInRoot(String filePath){
+    private LocationInRoot(){
+        
+    }
+    private LinkedList<String> resolveFromString(LinkedList<String> co,String filePath,boolean doUpperCase){
         String rootLoc = "";
         if(!filePath.isEmpty()){
             for(String s:FileManagerLB.getRootSet()){
@@ -35,9 +37,11 @@ public class LocationInRoot {
                 
             }
             rootLoc = rootLoc.toUpperCase();
-            coordinates.add(rootLoc);
+            co.add(rootLoc);
             if(!filePath.equalsIgnoreCase(rootLoc)){
-                filePath = ExtStringUtils.upperCase(filePath);
+                if(doUpperCase){
+                    filePath = ExtStringUtils.upperCase(filePath);
+                }
                 filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
                 String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
@@ -51,10 +55,17 @@ public class LocationInRoot {
                         iterator.remove();
                     }
                 }
-                coordinates.addAll(list);
+                co.addAll(list);
             }
             //Log.writeln(coordinates);
         }
+        return co;
+    }
+    public LocationInRoot(String path){
+        this.coordinates = resolveFromString(this.coordinates,path,true);
+    }
+    public LocationInRoot(String path,boolean doUppercase){
+        this.coordinates = resolveFromString(this.coordinates,path,doUppercase);
     }
     public LocationInRoot(LocationInRoot loc){
         this.coordinates.addAll(loc.coordinates);
