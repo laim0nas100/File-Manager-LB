@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -772,8 +773,8 @@ public class MediaPlayerController extends BaseController {
         
     }
     public void shuffle(){
-        playNext(1,false,true);
-//        Collections.shuffle(table.getItems());
+//        playNext(1,false,true);
+        Collections.shuffle(table.getItems());
         
     }
     
