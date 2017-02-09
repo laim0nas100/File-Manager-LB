@@ -159,29 +159,27 @@ public class MediaPlayerController extends BaseController {
         CanvasVideoSurface newVideoSurface = factory.newVideoSurface(canvas);
         newPlayer.setVideoSurface(newVideoSurface);
 //        Log.write("Inside: done with surface");
-//        
-//        if(getCurrentFrame()!=null)
-//            videoFrame.setVisible(false);
-//        Log.write("New JFrame");
-//        videoFrame = new JFrame("VIDEO");
         JFrame jframe = new JFrame();
         jframe.setBackground(Color.black);
-        frames.add(jframe);
+        
 //        Log.write("New JFrame done");
-        getCurrentFrame().toBack();
-        getCurrentFrame().setSize(800, 480);
-        getCurrentFrame().setVisible(true);
+        jframe.setVisible(true);
+        jframe.toBack();
+        jframe.setSize(getCurrentFrame().getSize());
+        jframe.setLocation(getCurrentFrame().getLocation());
+        
 //        Log.write("Set visible");
-        getCurrentFrame().add(canvas);
-        getCurrentFrame().setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        getCurrentFrame().addWindowListener(new java.awt.event.WindowAdapter() {
+        jframe.add(canvas);
+        jframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        jframe.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 showVideo.setSelected(false);
             }
         });
 //        Log.write("Inside: done with frame");
-        getCurrentFrame().setVisible(showVideo.selectedProperty().get());
+        jframe.setVisible(showVideo.selectedProperty().get());
+        frames.add(jframe);
         newPlayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
@@ -223,6 +221,7 @@ public class MediaPlayerController extends BaseController {
     };
     public void beforeShow(Collection<ExtPath> files){
         JFrame tempFrame = new JFrame();
+        tempFrame.setSize(800, 480);
         frames.add(tempFrame); 
         getCurrentFrame().setVisible(false);
         factory = new MediaPlayerFactory();
