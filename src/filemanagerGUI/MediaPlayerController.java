@@ -12,6 +12,7 @@ import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
+import filemanagerLogic.LocationInRootNode;
 import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +64,9 @@ import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 import utility.ErrorReport;
 import static utility.ExtStringUtils.normalize;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
+import static utility.ExtStringUtils.mod;
 import static utility.ExtStringUtils.mod;
 
 /**
@@ -261,14 +266,15 @@ public class MediaPlayerController extends BaseController {
         Platform.runLater(()->{
             execService.scheduleAtFixedRate(()->{
                 Platform.runLater(()->{
-                    if(!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                    
+                    if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
                         updateSeek();
                 }
                 });
                 }, 1000, 300, TimeUnit.MILLISECONDS);
         });
             execService.scheduleAtFixedRate(()->{
-                if(!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
                     volumeSlider.setValue(getCurrentPlayer().getVolume()/2);
                 }
             update();
@@ -323,15 +329,17 @@ public class MediaPlayerController extends BaseController {
         });
         table.setOnDragDetected((MouseEvent event) ->{
             if(this.extTableView.recentlyResized.get()){
+                Log.write("recently resized");
                 return;
             }
             MainController.dragList = table.getSelectionModel().getSelectedItems();
-            TaskFactory.dragInitWindowID = ID;
+            TaskFactory.dragInitWindowID = this.windowID;
+            Log.write(TaskFactory.dragInitWindowID,MainController.dragList);
             if(!MainController.dragList.isEmpty()){
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
-                ClipboardContent content = new ClipboardContent();
+               ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-//                content.putString("Ready");
+                    content.putString("Ready");
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -339,13 +347,22 @@ public class MediaPlayerController extends BaseController {
         });
         
         table.setOnDragOver((DragEvent event)-> {
+            if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                return;
+            }
+            // data is dragged over the target
             Dragboard db = event.getDragboard();
             if (event.getDragboard().hasString()){
-                event.acceptTransferModes(TransferMode.COPY);
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                
+                //Log.writeln(event.getDragboard().getString());
             }
             event.consume();
         });
         table.setOnDragDropped((DragEvent event)-> {
+            if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                return;
+            }
             Dragboard db = event.getDragboard();
             boolean success = false;
             if (!MainController.dragList.isEmpty()) {
@@ -729,32 +746,33 @@ public class MediaPlayerController extends BaseController {
     }
     
     public static class PlaylistState{
-        public ArrayList<String> list;
+        public LocationInRootNode root;
         public Integer index;
         public String type;
         public PlaylistState(){};
         
     }
-    public PlaylistState getState(){
+    public PlaylistState getPlaylistState(){
         PlaylistState state = new PlaylistState();
+        state.root = new LocationInRootNode("",-1);
         state.index = this.getIndex(filePlaying);
         state.type = (String) this.playType.getSelectionModel().getSelectedItem();
-        state.list = new ArrayList<>();
-        new ArrayList<ExtPath>(this.table.getItems()).forEach(item ->{
+        int i =0;
+        for(Object item:table.getItems()){
             ExtPath path = (ExtPath) item;
-            state.list.add(path.getAbsolutePath());
-        });
+            state.root.add(new LocationInRoot(path.getAbsolutePath(),false),i++);
+        }
         return state;
     }
     
-    public void loadState(PlaylistState state){
+    public void loadPlaylistState(PlaylistState state){
         this.stop();
         this.table.getItems().clear();
-        state.list.forEach(item ->{
+        state.root.resolve(false).forEach(item ->{
             ExtPath file;
             LocationInRoot locationMapping = LocationAPI.getInstance().getLocationMapping(item);
-            if(!LocationAPI.getInstance().existByLocation(locationMapping.getParentLocation())){
-                Log.write("Dont exist",locationMapping.getParentLocation());
+            if(!LocationAPI.getInstance().existByLocation(locationMapping)){
+                Log.write("Populate",locationMapping);
                 file = LocationAPI.getInstance().getFileAndPopulate(item);
             }else{
                 file = LocationAPI.getInstance().getFileByLocation(locationMapping);
@@ -773,13 +791,33 @@ public class MediaPlayerController extends BaseController {
         
     }
     public void saveState(){
-        ObjectMapper mapper = new ObjectMapper();
+        labelStatus.setText("Busy");
+        
         String path = FileManagerLB.HOME_DIR + saveState.getText().trim();
-        try{
-            mapper.writeValue(Paths.get(path).toFile(), getState());
-        }catch(Exception e){
-            ErrorReport.report(e);
-        }
+        SimpleTask task = new SimpleTask(){
+            @Override
+            protected Void call() throws Exception {
+                try{
+                ArrayList<String> list = new ArrayList<>();
+                PlaylistState state = getPlaylistState();
+                list.add(state.index+"");
+                list.add(state.type);
+                list.add(state.root.specialString());
+                LibraryLB.FileManaging.FileReader.writeToFile(path, list);
+                }catch(Exception e){
+                    report(e);
+                }
+                return null;
+            }
+            
+        };
+        task.setOnSucceeded(value ->{
+                labelStatus.setText("Ready");
+        });
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+        
 
     }
     public void loadState(){
@@ -787,10 +825,14 @@ public class MediaPlayerController extends BaseController {
         SimpleTask task = new SimpleTask(){
             @Override
             protected Void call() throws Exception {
-                ObjectMapper mapper = new ObjectMapper();
+                PlaylistState state = new PlaylistState();
                 String path = FileManagerLB.HOME_DIR + loadState.getText().trim();
                 try{
-                    loadState(mapper.readValue(Paths.get(path).toFile(), PlaylistState.class));
+                    LinkedList<String> readFromFile = (LinkedList<String>) LibraryLB.FileManaging.FileReader.readFromFile(path);
+                    state.index = Integer.parseInt(readFromFile.pollFirst());
+                    state.type = readFromFile.pollFirst();
+                    state.root = LocationInRootNode.nodeFromFile(readFromFile);
+                    loadPlaylistState(state);
                     update();
                 }catch(Exception e){
                     ErrorReport.report(e);

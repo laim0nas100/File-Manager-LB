@@ -282,13 +282,14 @@ public class MainController extends BaseController{
     }
     public void test() throws IOException{
         Log.write("TEST");
-        LocationInRootNode root = new LocationInRootNode("");
-        MainController.markedList.forEach(item ->{
-            root.add(new LocationInRoot(item.getAbsolutePath(),false));
-        });
+        LocationInRootNode root = new LocationInRootNode("",-1);
+        int i = 0;
+        for(ExtPath item:MainController.markedList){
+            root.add(new LocationInRoot(item.getAbsolutePath(),false),i++);
+        }
         Log.write(root.specialString());
         Log.write("RESOLVED");
-        for(String p:root.resolve("",false)){
+        for(String p:root.resolve(false)){
             Log.write(p);
         }
         Log.write("END TEST");

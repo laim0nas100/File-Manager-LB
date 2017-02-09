@@ -9,6 +9,7 @@ import LibraryLB.Log;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -19,12 +20,16 @@ import java.util.HashMap;
 public class LocationInRootNode {
     public HashMap<String,LocationInRootNode> leafs;
     public String self;
-    
-    public LocationInRootNode(String self){
+    public int index;
+    public final static String folderStart = "\\";
+    public final static String folderEnd="/";
+    public final static Character indexEnd = ':';
+    public LocationInRootNode(String self,int i){
         this.self = self;
+        this.index = i;
         this.leafs = new HashMap<>();
     }
-    public void add(LocationInRoot loc){
+    public void add(LocationInRoot loc,int index){
         LocationInRootNode currentNode = this;
         while(!loc.coordinates.isEmpty()){
 //            Log.write(loc.coordinates);
@@ -33,8 +38,11 @@ public class LocationInRootNode {
 //                Log.write("Contains");
                 currentNode = currentNode.leafs.get(key);
             }else{
-//                Log.write("Create new");
-                LocationInRootNode newNode = new LocationInRootNode(key);
+                
+                LocationInRootNode newNode = new LocationInRootNode(key,-1);
+                if(loc.coordinates.isEmpty()){
+                    newNode.index = index;
+                }
                 currentNode.leafs.put(key, newNode);
                 currentNode = newNode;
             }
@@ -44,17 +52,21 @@ public class LocationInRootNode {
     @Override
     public String toString(){
         String res = "";
-        if(!leafs.values().isEmpty()){
-            res+="\\";
+        boolean isFolder = !leafs.values().isEmpty();
+        if(isFolder){
+            res+=folderStart;
+        }
+        if(!isFolder){
+            res+=index +""+ indexEnd;
         }
         res+=""+self+"";
-        if(!leafs.values().isEmpty()){
+        if(isFolder){
             res+="\n";
         }
         for(LocationInRootNode node:leafs.values()){
             res += node.toString();
-        }if(!leafs.values().isEmpty()){
-            res+="/\\";
+        }if(isFolder){
+            res+=folderEnd;
         }
         res+="\n";
         
@@ -67,47 +79,74 @@ public class LocationInRootNode {
         }
         return res;
     }
-    public ArrayList<String> resolve(String parentPath,boolean includeFolders){
-        ArrayList<String> list = new ArrayList<>();
+    private class StringWithIndex{
+        public String str;
+        public Integer index;
+        public StringWithIndex(String str,int index){
+            this.str = str;
+            this.index = index;
+        }
+        @Override
+        public String toString(){
+            return index + indexEnd + str;
+        }
+    }
+    public ArrayList<String> resolve(boolean includeFolders){
+        ArrayList<StringWithIndex> resolvePrivate = resolvePrivate("",includeFolders);
+        String[] array = new String[resolvePrivate.size()];
+        for(StringWithIndex p:resolvePrivate){
+            array[p.index] = p.str;
+        }
+        return new ArrayList<>(Arrays.asList(array));
+    }
+    private ArrayList<StringWithIndex> resolvePrivate(String parentPath,boolean includeFolders){
+        ArrayList<StringWithIndex> list = new ArrayList<>();
         String path = parentPath+this.self;
         if(this.leafs.isEmpty()){
-            list.add(path);
+            list.add(new StringWithIndex(path,this.index));
         }else if(includeFolders){
-            list.add(path);
+            list.add(new StringWithIndex(path,this.index));
         }
         if(!path.endsWith(File.separator)&&path.length()>0){
             path+=File.separator;
         }
         for(LocationInRootNode node:this.leafs.values()){
-            list.addAll(node.resolve(path,includeFolders));
+            list.addAll(node.resolvePrivate(path,includeFolders));
         }
         return list;
     }
-    public static Collection<String> createFromFile(Collection<String> lines){
-        ArrayList<String> result = new ArrayList<>();
-        ArrayDeque<String> folderStack = new ArrayDeque<>();
-        String folderStart = "\\";
-        String folderEnd="/\\";
+    public static LocationInRootNode nodeFromFile(Collection<String> lines){
+        ArrayDeque<LocationInRootNode> folderStack = new ArrayDeque<>();
+        LocationInRootNode root = new LocationInRootNode("",-1);
+        folderStack.add(root);
         for(String line:lines){
             if(line.startsWith(folderStart)){
                 line = line.substring(1);
-                folderStack.addLast(line);
+                LocationInRootNode node = new LocationInRootNode(line,-1);
+                folderStack.getLast().leafs.put(node.self, node);
+                folderStack.addLast(node);
             }else if(line.startsWith(folderEnd)){
                 folderStack.pollLast();
-            }else{
-                //resolve path
-                String path ="";
-                for(String pathPart:folderStack){
-                    if(!pathPart.endsWith(File.separator)){
-                        pathPart+=File.separator;
+            }else if(line.length()>2 && line.contains(""+indexEnd)){
+                //Add simple path ####:path
+                String index = "";
+                for(Character c:line.toCharArray()){
+                    if(c.equals(indexEnd)){
+                        break;
                     }
-                    path+=pathPart;
+                    if(Character.isDigit(c)){
+                        index+=c;
+                    }
                 }
-                path+=line;
-                result.add(path);
+                Log.write(index,line);
+                
+                int i = Integer.parseInt(index);
+                line = line.substring(index.length()+1);
+                LocationInRootNode node = new LocationInRootNode(line,i);
+                folderStack.getLast().leafs.put(node.self, node);
             }
         }
-        return result;
-        
+        return root;
     }
+    
 }

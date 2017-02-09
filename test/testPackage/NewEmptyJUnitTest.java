@@ -5,6 +5,7 @@
  */
 package testPackage;
 
+import LibraryLB.Log;
 import filemanagerLogic.LocationInRootNode;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -71,10 +72,13 @@ public class NewEmptyJUnitTest {
 //        PathStringCommands path = new PathStringCommands("C:\\");
 //        print(path.getName(true));
 //        print("123".substring(0, 10));
-        Collection<String> createFromFile = LocationInRootNode.createFromFile(LibraryLB.FileManaging.FileReader.readFromFile("file"));
-        createFromFile.forEach(f->{
-            print(f);
+        LocationInRootNode node = LocationInRootNode.nodeFromFile(LibraryLB.FileManaging.FileReader.readFromFile("file"));
+        Log.display = true;
+        Log.write(node.specialString());
+        node.resolve(true).forEach(item->{
+            print(item);
         });
+        print("Fizikinis pasauliu įvaizdis");
     }
  
     public static void print(Object...o){
