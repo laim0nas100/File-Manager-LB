@@ -45,7 +45,6 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationInRootNode;
-import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -277,7 +276,7 @@ public class MainController extends BaseController{
         }    
     }
     public void mediaPlayer(){
-        ViewManager.getInstance().newMusicPlayer(MainController.markedList);
+        ViewManager.getInstance().newMusicPlayer();
 
     }
     public void test() throws IOException{

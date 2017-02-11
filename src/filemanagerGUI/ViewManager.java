@@ -288,7 +288,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     } 
-    public void newMusicPlayer(Collection<ExtPath> list){
+    public void newMusicPlayer(){
         
         SimpleTask et = new SimpleTask() {
             @Override
@@ -300,7 +300,7 @@ public class ViewManager {
                 MediaPlayerController controller = (MediaPlayerController) frame.getController();
                 
                 controller.discover();
-                controller.beforeShow(list);
+                controller.beforeShow();
                 frame.getStage().show();
                 frame.getStage().toFront();
                 controller.afterShow();
@@ -351,6 +351,7 @@ public class ViewManager {
         frames.remove(windowID);
         windows.remove(windowID);
         if(windows.isEmpty()){
+            closeAllFramesNoExit();
             try{
                 FileManagerLB.doOnExit();
             }catch(Exception e){
@@ -362,7 +363,11 @@ public class ViewManager {
     }
     public void closeAllFramesNoExit(){
         frames.keySet().forEach(key->{
-            frames.get(key).getStage().close();
+            Frame frame = frames.get(key);
+                if(!windows.contains(frame.getID())){
+                   frame.getController().exit(); 
+                }
+            frame.getStage().close();
             frames.remove(key);
             windows.remove(key);
         });

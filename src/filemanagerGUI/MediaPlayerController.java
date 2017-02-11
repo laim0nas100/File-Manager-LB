@@ -6,7 +6,6 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums.Identity;
@@ -19,18 +18,14 @@ import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleFloatProperty;
@@ -65,9 +60,6 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 import utility.ErrorReport;
 import static utility.ExtStringUtils.normalize;
 import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
-import static utility.ExtStringUtils.mod;
 
 /**
  * FXML Controller class
@@ -77,6 +69,7 @@ import static utility.ExtStringUtils.mod;
 public class MediaPlayerController extends BaseController {
     public final static String ID = "MEDIA_PLAYER";
     public final static String PLAY_SYMBOL = "✓";
+    public final static String PLAYLIST_FILE_NAME = "DEFAULT_PLAYLIST";
     public static boolean VLCfound = false;
     
     @FXML public Label labelCurrent;
@@ -219,7 +212,7 @@ public class MediaPlayerController extends BaseController {
         });
         return newPlayer;
     };
-    public void beforeShow(Collection<ExtPath> files){
+    public void beforeShow(){
         JFrame tempFrame = new JFrame();
         tempFrame.setSize(800, 480);
         frames.add(tempFrame); 
@@ -230,7 +223,6 @@ public class MediaPlayerController extends BaseController {
         frames.pollFirst().setVisible(false);
 //        Log.write("Player INIT");
         volumeSlider.valueProperty().addListener(listener->{
-            
             getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()*2));
         });
         this.volumeSlider.setValue(50);
@@ -249,12 +241,7 @@ public class MediaPlayerController extends BaseController {
         seekSlider.setOnMouseReleased(event->{
             this.released = true;
         });
-        setUpTable();
-        
-        files.forEach(file->{
-            addIfAbsent(file);
-        });
-        
+        setUpTable();      
         buttonPlayPrev.setOnAction(event ->{
             playNext(-1,true);
         });
@@ -271,7 +258,7 @@ public class MediaPlayerController extends BaseController {
                 }
                 });
                 }, 1000, 300, TimeUnit.MILLISECONDS);
-        });
+        
             execService.scheduleAtFixedRate(()->{
                 if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
                     volumeSlider.setValue(getCurrentPlayer().getVolume()/2);
@@ -279,8 +266,6 @@ public class MediaPlayerController extends BaseController {
             update();
             }, 1, 3, TimeUnit.SECONDS);
             
-        
-        Platform.runLater(()->{
             playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
             playType.getSelectionModel().select(0);
             showVideo.selectedProperty().addListener(listener->{
@@ -291,6 +276,7 @@ public class MediaPlayerController extends BaseController {
                 }
 
             });
+            loadState(FileManagerLB.HOME_DIR+PLAYLIST_FILE_NAME);
         });
         
     }
@@ -527,6 +513,7 @@ public class MediaPlayerController extends BaseController {
         frames.forEach(frame->{
             frame.setVisible(false);
         });
+        saveState(FileManagerLB.HOME_DIR+PLAYLIST_FILE_NAME);
         super.exit();
     }
     public void playNext(int increment,Object... opt){
@@ -754,7 +741,7 @@ public class MediaPlayerController extends BaseController {
     public PlaylistState getPlaylistState(){
         PlaylistState state = new PlaylistState();
         state.root = new LocationInRootNode("",-1);
-        state.index = this.getIndex(filePlaying);
+        state.index = Math.max(0,getIndex(filePlaying));
         state.type = (String) this.playType.getSelectionModel().getSelectedItem();
         int i =0;
         for(Object item:table.getItems()){
@@ -762,8 +749,7 @@ public class MediaPlayerController extends BaseController {
             state.root.add(new LocationInRoot(path.getAbsolutePath(),false),i++);
         }
         return state;
-    }
-    
+    }  
     public void loadPlaylistState(PlaylistState state){
         this.stop();
         this.table.getItems().clear();
@@ -789,10 +775,8 @@ public class MediaPlayerController extends BaseController {
         }
         
     }
-    public void saveState(){
-        labelStatus.setText("Busy");
-        
-        String path = FileManagerLB.HOME_DIR + saveState.getText().trim();
+    public void saveState(String path){
+       labelStatus.setText("Busy");
         SimpleTask task = new SimpleTask(){
             @Override
             protected Void call() throws Exception {
@@ -808,24 +792,26 @@ public class MediaPlayerController extends BaseController {
                 }
                 return null;
             }
-            
         };
         task.setOnSucceeded(value ->{
                 labelStatus.setText("Ready");
         });
         Thread t = new Thread(task);
         t.setDaemon(true);
-        t.start();
-        
-
+        t.start(); 
+    }
+    public void saveState(){
+        saveState(FileManagerLB.HOME_DIR + saveState.getText().trim());
     }
     public void loadState(){
+        loadState(FileManagerLB.HOME_DIR + loadState.getText().trim());
+    }
+    private void loadState(String path){
         labelStatus.setText("Busy");
         SimpleTask task = new SimpleTask(){
             @Override
             protected Void call() throws Exception {
                 PlaylistState state = new PlaylistState();
-                String path = FileManagerLB.HOME_DIR + loadState.getText().trim();
                 try{
                     LinkedList<String> readFromFile = (LinkedList<String>) LibraryLB.FileManaging.FileReader.readFromFile(path);
                     state.index = Integer.parseInt(readFromFile.pollFirst());
@@ -846,7 +832,6 @@ public class MediaPlayerController extends BaseController {
         Thread t = new Thread(task);
         t.setDaemon(true);
         t.start();
-        
     }
     public void shuffle(){
 //        playNext(1,false,true);

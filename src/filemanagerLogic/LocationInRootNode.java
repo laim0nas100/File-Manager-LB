@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -65,7 +67,8 @@ public class LocationInRootNode {
         }
         for(LocationInRootNode node:leafs.values()){
             res += node.toString();
-        }if(isFolder){
+        }
+        if(isFolder){
             res+=folderEnd;
         }
         res+="\n";
@@ -73,10 +76,42 @@ public class LocationInRootNode {
         return res;
     }
     public String specialString(){
+        boolean isFolder = !leafs.values().isEmpty();
         String res = "";
-        for(LocationInRootNode node:this.leafs.values()){
-            res+=node.toString();
+        Collection<LocationInRootNode> values;
+        if(isFolder){
+            ArrayList<LocationInRootNode> folders = new ArrayList<>();
+            ArrayList<LocationInRootNode> files = new ArrayList<>();
+            for(LocationInRootNode node:this.leafs.values()){
+                if(node.leafs.isEmpty()){
+                    files.add(node);
+                }else{
+                    folders.add(node);
+                }
+            }   
+            values = new ArrayList<>();
+            values.addAll(folders);
+            values.addAll(files);
+        }else{
+            values = new ArrayList<>();
         }
+        
+        if(isFolder){
+            res+=folderStart;
+        }else{
+            res+=index +""+ indexEnd;
+        }
+        res+=""+self+"";
+        if(isFolder){
+            res+="\n";
+        }
+        for(LocationInRootNode node:values){
+            res+=node.specialString();
+        }
+        if(isFolder){
+            res+=folderEnd;
+        }
+        res+="\n";
         return res;
     }
     private class StringWithIndex{
@@ -93,11 +128,21 @@ public class LocationInRootNode {
     }
     public ArrayList<String> resolve(boolean includeFolders){
         ArrayList<StringWithIndex> resolvePrivate = resolvePrivate("",includeFolders);
-        String[] array = new String[resolvePrivate.size()];
+        String[] array = new String[resolvePrivate.size()+1];
         for(StringWithIndex p:resolvePrivate){
-            array[p.index] = p.str;
+            if(p.index>=0){
+                array[p.index] = p.str;
+            }
         }
-        return new ArrayList<>(Arrays.asList(array));
+        List<String> asList = Arrays.asList(array);
+        Iterator<String> iterator = asList.iterator();
+        ArrayList<String> list = new ArrayList<>();
+        for(String s:asList){
+            if(s!=null){
+                list.add(s);
+            }
+        }
+        return list;
     }
     private ArrayList<StringWithIndex> resolvePrivate(String parentPath,boolean includeFolders){
         ArrayList<StringWithIndex> list = new ArrayList<>();
@@ -138,7 +183,7 @@ public class LocationInRootNode {
                         index+=c;
                     }
                 }
-                Log.write(index,line);
+//                Log.write(index,line);
                 
                 int i = Integer.parseInt(index);
                 line = line.substring(index.length()+1);
