@@ -45,10 +45,12 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationInRootNode;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -68,10 +70,12 @@ public class MainController extends BaseController{
 
     
     @FXML public CheckMenuItem autoClose;
-     @FXML public CheckMenuItem autoStart;
+    @FXML public CheckMenuItem autoStart;
     @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
+    @FXML public TextField localSearch;
+    
     private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
     
     public static ObservableList<FavouriteLink> links;
@@ -141,6 +145,10 @@ public class MainController extends BaseController{
     private SimpleIntegerProperty propertySelectedSize;
     private SimpleIntegerProperty propertyMarkedSelectedSize;
     private Task searchTask;
+    
+    private int localSearchCounter = 1000;
+    private Task localSearchTask;
+    
     public ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder currentDir){
         
@@ -238,10 +246,8 @@ public class MainController extends BaseController{
 
             
             
-            
-            Platform.runLater(()->{
-                extTableView.updateContentsAndSort(MC.getCurrentContents());
-            });
+            localSearch();
+
         });
         
     }
@@ -318,6 +324,7 @@ public class MainController extends BaseController{
        MC.changeDirTo(dir);
        Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH));
        t.start();
+       localSearch.clear();
        update();
       
     }
@@ -367,6 +374,49 @@ public class MainController extends BaseController{
        
         }   
     }
+    public void localSearchTask(){
+        if(localSearchTask!=null){
+            localSearchTask.cancel();
+        }
+        localSearchCounter = 1000;
+        localSearchTask = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+                while(localSearchCounter>=0){
+                    if(this.isCancelled()){
+                        return null;
+                    }
+                    localSearchCounter-=100;
+                    Thread.sleep(100);
+                }
+                Platform.runLater(()->{
+                  localSearch();  
+                });
+                
+                return null;
+            }
+        };
+        new Thread(localSearchTask).start();
+    }
+    public void localSearch(){
+        Collection<ExtPath> currentContents = this.MC.getCurrentContents();
+        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
+        String lookFor = localSearch.getText().trim();
+        if(lookFor.length()==0){
+            extTableView.updateContentsAndSort(currentContents);
+            
+        }else{
+            currentContents.forEach(item ->{
+                String name = item.propertyName.get();
+                if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
+                    newList.add(item);
+                }
+            });
+            Platform.runLater(() ->{
+                extTableView.updateContentsAndSort(newList);
+            });
+        }
+    }
     public void loadSnapshot(){
         try{
             String possibleSnapshot = this.snapshotLoadField.getText().trim();
@@ -410,6 +460,8 @@ public class MainController extends BaseController{
     public void commandWindow(){
         ViewManager.getInstance().newCommandDialog();
     }
+    
+    
     
     private void selectInverted(MultipleSelectionModel sm){
         ObservableList<Integer> selected = sm.getSelectedIndices();

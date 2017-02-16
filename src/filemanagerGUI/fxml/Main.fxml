@@ -136,11 +136,21 @@
    <center>
       <SplitPane dividerPositions="0.5">
         <items>
-            <AnchorPane fx:id="left" SplitPane.resizableWithParent="false">
+            <VBox SplitPane.resizableWithParent="false">
                <children>
-                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <HBox>
+                     <children>
+                        <Label text="Local Search:" HBox.hgrow="NEVER">
+                           <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </HBox.margin>
+                        </Label>
+                        <TextField fx:id="localSearch" onKeyReleased="#localSearchTask" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+                  <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" VBox.vgrow="ALWAYS" />
                </children>
-            </AnchorPane>
+            </VBox>
             <TabPane>
                <tabs>
                   <Tab closable="false" text="Marked List">
@@ -300,11 +310,4 @@
          </BorderPane.margin>
       </SplitPane>
    </center>
-   <bottom>
-      <HBox alignment="CENTER">
-         <children>
-            <VBox alignment="CENTER" />
-         </children>
-      </HBox>
-   </bottom>
 </BorderPane>

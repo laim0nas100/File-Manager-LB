@@ -20,25 +20,26 @@ import javafx.beans.property.SimpleStringProperty;
  */
 public class CustomClock {
     public CustomClock(){
-        updateDuration = 1000;
+        updateDuration = 500;
         pausedTime = 0;
         timeProperty = new SimpleStringProperty();
         paused = new SimpleBooleanProperty(false);
         execService.scheduleAtFixedRate(()->{
             Platform.runLater(()->{
+                    
+                    updateTimeProperty();
                     if(paused.get()){
                         pausedTime+=updateDuration;
                     }
-                    updateTimeProperty();
                 });
-        }, updateDuration, updateDuration, TimeUnit.MILLISECONDS);
+        }, 0, updateDuration, TimeUnit.MILLISECONDS);
         timeStartPoint = Clock.systemUTC().instant();
     }
     public long pausedTime;
     public SimpleBooleanProperty paused;
     public SimpleStringProperty timeProperty;
     private final Instant timeStartPoint;
-    private final ScheduledExecutorService execService = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService execService = Executors.newScheduledThreadPool(5);
     
     public int updateDuration;
     private void updateTimeProperty(){
@@ -63,16 +64,10 @@ public class CustomClock {
         }else{
             currentTimePoint = inst[0];
         }
-        return (double)(currentTimePoint.toEpochMilli()-timeStartPoint.toEpochMilli()-pausedTime)/1000;
+        return (double)(currentTimePoint.toEpochMilli()-timeStartPoint.toEpochMilli()-pausedTime + updateDuration)/1000;
     }
     public long getSecondsPassedRound(Instant...inst){
-        Instant currentTimePoint;
-        if(inst.length==0){
-            currentTimePoint = Clock.systemUTC().instant();
-        }else{
-            currentTimePoint = inst[0];
-        }
-        return (long) (currentTimePoint.getEpochSecond()-timeStartPoint.getEpochSecond()-pausedTime/1000);
+        return (long) Math.floor(getSecondsPassed(inst));
     }
     public void stopTimer(){
         this.timeProperty.set("Done in: "+(this.getSecondsPassed()));
