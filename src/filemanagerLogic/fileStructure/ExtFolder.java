@@ -14,15 +14,11 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
-//import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
 import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import utility.ExtStringUtils;
 
 /**
@@ -39,18 +35,12 @@ public class ExtFolder extends ExtPath{
         }
     };
     private boolean populated;
-    public Map <String,ExtPath> files;
-//    public Map <String,ExtPath> files;
-
+    public ConcurrentHashMap <String,ExtPath> files;
     
-
-
-    
+  
     public ExtFolder(String src,Object...optional){
         super(src,optional);
-        files = Collections.synchronizedMap(new HashMap<>());
-//        files = new ConcurrentHashMap<>(1,0.75f);        
-        
+        files = new ConcurrentHashMap<>(1,0.75f,2);        
         populated = false;
     }
     public Collection<ExtPath> getFilesCollection(){

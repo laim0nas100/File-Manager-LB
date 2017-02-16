@@ -917,7 +917,7 @@ public class MainController extends BaseController{
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isVirtual.get()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){

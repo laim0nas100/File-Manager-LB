@@ -269,7 +269,10 @@ public class MediaPlayerController extends BaseController {
             
                 getCurrentFrame().setVisible(showVideo.selectedProperty().get());
                 if(showVideo.selectedProperty().get() && !startedWithVideo){
-                    relaunch();
+                    if(getCurrentPlayer().isPlaying()){
+                        relaunch();
+                    }
+                    
                 }
 
             });
@@ -711,10 +714,12 @@ public class MediaPlayerController extends BaseController {
         if(showVideo.selectedProperty().not().get()){
             options.add("no-video");
         }
+        else{
 //        options.add("audio-visual=visual");
-//        options.add("effect-list=spectrum");
-//        options.add("effect-width="+videoFrame.getWidth());
-//        options.add("effect-height="+videoFrame.getHeight());
+//        options.add("effect-list=spectrometer");
+//        options.add("effect-width="+getCurrentFrame().getWidth());
+//        options.add("effect-height="+getCurrentFrame().getHeight());
+        }
         return options.toArray(new String[1]);
     }
     public boolean isSelected(ExtPath path){
@@ -821,7 +826,6 @@ public class MediaPlayerController extends BaseController {
         t.start();
     }
     public void shuffle(){
-//        playNext(1,false,true);
         Collections.shuffle(table.getItems());
         
     }
