@@ -37,6 +37,7 @@
                   <Menu mnemonicParsing="false" text="Options">
                      <items>
                         <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
+                        <CheckMenuItem fx:id="autoStart" mnemonicParsing="false" text="Auto Start Progress Dialogs" />
                         <Menu fx:id="menuSizeUnits" mnemonicParsing="false" text="Size Units">
                           <items>
                             <MenuItem mnemonicParsing="false" text="B" />

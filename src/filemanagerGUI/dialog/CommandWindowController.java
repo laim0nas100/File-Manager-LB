@@ -238,64 +238,6 @@ public class CommandWindowController extends BaseController {
                 ErrorReport.report(ex);
             }
         }
-        public boolean customCommand(String firstWord,String fullCommand,LinkedList<String> commands) throws IOException, InterruptedException{
-//            ArrayList<String> deque = new ArrayList<>();
-//            if(firstWord.equalsIgnoreCase(commandGenerate)){
-//                commands.removeFirst();
-//                String newCom = fullCommand;
-//                newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
-//                generate(newCom);
-//                return true;
-//            }else 
-//            if(firstWord.equalsIgnoreCase(commandApply)){
-//                commands.removeFirst();
-//                apply(commands.removeFirst());
-//                return true;
-//            }else
-//            if(firstWord.equalsIgnoreCase(commandListRec)){
-//                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-//                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-//                for(ExtPath f:file.getListRecursive()){    
-//                    deque.add(f.getAbsoluteDirectory());
-//                }
-//                String desc = "Listing recursive:"+deque.remove(0);
-//                ViewManager.getInstance().newListFrame(desc, deque);
-//                return true;
-//            }else 
-//            if(firstWord.equalsIgnoreCase(commandList)){
-//                String newCom = ExtStringUtils.replace(fullCommand, commands.getFirst()+" ","");
-//                ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-//                if(file.getIdentity().equals(Identity.FOLDER)){
-//                    String desc = "Listing:"+file.getAbsoluteDirectory();
-//
-//                    ExtFolder folder = (ExtFolder) file;
-//                    for(ExtPath f:folder.getFilesCollection()){
-//                        deque.add(f.getAbsoluteDirectory());
-//                    }
-//                    System.out.println(deque);
-//                    ViewManager.getInstance().newListFrame(desc, deque);
-//                }
-//                
-//                return true;
-//            }else
-//            if(firstWord.equalsIgnoreCase(commandSetCustom)){
-//                if(MainController.markedList.isEmpty()){
-//                    return true;
-//                }
-//                String get = MainController.markedList.get(0);
-//                FileManagerLB.customPath.setPath(get);
-//                return true;
-//            
-//            }else 
-//            if(firstWord.equalsIgnoreCase(commandHelp)){
-//                addToTextArea(textArea,"Read Parameters.txt file for info\n");
-//                return true;
-//            }else if(firstWord.equalsIgnoreCase(commandClear)){
-//                textArea.clear();
-//                return true;
-//            }
-            return false;
-        }
         @Override
         public void submit(String command) {
             Log.writeln(command);

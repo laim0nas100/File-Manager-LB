@@ -112,7 +112,7 @@ public class DuplicateFinderController extends BaseController{
             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
             for(Object ob:selectedItems){
                 SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileUnsecure(item.f1.getPath()));
+                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f1.getPath()));
             }
         });
         MenuItem markPath2 = new MenuItem("Mark Path 2");
@@ -120,7 +120,7 @@ public class DuplicateFinderController extends BaseController{
             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
             for(Object ob:selectedItems){
                 SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileUnsecure(item.f2.getPath()));
+                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f2.getPath()));
             }
         });
         menuTree.addMenuItem(markPath1, markPath1.getText());
@@ -154,6 +154,7 @@ public class DuplicateFinderController extends BaseController{
 
     @Override
     public void update() {
+        root.update();
     }
     public void cancel(){
         if(task!=null){

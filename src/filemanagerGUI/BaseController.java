@@ -31,7 +31,7 @@ public abstract class BaseController implements Initializable{
     
     public void exit(){
         ViewManager.getInstance().closeFrame(this.windowID);
-        ViewManager.getInstance().updateAllWindows();
+        ViewManager.getInstance().updateAllFrames();
     }
     public abstract void update();
 }

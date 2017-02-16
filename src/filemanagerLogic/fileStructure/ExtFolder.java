@@ -14,10 +14,12 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
-import static filemanagerGUI.FileManagerLB.ROOT_NAME;
+//import static filemanagerGUI.FileManagerLB.ROOT_NAME;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
 import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -46,9 +48,8 @@ public class ExtFolder extends ExtPath{
     
     public ExtFolder(String src,Object...optional){
         super(src,optional);
-        files = new ConcurrentHashMap<>(1,0.75f);
-//        files = new HashMap<>(1,0.75f);files = Collections.synchronizedMap(files);
-        
+        files = Collections.synchronizedMap(new HashMap<>());
+//        files = new ConcurrentHashMap<>(1,0.75f);        
         
         populated = false;
     }
@@ -228,15 +229,11 @@ public class ExtFolder extends ExtPath{
     @Override
     public String getAbsoluteDirectory(){
         if(isAbsoluteRoot.get()){
-            return ROOT_NAME;
+            return FileManagerLB.ROOT_NAME;
         }
         return this.getAbsolutePath()+File.separator;
     }
 
-    
-
-    //GETTERS & SETTERS
-    
     public boolean isPopulated(){
         return populated;
         

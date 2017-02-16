@@ -68,6 +68,7 @@ public class MainController extends BaseController{
 
     
     @FXML public CheckMenuItem autoClose;
+     @FXML public CheckMenuItem autoStart;
     @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
@@ -159,7 +160,7 @@ public class MainController extends BaseController{
         propertyMarkedSize = new SimpleIntegerProperty(0);
         propertySelectedSize = new SimpleIntegerProperty(0);
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
-        
+        autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
         propertyDeleteCondition.bind(MC.isVirtual.not().and(propertySelectedSize.greaterThan(0)));
         propertyRenameCondition.bind(MC.isVirtual.not().and(propertySelectedSize.isEqualTo(1)));
         
@@ -577,11 +578,7 @@ public class MainController extends BaseController{
             MainController.actionList.addAll(MainController.dragList);
             ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
             task.setTaskDescription("Move Dragged files");
-            boolean paused = false;
-            if(TaskFactory.dragInitWindowID.equals(MediaPlayerController.ID)){
-                    paused = true;
-            }
-            ViewManager.getInstance().newProgressDialog(task,paused);
+            ViewManager.getInstance().newProgressDialog(task);
         });
         contextMenuItems[11] = new MenuItem("Copy here selected");
         contextMenuItems[11].setOnAction(eh ->{        

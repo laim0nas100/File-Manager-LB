@@ -382,7 +382,7 @@ public class TaskFactory {
             @Override
             protected Void call(){
                 list.forEach(file ->{
-                    addToMarked(LocationAPI.getInstance().getFileUnsecure(file));
+                    addToMarked(LocationAPI.getInstance().getFileOptimized(file));
                 });
                 return null;
             }

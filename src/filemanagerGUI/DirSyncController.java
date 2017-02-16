@@ -430,6 +430,9 @@ public class DirSyncController extends BaseController {
 
     @Override
     public void update() {
-        this.compare();
+        if(this.snapshot0!=null && this.snapshot1!=null){
+           this.compare(); 
+        }
+        
     }
 }

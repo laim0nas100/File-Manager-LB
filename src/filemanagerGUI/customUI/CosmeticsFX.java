@@ -14,6 +14,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -185,11 +186,16 @@ public class CosmeticsFX {
             }
         }
         public void updateContents(Collection collection){
+            ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
             table.setItems(FXCollections.observableArrayList(collection));
             //Workaround to update table
+            for(Integer i:selectedIndices){
+                table.getSelectionModel().select(i);
+            }
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);
             get.setVisible(true);
+            
         }
         public void updateContentsAndSort(Collection collection){
             saveSortPrefereces();

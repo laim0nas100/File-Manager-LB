@@ -40,8 +40,9 @@ public class ProgressDialogController extends BaseController {
     private SimpleBooleanProperty paused;
     private String fullText = "";
     
-    public void afterShow(ExtTask newTask,boolean pause){
+    public void afterShow(ExtTask newTask){
         super.afterShow();
+        boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
         this.task = newTask;
         task.paused.bind(paused);
@@ -62,6 +63,7 @@ public class ProgressDialogController extends BaseController {
         
         Thread t = new Thread(task);
         clock = new CustomClock();
+        
         t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
@@ -76,9 +78,8 @@ public class ProgressDialogController extends BaseController {
             }
         });
         
-        if(pause){
-            pauseButton.setText("CONTINUE");
-            paused.set(true);
+        if(paused.get()){
+            pauseButton.setText("START");
         }
         Platform.runLater(()->{
             t.start();

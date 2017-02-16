@@ -184,7 +184,12 @@ public class LocationAPI {
         }
         return file;
     }
-    public ExtPath getFileUnsecure(String path){
-        return getFileByLocation(new LocationInRoot(path));
+    public ExtPath getFileOptimized(String path){
+        LocationInRoot loc = new LocationInRoot(path);
+        if(!this.existByLocation(loc)){
+            return getFileAndPopulate(path);
+        }else{
+            return getFileByLocation(loc);
+        }
     }
 }

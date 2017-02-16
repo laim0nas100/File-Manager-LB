@@ -67,7 +67,6 @@ import static utility.ExtStringUtils.mod;
  * @author Lemmin
  */
 public class MediaPlayerController extends BaseController {
-    public final static String ID = "MEDIA_PLAYER";
     public final static String PLAY_SYMBOL = "✓";
     public final static String PLAYLIST_FILE_NAME = "DEFAULT_PLAYLIST";
     public static boolean VLCfound = false;
@@ -137,7 +136,7 @@ public class MediaPlayerController extends BaseController {
             VLCfound = new NativeDiscovery().discover();
             Thread.sleep(500);
             tries++;
-            if(tries>5){
+            if(tries>1){
                 throw new VLCNotFoundException("Could not locate VLC");
             }
         }
@@ -157,7 +156,6 @@ public class MediaPlayerController extends BaseController {
         
 //        Log.write("New JFrame done");
         jframe.setVisible(true);
-        jframe.toBack();
         jframe.setSize(getCurrentFrame().getSize());
         jframe.setLocation(getCurrentFrame().getLocation());
         
@@ -263,7 +261,6 @@ public class MediaPlayerController extends BaseController {
                 if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
                     volumeSlider.setValue(getCurrentPlayer().getVolume()/2);
                 }
-            update();
             }, 1, 3, TimeUnit.SECONDS);
             
             playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
@@ -476,7 +473,6 @@ public class MediaPlayerController extends BaseController {
     public void stop(){
         if(getCurrentPlayer().isPlaying()){
             getCurrentPlayer().stop();
-//            getCurrentPlayer().setPosition(0);
             
         }
     }
@@ -516,10 +512,7 @@ public class MediaPlayerController extends BaseController {
         saveState(FileManagerLB.HOME_DIR+PLAYLIST_FILE_NAME);
         super.exit();
     }
-    public void playNext(int increment,Object... opt){
-//        if(!canPlayNext){
-//            return;
-//        }
+    public void playNext(int increment,boolean ignoreModifiers,Object... opt){
         Platform.runLater(()->{
             if(table.getItems().isEmpty()){
                 playTaskComplete = true;
@@ -534,7 +527,7 @@ public class MediaPlayerController extends BaseController {
                     index = potIndex;
                 }
             }
-            if(!(boolean)opt[0]){
+            if(!ignoreModifiers){
                 if(playType.getSelectionModel().getSelectedItem().equals(typeRandom)){
                     index = (int) (Math.random() * table.getItems().size());
                 }else if(playType.getSelectionModel().getSelectedItem().equals(typeLoopSong)){
@@ -559,8 +552,8 @@ public class MediaPlayerController extends BaseController {
                 playTaskComplete = true;
                 return;
             }
-            if(opt.length>1&&(boolean)opt[1]){
-                playSeemless(item,(long)opt[2]);
+            if(opt.length>1&&(boolean)opt[0]){
+                playSeemless(item,(long)opt[1]);
             }else{
                 play(item);
             }
@@ -581,9 +574,9 @@ public class MediaPlayerController extends BaseController {
                         iterator.remove();
                     }
                 }
-                Platform.runLater(()->{
+//                Platform.runLater(()->{
                   extTableView.updateContents(table.getItems());  
-                });
+//                });
                 
                 return null;
             }
@@ -591,12 +584,13 @@ public class MediaPlayerController extends BaseController {
         Platform.runLater(t);      
     }
     public void playSelected(){
-        update();
         play((ExtPath) table.getSelectionModel().getSelectedItem());
     }
     private void play(ExtPath item){
-        if(item==null){
-            playTaskComplete = true;
+        update();
+        int i = this.getIndex(item);
+        if(i<0){
+            playNext(0,true);
             return;
         }
         if(getCurrentPlayer().isPlaying()){
@@ -754,14 +748,7 @@ public class MediaPlayerController extends BaseController {
         this.stop();
         this.table.getItems().clear();
         state.root.resolve(false).forEach(item ->{
-            ExtPath file;
-            LocationInRoot locationMapping = LocationAPI.getInstance().getLocationMapping(item);
-            if(!LocationAPI.getInstance().existByLocation(locationMapping)){
-                Log.write("Populate",locationMapping);
-                file = LocationAPI.getInstance().getFileAndPopulate(item);
-            }else{
-                file = LocationAPI.getInstance().getFileByLocation(locationMapping);
-            }
+            ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
             if(item.equals(file.getAbsolutePath())){
                 addIfAbsent(file);
             }

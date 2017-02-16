@@ -31,10 +31,10 @@ public class CustomClock {
                     }
                     updateTimeProperty();
                 });
-        }, 0, updateDuration, TimeUnit.MILLISECONDS);
+        }, updateDuration, updateDuration, TimeUnit.MILLISECONDS);
         timeStartPoint = Clock.systemUTC().instant();
     }
-    public double pausedTime;
+    public long pausedTime;
     public SimpleBooleanProperty paused;
     public SimpleStringProperty timeProperty;
     private final Instant timeStartPoint;

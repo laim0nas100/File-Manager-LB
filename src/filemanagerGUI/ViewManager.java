@@ -43,9 +43,11 @@ import utility.ErrorReport;
  */
 public class ViewManager {
     public SimpleBooleanProperty autoCloseProgressDialogs;
+    public SimpleBooleanProperty autoStartProgressDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
     protected ViewManager(){
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
+        this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
         this.frames = new ConcurrentHashMap<>();
         this.windows = new HashSet<>();
 
@@ -96,10 +98,8 @@ public class ViewManager {
 //        }); 
     }
     public void updateAllFrames(){
-        Platform.runLater(()->{
-            frames.values().forEach( frame ->{
-                frame.getController().update();
-            });
+        frames.values().forEach( frame ->{
+            frame.getController().update();
         });
     }
     public Frame getFrame(String windowID){
@@ -107,7 +107,7 @@ public class ViewManager {
     }
     
 //DIALOG ACTIONS
-    public void newProgressDialog(ExtTask task,Object...params){
+    public void newProgressDialog(ExtTask task){
         
         SimpleTask et = new SimpleTask() {
             @Override
@@ -121,11 +121,7 @@ public class ViewManager {
                 frame.getStage().setMinHeight(250);
                 frame.getStage().setMinWidth(400);
                 frame.getStage().show();
-                if(params.length>0){
-                    controller.afterShow(task,(boolean)params[0]);
-                }else{
-                    controller.afterShow(task,false);
-                }
+                controller.afterShow(task);
                 frame.getStage().requestFocus();
                 frame.getStage().toFront();         
             } catch (Exception ex) {
@@ -149,7 +145,6 @@ public class ViewManager {
                     frame.getStage().setMinWidth(500);
                     frame.getStage().show();
                     frame.getStage().setAlwaysOnTop(true);
-
                     controller.afterShow(folder,itemToRename);
                     frame.getStage().toFront();           
                 } catch (Exception ex) {

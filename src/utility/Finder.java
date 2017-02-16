@@ -69,8 +69,10 @@ public class Finder extends SimpleFileVisitor<Path> {
                 }
                 if(matches){
                     Platform.runLater(()->{
-                        if(!list.contains(file.toString()))
-                        list.add(file.toString()); 
+                        String toAdd = file.toAbsolutePath().toString();
+                        if(!list.contains(toAdd)){
+                            list.add(toAdd);
+                        }
                     });
                 }
             }
@@ -119,7 +121,8 @@ public class Finder extends SimpleFileVisitor<Path> {
                 ',',
                 '+',
                 '|',
-                '?',           
+                '?',
+                '.'
             };
             regexSet = new HashSet<>();
             regexSet.addAll(Arrays.asList(array));
