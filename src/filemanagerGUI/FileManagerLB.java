@@ -9,6 +9,7 @@ import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
+import LibraryLB.TaskExecutor;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -54,12 +55,9 @@ public class FileManagerLB extends Application {
     @Override
     public void start(Stage primaryStage) {
         reInit();
-        
-//        Platform.runLater(()->{
-            if(DEBUG.not().get()){
-                ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-            }
-//        });
+        if(DEBUG.not().get()){
+            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+        }
         
         
     } 
@@ -138,6 +136,7 @@ public class FileManagerLB extends Application {
         System.exit(0);
     }
     public static void reInit(){
+        Log.write("INITIALIZE");
         ViewManager.getInstance().closeAllFramesNoExit();
         MediaPlayerController.VLCfound = false;
         MainController.actionList = new ArrayList<>();
@@ -151,7 +150,13 @@ public class FileManagerLB extends Application {
         ArtificialRoot.setIsAbsoluteRoot(true);
         ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
         VirtualFolders.setPopulated(true);
+        if(CommandWindowController.executor!=null){
+            CommandWindowController.executor.cancel();
+        }
         readParameters();
+        CommandWindowController.executor = new TaskExecutor(CommandWindowController.maxExecutablesAtOnce,1);
+        CommandWindowController.executor.neverStop = true;
+        new Thread(CommandWindowController.executor).start();
         Platform.runLater(()->{
             try{
                 Files.deleteIfExists(ArtificialRoot.toPath());
@@ -183,6 +188,7 @@ public class FileManagerLB extends Application {
         LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
         ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
         MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
+        MediaPlayerController.VLC_SEARCH_PATH = (String) parameters.defaultGet("vlcPath", HOME_DIR+"lib");
         PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
         PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
         PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
@@ -198,12 +204,15 @@ public class FileManagerLB extends Application {
         CommandWindowController.commandGenerate = (String) parameters.defaultGet("code.commandGenerate", "generate");
         CommandWindowController.commandApply = (String) parameters.defaultGet("code.commandApply", "apply");
         CommandWindowController.commandClear = (String) parameters.defaultGet("code.clear", "clear");
+        CommandWindowController.commandCancel = (String) parameters.defaultGet("code.cancel", "cancel");
         CommandWindowController.commandList = (String) parameters.defaultGet("code.list", "list");
         CommandWindowController.commandListRec = (String) parameters.defaultGet("code.listRec", "listRec");
         CommandWindowController.commandSetCustom = (String) parameters.defaultGet("code.setCustom", "setCustom");
         CommandWindowController.commandHelp = (String) parameters.defaultGet("code.help", "help");
         CommandWindowController.commandListParams = (String) parameters.defaultGet("code.listParameters", "listParams");
         CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", 5);
+
+
         
     }
     

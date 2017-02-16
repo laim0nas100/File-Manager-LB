@@ -350,7 +350,11 @@ public class TaskFactory {
         if(0<depth){
             Log.writeln("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
             folder.updateTask.cancel();
-            folder.startUpdateTask();
+            if(folder.isVirtual.get()){
+                folder.update();
+            }else{
+                folder.startUpdateTask();
+            }
             
             folder.getFoldersFromFiles().stream().forEach((fold) -> {
                 populateRecursiveParallelInner(fold, depth-1);

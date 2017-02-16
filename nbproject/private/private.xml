@@ -12,6 +12,7 @@
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/ProgressDialogController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/CommandWindowController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/CustomClock.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/PathStringCommands.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/MediaPlayerController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/dialog/DuplicateFinderController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/ViewManager.java</file>
@@ -24,6 +25,7 @@
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/customUI/CosmeticsFX.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/filemanagerGUI/DirSyncController.java</file>
             <file>file:/E:/Dev/Java/Workspace/FileManagerLB/src/utility/Finder.java</file>
+            <file>file:/E:/Dev/Java/Workspace/FileManagerLB/test/testPackage/testExtFileInfoClass.java</file>
         </group>
     </open-files>
 </project-private>

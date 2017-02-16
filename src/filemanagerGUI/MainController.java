@@ -146,7 +146,7 @@ public class MainController extends BaseController{
     private SimpleIntegerProperty propertyMarkedSelectedSize;
     private Task searchTask;
     
-    private int localSearchCounter = 1000;
+    private int localSearchCounter = 500;
     private Task localSearchTask;
     
     public ExtTableView extTableView;
@@ -257,6 +257,11 @@ public class MainController extends BaseController{
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(MC.currentDir);
     }
+    public void restart(){
+        Platform.runLater(() ->{
+            FileManagerLB.reInit();
+        });
+    }
     public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
             VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
@@ -309,15 +314,18 @@ public class MainController extends BaseController{
     }    
     public void changeToParent(){
         MC.changeToParent();
+        this.localSearch.clear();
         update();
     }
     public void changeToPrevious(){
         MC.changeToPrevious();
+        this.localSearch.clear();
         update();
         
     }
     public void changeToForward(){
         MC.changeToForward();
+        this.localSearch.clear();
         update();
     }
     public void changeToDir(ExtFolder dir){

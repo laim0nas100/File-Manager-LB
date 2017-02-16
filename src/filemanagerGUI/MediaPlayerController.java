@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,10 @@ import javafx.scene.input.TransferMode;
 import javax.swing.JFrame;
 import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
+import uk.co.caprica.vlcj.discovery.StandardNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.linux.DefaultLinuxNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.mac.DefaultMacNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.windows.DefaultWindowsNativeDiscoveryStrategy;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
@@ -67,8 +72,10 @@ import static utility.ExtStringUtils.mod;
  * @author Lemmin
  */
 public class MediaPlayerController extends BaseController {
+    
     public final static String PLAY_SYMBOL = "✓";
     public final static String PLAYLIST_FILE_NAME = "DEFAULT_PLAYLIST";
+    public static String VLC_SEARCH_PATH = "E:\\WindowsProgramFiles\\VLCC";
     public static boolean VLCfound = false;
     
     @FXML public Label labelCurrent;
@@ -109,7 +116,7 @@ public class MediaPlayerController extends BaseController {
     private ArrayDeque<MediaPlayer> players = new ArrayDeque<>();
 
     private SimpleFloatProperty valueToSet = new SimpleFloatProperty(0f);
-    ScheduledExecutorService execService = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
        
     private MediaPlayer getCurrentPlayer(){
         return this.players.getLast();
@@ -128,19 +135,69 @@ public class MediaPlayerController extends BaseController {
             super(str);
         }
     }
-    public void discover() throws InterruptedException, VLCNotFoundException{
-        
-        int tries=0;
-        while(!VLCfound){
-
-            VLCfound = new NativeDiscovery().discover();
-            Thread.sleep(500);
-            tries++;
-            if(tries>1){
-                throw new VLCNotFoundException("Could not locate VLC");
+    public void discover() throws InterruptedException, VLCNotFoundException, InstantiationException, IllegalAccessException{    
+        if(!VLCfound){
+            StandardNativeDiscoveryStrategy[] array = new StandardNativeDiscoveryStrategy[3];
+            array[0] = new DefaultWindowsNativeDiscoveryStrategy();
+            array[1] = new DefaultLinuxNativeDiscoveryStrategy();         
+            array[2] = new DefaultMacNativeDiscoveryStrategy();
+            int supportedOS = -1;
+            for(int i=0;i<3;i++){
+                if(array[i].supported()){
+                    supportedOS = i;
+                }
             }
+            StandardNativeDiscoveryStrategy finalStrat;
+            switch(supportedOS){
+                case 0:{
+                    finalStrat = new DefaultWindowsNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            
+                            super.onGetDirectoryNames(directoryNames); //To change body of generated methods, choose Tools | Templates.
+                            directoryNames.add(0,VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 1:{
+                    finalStrat = new DefaultLinuxNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            
+                            super.onGetDirectoryNames(directoryNames); //To change body of generated methods, choose Tools | Templates.
+                            directoryNames.add(0,VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 2:{
+                    finalStrat = new DefaultMacNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            
+                            super.onGetDirectoryNames(directoryNames); //To change body of generated methods, choose Tools | Templates.
+                            directoryNames.add(0,VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                default:{
+                    finalStrat = null;
+                    throw new VLCNotFoundException("Unsupported OS");
+                }
+            }
+
+            
+            VLCfound = new NativeDiscovery(finalStrat).discover();
+            if(VLCfound){
+                Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
+            }else{
+                throw new VLCNotFoundException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
+            }
+            
         }
-        Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
+        
         
     }
     
@@ -221,9 +278,9 @@ public class MediaPlayerController extends BaseController {
         frames.pollFirst().setVisible(false);
 //        Log.write("Player INIT");
         volumeSlider.valueProperty().addListener(listener->{
-            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()*2));
+            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
         });
-        this.volumeSlider.setValue(50);
+        volumeSlider.setValue(100);
         
         valueToSet.bind(seekSlider.valueProperty().divide(100f));
         seekSlider.setOnMousePressed(event->{
@@ -259,7 +316,7 @@ public class MediaPlayerController extends BaseController {
         
             execService.scheduleAtFixedRate(()->{
                 if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
-                    volumeSlider.setValue(getCurrentPlayer().getVolume()/2);
+                    volumeSlider.setValue(getCurrentPlayer().getVolume());
                 }
             }, 1, 3, TimeUnit.SECONDS);
             

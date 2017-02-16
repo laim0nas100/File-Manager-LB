@@ -46,7 +46,7 @@ public class CommandWindowController extends BaseController {
     @FXML TextField textField;
     @FXML TextArea textArea;
     private Commander command;
-    public TaskExecutor executor;
+    public static TaskExecutor executor;
     public static int maxExecutablesAtOnce;
     public static int truncateAfter;
     public static String  commandGenerate,
@@ -57,13 +57,16 @@ public class CommandWindowController extends BaseController {
                     commandInit,
                     commandSetCustom,
                     commandClear,
+                    commandCancel,
                     commandHelp;
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
-        executor = new TaskExecutor(maxExecutablesAtOnce,10);
-        executor.neverStop = true;
+
         command = new Commander(textField);
+        command.addCommand(commandCancel, (Object... params)->{ 
+                executor.cancel();
+        });
         command.addCommand(commandGenerate, (Object... params) -> {
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
@@ -76,7 +79,10 @@ public class CommandWindowController extends BaseController {
                 command.apply(newCom);
         });
         command.addCommand(commandInit, (Object... params)->{
-                FileManagerLB.reInit();
+                Platform.runLater(()->{
+                   FileManagerLB.reInit(); 
+                });
+                
         });
         command.addCommand(commandListRec, (Object... params)->{
                 ArrayDeque<String> deque = new ArrayDeque<>();
@@ -108,27 +114,28 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandSetCustom, (Object... params)->{
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom+" ", "");
-                FileManagerLB.customPath.setPath(newCom);
+                FileManagerLB.customPath = new PathStringCommands(newCom.trim());
         });
         command.addCommand(commandClear, (Object... params)->{
                 textArea.clear();
         });
-        command.addCommand(commandHelp, (Object... params)->{
+        command.addCommand(commandHelp, (Object... params)->{listParameters();
                 addToTextArea(textArea,"Read Parameters.txt file for info\n");
+                listParameters();
+                
         });
         command.addCommand(commandListParams, (Object... params)->{
-            ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
+            listParameters();
+        });   
+        
+    }
+    public void listParameters(){
+        ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
             Collections.sort(list);
             list.forEach(key->{
                 ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
                 addToTextArea(textArea, parameter.toString()+"\n");
             });
-        });
-        Thread t = new Thread(this.executor);
-        t.setDaemon(true);
-        t.start();
-        
-        
     }
     public void addToTextArea(TextArea textA,String text){
             Platform.runLater(()->{
@@ -179,9 +186,7 @@ public class CommandWindowController extends BaseController {
        
         public void apply(String name) throws IOException, InterruptedException{
             LinkedList<String> readFromFile = new LinkedList(LibraryLB.FileManaging.FileReader.readFromFile(name));
-            this.setTextAfterwards = true;
-            
-            
+            this.setTextAfterwards = true;    
             for(String command:readFromFile){
                 submit(command);
             }
@@ -198,15 +203,26 @@ public class CommandWindowController extends BaseController {
                 Lexer lexer = new Lexer(command);
                 lexer.skipWhitespace = false;
                 lexer.addToken(PathStringCommands.returnDefinedKeys());
+                int index = 1;
                 for(String absPath:l){
                     PathStringCommands pathInfo = new PathStringCommands(absPath);
                     lexer.reset();
                     String commandToAdd = "";
+                    int numbersToAdd = 0;
                     while(true){
+                        
                         Token token = lexer.getNextToken();
                         if(token==null){
                             break;
                         }
+                        if(token.id.equals(PathStringCommands.number)){
+                           numbersToAdd++ ;
+                           continue;
+                        }else if( numbersToAdd>0){
+                            commandToAdd+=ExtStringUtils.simpleFormat(index, numbersToAdd);
+                            numbersToAdd = 0;       
+                        }
+                        
                         if(token.id.equals(PathStringCommands.fileName)){
                             commandToAdd+=pathInfo.getName(true);
                         }else if(token.id.equals(PathStringCommands.nameNoExt)){
@@ -221,19 +237,22 @@ public class CommandWindowController extends BaseController {
                             commandToAdd+=pathInfo.getParent(2);
                         }else if(token.id.equals(PathStringCommands.custom)){
                             commandToAdd+=FileManagerLB.customPath.getPath();
-                        }else if(token.id.equals(PathStringCommands.relativeCustom)){
-                            commandToAdd+=FileManagerLB.customPath.relativeTo(pathInfo.getPath());
+                        }else if(token.id.equals(PathStringCommands.relativeCustom)){  
+                            commandToAdd+=FileManagerLB.customPath.relativePathTo(pathInfo.getPath());
                         }else{
                             Literal lit = (Literal)token;
                             commandToAdd+=lit.value;
                         }
-                        
+                           
+                    }
+                    if(numbersToAdd>0){
+                        commandToAdd+=ExtStringUtils.simpleFormat(index, numbersToAdd);
                     }
                     allCommands.add(commandToAdd);
                     Log.writeln(command+" => "+commandToAdd);
+                    index++;
                 }
                 ViewManager.getInstance().newListFrame("Script generation", allCommands);
-//                LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.HOME_DIR+name, commands);
             }catch(Exception ex){
                 ErrorReport.report(ex);
             }
@@ -274,7 +293,6 @@ public class CommandWindowController extends BaseController {
     }
     @Override
     public void exit(){
-        this.executor.cancel();
         super.exit();
         
     }

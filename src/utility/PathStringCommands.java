@@ -60,8 +60,8 @@ public class PathStringCommands {
     public String getExtension(){
         String name = this.getName(true);
         if(name.contains(".")){
-            int index = ExtStringUtils.lastIndexOf(name, ".")-1;
-            if(index>=0){
+            int index = ExtStringUtils.lastIndexOf(name, ".")+1;
+            if(index<name.length()){
                 name = name.substring(index);
             }else{
                 return "";
@@ -88,7 +88,7 @@ public class PathStringCommands {
         return current;
        
     }
-    public String relativeFrom(String possibleParent){
+    public String relativePathFrom(String possibleParent){
         String path = absolutePath+File.separator;
         if(!path.contains(possibleParent) || path.equalsIgnoreCase(possibleParent)){
             return absolutePath;
@@ -96,7 +96,8 @@ public class PathStringCommands {
             return ExtStringUtils.replaceOnce(path, possibleParent, "");
         }
     }
-    public String relativeTo(String possibleChild){
+    public String relativePathTo(String possibleChild){
+        
         String path = absolutePath+File.separator;
         if(!possibleChild.contains(path) || possibleChild.equalsIgnoreCase(path)){
             return absolutePath;

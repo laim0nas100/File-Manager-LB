@@ -1,7 +1,18 @@
+//Line comment
+
+/* 
+    Multi-line
+    Comment     
+*/
+
+// reserved tokens (don't use in parameters): "//", "/*", "*/", "=" 
+   
+//PARAMETERS:
+
 debug=true
 
 //Populating folder depth
-lookDepth=0
+lookDepth=2
 
 //BUP folder subfolder size
 logBackupCount=5
@@ -9,9 +20,10 @@ logBackupCount=5
 //currently does nothing
 lang=EN
 
+//VLC priority path
+vlcPath=
 
-
-//Name of root directory (don't set to an actual path in your system or you wont be able to access it via address field)
+//Name of root directory (don't set to an actual path in your system or you won't be able to access it via address field)
 ROOT_NAME=\
 
 //Multi-threading load for specific tasks
@@ -29,7 +41,7 @@ filter.nameNoExtention=<nne>
 //File name with extension
 filter.name=<n>//replace with file name
 
-//File name extension
+//File name extension 
 filter.nameExtension=<ne>
 
 //All path filters have no file separator at the end
@@ -41,12 +53,22 @@ filter.parent1=<p1>
 
 //File parent 2 level up
 filter.parent2=<p2>
+/*
+    Path mangling example for file /home/user/documents/doc.txt
+    path                = /home/user/documents/doc.txt
+    parent1             = /home/user/documents
+    parent2             = /home/user
+    name                = doc.txt
+    nameNoExtention     = doc
+    nameExtension       = txt
 
-filter.relativeCustom=<rc>
+
+*/
 
 //Custom path
-filter.custom=<c>
 
+filter.custom=<c>
+filter.relativeCustom=<rc>
 code.setCustom=setCustom
 /*  
     Relative to custom path
@@ -61,7 +83,7 @@ code.setCustom=setCustom
 code.maxThreadsForCommand=5
 
 
-code.listParameters=listParams
+code.listParameters=listParam
 code.clear=clear//clear screen
 code.truncateAfter=10000//truncate command text window after specified length
 code.commandGenerate=generate//command to generate script
@@ -69,6 +91,7 @@ code.commandApply=apply//command to load script
 code.init=init//reinitialize application
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
+code.cancel=cancel
 
 virtualPrefix=V
 

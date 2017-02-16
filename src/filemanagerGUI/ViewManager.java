@@ -54,6 +54,7 @@ public class ViewManager {
     };
     private final ConcurrentHashMap<String,Frame> frames;
     private final HashSet<String> windows;
+    private boolean initStart = false;
 
     public static ViewManager getInstance(){
         return INSTANCE;
@@ -77,7 +78,7 @@ public class ViewManager {
                 try {
                     Frame frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = (MainController) frame.getController();
-                    windows.add(frame.getTitle());
+                    windows.add(frame.getID());
                     controller.beforeShow(frame.getTitle(),currentFolder);
                     frame.getStage().show();
                 } catch (IOException ex) {
@@ -342,6 +343,9 @@ public class ViewManager {
        
     }
     public void closeFrame(String windowID){
+        if(this.initStart){
+            return;
+        }
         frames.get(windowID).getStage().close();
         frames.remove(windowID);
         windows.remove(windowID);
@@ -357,15 +361,16 @@ public class ViewManager {
         System.gc();
     }
     public void closeAllFramesNoExit(){
+        this.initStart = true;
         frames.keySet().forEach(key->{
             Frame frame = frames.get(key);
-                if(!windows.contains(frame.getID())){
-                   frame.getController().exit(); 
-                }
+            frame.getController().exit(); 
+            Log.write("Close",frame.getID());
             frame.getStage().close();
-            frames.remove(key);
-            windows.remove(key);
         });
+        frames.clear();
+        windows.clear();
+        this.initStart = false;
         System.gc();
         
     }

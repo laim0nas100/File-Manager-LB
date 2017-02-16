@@ -261,10 +261,10 @@ public class ExtPath{
         return new PathStringCommands(this.absolutePath).getParent(timesToGoUp);
     }
     public String relativeFrom(String possibleParent){
-        return new PathStringCommands(absolutePath).relativeFrom(possibleParent);
+        return new PathStringCommands(absolutePath).relativePathFrom(possibleParent);
     }
     public String relativeTo(String possibleChild){
-        return new PathStringCommands(absolutePath).relativeTo(possibleChild);
+        return new PathStringCommands(absolutePath).relativePathTo(possibleChild);
     }
     @Override
     public String toString(){
