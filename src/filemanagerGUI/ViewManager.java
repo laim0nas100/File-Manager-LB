@@ -156,7 +156,7 @@ public class ViewManager {
         };
         Platform.runLater(et);
     }
-    public void newAdvancedRenameDialog(VirtualFolder folder){
+    public void newAdvancedRenameDialog(ExtFolder folder){
        
        
         SimpleTask et = new SimpleTask() {

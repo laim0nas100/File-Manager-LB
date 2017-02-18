@@ -59,13 +59,22 @@ public class CommandWindowController extends BaseController {
                     commandClear,
                     commandCancel,
                     commandHelp;
+    public static void startExecutor(){
+        if(executor!=null){
+            executor.cancel();
+        }
+        executor = new TaskExecutor(maxExecutablesAtOnce,1);
+        executor.neverStop = true;
+        new Thread(executor).start();
+    }
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
 
         command = new Commander(textField);
         command.addCommand(commandCancel, (Object... params)->{ 
-                executor.cancel();
+                startExecutor();
+                
         });
         command.addCommand(commandGenerate, (Object... params) -> {
                 String newCom = (String) params[0];

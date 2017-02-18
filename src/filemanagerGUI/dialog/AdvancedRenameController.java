@@ -69,9 +69,9 @@ public class AdvancedRenameController extends BaseController {
 private int startingNumber;
 private int increment;
 private LinkedList<TableItemObject> tableList;
-private VirtualFolder virtual;
+private ExtFolder virtual;
 
-public void beforeShow(String title,VirtualFolder virtual){
+public void beforeShow(String title, ExtFolder virtual){
     super.beforeShow(title);    
     this.setNumber();
     this.tableList = new LinkedList<>();
@@ -133,7 +133,7 @@ public void beforeShow(String title,VirtualFolder virtual){
     updateLists();
 }
 public void updateLists(){
-    
+    virtual.update();
     ArrayList<ExtPath> array = new ArrayList<>();
     if(recursive.selectedProperty().get()){
         this.virtual.getListRecursive().stream().forEach(file->{

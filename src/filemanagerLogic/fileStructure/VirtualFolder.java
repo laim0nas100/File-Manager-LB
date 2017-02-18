@@ -11,6 +11,7 @@ import filemanagerLogic.Enums.Identity;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  *
@@ -41,10 +42,10 @@ public class VirtualFolder extends ExtFolder {
         if(this.equals(FileManagerLB.VirtualFolders)){
             return;
         }
-        Collection<ExtPath> filesCol = this.getFilesCollection();
-        for(ExtPath file:filesCol){
-            if(!Files.exists(file.toPath())){
-                this.files.remove(file.propertyName.get());
+        Iterator<ExtPath> iter = this.getFilesCollection().iterator();
+        while(iter.hasNext()){
+            if(!Files.exists(iter.next().toPath())){
+                iter.remove();
             }
         }
         Collection<ExtFolder> folders = this.getFoldersFromFiles();
