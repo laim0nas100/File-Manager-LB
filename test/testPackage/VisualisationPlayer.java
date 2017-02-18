@@ -1,6 +1,7 @@
 package testPackage;
 
 
+import com.sun.jna.NativeLibrary;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -20,11 +21,15 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import org.junit.Test;
+import uk.co.caprica.vlcj.binding.LibC;
+import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
 
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
 /**
  * An example of embedded audio visualisation.
@@ -40,7 +45,7 @@ public class VisualisationPlayer {
     private final EmbeddedMediaPlayer mediaPlayer;
     private final CanvasVideoSurface videoSurface;
 
-//    private final String mrl;
+    private final String mrl;
 
     private static JFrame frame;
     private final JPanel contentPane;
@@ -53,20 +58,28 @@ public class VisualisationPlayer {
     private final JTextField widthTextField;
     private final JLabel heightLabel;
     private final JTextField heightTextField;
+    private String file = "E:\\VA.mp4";
+    
+    
+    public static void main(String...arg) throws Exception {
+        String path = "E:\\WindowsProgramFiles\\VLC"; 
+        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), path);
+        LibC.INSTANCE._putenv(String.format("%s=%s", "VLC_PLUGIN_PATH", path+"\\"+"plugins"));
 
-    public static void main(final String[] args) throws Exception {
-        new NativeDiscovery().discover();
+//        new NativeDiscovery(path).discover();
+        System.out.println(LibVlc.INSTANCE.libvlc_get_version());
+
         frame = new JFrame("vlcj audio visualisation");
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new VisualisationPlayer("‪E:\\FileZZZ\\General Music Folder\\G-Eazy X Bebe Rexha - Me, Myself & I (Audio).mp3").start();
+                new VisualisationPlayer().start();
             }
         });
     }
-
-    public VisualisationPlayer(String mrl) {
-//        this.mrl = mrl;
+    
+    public VisualisationPlayer() {
+        this.mrl = file;
 
         factory = new MediaPlayerFactory();
         mediaPlayer = factory.newEmbeddedMediaPlayer();
@@ -140,6 +153,6 @@ public class VisualisationPlayer {
 
     private void doPlay() {
         String[] options = {"audio-visual=visual", "effect-list=" + comboBox.getSelectedItem(), "effect-width=" + widthTextField.getText(), "effect-height=" + heightTextField.getText()};
-        mediaPlayer.playMedia("/mnt/Extra-Space/Vexento/Axero & Vexento - Our Road.mp3", options);
+        mediaPlayer.playMedia(mrl, options);
     }
 }

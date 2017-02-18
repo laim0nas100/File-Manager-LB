@@ -20,9 +20,11 @@ import java.awt.Color;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +53,11 @@ import javafx.scene.input.TransferMode;
 import javax.swing.JFrame;
 import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
+import uk.co.caprica.vlcj.discovery.NativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.StandardNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.linux.DefaultLinuxNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.mac.DefaultMacNativeDiscoveryStrategy;
+import uk.co.caprica.vlcj.discovery.windows.DefaultWindowsNativeDiscoveryStrategy;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
@@ -132,7 +139,59 @@ public class MediaPlayerController extends BaseController {
     }
     public void discover() throws InterruptedException, VLCNotFoundException{    
         if(!VLCfound){
-            VLCfound = new NativeDiscovery(VLC_SEARCH_PATH).discover();
+            NativeDiscoveryStrategy[] array = new StandardNativeDiscoveryStrategy[]{
+                new DefaultWindowsNativeDiscoveryStrategy(),
+                new DefaultLinuxNativeDiscoveryStrategy(),
+                new DefaultMacNativeDiscoveryStrategy()
+            };
+            int supportedOS = -1;
+            for(int i = 0; i<array.length; i++){
+                if(array[i].supported()){
+                    supportedOS = i;
+                    break;
+                }
+            }
+            switch(supportedOS){
+                case 0:{
+                    array[supportedOS] = new DefaultWindowsNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 1:{
+                    array[supportedOS] = new DefaultLinuxNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 2:{
+                    array[supportedOS] = new DefaultMacNativeDiscoveryStrategy(){
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) { 
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                default:{
+                    //unsupported OS?
+                } 
+            }
+            if(supportedOS != -1){
+                Log.write("Array:"+Arrays.asList(array));
+                VLCfound = new NativeDiscovery(new DefaultWindowsNativeDiscoveryStrategy(),
+                new DefaultLinuxNativeDiscoveryStrategy(),
+                new DefaultMacNativeDiscoveryStrategy()).discover();
+            }
             if(VLCfound){
                 Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
             }else{
