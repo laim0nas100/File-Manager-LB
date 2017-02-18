@@ -187,10 +187,7 @@ public class MediaPlayerController extends BaseController {
                 } 
             }
             if(supportedOS != -1){
-                Log.write("Array:"+Arrays.asList(array));
-                VLCfound = new NativeDiscovery(new DefaultWindowsNativeDiscoveryStrategy(),
-                new DefaultLinuxNativeDiscoveryStrategy(),
-                new DefaultMacNativeDiscoveryStrategy()).discover();
+                VLCfound = new NativeDiscovery(array[supportedOS]).discover();
             }
             if(VLCfound){
                 Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
