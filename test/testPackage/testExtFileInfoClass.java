@@ -5,6 +5,7 @@
  */
 package testPackage;
 
+import LibraryLB.Log;
 import org.junit.Test;
 import utility.PathStringCommands;
 
@@ -17,11 +18,14 @@ public class testExtFileInfoClass {
     
     @Test
     public void test1(){
-        String path1 = "file";
+        String path1 = "ok.";
         String path2 = "/home/lemmin/Android/MyAlarm/file.lol";
         PathStringCommands info = new PathStringCommands(path1);
-        System.out.println(info.getName(false));
-        System.out.println(info.getName(true));
+//        System.out.println(info.getName(false));
+//        System.out.println(info.getExtension());
+        PathStringCommands p1 = new PathStringCommands("C:\\");
+        PathStringCommands p2 = new PathStringCommands("C:\\test\\New New New New File");
+        Log.write(p1.relativePathTo(p2.getPath()));
 //        for(int i=0; i<7;i++){
 //            System.out.println(i+" "+info.getParent(i));
 //

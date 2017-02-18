@@ -9,7 +9,6 @@ import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
-import LibraryLB.TaskExecutor;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -154,9 +153,7 @@ public class FileManagerLB extends Application {
             CommandWindowController.executor.cancel();
         }
         readParameters();
-        CommandWindowController.executor = new TaskExecutor(CommandWindowController.maxExecutablesAtOnce,1);
-        CommandWindowController.executor.neverStop = true;
-        new Thread(CommandWindowController.executor).start();
+        CommandWindowController.startExecutor();
         Platform.runLater(()->{
             try{
                 Files.deleteIfExists(ArtificialRoot.toPath());

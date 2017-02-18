@@ -264,9 +264,7 @@ public class MainController extends BaseController{
     }
     public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
-            VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
-            folder.addAll(MC.currentDir.getFilesCollection());
-            ViewManager.getInstance().newAdvancedRenameDialog(folder);
+            ViewManager.getInstance().newAdvancedRenameDialog(MC.currentDir);
         }
     }
     public void advancedRenameMarked(){
@@ -505,12 +503,14 @@ public class MainController extends BaseController{
         try{
             if(possibleDir.equals(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
                 changeToDir(FileManagerLB.ArtificialRoot);
-            }else{
+            } 
+            else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
-                if(fileAndPopulate!=null){
+                if(MC.currentDir.equals(fileAndPopulate)){
+                    update();
+                }
+                else{
                     this.changeToDir(fileAndPopulate);
-                }else{
-                    update();//never should happen
                 }
                 
             }
