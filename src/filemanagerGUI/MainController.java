@@ -5,7 +5,7 @@
  */
 package filemanagerGUI;
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.LocationInRoot;
@@ -39,6 +39,7 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
+import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
@@ -145,9 +146,12 @@ public class MainController extends BaseController{
     private SimpleIntegerProperty propertySelectedSize;
     private SimpleIntegerProperty propertyMarkedSelectedSize;
     private Task searchTask;
-    
-    private int localSearchCounter = 500;
-    private Task localSearchTask;
+   
+    private TimeoutTask localSearchTask = new TimeoutTask(500,100,() ->{
+        Platform.runLater(()->{
+           localSearch();  
+        });
+    });
     
     public ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder currentDir){
@@ -204,6 +208,8 @@ public class MainController extends BaseController{
     
     @Override
     public void exit(){ 
+        this.localSearchTask.shutdown();
+        this.extTableView.resizeTask.shutdown();
         ViewManager.getInstance().closeFrame(windowID); 
     }
 
@@ -381,28 +387,7 @@ public class MainController extends BaseController{
         }   
     }
     public void localSearchTask(){
-        if(localSearchTask!=null){
-            localSearchTask.cancel();
-        }
-        localSearchCounter = 1000;
-        localSearchTask = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                while(localSearchCounter>=0){
-                    if(this.isCancelled()){
-                        return null;
-                    }
-                    localSearchCounter-=100;
-                    Thread.sleep(100);
-                }
-                Platform.runLater(()->{
-                  localSearch();  
-                });
-                
-                return null;
-            }
-        };
-        new Thread(localSearchTask).start();
+        localSearchTask.update();
     }
     public void localSearch(){
         Collection<ExtPath> currentContents = this.MC.getCurrentContents();
@@ -418,9 +403,7 @@ public class MainController extends BaseController{
                     newList.add(item);
                 }
             });
-            Platform.runLater(() ->{
-                extTableView.updateContentsAndSort(newList);
-            });
+            extTableView.updateContentsAndSort(newList);
         }
     }
     public void loadSnapshot(){

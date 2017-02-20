@@ -48,10 +48,6 @@ public class VirtualFolder extends ExtFolder {
                 iter.remove();
             }
         }
-        Collection<ExtFolder> folders = this.getFoldersFromFiles();
-        for(ExtFolder folder:folders){
-            folder.update();
-        }
         
     }
     @Override

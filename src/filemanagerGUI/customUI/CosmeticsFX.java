@@ -5,6 +5,7 @@
  */
 package filemanagerGUI.customUI;
 
+import LibraryLB.Threads.TimeoutTask;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -106,12 +107,17 @@ public class CosmeticsFX {
     }
     public static class ExtTableView{
         public final long resizeTimeout = 500;
+        public SimpleBooleanProperty recentlyResized;
+        public TimeoutTask resizeTask = new TimeoutTask(resizeTimeout,100,()->{
+            recentlyResized.set(false);
+        });
+        
         public ArrayList<SortType> sortTypes;
         public ArrayList<TableColumn> sortColumns;
         public int sortByColumn;
         public boolean sortable = true;
         public TableView table;
-        public SimpleBooleanProperty recentlyResized;
+        
         public ExtTableView(TableView table){
            
             this.table = table; 
@@ -145,17 +151,8 @@ public class CosmeticsFX {
         listerColumn.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
-//                System.out.print(listerColumn.getText() + "  ");
-//                System.out.println(t1);
                 recentlyResized.set(true);
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(resizeTimeout);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                    recentlyResized.set(false);
-                }).start();
+                resizeTask.update();
             }
         });
     }

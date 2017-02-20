@@ -5,10 +5,12 @@
  */
 package filemanagerGUI.dialog;
 
+import LibraryLB.Threads.TimeoutTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -33,8 +35,23 @@ public class RenameDialogController extends TextInputDialogController {
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    
-    
+    private TimeoutTask folderUpdateTask = new TimeoutTask(1000,100,()->{
+        update(); 
+        Platform.runLater(() ->{
+            if(!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0){
+                nameAvailable.setText("Available");   
+                nameIsAvailable.set(true);
+            }
+        });
+            
+        
+    });
+
+    @Override
+    public void exit() {
+        super.exit(); //To change body of generated methods, choose Tools | Templates.
+        this.folderUpdateTask.shutdown();
+    }
     public void afterShow(ExtFolder folder,ExtPath itemToRename){
         
         this.description.setText("Rename "+itemToRename.propertyName.get());
@@ -56,14 +73,10 @@ public class RenameDialogController extends TextInputDialogController {
         if(!Files.exists(itemToRename.toPath())){
             exit();
         }
-        update(); 
-        if(listToCheck.contains(textField.getText()) ||textField.getText().length()<1){
-            nameIsAvailable.set(false);
-            nameAvailable.setText("Taken");
-        }else{
-            nameAvailable.setText("Available");   
-            nameIsAvailable.set(true);
-        }
+        nameIsAvailable.set(false);
+        nameAvailable.setText("Taken");
+        folderUpdateTask.update();
+        
     }
     @Override
     public void apply(){
@@ -83,6 +96,7 @@ public class RenameDialogController extends TextInputDialogController {
 
     @Override
     public void update() {
+        
         listToCheck.clear();
         folder.update();
         for(ExtPath file:folder.getFilesCollection()){

@@ -5,7 +5,7 @@
  */
 package filemanagerLogic;
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import utility.ErrorReport;
 
 /**

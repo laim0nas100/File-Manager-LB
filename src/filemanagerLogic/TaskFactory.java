@@ -5,7 +5,7 @@
  */
 package filemanagerLogic;
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -19,7 +19,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import LibraryLB.StringOperations;
-import LibraryLB.TaskExecutor;
+import LibraryLB.Threads.TaskExecutor;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;

@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -429,10 +429,6 @@ public class DirSyncController extends BaseController {
     }
 
     @Override
-    public void update() {
-        if(this.snapshot0!=null && this.snapshot1!=null){
-           this.compare(); 
-        }
-        
+    public void update(){ 
     }
 }

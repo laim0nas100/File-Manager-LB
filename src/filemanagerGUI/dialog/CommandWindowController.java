@@ -10,7 +10,7 @@ import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
-import LibraryLB.TaskExecutor;
+import LibraryLB.Threads.TaskExecutor;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;

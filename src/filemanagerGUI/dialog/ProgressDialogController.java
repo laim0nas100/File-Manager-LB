@@ -5,7 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import java.util.Arrays;

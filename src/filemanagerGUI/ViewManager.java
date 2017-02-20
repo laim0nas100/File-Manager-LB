@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 
-import LibraryLB.ExtTask;
+import LibraryLB.Threads.ExtTask;
 import LibraryLB.Log;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
@@ -20,7 +20,6 @@ import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
-import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;

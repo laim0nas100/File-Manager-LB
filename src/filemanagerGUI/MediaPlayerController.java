@@ -6,6 +6,7 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
+import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums.Identity;
@@ -20,7 +21,6 @@ import java.awt.Color;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -30,7 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -61,6 +61,7 @@ import uk.co.caprica.vlcj.discovery.windows.DefaultWindowsNativeDiscoveryStrateg
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.discoverer.MediaDiscoverer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
@@ -101,11 +102,8 @@ public class MediaPlayerController extends BaseController {
     private boolean startedWithVideo = false;
     private int index = 0;
     private Float minDelta = 0.005f;
-    private Float delta = 0f;
-    private int inDrag;
     private long currentLength = 0;
-    private boolean freeze;
-    private boolean released = false;
+    private SimpleBooleanProperty released = new SimpleBooleanProperty(false);
     private boolean stopping = false;
     private boolean playTaskComplete = false;
     private String typeLoopSong = "Loop file";
@@ -117,8 +115,16 @@ public class MediaPlayerController extends BaseController {
     private ArrayDeque<JFrame> frames = new ArrayDeque<>();
     private ArrayDeque<MediaPlayer> players = new ArrayDeque<>();
 
-    private SimpleFloatProperty valueToSet = new SimpleFloatProperty(0f);
     ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
+    TimeoutTask dragTask = new TimeoutTask(300,20,()->{
+           float val = seekSlider.valueProperty().divide(100).floatValue();
+           Log.write(getCurrentPlayer().getPosition(),val);
+           if(Math.abs(getCurrentPlayer().getPosition()-val)>minDelta){
+                    val = (float) normalize(val,3);
+                    getCurrentPlayer().setPosition(val);
+                    Log.write("Set new seek");
+            } 
+        });
        
     private MediaPlayer getCurrentPlayer(){
         return this.players.getLast();
@@ -126,12 +132,6 @@ public class MediaPlayerController extends BaseController {
     private JFrame getCurrentFrame(){
         return this.frames.getLast();
     }
-    private SimpleTask endDrag = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                return null;
-            }
-        };
     public class VLCNotFoundException extends Exception{
         VLCNotFoundException(String str){
             super(str);
@@ -205,13 +205,12 @@ public class MediaPlayerController extends BaseController {
         newPlayer.setVideoSurface(newVideoSurface);
 //        Log.write("Inside: done with surface");
         JFrame jframe = new JFrame();
-        jframe.setBackground(Color.black);
+        
         
 //        Log.write("New JFrame done");
-        jframe.setVisible(true);
-        jframe.setSize(getCurrentFrame().getSize());
-        jframe.setLocation(getCurrentFrame().getLocation());
         
+        jframe.setVisible(true);
+        jframe.setExtendedState(JFrame.ICONIFIED);        
 //        Log.write("Set visible");
         jframe.add(canvas);
         jframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -222,7 +221,15 @@ public class MediaPlayerController extends BaseController {
             }
         });
 //        Log.write("Inside: done with frame");
-        jframe.setVisible(showVideo.selectedProperty().get());
+        if(showVideo.selectedProperty().get()){
+            jframe.setExtendedState(JFrame.NORMAL);
+            jframe.setVisible(true);
+        }else{
+            jframe.setVisible(false);
+        }
+        jframe.setBackground(Color.black);
+        jframe.setSize(getCurrentFrame().getSize());
+        jframe.setLocation(getCurrentFrame().getLocation());
         frames.add(jframe);
         newPlayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
             @Override
@@ -277,28 +284,27 @@ public class MediaPlayerController extends BaseController {
             getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
         });
         volumeSlider.setValue(100);
-        
-        valueToSet.bind(seekSlider.valueProperty().divide(100f));
+        dragTask.andConditionalCheck(released);
         seekSlider.setOnMousePressed(event->{
-            this.inDrag = 10;
-            this.delta = getCurrentPlayer().getPosition();
-            this.released = false;
-            startThread();
+            dragTask.update();
+            released.set(false);
         });
         seekSlider.setOnMouseDragged(value->{
-            this.inDrag = 10;        
+            dragTask.update();
 
         });
         seekSlider.setOnMouseReleased(event->{
-            this.released = true;
+            released.set(true);
         });
-        setUpTable();      
+            
         buttonPlayPrev.setOnAction(event ->{
             playNext(-1,true);
         });
         buttonPlayNext.setOnAction(event ->{
             playNext(1,true);
         });
+        
+        setUpTable();  
         
         Platform.runLater(()->{
             execService.scheduleAtFixedRate(()->{
@@ -319,9 +325,13 @@ public class MediaPlayerController extends BaseController {
             playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
             playType.getSelectionModel().select(0);
             showVideo.selectedProperty().addListener(listener->{
-            
-                getCurrentFrame().setVisible(showVideo.selectedProperty().get());
-                if(showVideo.selectedProperty().get() && !startedWithVideo){
+                boolean visible = showVideo.selectedProperty().get();
+                getCurrentFrame().setVisible(visible);
+                if(visible){
+                    getCurrentFrame().setExtendedState(JFrame.NORMAL);
+                }
+                
+                if(visible && !startedWithVideo){
                     if(getCurrentPlayer().isPlaying()){
                         relaunch();
                     }
@@ -462,35 +472,7 @@ public class MediaPlayerController extends BaseController {
         table.setContextMenu(tree.constructContextMenu());
         extTableView.prepareChangeListeners();
     }
-    public void startThread(){
-        
-        freeze = true;
-        endDrag.cancel();
-        endDrag = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                while(!released || inDrag>0){
-                    if(this.isCancelled()){
-                        return null;
-                    }
-                    if(inDrag>0){
-                        inDrag--;
-                    }
-                    Thread.sleep(20);
-                }
-                if(Math.abs(delta-valueToSet.get())>minDelta){
-                    float val = (float) normalize(valueToSet.doubleValue(),3);
-                    getCurrentPlayer().setPosition(val);
-                    
-                }
-                return null;
-            }
-        };
-        endDrag.setOnSucceeded(event->{
-            freeze = false;
-        });
-        new Thread(endDrag).start();
-    }
+
     public void updateSeek() {
         Float position;
         if(stopping){
@@ -504,7 +486,7 @@ public class MediaPlayerController extends BaseController {
         
         long millisPassed = (long)(this.currentLength*position);
         this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
-        if(!freeze){
+        if(!this.dragTask.isInAction()){
             this.seekSlider.valueProperty().set(position*100);
         }
         
@@ -557,7 +539,9 @@ public class MediaPlayerController extends BaseController {
     @Override
     public void exit(){
         stopping = true;
-        this.execService.shutdownNow();
+        this.execService.shutdown();
+        this.dragTask.shutdown();
+        this.extTableView.resizeTask.shutdown();
         players.forEach(player ->{
             player.stop();
             player.release();
