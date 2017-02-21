@@ -645,10 +645,10 @@ public class MediaPlayerController extends BaseController {
                        getCurrentPlayer().stop();
                     }
                     
-                    do{
-                        
-                        Thread.sleep(10);
-                    }while(getCurrentPlayer().isPlaying());
+//                    do{
+//                        
+//                        Thread.sleep(10);
+//                    }while(getCurrentPlayer().isPlaying());
                     getCurrentFrame().setTitle(filePlaying.getName(true));
                     startedWithVideo = getCurrentFrame().isVisible();
                     boolean playable = getCurrentPlayer().prepareMedia(filePlaying.getAbsolutePath(),getOptions());

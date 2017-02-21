@@ -13,6 +13,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import utility.ErrorReport;
 
 /**
@@ -32,7 +33,7 @@ public class LocationAPI {
         ExtPath file = FileManagerLB.ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
         pathl = pathl.trim();
-        if(!pathl.isEmpty() && !pathl.startsWith(FileManagerLB.ROOT_NAME)){
+        if(!pathl.isEmpty() && !pathl.equals(FileManagerLB.ROOT_NAME)){
             
             try{
                 ExtPath tempFile = new ExtPath(pathl);
@@ -40,18 +41,14 @@ public class LocationAPI {
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
                         tempFile = new ExtPath(path.toAbsolutePath().toString());
-                        if(!tempFile.isRoot()){
+                        if(!FileManagerLB.getRootSet().contains(path.getRoot().toString().toUpperCase(Locale.ROOT))){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 FileManagerLB.ArtificialRoot.update();
                             }
                         }
                     }
                 }catch(Exception e){
-                    //ErrorReport.report(new Exception("windows auto pathing exception"));
-                }
-                //loc = tempFile.getMapping();
-                if(Files.isDirectory(tempFile.toPath())){
-                    tempFile = new ExtFolder(tempFile.getAbsoluteDirectory());
+                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = tempFile.getMapping();
                 Log.write("Location:",loc);

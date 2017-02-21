@@ -79,20 +79,20 @@ public class FileManagerLB extends Application {
     public static boolean mountDevice(String name){
         boolean result = false;
         name = name.toUpperCase();
-        //Log.write("Mount:",name);
+        Log.write("Mount:",name);
         Path path = Paths.get(name);
         if(Files.isDirectory(path)){
             ExtFolder device = new ExtFolder(name);
             int nameCount = path.getNameCount();
-            //Log.write("Is direcory");
+//            Log.write("Is direcory");
             if(nameCount == 0){
                 result = true;
                 String newName = path.getRoot().toString();
-                //Log.writeln("newName= "+newName);
+//                Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
                 if(!ArtificialRoot.files.containsKey(newName)){
                     ArtificialRoot.files.put(newName, device);
-                    device.update();
+//                    device.update();
                     
                 }else{
                     result = false;
@@ -110,11 +110,12 @@ public class FileManagerLB extends Application {
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
     public static Set<String> getRootSet(){
-        HashSet<String> set = new HashSet<>();
-        for(ExtPath file:ArtificialRoot.files.values()){
-            set.add(file.propertyName.get());
-        }
-        return set;
+//        HashSet<String> set = new HashSet<>();
+//        for(ExtPath file:ArtificialRoot.files.values()){
+//            set.add(file.propertyName.get());
+//        }
+        return ArtificialRoot.files.keySet();
+//        return set;
         
     }
     public static void doOnExit(){

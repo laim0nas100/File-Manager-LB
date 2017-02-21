@@ -59,7 +59,7 @@ public class TaskFactory {
     }
     protected TaskFactory(){
         illegalCharacters = new HashSet<>();
-        Character[] array = new Character[] {
+        Character[] arrayWindows = new Character[] {
                 '\\',
                 '/',
                 '<',
@@ -70,7 +70,11 @@ public class TaskFactory {
                 ':',
                 '\"'
             };
-            illegalCharacters.addAll(Arrays.asList(array));
+        if(File.separator.equals('/')){
+            illegalCharacters.add('/');
+        }else{
+            illegalCharacters.addAll(Arrays.asList(arrayWindows));
+        }
     }
         
     private static final Comparator<ActionFile> cmpDesc = (ActionFile f1, ActionFile f2) -> {

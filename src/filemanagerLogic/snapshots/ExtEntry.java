@@ -25,10 +25,8 @@ public class ExtEntry extends Entry{
         actionCompleted = new SimpleBooleanProperty(false);
         actionType = new SimpleIntegerProperty(0);
     }
-    
-    public void setAction(int act){
-        this.actionType.set(act);
-        //Action Types
+    public static String getActionDescription(int act){
+       //Action Types
             //0 - no Action
             //1 - copy to source
             //2 - copy to compared
@@ -36,27 +34,28 @@ public class ExtEntry extends Entry{
             //4 - delete from compared
         switch(act){
             case(1):{
-                this.action.set("(1) Copy from compared to source");
-                break;
+                return ("(1) Copy from compared to source");
             }
             case(2):{
-                this.action.set("(2) Copy from source to compared");
-                break;
+                return ("(2) Copy from source to compared");
             }
             case(3):{
-                this.action.set("(3) Delete from source");
-                break;
+                return ("(3) Delete from source");
             }
             case(4):{
-                this.action.set("(4) Delete from compared");
-                break;
+                return ("(4) Delete from compared");
             }
             default:{
-                this.action.set("(0) No Action");
-                this.actionType.set(0);
-                break;
+                return ("(0) No Action");
             }
+        } 
+    }
+    public void setAction(int act){
+        if(act<0 || act>4){
+            this.actionType.set(0);
         }
+        this.action.set(getActionDescription(this.actionType.get()));
+        
     }
     @Override
     public String toString(){

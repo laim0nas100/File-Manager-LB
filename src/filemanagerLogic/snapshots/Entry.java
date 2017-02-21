@@ -50,8 +50,8 @@ public class Entry{
         @Override
         public String toString(){
             String s="";
-            s+= "'"+this.absolutePath;
-            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t" +relativePath +"\t "+(double)size/Enums.DATA_SIZE.KB.size;
+            s+= "'"+this.relativePath+"' ";
+            s+= new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(lastModified))) +"\t "+(double)size/Enums.DATA_SIZE.KB.size;
             if(isNew){
                 s+=" new";
             }else if(isMissing){

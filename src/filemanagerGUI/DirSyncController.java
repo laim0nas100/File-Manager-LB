@@ -40,9 +40,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
+import LibraryLB.Threads.TaskExecutor;
+import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
 import javafx.scene.control.MenuItem;
+import utility.ErrorReport;
 
 /**
  * FXML Controller class
@@ -80,7 +83,14 @@ public class DirSyncController extends BaseController {
     private Snapshot result;
     private ExtPath file0;
     private ExtPath file1;
-    private ObservableList<TableColumn<ExtEntry,String>> tableColumns; 
+    private ObservableList<TableColumn<ExtEntry,String>> tableColumns;
+
+    private TimeoutTask directoryCheckTask = new TimeoutTask(1000,100,()->{
+        Platform.runLater(()->{
+            checkDirs();
+        });
+    });
+    
     
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
         @Override
@@ -93,10 +103,13 @@ public class DirSyncController extends BaseController {
     
     @Override
     public void beforeShow(String title){
-    super.beforeShow(title);
     Platform.runLater(()->{
         
-        
+        this.directoryCheckTask.addOnUpdate(() ->{
+            this.btnLoad.setDisable(true);
+            this.btnCompare.setDisable(true);
+            this.btnSync.setDisable(true);
+        });
         ObservableList<String> options = FXCollections.observableArrayList();
         options.add("Bidirectional");
         options.add("Make B like A");
@@ -122,7 +135,7 @@ public class DirSyncController extends BaseController {
         tableColumns.get(0).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-                String path =cellData.getValue().relativePath;
+                String path = cellData.getValue().relativePath;
                 SimpleStringProperty string = new SimpleStringProperty(path);
                 if(checkShowAbsolutePath.selectedProperty().get()){
                     path = cellData.getValue().absolutePath;
@@ -185,8 +198,7 @@ public class DirSyncController extends BaseController {
         MenuTree menuTree = new MenuTree(null);
         for(int i=0;i<5;i++){
             final int action = i;
-            MenuItem item = new MenuItem("Set Action " +action);
-            
+            MenuItem item = new MenuItem("Set " +ExtEntry.getActionDescription(action));
             item.setOnAction(eh ->{
                 ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
                 for(Object ob:selectedItems){
@@ -204,6 +216,15 @@ public class DirSyncController extends BaseController {
     @Override
     public void afterShow() {
         super.afterShow();
+        this.directoryCheckTask.addOnUpdate(()->{
+            this.btnCompare.setDisable(true);
+        });
+        this.directory0.textProperty().addListener(onChange ->{
+            this.directoryCheckTask.update();
+        });
+        this.directory1.textProperty().addListener(onChange ->{
+            this.directoryCheckTask.update();
+        });
         
     }
     public void checkDirs(){
@@ -232,45 +253,57 @@ public class DirSyncController extends BaseController {
             btnLoad.setDisable(false);
         }
     }
-    public void setDirs(){
-        if(!file0.isAbsoluteOrVirtualFolders()){
+    public void setDirs() throws Exception{
+        if(!file0.isVirtual.get()){
             directory0.setText(file0.getAbsoluteDirectory());
         }else{
-            directory0.setText("");
+            throw new Exception("Bad directory setup");
         }
-        if(!file1.isAbsoluteOrVirtualFolders()){
+        if(!file1.isVirtual.get()){
             directory1.setText(file1.getAbsoluteDirectory());
         }else{
-            directory1.setText("");
+            throw new Exception("Bad directory setup");
         }
     }
     public void load(){
+        try {
             setDirs();
-            snapshot0 = SnapshotAPI.getEmptySnapshot();
-            snapshot1 = SnapshotAPI.getEmptySnapshot();
-            this.status.textProperty().set("Loading A");
-            this.btnSync.setDisable(true);
-            this.btnCompare.setDisable(true);
-            if(cond0&&cond1){           
-                Task<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask((directory0.getText()));
-                Task<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask((directory1.getText()));
-                task0.setOnSucceeded(eh ->{                  
-                    snapshot0 = task0.getValue();
-                    //Log.writeln(snapshot0);
-                    this.status.textProperty().set("Loading B");
-                    new Thread(task1).start();
-                });
-                task1.setOnSucceeded(eh ->{
-                    snapshot1 = task1.getValue();
-                    //Log.writeln(snapshot1);
-                    btnCompare.setDisable(false);
-                    this.status.textProperty().set("Done");
-                });
-                new Thread(task0).start();
-            }       
+        } catch (Exception ex) {
+            ErrorReport.report(ex);
+            return;
+        }
+            
+        snapshot0 = SnapshotAPI.getEmptySnapshot();
+        snapshot1 = SnapshotAPI.getEmptySnapshot();
+        this.status.textProperty().set("Populating directories:\n");
+        this.btnSync.setDisable(true);
+        this.btnCompare.setDisable(true);
+        if(cond0&&cond1){           
+            Task<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.getAbsolutePath());
+            Task<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.getAbsolutePath());
+            task0.setOnSucceeded(eh ->{                  
+                snapshot0 = task0.getValue();
+                status.setText(status.getText().concat(snapshot0.folderCreatedFrom+"\n"));
+            });
+            task1.setOnSucceeded(eh ->{
+                snapshot1 = task1.getValue();                
+                status.setText(status.getText().concat(snapshot1.folderCreatedFrom+"\n"));
+
+            });
+            
+            TaskExecutor executor = new TaskExecutor(2,5);
+            executor.addTask(task0);
+            executor.addTask(task1);
+            executor.neverStop = false;
+            executor.setOnSucceeded(eh ->{
+                btnCompare.setDisable(false);
+            });
+            new Thread(executor).start();
+        }       
     }
     
     public void compare(){
+        Runnable r = () ->{
             ObservableList sortOrder = table.getSortOrder();
             
             this.status.textProperty().set("Comparing");
@@ -382,13 +415,17 @@ public class DirSyncController extends BaseController {
             }
             
             
-        Platform.runLater(()->{
-            table.setItems(list);
-            table.getSortOrder().setAll(sortOrder);
-            table.sort();
-            this.status.textProperty().set("Done");
-            this.btnSync.setDisable(false);
-        });
+            Platform.runLater(()->{
+                table.setItems(list);
+                table.getSortOrder().setAll(sortOrder);
+                table.sort();
+                this.status.textProperty().set("Done");
+                this.btnSync.setDisable(false);
+            });
+        };
+        new Thread(r).start();
+        
+        
     }
     
     public void synchronize(){
@@ -421,7 +458,9 @@ public class DirSyncController extends BaseController {
         
         task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom,this.snapshot1.folderCreatedFrom,list);
 
-        task.setTaskDescription("Synchronization");
+        task.setTaskDescription("Synchronization: "+"\n"+
+                "Source:"+this.snapshot0.folderCreatedFrom +"\n"+
+                "Compared:"+this.snapshot1.folderCreatedFrom);
         
         ViewManager.getInstance().newProgressDialog(task);
         
@@ -430,5 +469,10 @@ public class DirSyncController extends BaseController {
 
     @Override
     public void update(){ 
+    }
+    @Override
+    public void exit(){
+        this.directoryCheckTask.shutdown();
+        super.exit();
     }
 }

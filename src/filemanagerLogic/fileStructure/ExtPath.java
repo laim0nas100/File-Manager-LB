@@ -188,14 +188,7 @@ public class ExtPath{
         return list; 
     }
     public boolean isRoot(){
-        String strPath = this.getAbsoluteDirectory();
-        Iterator<String> iterator = FileManagerLB.getRootSet().iterator();
-        while(iterator.hasNext()){
-            if(strPath.equalsIgnoreCase(iterator.next())){
-                return true;
-            }
-        }
-        return false;
+        return FileManagerLB.getRootSet().contains(this.getAbsoluteDirectory());
     }
     public String getAbsoluteDirectory(){
         return this.getAbsolutePath();

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -55,63 +54,51 @@ public class LocationInRootNode {
     public String toString(){
         String res = "";
         boolean isFolder = !leafs.values().isEmpty();
-        if(isFolder){
-            res+=folderStart;
+        
+        if(index>=0){
+            res+=index +""+ indexEnd + self + "\n";
         }
-        if(!isFolder){
-            res+=index +""+ indexEnd;
-        }
-        res+=""+self+"";
         if(isFolder){
-            res+="\n";
+            res+=folderStart + self + "\n";
         }
         for(LocationInRootNode node:leafs.values()){
             res += node.toString();
         }
         if(isFolder){
-            res+=folderEnd;
+            res+=folderEnd + "\n";
         }
-        res+="\n";
         
         return res;
     }
     public String specialString(){
         boolean isFolder = !leafs.values().isEmpty();
         String res = "";
-        Collection<LocationInRootNode> values;
+        Collection<LocationInRootNode> values = new ArrayList<>();
         if(isFolder){
             ArrayList<LocationInRootNode> folders = new ArrayList<>();
             ArrayList<LocationInRootNode> files = new ArrayList<>();
-            for(LocationInRootNode node:this.leafs.values()){
+            for(LocationInRootNode node:leafs.values()){
                 if(node.leafs.isEmpty()){
                     files.add(node);
                 }else{
                     folders.add(node);
                 }
             }   
-            values = new ArrayList<>();
             values.addAll(folders);
             values.addAll(files);
-        }else{
-            values = new ArrayList<>();
         }
-        
-        if(isFolder){
-            res+=folderStart;
-        }else{
-            res+=index +""+ indexEnd;
+        if(index>=0){
+            res+=index +""+ indexEnd + self + "\n";
         }
-        res+=""+self+"";
         if(isFolder){
-            res+="\n";
+            res+=folderStart + self + "\n";
         }
         for(LocationInRootNode node:values){
             res+=node.specialString();
         }
         if(isFolder){
-            res+=folderEnd;
+            res+=folderEnd + "\n";
         }
-        res+="\n";
         return res;
     }
     private class StringWithIndex{
@@ -135,7 +122,6 @@ public class LocationInRootNode {
             }
         }
         List<String> asList = Arrays.asList(array);
-        Iterator<String> iterator = asList.iterator();
         ArrayList<String> list = new ArrayList<>();
         for(String s:asList){
             if(s!=null){

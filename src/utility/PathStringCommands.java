@@ -89,7 +89,10 @@ public class PathStringCommands {
        
     }
     public String relativePathFrom(String possibleParent){
-        String path = absolutePath+File.separator;
+        if(!possibleParent.endsWith(File.separator)){
+            possibleParent+=File.separator;
+        }
+        String path = absolutePath;
         if(!path.contains(possibleParent) || path.equalsIgnoreCase(possibleParent)){
             return absolutePath;
         }else{

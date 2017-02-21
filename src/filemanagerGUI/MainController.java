@@ -250,8 +250,6 @@ public class MainController extends BaseController{
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
 
-            
-            
             localSearch();
 
         });
@@ -304,17 +302,35 @@ public class MainController extends BaseController{
         }
         Log.write(root.specialString());
         Log.write("RESOLVED");
-        for(String p:root.resolve(false)){
+        for(String p:root.resolve(true)){
             Log.write(p);
         }
         Log.write("END TEST");
-        
-        
+  
     }
 
     
     public void openCustomDir() {
         changeToCustomDir(fileAddress.field.getText().trim());
+    }
+    private void changeToCustomDir(String possibleDir){
+        try{
+            if(possibleDir.equals(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
+                changeToDir(FileManagerLB.ArtificialRoot);
+            } 
+            else{
+                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
+                if(MC.currentDir.equals(fileAndPopulate)){
+                    update();
+                }
+                else{
+                    this.changeToDir(fileAndPopulate);
+                }
+                
+            }
+        } catch (Exception ex) {
+            ErrorReport.report(ex);
+        }
     }    
     public void changeToParent(){
         MC.changeToParent();
@@ -340,6 +356,7 @@ public class MainController extends BaseController{
        update();
       
     }
+    
     public void searchTyped(){
         if(!this.useRegex.isSelected()){
             search();
@@ -482,25 +499,7 @@ public class MainController extends BaseController{
             }
         }
     }
-    private void changeToCustomDir(String possibleDir){
-        try{
-            if(possibleDir.equals(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
-                changeToDir(FileManagerLB.ArtificialRoot);
-            } 
-            else{
-                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
-                if(MC.currentDir.equals(fileAndPopulate)){
-                    update();
-                }
-                else{
-                    this.changeToDir(fileAndPopulate);
-                }
-                
-            }
-        } catch (Exception ex) {
-            ErrorReport.report(ex);
-        }
-    }
+    
     private Stage getStage(){
         return ViewManager.getInstance().getFrame(windowID).getStage();
     }

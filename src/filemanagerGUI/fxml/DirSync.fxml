@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<SplitPane dividerPositions="0.5" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.DirSyncController">
+<SplitPane dividerPositions="0.5" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.DirSyncController">
   <items>
     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="141.0" prefWidth="598.0">
          <children>
@@ -22,7 +22,7 @@
                <children>
                   <HBox alignment="CENTER">
                      <children>
-                        <TextField fx:id="directory0" alignment="TOP_LEFT" onAction="#setDirs" onKeyReleased="#checkDirs" onMouseClicked="#checkDirs" promptText="Directory A" HBox.hgrow="ALWAYS">
+                        <TextField fx:id="directory0" alignment="TOP_LEFT" promptText="Directory A" HBox.hgrow="ALWAYS">
                            <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                            </HBox.margin>
@@ -36,7 +36,7 @@
                   </HBox>
                   <HBox alignment="CENTER">
                      <children>
-                        <TextField fx:id="directory1" onAction="#setDirs" onKeyReleased="#checkDirs" onMouseClicked="#checkDirs" promptText="Directory B" HBox.hgrow="ALWAYS">
+                        <TextField fx:id="directory1" promptText="Directory B" HBox.hgrow="ALWAYS">
                            <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                            </HBox.margin>
