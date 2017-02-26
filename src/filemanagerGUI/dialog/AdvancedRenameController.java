@@ -18,6 +18,8 @@ import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
@@ -242,10 +244,10 @@ public void setNumber(){
         increment = 1;
         this.tfStartingNumber.setText(startingNumber+"");
         this.tfIncrement.setText(increment+"");
-        //reportError(ex);
     }
 }
 public void apply(){
+    HashSet<ExtPath> set = new HashSet<>();
     for(Object object:table.getItems()){
         TableItemObject ob = (TableItemObject) object;
         
@@ -253,10 +255,16 @@ public void apply(){
             ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.getParent(1)));
             PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
             TaskFactory.getInstance().renameTo(ob.path1.getPath(),ob.path2.getName(true),fallback.getName(true));
+            if(this.virtual.isVirtual.get())
+                set.add(LocationAPI.getInstance().getFileOptimized(ob.path2.toString()));
+            
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
     }
+    set.forEach(item ->{
+        this.virtual.files.put(item.getName(true), item);
+    });
     update();
     Platform.runLater(()->{
         update();

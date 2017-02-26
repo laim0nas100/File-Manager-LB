@@ -49,11 +49,9 @@ public class RenameDialogController extends TextInputDialogController {
 
     @Override
     public void exit() {
-        super.exit(); //To change body of generated methods, choose Tools | Templates.
-        this.folderUpdateTask.shutdown();
+        super.exit(); 
     }
     public void afterShow(ExtFolder folder,ExtPath itemToRename){
-        
         this.description.setText("Rename "+itemToRename.propertyName.get());
         this.itemToRename = itemToRename;
         this.textField.setText(itemToRename.propertyName.get());

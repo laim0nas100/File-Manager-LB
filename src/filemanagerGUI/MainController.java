@@ -147,7 +147,7 @@ public class MainController extends BaseController{
     private SimpleIntegerProperty propertyMarkedSelectedSize;
     private Task searchTask;
    
-    private TimeoutTask localSearchTask = new TimeoutTask(500,100,() ->{
+    private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
            localSearch();  
         });
@@ -202,14 +202,16 @@ public class MainController extends BaseController{
         nameCol.setSortType(TableColumn.SortType.ASCENDING);
         tableView.getSortOrder().add(typeCol);
         tableView.getSortOrder().add(nameCol);
-
         update();
     }
     
     @Override
+    public void afterShow(){
+        
+    }
+    @Override
     public void exit(){ 
-        this.localSearchTask.shutdown();
-        this.extTableView.resizeTask.shutdown();
+//        this.localSearchTask.shutdown();
         ViewManager.getInstance().closeFrame(windowID); 
     }
 
@@ -294,18 +296,19 @@ public class MainController extends BaseController{
 
     }
     public void test() throws IOException{
-        Log.write("TEST");
-        LocationInRootNode root = new LocationInRootNode("",-1);
-        int i = 0;
-        for(ExtPath item:MainController.markedList){
-            root.add(new LocationInRoot(item.getAbsolutePath(),false),i++);
-        }
-        Log.write(root.specialString());
-        Log.write("RESOLVED");
-        for(String p:root.resolve(true)){
-            Log.write(p);
-        }
-        Log.write("END TEST");
+//        Log.write("TEST");
+//        LocationInRootNode root = new LocationInRootNode("",-1);
+//        int i = 0;
+//        for(ExtPath item:MainController.markedList){
+//            root.add(new LocationInRoot(item.getAbsolutePath(),false),i++);
+//        }
+//        Log.write(root.specialString());
+//        Log.write("RESOLVED");
+//        for(String p:root.resolve(true)){
+//            Log.write(p);
+//        }
+//        Log.write("END TEST");
+        Log.write(ViewManager.getInstance().frames.keySet());
   
     }
 
@@ -500,9 +503,6 @@ public class MainController extends BaseController{
         }
     }
     
-    private Stage getStage(){
-        return ViewManager.getInstance().getFrame(windowID).getStage();
-    }
     private void hideAllContextMenus(){
         tableContextMenu.hide();
         markedContextMenu.hide();

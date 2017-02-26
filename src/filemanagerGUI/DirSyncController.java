@@ -110,6 +110,9 @@ public class DirSyncController extends BaseController {
             this.btnCompare.setDisable(true);
             this.btnSync.setDisable(true);
         });
+        this.btnLoad.setDisable(true);
+        this.btnCompare.setDisable(true);
+        this.btnSync.setDisable(true);
         ObservableList<String> options = FXCollections.observableArrayList();
         options.add("Bidirectional");
         options.add("Make B like A");
@@ -216,6 +219,9 @@ public class DirSyncController extends BaseController {
     @Override
     public void afterShow() {
         super.afterShow();
+        
+//        this.directoryCheckTask.doneCheck.bind(this.isGone);
+        
         this.directoryCheckTask.addOnUpdate(()->{
             this.btnCompare.setDisable(true);
         });
@@ -225,6 +231,9 @@ public class DirSyncController extends BaseController {
         this.directory1.textProperty().addListener(onChange ->{
             this.directoryCheckTask.update();
         });
+//        new Thread(this.directoryCheckTask).start();
+        
+                
         
     }
     public void checkDirs(){
@@ -472,7 +481,7 @@ public class DirSyncController extends BaseController {
     }
     @Override
     public void exit(){
-        this.directoryCheckTask.shutdown();
+//        this.directoryCheckTask.shutdown();
         super.exit();
     }
 }

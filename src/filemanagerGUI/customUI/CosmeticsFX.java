@@ -30,8 +30,7 @@ import utility.ErrorReport;
  */
 public class CosmeticsFX {
     public static class MenuTree{
-        //comment
-        //more comment
+
         HashMap<String,MenuTree> leafs;
         LinkedList<String> myMapping;
         MenuItem data;
@@ -108,7 +107,7 @@ public class CosmeticsFX {
     public static class ExtTableView{
         public final long resizeTimeout = 500;
         public SimpleBooleanProperty recentlyResized;
-        public TimeoutTask resizeTask = new TimeoutTask(resizeTimeout,100,()->{
+        public TimeoutTask resizeTask = new TimeoutTask(resizeTimeout,10,()->{
             recentlyResized.set(false);
         });
         
@@ -121,6 +120,7 @@ public class CosmeticsFX {
         public ExtTableView(TableView table){
            
             this.table = table; 
+            
             defaultValues();
         }
         public ExtTableView(){
@@ -132,6 +132,7 @@ public class CosmeticsFX {
             sortColumns = new ArrayList<>();
             sortByColumn = 0;
             recentlyResized = new SimpleBooleanProperty();
+//            resizeTask.doneCheck = (table.visibleProperty().not());
             
         }
         public void prepareChangeListeners(){

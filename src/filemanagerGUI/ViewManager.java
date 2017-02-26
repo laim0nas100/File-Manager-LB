@@ -23,9 +23,12 @@ import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 
@@ -47,12 +50,12 @@ public class ViewManager {
     protected ViewManager(){
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
         this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
-        this.frames = new ConcurrentHashMap<>();
+        this.frames = new HashMap<>();
         this.windows = new HashSet<>();
 
     };
-    private final ConcurrentHashMap<String,Frame> frames;
-    private final HashSet<String> windows;
+    public final HashMap<String,Frame> frames;
+    public final HashSet<String> windows;
     private boolean initStart = false;
 
     public static ViewManager getInstance(){
@@ -80,6 +83,7 @@ public class ViewManager {
                     windows.add(frame.getID());
                     controller.beforeShow(frame.getTitle(),currentFolder);
                     frame.getStage().show();
+                    controller.afterShow();
                 } catch (IOException ex) {
                     ErrorReport.report(ex);
                 }            
@@ -104,6 +108,11 @@ public class ViewManager {
     }
     public Frame getFrame(String windowID){
         return frames.get(windowID);
+    }
+    public boolean frameIsVisible(String windowID){
+        boolean res = frames.containsKey(windowID);
+//        Log.write(windowID +" isVisible call:"+res );
+        return res;
     }
     
 //DIALOG ACTIONS
@@ -369,6 +378,11 @@ public class ViewManager {
         });
         frames.clear();
         windows.clear();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ViewManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.initStart = false;
         System.gc();
         

@@ -7,7 +7,9 @@ package filemanagerGUI;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.Initializable;
+import javafx.stage.Stage;
 
 /**
  *
@@ -16,9 +18,16 @@ import javafx.fxml.Initializable;
 
 public abstract class BaseController implements Initializable{
     protected String windowID;
-    
+    public final SimpleBooleanProperty isGone = new SimpleBooleanProperty(){
+            @Override
+            public boolean get(){
+                return !ViewManager.getInstance().frameIsVisible(windowID)||!getStage().isShowing();
+            }
+        };
+            
     @Override
-    public void initialize(URL url, ResourceBundle rb) {}; 
+    public void initialize(URL url, ResourceBundle rb) {
+    } 
     
     protected void beforeShow(String title){
     }
@@ -28,7 +37,9 @@ public abstract class BaseController implements Initializable{
     protected void afterShow(){
         
     }
-    
+    protected Stage getStage(){
+        return ViewManager.getInstance().getFrame(windowID).getStage();
+    }
     public void exit(){
         ViewManager.getInstance().closeFrame(this.windowID);
         ViewManager.getInstance().updateAllFrames();

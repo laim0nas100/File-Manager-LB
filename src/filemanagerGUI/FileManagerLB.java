@@ -146,10 +146,10 @@ public class FileManagerLB extends Application {
         MainController.markedList = FXCollections.observableArrayList();
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-        ArtificialRoot.setPopulated(true);
+//        ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
         ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
-        VirtualFolders.setPopulated(true);
+//        VirtualFolders.setPopulated(true);
         if(CommandWindowController.executor!=null){
             CommandWindowController.executor.cancel();
         }

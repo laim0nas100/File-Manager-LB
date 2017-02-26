@@ -61,7 +61,6 @@ import uk.co.caprica.vlcj.discovery.windows.DefaultWindowsNativeDiscoveryStrateg
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
-import uk.co.caprica.vlcj.player.discoverer.MediaDiscoverer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
@@ -240,32 +239,13 @@ public class MediaPlayerController extends BaseController {
             @Override
             public void finished(MediaPlayer mediaPlayer) {
                 Log.write("Finished",filePlaying.toPath());
-                SimpleTask task = new SimpleTask() {
-                    @Override
-                    protected Void call() throws Exception {
-                            Thread.sleep(1000);
-                                playNext(1,false);                     
-                        return null;
-                    }
-
-                };
-                task.run();
-
+                playNext(1,false); 
             }
 
             @Override
             public void error(MediaPlayer mediaPlayer) {
                 Log.write("Error at",filePlaying.toPath());
-                SimpleTask task = new SimpleTask() {
-                    @Override
-                    protected Void call() throws Exception {
-                            Thread.sleep(1000);
-                                playNext(1,false);                     
-                        return null;
-                    }
-
-                };
-                task.run();
+                playNext(1,false);  
             }
         });
         return newPlayer;
@@ -284,7 +264,7 @@ public class MediaPlayerController extends BaseController {
             getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
         });
         volumeSlider.setValue(100);
-        dragTask.andConditionalCheck(released);
+        dragTask.conditionalCheck = (released);
         seekSlider.setOnMousePressed(event->{
             dragTask.update();
             released.set(false);
@@ -471,6 +451,7 @@ public class MediaPlayerController extends BaseController {
         tree.addMenuItem(remove, remove.getText());
         table.setContextMenu(tree.constructContextMenu());
         extTableView.prepareChangeListeners();
+
     }
 
     public void updateSeek() {
@@ -540,8 +521,6 @@ public class MediaPlayerController extends BaseController {
     public void exit(){
         stopping = true;
         this.execService.shutdown();
-        this.dragTask.shutdown();
-        this.extTableView.resizeTask.shutdown();
         players.forEach(player ->{
             player.stop();
             player.release();
@@ -641,14 +620,13 @@ public class MediaPlayerController extends BaseController {
         SimpleTask playTask = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                    if(getCurrentPlayer().isPlaying()){
-                       getCurrentPlayer().stop();
-                    }
                     
-//                    do{
-//                        
-//                        Thread.sleep(10);
-//                    }while(getCurrentPlayer().isPlaying());
+                    int i =0;
+                    do{
+                        getCurrentPlayer().stop();
+                        Log.write("Sleep play task " + i++);
+                        Thread.sleep(10);
+                    }while(getCurrentPlayer().isPlaying());
                     getCurrentFrame().setTitle(filePlaying.getName(true));
                     startedWithVideo = getCurrentFrame().isVisible();
                     boolean playable = getCurrentPlayer().prepareMedia(filePlaying.getAbsolutePath(),getOptions());
@@ -668,7 +646,6 @@ public class MediaPlayerController extends BaseController {
             }
         };
         Thread t = new Thread(playTask);
-        t.setDaemon(true);
         t.start();
     }
 
