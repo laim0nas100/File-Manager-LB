@@ -123,7 +123,9 @@ public class ExtFolder extends ExtPath{
     }
     public void update(){
         Log.writeln("Update:"+this.getAbsoluteDirectory());
-        this.updateTask.cancel();
+        if(updateTask!=null){
+            updateTask.cancel();
+        }
         if(isAbsoluteRoot.get()){
             FileManagerLB.remount();
         }
@@ -139,6 +141,9 @@ public class ExtFolder extends ExtPath{
         populateFolder();
     }
     public void startUpdateTask(){
+        if(updateTask!=null){
+            updateTask.cancel();
+        }
         updateTask = new SimpleTask() {
         @Override
         protected Void call() throws Exception {

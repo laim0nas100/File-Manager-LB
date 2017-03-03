@@ -52,13 +52,14 @@ public class ExtEntry extends Entry{
     }
     public void setAction(int act){
         if(act<0 || act>4){
-            this.actionType.set(0);
+            act = 0;
         }
-        this.action.set(getActionDescription(this.actionType.get()));
+        this.actionType.set(act);
+        this.action.set(getActionDescription(act));
         
     }
     @Override
     public String toString(){
-        return super.toString() + " "+action.get();
+        return super.toString() + " "+getActionDescription(actionType.get());
     }
 }

@@ -9,8 +9,8 @@ import LibraryLB.Threads.TimeoutTask;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.TreeMap;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -31,12 +31,12 @@ import utility.ErrorReport;
 public class CosmeticsFX {
     public static class MenuTree{
 
-        HashMap<String,MenuTree> leafs;
+        TreeMap<String,MenuTree> leafs;
         LinkedList<String> myMapping;
         MenuItem data;
         public boolean hidden;
         public MenuTree(MenuItem data,String...mapping){
-            leafs = new HashMap<>();
+            leafs = new TreeMap<>();
             myMapping = new LinkedList<>();
             myMapping.addAll(Arrays.asList(mapping));
             this.data = data;

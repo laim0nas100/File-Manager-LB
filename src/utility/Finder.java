@@ -44,8 +44,7 @@ public class Finder extends SimpleFileVisitor<Path> {
         public void newTask(String pattern){
             patternStr = pattern.toLowerCase(Locale.ROOT);
             noRegex = true;
-            
-            if(hasRegexChar(pattern)){
+            if(useRegex.get() && hasRegexChar(pattern)){
                 try{
                     this.pattern = Pattern.compile(pattern);
                     noRegex = false;
@@ -118,6 +117,8 @@ public class Finder extends SimpleFileVisitor<Path> {
                 '?',
                 '{',
                 '}',
+                '(',
+                ')',
                 ',',
                 '+',
                 '|',

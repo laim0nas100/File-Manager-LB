@@ -153,6 +153,12 @@ public class MainController extends BaseController{
         });
     });
     
+    private TimeoutTask searchTimeoutTask = new TimeoutTask(500,100,()->{
+        Platform.runLater(() ->{
+            search();
+        });
+    });
+    
     public ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder currentDir){
         
@@ -362,7 +368,7 @@ public class MainController extends BaseController{
     
     public void searchTyped(){
         if(!this.useRegex.isSelected()){
-            search();
+            this.searchTimeoutTask.update();
         }
     }
     public void search(){
@@ -370,6 +376,9 @@ public class MainController extends BaseController{
         this.propertyReadyToSearch.set(true);
         finder.list.clear();
         searchView.getItems().clear();
+        if(searchTask!=null){
+            searchTask.cancel();
+        }
         if(pattern.length()>1){
             this.propertyReadyToSearch.set(false);
             
@@ -379,16 +388,16 @@ public class MainController extends BaseController{
                 protected Void call() throws Exception {
                 finder.newTask(pattern);
                 
-                if(!MC.currentDir.isAbsoluteOrVirtualFolders()){
+                if(!MC.currentDir.isVirtual.get()){
                     try {
                         Files.walkFileTree(MC.currentDir.toPath(), finder);
                         
                     } catch (Exception ex) {
                         ErrorReport.report(ex);
                     }
-                }else{
+                }else if(!MC.currentDir.isAbsoluteOrVirtualFolders() && !MC.currentDir.isAbsoluteRoot.get()){
                     try {
-                        for(ExtPath file:FileManagerLB.ArtificialRoot.getFilesCollection()){
+                        for(ExtPath file:MC.currentDir.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
                         }
                     } catch (Exception ex) {
