@@ -319,7 +319,7 @@ public class MediaPlayerController extends BaseController {
                 }
 
             });
-            loadState(FileManagerLB.HOME_DIR+PLAYLIST_FILE_NAME);
+            loadState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
         });
         
     }
@@ -528,7 +528,7 @@ public class MediaPlayerController extends BaseController {
         frames.forEach(frame->{
             frame.setVisible(false);
         });
-        saveState(FileManagerLB.HOME_DIR+PLAYLIST_FILE_NAME);
+        saveState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
         super.exit();
     }
     public void playNext(int increment,boolean ignoreModifiers,Object... opt){
@@ -804,10 +804,10 @@ public class MediaPlayerController extends BaseController {
         t.start(); 
     }
     public void saveState(){
-        saveState(FileManagerLB.HOME_DIR + saveState.getText().trim());
+        saveState(FileManagerLB.USER_DIR + saveState.getText().trim());
     }
     public void loadState(){
-        loadState(FileManagerLB.HOME_DIR + loadState.getText().trim());
+        loadState(FileManagerLB.USER_DIR + loadState.getText().trim());
     }
     private void loadState(String path){
         labelStatus.setText("Busy");

@@ -41,6 +41,7 @@ public class FileManagerLB extends Application {
     public static final String HOME_DIR  = System.getProperty("user.dir")+File.separator;
     public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR+"VIRTUAL_FOLDERS"+File.separator;
     public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR+"ARTIFICIAL_ROOT";
+    public static String USER_DIR = HOME_DIR;
     public static String ROOT_NAME = "ROOT";
     public static int MAX_THREADS_FOR_TASK = 10;
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
@@ -50,7 +51,7 @@ public class FileManagerLB extends Application {
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
     public static ParametersMap parameters;
-    public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
+    public static PathStringCommands customPath = new PathStringCommands(USER_DIR);
     @Override
     public void start(Stage primaryStage) {
         reInit();
@@ -120,9 +121,9 @@ public class FileManagerLB extends Application {
     }
     public static void doOnExit(){
         try {           
-            LibraryLB.FileManaging.FileReader.writeToFile(HOME_DIR+"Log.txt", Log.getInstance().list);
-            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,HOME_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
-            Collection<Runnable> makeNewCopy = BM.makeNewCopy(HOME_DIR+"Log.txt");
+            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
+            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
+            Collection<Runnable> makeNewCopy = BM.makeNewCopy(USER_DIR+"Log.txt");
             makeNewCopy.forEach(th ->{
                 th.run();
             });
@@ -180,13 +181,15 @@ public class FileManagerLB extends Application {
         }
         parameters = new ParametersMap(list,"=");
         Log.writeln("Parameters",parameters);
-        VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
+        
         DEBUG.set((boolean) parameters.defaultGet("debug",false));
         DEPTH = (int) parameters.defaultGet("lookDepth",2);
         LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
         ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
         MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
-        MediaPlayerController.VLC_SEARCH_PATH = (String) parameters.defaultGet("vlcPath", HOME_DIR+"lib");
+        USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath()+File.separator;
+        VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
+        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands((String) parameters.defaultGet("vlcPath", HOME_DIR+"lib")).getPath()+File.separator;
         PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
         PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
         PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");

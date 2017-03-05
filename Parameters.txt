@@ -11,6 +11,8 @@
 
 debug=true
 
+userDir=C:\Users\Lemmin\Desktop\userDir
+
 //Populating folder depth
 lookDepth=2
 

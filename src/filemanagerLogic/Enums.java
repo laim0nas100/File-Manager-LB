@@ -21,8 +21,8 @@ public class Enums {
         }
     }
     public static enum WebDialog{
-         About("","About.html")
-        ,Regex("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","Pattern (Java Platform SE 7 ).html")
+         About("","docs/About.html")
+        ,Regex("https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html","docs/Pattern (Java Platform SE 7 ).html")
 
         ;
         public String address,local;
