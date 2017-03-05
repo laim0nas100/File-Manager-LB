@@ -121,19 +121,19 @@ public class FileManagerLB extends Application {
     }
     public static void doOnExit(){
         try {           
-            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
+//            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(USER_DIR+"Log.txt");
             makeNewCopy.forEach(th ->{
                 th.run();
             });
             BM.cleanUp().run();
-            Files.deleteIfExists(ArtificialRoot.toPath());
+            
             
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
-        
+        Log.getInstance().close();
         System.exit(0);
     }
     public static void reInit(){
@@ -147,7 +147,6 @@ public class FileManagerLB extends Application {
         MainController.markedList = FXCollections.observableArrayList();
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-//        ArtificialRoot.setPopulated(true);
         ArtificialRoot.setIsAbsoluteRoot(true);
         ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
 //        VirtualFolders.setPopulated(true);
@@ -155,16 +154,13 @@ public class FileManagerLB extends Application {
             CommandWindowController.executor.cancel();
         }
         readParameters();
+        try{
+            Log.changeStream('f',USER_DIR+"Log.txt");
+        }catch(Exception e){
+            ErrorReport.report(e);
+        }
         CommandWindowController.startExecutor();
         Platform.runLater(()->{
-            try{
-                Files.deleteIfExists(ArtificialRoot.toPath());
-                Files.createFile(ArtificialRoot.toPath());
-               
-            }catch(Exception e){
-                
-                ErrorReport.report(e);
-            }
             ArtificialRoot.propertyName.set(ROOT_NAME);
             MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
             ViewManager.getInstance().newWindow(ArtificialRoot);

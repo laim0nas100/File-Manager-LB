@@ -32,15 +32,17 @@ public class LocationAPI {
     public ExtPath getFileAndPopulate(String pathl){
         ExtPath file = FileManagerLB.ArtificialRoot;
         //pathl = ExtStringUtils.upperCase(pathl);
+        
         pathl = pathl.trim();
+        Log.write("getFileAndPopulate:"+pathl);
         if(!pathl.isEmpty() && !pathl.equals(FileManagerLB.ROOT_NAME)){
             
             try{
-                ExtPath tempFile = new ExtPath(pathl);
                 try{
                     if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
-                        tempFile = new ExtPath(path.toAbsolutePath().toString());
+                        pathl = path.toAbsolutePath().toString();
+                        Log.write("realPath:"+path);
                         if(!FileManagerLB.getRootSet().contains(path.getRoot().toString().toUpperCase(Locale.ROOT))){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
                                 FileManagerLB.ArtificialRoot.update();
@@ -50,9 +52,8 @@ public class LocationAPI {
                 }catch(Exception e){
                     ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
-                LocationInRoot loc = tempFile.getMapping();
+                LocationInRoot loc = new LocationInRoot(pathl);
                 Log.write("Location:",loc);
-                Log.write("Path:",tempFile.getAbsoluteDirectory());
                 this.populateByLocation(loc.getParentLocation());
                 
                 file = getClosestFileByLocation(loc);

@@ -5,10 +5,10 @@
  */
 package filemanagerLogic.fileStructure;
 
+import LibraryLB.Log;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
-import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import java.io.File;
 import java.nio.file.Files;
@@ -20,15 +20,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.concurrent.Task;
+import utility.ErrorReport;
 import utility.PathStringCommands;
 
 /**
@@ -76,17 +79,28 @@ public class ExtPath{
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
     
-    private Task getSizeTask = new Task<Void>(){
+    
+    private AtomicBoolean sizeTaskComplete = new AtomicBoolean(true);
+    private AtomicBoolean dateTaskComplete = new AtomicBoolean(true);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private Callable getSizeTask = new Callable(){
             @Override
-            protected Void call() throws Exception {
+            public Void call() throws Exception {
+                
+//                Log.write("getSizeTask ",absolutePath);
                 size =  Files.size(toPath());
+                propertySize.set(size);
+                sizeTaskComplete.set(true);
                 return null;
             }
         };
-    private Task getDateTask = new Task<Void>(){
+    private Callable getDateTask = new Callable(){
             @Override
-            protected Void call() throws Exception {
+            public Void call() throws Exception {
+//                Log.write("getDateTask ",absolutePath);
                 lastModified =  Files.getLastModifiedTime(toPath()).toMillis();
+                propertyLastModified.set(lastModified);
+                dateTaskComplete.set(true);
                 return null;
             }
         };
@@ -109,19 +123,15 @@ public class ExtPath{
         return this.path;
     }
     private void init(){
-        this.getSizeTask.setOnSucceeded(event->{
-            this.propertySize.set(size);
-        });
-        this.getDateTask.setOnSucceeded(event->{
-            this.propertyLastModified.set(lastModified);
-        });
         this.propertyName = new SimpleStringProperty(this.getName(true));
         this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
         this.isDisabled = new SimpleBooleanProperty(false);
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
-                new Thread(getSizeTask).start();
+                if(sizeTaskComplete.compareAndSet(true, false)){
+                    ExtPath.executor.submit(getSizeTask);
+                }                
                 return size;
                     
             }
@@ -129,7 +139,11 @@ public class ExtPath{
         this.propertyLastModified = new SimpleLongProperty(){
             @Override
             public long get() {
-                new Thread(getDateTask).start();
+                if(dateTaskComplete.get()){
+                   dateTaskComplete.compareAndSet(true, false);
+                   ExtPath.executor.submit(getDateTask);
+                }
+//                new Thread((getDateTask)).start();
                 return lastModified;
                     
             }
@@ -197,7 +211,7 @@ public class ExtPath{
         return absolutePath;
     }
     public LocationInRoot getMapping(){
-        return LocationAPI.getInstance().getLocationMapping(getAbsoluteDirectory());
+        return new LocationInRoot(this.getAbsoluteDirectory());
     }
     public Enums.Identity getIdentity(){
         return Enums.Identity.FILE;
@@ -211,14 +225,22 @@ public class ExtPath{
     public long size(){
         long get = this.propertySize.get();
         if(get==-1){
-            this.getSizeTask.run();
+            try {
+                this.getSizeTask.call();
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
         }
         return this.size;
     }
     public long lastModified(){
         long get = this.propertyLastModified.get();
         if(get==-1){
-            this.getDateTask.run();
+            try {
+                this.getDateTask.call();
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
         }
         return this.lastModified;
     }

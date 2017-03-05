@@ -31,6 +31,7 @@ public class VirtualFolder extends ExtFolder {
     }
     public VirtualFolder(String src) {
         super(src);
+        this.populated = true;
     }
     
     @Override

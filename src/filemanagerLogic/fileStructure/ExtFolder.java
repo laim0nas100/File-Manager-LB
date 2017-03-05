@@ -34,7 +34,7 @@ public class ExtFolder extends ExtPath{
             return null;
         }
     };
-    private boolean populated;
+    protected boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
     
   

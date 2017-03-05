@@ -315,6 +315,8 @@ public class MainController extends BaseController{
 //        }
 //        Log.write("END TEST");
         Log.write(ViewManager.getInstance().frames.keySet());
+        Log.write(FileManagerLB.getRootSet());
+        Log.write(Log.getInstance().list);
   
     }
 
@@ -329,10 +331,7 @@ public class MainController extends BaseController{
             } 
             else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
-                if(MC.currentDir.equals(fileAndPopulate)){
-                    update();
-                }
-                else{
+                if(!MC.currentDir.equals(fileAndPopulate)){
                     this.changeToDir(fileAndPopulate);
                 }
                 
