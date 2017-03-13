@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
+import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
 import java.util.ArrayDeque;
@@ -58,7 +59,7 @@ public class ExtFolder extends ExtPath{
                 Files.newDirectoryStream(Paths.get(parent)).forEach(f->{
                     String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                     String filePathStr = f.toString();
-                    if(Files.exists(f)&&!files.containsKey(name)){
+                    if(Files.exists(f) && !files.containsKey(name)){
                         ExtPath file;
                         if(Files.isDirectory(f)){
                             file = new ExtFolder(filePathStr,f);             
@@ -99,7 +100,7 @@ public class ExtFolder extends ExtPath{
         return folders;   
     }
     @Override
-    public Collection<ExtPath> getListRecursive(){
+    public Collection<ExtPath> getListRecursive(boolean applyDisable){
         LinkedList<ExtPath> list = new LinkedList<>();
         list.add(this);
         getRootList(list,this);
@@ -111,6 +112,17 @@ public class ExtFolder extends ExtPath{
             }
         }
         return list; 
+    }
+    public Collection<ExtPath> getListRecursiveFolders(boolean applyDisalbe){
+        Collection<ExtPath> listRecursive = this.getListRecursive(applyDisalbe);
+        Iterator<ExtPath> iterator = listRecursive.iterator();
+        while(iterator.hasNext()){
+            ExtPath next = iterator.next();
+            if(!next.getIdentity().equals(Enums.Identity.FOLDER)){
+                iterator.remove();
+            }
+        }
+        return listRecursive;
     }
     private void getRootList(Collection<ExtPath> list,ExtFolder folder){
         folder.update();
@@ -211,10 +223,8 @@ public class ExtFolder extends ExtPath{
         return !key.isEmpty();
     }
     public String getKey(String name){
-        ArrayList<String> keys = new ArrayList<>();
-        keys.addAll(files.keySet());
         String request = "";
-        for(String key:keys){
+        for(String key:files.keySet()){
             if(name.equalsIgnoreCase(key)){
                 request = key;
             }

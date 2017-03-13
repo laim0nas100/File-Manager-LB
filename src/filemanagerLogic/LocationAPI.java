@@ -50,7 +50,7 @@ public class LocationAPI {
                         }
                     }
                 }catch(Exception e){
-                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
+//                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);
                 Log.write("Location:",loc);

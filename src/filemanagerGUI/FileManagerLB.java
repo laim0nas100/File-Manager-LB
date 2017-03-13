@@ -80,7 +80,7 @@ public class FileManagerLB extends Application {
     public static boolean mountDevice(String name){
         boolean result = false;
         name = name.toUpperCase();
-        Log.write("Mount:",name);
+        Log.write("Mount: ",name);
         Path path = Paths.get(name);
         if(Files.isDirectory(path)){
             ExtFolder device = new ExtFolder(name);
@@ -208,6 +208,7 @@ public class FileManagerLB extends Application {
         CommandWindowController.commandHelp = (String) parameters.defaultGet("code.help", "help");
         CommandWindowController.commandListParams = (String) parameters.defaultGet("code.listParameters", "listParams");
         CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", 5);
+        CommandWindowController.commandCopyFolderStructure = (String) parameters.defaultGet("code.copyFolderStructure", "copyStructure");
 
 
         

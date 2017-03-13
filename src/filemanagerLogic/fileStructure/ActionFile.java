@@ -5,6 +5,8 @@
  */
 package filemanagerLogic.fileStructure;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -13,23 +15,33 @@ import java.nio.file.Paths;
  * @author Laimonas Beniušis
  */
 public class ActionFile {
-    public Path[] paths;
+    public String[] paths;
     public ActionFile(String...strings){
-        paths = new Path[2];
-        int i =0;
-        for(String s:strings){
-            paths[i++] = Paths.get(s);
-        }
+        paths = strings;
     }
     @Override
     public String toString(){
         String s="";
-        for(Path p:paths){
+        for(String p:paths){
             if(p!=null){
                 s+=p+" | ";
             }
         }
         return s;
+    }
+    
+    public void delete() throws IOException{
+        Files.delete(Paths.get(paths[0]));
+    }
+    
+    public static Path toPath(String s){
+        return Paths.get(s);
+    }
+    public void move() throws IOException{
+        Files.move(toPath(paths[0]), toPath(paths[1]));
+    }
+    public void copy() throws IOException{
+        Files.copy(toPath(paths[0]), toPath(paths[1]));
     }
     
 }

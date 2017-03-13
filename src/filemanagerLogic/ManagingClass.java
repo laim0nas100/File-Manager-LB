@@ -40,28 +40,6 @@ public class ManagingClass {
         
     }
     public void changeDirTo(ExtFolder file){
-/*
-        Log.writeln("Change dir to: "+file.getAbsoluteDirectory());
-            if(file.isAbsoluteRoot()){
-                currentDir = ArtificialRoot;
-               
-            }else if(file.isRoot()){
-                currentDir = (ExtFolder) ArtificialRoot.files.get(file.getAbsoluteDirectory());
-            }else if(FileManagerLB.VirtualFolders.files.containsKey(file.propertyName.get())){
-                //Found virtual folder
-                Log.write("Found Virtual Folder:"+file.getAbsoluteDirectory());
-                currentDir = (VirtualFolder) FileManagerLB.VirtualFolders.files.get(file.propertyName.get());
-            }else{
-                LocationInRoot location = new LocationInRoot(file.getAbsolutePath());      
-                if(!LocationAPI.getInstance().existByLocation(location)){
-                    Log.writeln("Put "+file.getAbsolutePath()+" to:"+location.toString());
-                    LocationAPI.getInstance().putByLocation(location, file);
-                }
-                
-            }
-        
-        //Log.writeln(cacheIndex+" : "+folderCache);
-*/
         currentDir = file;
         isVirtual.bind(currentDir.isVirtual);
         isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
@@ -70,14 +48,14 @@ public class ManagingClass {
     }
     public void changeToForward(){
        
-        if(cacheIndex+1<folderCache.size()){
+        if(cacheIndex+1 < folderCache.size()){
             currentDir = (ExtFolder) folderCache.get(++cacheIndex);
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToPrevious(){
         
-        if(cacheIndex-1>=0){
+        if(cacheIndex > 0){
             currentDir = (ExtFolder) folderCache.get(--cacheIndex);
         }
         Log.writeln(cacheIndex+" : "+folderCache);
@@ -90,14 +68,9 @@ public class ManagingClass {
                 }else if(currentDir instanceof VirtualFolder){
                     this.changeDirTo(FileManagerLB.VirtualFolders);
                 }else{
-                LocationInRoot location = new LocationInRoot(currentDir.getAbsolutePath());
-//                Log.writeln("Absolute Path:"+currentDir.getAbsolutePath());
-//                Log.writeln("CurrentLocation:"+location.toString());
-//                location = location.getParentLocation();
-//                Log.writeln("ParentLocation:"+location.toString()+" >");
-                ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
-//                Log.writeln("Parent path:"+folder.getAbsolutePath());
-                this.changeDirTo(folder);
+                    LocationInRoot location = new LocationInRoot(currentDir.getAbsoluteDirectory());
+                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
+                    this.changeDirTo(folder);
                 }
             } catch (Exception ex) {
                 ErrorReport.report(ex);
@@ -110,15 +83,9 @@ public class ManagingClass {
     }
     public ObservableList<ExtPath> getAllContents(){
         ObservableList<ExtPath> list = FXCollections.observableArrayList();
-        list.addAll(FileManagerLB.ArtificialRoot.getListRecursive());
+        list.addAll(FileManagerLB.ArtificialRoot.getListRecursive(false));
         return list;  
     }
-    public void printAllContents(){
-        for(ExtPath file:FileManagerLB.ArtificialRoot.getListRecursive()){
-            Log.writeln(file.getAbsolutePath());
-        }
-    }
-      
     private void addCacheNode(ExtFolder folder){
         if(!folderCache.isEmpty()){
             ArrayList<ExtPath> saveList = new ArrayList<>();
@@ -156,7 +123,7 @@ public class ManagingClass {
         return this.cacheIndex!=0;
     }
     public boolean hasForward(){
-        return this.folderCache.size() > this.cacheIndex;
+        return this.folderCache.size() > this.cacheIndex+1;
     }
     public boolean hasParent(){
         if(currentDir==null){

@@ -33,7 +33,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.stage.Stage;
 import utility.DesktopApi;
 import utility.ErrorReport;
 import utility.FavouriteLink;
@@ -46,11 +45,12 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationInRootNode;
-import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
@@ -301,23 +301,41 @@ public class MainController extends BaseController{
         ViewManager.getInstance().newMusicPlayer();
 
     }
-    public void test() throws IOException{
-//        Log.write("TEST");
+    public void test() throws Exception{
+        Log.write("TEST");
 //        LocationInRootNode root = new LocationInRootNode("",-1);
 //        int i = 0;
-//        for(ExtPath item:MainController.markedList){
-//            root.add(new LocationInRoot(item.getAbsolutePath(),false),i++);
-//        }
+//        
+//        ArrayList<Sfor(ExtPath item:this.MC.currentDir.getListRecursive()){
+//            root.add(new LocationInRoot(item.getAbsoluteDirectory(),false),i++);
+//        }tring> resolve = LocationInRootNode.nodeFromFile(LibraryLB.FileManaging.FileReader.readFromFile("Here.txt")).resolve(true);
+//        resolve.forEach(file ->{
+//            Log.write(file);
+//        });
+////        LibraryLB.FileManaging.FileReader.writeToFile("Raw.txt", resolve);
 //        Log.write(root.specialString());
+//        LibraryLB.FileManaging.FileReader.writeToFile("Here.txt", Arrays.asList(new String[]{root.specialString()}));
 //        Log.write("RESOLVED");
 //        for(String p:root.resolve(true)){
 //            Log.write(p);
 //        }
-//        Log.write("END TEST");
-        Log.write(ViewManager.getInstance().frames.keySet());
-        Log.write(FileManagerLB.getRootSet());
-        Log.write(Log.getInstance().list);
-  
+//        
+//        Log.write(ViewManager.getInstance().frames.keySet());
+//        Log.write(FileManagerLB.getRootSet());
+//        Log.write(Log.getInstance().list);
+//        Log.writeln(MainController.class.getFields());
+//        Log.write("Try to get field");
+//        Field f = this.getClass().getField("autoClose");
+//        CheckMenuItem get = (CheckMenuItem) f.get(ViewManager.getInstance().getFrame(windowID).getController());
+//        get.selectedProperty().set(true);
+
+        
+//        ExtTask copyFiles = TaskFactory.getInstance().copyFiles(MC.currentDir.getListRecursiveFolders(true), LocationAPI.getInstance().getFileOptimized("E:\\Dev\\dest"),
+//                LocationAPI.getInstance().getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));
+//            
+//        ViewManager.getInstance().newProgressDialog(copyFiles);
+
+        Log.write("END TEST");
     }
 
     
@@ -418,7 +436,7 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
-        Collection<ExtPath> currentContents = this.MC.getCurrentContents();
+        Collection<ExtPath> currentContents = MC.getCurrentContents();
         ObservableList<ExtPath> newList = FXCollections.observableArrayList();
         String lookFor = localSearch.getText().trim();
         if(lookFor.length()==0){
@@ -557,7 +575,7 @@ public class MainController extends BaseController{
         contextMenuItems[3].setOnAction((eh)->{
             Log.writeln("Copy Marked");
             
-            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
             task.setTaskDescription("Copy marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -566,7 +584,7 @@ public class MainController extends BaseController{
         contextMenuItems[4] = new MenuItem("Move Here");
         contextMenuItems[4].setOnAction((eh)->{
             Log.writeln("Move Marked");
-            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(markedList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
             task.setTaskDescription("Move marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -612,8 +630,7 @@ public class MainController extends BaseController{
         
         contextMenuItems[9] = new MenuItem("Delete all marked");
         contextMenuItems[9].setOnAction(eh ->{
-            ExtTask task = TaskFactory.getInstance().deleteFiles(
-                    TaskFactory.getInstance().populateStringFileList(markedList));
+            ExtTask task = TaskFactory.getInstance().deleteFiles(markedList);
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
             
@@ -626,7 +643,7 @@ public class MainController extends BaseController{
         contextMenuItems[10].setOnAction(eh ->{   
             MainController.actionList.clear();
             MainController.actionList.addAll(MainController.dragList);
-            ExtTask task = TaskFactory.getInstance().moveFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
             task.setTaskDescription("Move Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -635,7 +652,7 @@ public class MainController extends BaseController{
             //Log.writeln("Copy Dragger");
              MainController.actionList.clear();
             MainController.actionList.addAll(MainController.dragList);
-            ExtTask task = TaskFactory.getInstance().copyFiles(TaskFactory.getInstance().populateStringFileList(MainController.actionList),MC.currentDir);
+            ExtTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
             task.setTaskDescription("Copy Dragged files");
             ViewManager.getInstance().newProgressDialog(task);
         });
@@ -1167,7 +1184,7 @@ public class MainController extends BaseController{
             return;
         }
         Log.writeln("Deleting");
-        ExtTask task = TaskFactory.getInstance().deleteFiles(TaskFactory.getInstance().populateStringFileList(selectedList));
+        ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
         task.setTaskDescription("Delete selected files");
         ViewManager.getInstance().newProgressDialog(task);
     }

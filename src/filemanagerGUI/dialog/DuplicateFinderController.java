@@ -134,7 +134,7 @@ public class DuplicateFinderController extends BaseController{
             list.getItems().clear();
             List synchronizedList = Collections.synchronizedList(list.getItems());
             ArrayList<PathStringCommands> array = new ArrayList<>();
-            root.getListRecursive().stream().forEach(item->{
+            root.getListRecursive(true).stream().forEach(item->{
                 array.add(new PathStringCommands(item.getAbsolutePath()));
             });
             if(this.checkUseHash.selectedProperty().get()){

@@ -8,8 +8,10 @@ package filemanagerGUI.dialog;
 import LibraryLB.Containers.ParametersMap;
 import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
+import LibraryLB.Parsing.LexerWithStrings;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
+import LibraryLB.Threads.ExtTask;
 import LibraryLB.Threads.TaskExecutor;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
@@ -18,6 +20,7 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
+import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.io.BufferedReader;
@@ -25,8 +28,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -58,6 +65,7 @@ public class CommandWindowController extends BaseController {
                     commandSetCustom,
                     commandClear,
                     commandCancel,
+                    commandCopyFolderStructure,
                     commandHelp;
     public static void startExecutor(){
         if(executor!=null){
@@ -70,11 +78,19 @@ public class CommandWindowController extends BaseController {
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
-
         command = new Commander(textField);
+        command.addCommand(commandCopyFolderStructure, (Object... params)->{
+            Log.write("Copy params",Arrays.asList(params));
+            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized((String)params[1]);
+            ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
+            Log.write("Copy structure: ",root,dest);
+            ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true), dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
+            ViewManager.getInstance().newProgressDialog(copyFiles);
+            
+
+        });
         command.addCommand(commandCancel, (Object... params)->{ 
-                startExecutor();
-                
+                startExecutor();    
         });
         command.addCommand(commandGenerate, (Object... params) -> {
                 String newCom = (String) params[0];
@@ -99,7 +115,7 @@ public class CommandWindowController extends BaseController {
                 newCom = ExtStringUtils.replaceOnce(newCom, commandListRec+" ", "");
                 ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
                 
-                for(ExtPath f:file.getListRecursive()){    
+                for(ExtPath f:file.getListRecursive(false)){    
                     deque.add(f.getAbsoluteDirectory());
                 }
                 String desc = "Listing recursive:"+deque.removeFirst();
@@ -114,6 +130,7 @@ public class CommandWindowController extends BaseController {
                     String desc = "Listing:"+file.getAbsoluteDirectory();
 
                     ExtFolder folder = (ExtFolder) file;
+                    folder.update();
                     for(ExtPath f:folder.getFilesCollection()){
                         deque.add(f.getAbsoluteDirectory());
                     }
@@ -128,10 +145,10 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandClear, (Object... params)->{
                 textArea.clear();
         });
-        command.addCommand(commandHelp, (Object... params)->{listParameters();
-                addToTextArea(textArea,"Read Parameters.txt file for info\n");
+        command.addCommand(commandHelp, (Object... params)->{
+
                 listParameters();
-                
+                addToTextArea(textArea,"Read Parameters.txt file for info\n");
         });
         command.addCommand(commandListParams, (Object... params)->{
             listParameters();
@@ -219,7 +236,6 @@ public class CommandWindowController extends BaseController {
                     String commandToAdd = "";
                     int numbersToAdd = 0;
                     while(true){
-                        
                         Token token = lexer.getNextToken();
                         if(token==null){
                             break;
@@ -268,24 +284,51 @@ public class CommandWindowController extends BaseController {
         }
         @Override
         public void submit(String command) {
-            Log.writeln(command);
+            Log.write(command);
+            LinkedList<String> list = new LinkedList<>();
+            String[] split = command.split(" ");
+            for(String spl:split){
+                if(spl.length()>0){
+                    list.add(spl);
+                }
+            }
             Task<Void> task = new Task<Void>(){
                 @Override
                 protected Void call() throws Exception {
                     
-                    LinkedList<String> commands = new LinkedList<>();
-                    for(String s:command.split(" ")){
-                        if(s.length()>0) commands.add(s);
-                    }
-                    if(runCommand(commands.getFirst(),command)){
+//                    String lexerComm = ExtStringUtils.replace(command, "\\", "\\\\");
+//                    
+//                    LexerWithStrings lexer = new LexerWithStrings(lexerComm);
+//                    ArrayList<Token> remainingTokens = new ArrayList<>();
+//                    try {
+//                        remainingTokens.addAll(lexer.getRemainingTokens());
+//                    } catch (Exception ex) {
+//                        ex.printStackTrace();
+//                    }
+//                    LinkedList<String> commands = new LinkedList<>();
+//                    for(Token token:remainingTokens){
+//                        Literal lit = (Literal) token;
+//                        commands.add(lit.value);
+//                    }
+//                    Log.writeln("After parsing",commands);
+                    LinkedList<String> coms = new LinkedList<>();
+                    coms.addAll(list);
+//                    coms.pollFirst();
+                    coms.add(1,command);
+                    Log.write(coms);
+                    String c = coms.pollFirst();
+                    if(runCommand(c,coms.toArray(new String[1]))){
+                        Log.write("Run in-built command");
+                        return null;
+                    }else{
+                        Log.writeln("Run native command");
+                        
+                        ProcessBuilder builder = new ProcessBuilder(list.toArray(new String[1]));
+                        builder.redirectErrorStream(true);
+                        Process process = builder.start();
+                        handleStream(process,textArea,setTextAfterwards,command);
                         return null;
                     }
-                    ProcessBuilder builder = new ProcessBuilder(commands.toArray(new String[1]));
-                    builder.redirectErrorStream(true);
-                    Process process = builder.start();
-                    
-                    handleStream(process,textArea,setTextAfterwards,command);
-                    return null;
                 }                
             };
             executor.addTask(task);

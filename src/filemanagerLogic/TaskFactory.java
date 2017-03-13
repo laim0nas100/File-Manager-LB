@@ -18,8 +18,9 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
-import LibraryLB.StringOperations;
+import LibraryLB.Parsing.StringOperations;
 import LibraryLB.Threads.TaskExecutor;
+import com.sun.jna.platform.FileUtils;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
 import filemanagerGUI.ViewManager;
@@ -34,8 +35,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import utility.CLI;
 import utility.ErrorReport;
 import utility.FileNameException;
 import utility.PathStringCommands;
@@ -119,13 +123,13 @@ public class TaskFactory {
         
         
     }
-    public Collection<ExtPath> populateExtPathList(Collection<String> filelist){
-        Collection<ExtPath> collection = FXCollections.observableArrayList();
-        filelist.forEach(item ->{
-            collection.add(LocationAPI.getInstance().getFileAndPopulate(item));
-        });
-        return collection;
-    }
+//    public Collection<ExtPath> populateExtPathList(Collection<String> filelist){
+//        Collection<ExtPath> collection = FXCollections.observableArrayList();
+//        filelist.forEach(item ->{
+//            collection.add(LocationAPI.getInstance().getFileOptimized(item));
+//        });
+//        return collection;
+//    }
     public Collection<String> populateStringFileList(Collection<ExtPath> filelist){
         Collection<String> collection = FXCollections.observableArrayList();
         filelist.forEach(item ->{
@@ -134,7 +138,7 @@ public class TaskFactory {
         return collection;
     }
     
-    private ActionFile[] prepareForCopy(Collection<ExtPath> fileList, ExtPath dest){
+    private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest){
         Log.writeln("List recieved in task");
         
         for(ExtPath file:fileList){
@@ -142,48 +146,72 @@ public class TaskFactory {
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtPath file:fileList){
-            Collection<ExtPath> listRecursive = file.getListRecursive();
+            Collection<ExtPath> listRecursive = new ArrayList<>();
+            listRecursive.addAll(file.getListRecursive(true));
             ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
             for(ExtPath f:listRecursive){
-                String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
-                list.add(new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath));
+                String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
+                list.add(new ActionFile(f.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath));
             }
+
+            
            
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
-
-        ActionFile[] array = new ActionFile[list.size()];
-        array = list.toArray(array);
-        for (ActionFile array1 : array) {
+        for (ActionFile array1 : list) {
             Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
         }
-        return array;
+        return list;
         
-    }   
-    private ActionFile[] prepareForDelete(Collection<ExtPath> fileList){
+    }
+    private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){
+        Log.writeln("List recieved in task test");
+        
+        for(ExtPath file:fileList){
+            Log.writeln(file.getAbsolutePath());
+        }
+        ArrayList<ActionFile> list = new ArrayList<>();
+        for(ExtPath file:fileList){
+//            Log.write("Root",root);
+            String relativePath = file.relativeFrom(root.getAbsoluteDirectory());
+//            Log.write("RelativePath:",relativePath);
+            ActionFile af = new ActionFile(file.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath);
+            list.add(af);
+//            Log.write("Add",af);
+        }
+        list.sort(cmpDesc);
+        Log.writeln("List after computing");
+
+        
+        for (ActionFile array1 : list) {
+            Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
+        }
+        return list;
+        
+    }
+    private ArrayList<ActionFile> prepareForDelete(Collection<ExtPath> fileList){
         Log.writeln("List recieved in task");
         for(ExtPath file:fileList){
             Log.writeln(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtPath file:fileList){
-            Collection<ExtPath> listRecursive = file.getListRecursive();
+            Collection<ExtPath> listRecursive = file.getListRecursive(true);
             for(ExtPath f:listRecursive){
-                list.add(new ActionFile(f.getAbsolutePath()));
+//                f.path = null;
+                list.add(new ActionFile(f.getAbsoluteDirectory()));
             }
         }
         list.sort(cmpAsc);
         Log.writeln("List after computing");
         for(ActionFile file:list){
-            Log.writeln(file);
+            Log.writeln(file.toString());
         }
-        ActionFile[] array = new ActionFile[list.size()];
-        array = list.toArray(array);
-        return array;
+        return list;
         
     } 
-    private ActionFile[] prepareForMove(Collection<ExtPath> fileList,ExtPath dest){
+    private ArrayList<ActionFile> prepareForMove(Collection<ExtPath> fileList,ExtPath dest){
         Log.writeln("List recieved in task");
         
         for(ExtPath file:fileList){
@@ -191,13 +219,13 @@ public class TaskFactory {
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtPath file:fileList){
-            Collection<ExtPath> listRecursive = file.getListRecursive();
+            Collection<ExtPath> listRecursive = file.getListRecursive(true);
             ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
             for(ExtPath f:listRecursive){
                 try{
                 String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
                 //Log.write("RelativePath: ",relativePath);
-                ActionFile AF = new ActionFile(f.getAbsolutePath(),dest.getAbsoluteDirectory()+relativePath);
+                ActionFile AF = new ActionFile(f.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath);
                 //Log.write("ActionFile: ",AF);
                 list.add(AF);
                 }catch(Exception e){
@@ -208,23 +236,29 @@ public class TaskFactory {
         }
         list.sort(cmpDesc);
         Log.writeln("List after computing");
-
-        ActionFile[] array = new ActionFile[list.size()];
-        array = list.toArray(array);
-        for (ActionFile array1 : array) {
+        for (ActionFile array1 : list) {
             Log.writeln(array1.paths[0]+" -> "+array1.paths[1]);
         }
-        return array;
+        return list;
     }
     
 //TASKS    
-    public ExtTask copyFiles(Collection<String> fileList, ExtPath dest){  
+    public ExtTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
         return new SimpleTask(){
             protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
-                ActionFile[] list = prepareForCopy(populateExtPathList(fileList),dest);
-                for(int i=0; i<list.length; i++){
+                List<ActionFile> list;
+                if(root == null){
+                   list = prepareForCopy(fileList,dest);
+                }else{
+                    Log.write("Test copy");
+                    list = prepareForCopy(fileList,dest,root);
+                }
+                Log.write("In a task now");
+                Log.writeln(list);
+                 
+                for(int i=0; i<list.size(); i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
                         if(this.isCancelled()){
@@ -235,18 +269,18 @@ public class TaskFactory {
                         return null;
                     }
                     
-                    str = "Source: \t\t"+list[i].paths[0]+"\n";
-                    str +="Destination: \t"+list[i].paths[1];
+                    str = "Source: \t\t"+list.get(i).paths[0]+"\n";
+                    str +="Destination: \t"+list.get(i).paths[1];
                     updateMessage(str);
-                    updateProgress(i+0.5, list.length);
+                    updateProgress(i+0.5, list.size());
                     try{
-                        Files.copy(list[i].paths[0],list[i].paths[1]);
-                        Log.writeln("OK:"+list[i]);
+                        list.get(i).copy();
+                        Log.writeln("OK:"+list.get(i));
                         
                     }catch(Exception e){
                         ErrorReport.report(e); 
                     }
-                    updateProgress(i+1, list.length);                    
+                    updateProgress(i+1, list.size());                    
                 }
                 updateProgress(1,1);
                 updateMessage("FINISHED");
@@ -254,16 +288,16 @@ public class TaskFactory {
             }
         };
     }
-    public ExtTask moveFiles(Collection<String> fileList, ExtPath dest){
+    public ExtTask moveFiles(Collection<ExtPath> fileList, ExtPath dest){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
                 updateMessage("Populating list for move");
-                ActionFile[] list = prepareForMove(populateExtPathList(fileList),dest);
+                List<ActionFile> list = prepareForMove(fileList,dest);
                 updateMessage("Begin");
                 int index1 = 0;
-                for(; index1<list.length; index1++){
+                for(; index1<list.size(); index1++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
                         if(this.isCancelled()){
@@ -274,25 +308,26 @@ public class TaskFactory {
                         return null;
                     }
                     
-                    str = "Source: \t\t"+list[index1].paths[0]+"\n";
-                    str +="Destination: \t"+list[index1].paths[1];
+                    str = "Source: \t\t"+list.get(index1).paths[0]+"\n";
+                    str +="Destination: \t"+list.get(index1).paths[1];
                     updateMessage(str);
-                    updateProgress(index1+0.5, list.length+leftFolders.size());
+                    updateProgress(index1+0.5, list.size()+leftFolders.size());
                     try{
-                        if(Files.isDirectory(list[index1].paths[0])){
-                            leftFolders.add(list[index1]);
-                            Files.createDirectory(list[index1].paths[1]);
-                            Log.writeln("Added to folders:"+list[index1].paths[1]);
+                        if(Files.isDirectory(Paths.get(list.get(index1).paths[0]))){
+                            leftFolders.add(list.get(index1));
+                            Files.createDirectory(Paths.get(list.get(index1).paths[1]));
+                            Log.writeln("Added to folders:"+list.get(index1).paths[1]);
                         }else{
-                            Files.move(list[index1].paths[0],list[index1].paths[1]);
+                            list.get(index1).move();
+//                            Files.move(list.get(index1).paths[0],list.get(index1).paths[1]);
                             
-                            Log.writeln("OK:"+list[index1]);
+                            Log.writeln("OK:"+list.get(index1));
                         }
                     }catch(Exception e){
                         ErrorReport.report(e); 
                         
                     }
-                    updateProgress(index1+1, list.length+leftFolders.size());
+                    updateProgress(index1+1, list.size()+leftFolders.size());
                 }
                 updateMessage("Deleting leftover folders");
                 int i=0;
@@ -301,12 +336,13 @@ public class TaskFactory {
                 for(ActionFile f:leftFolders){
                     try{
                         Log.writeln("Deleting "+f.paths[0]);
-                        Files.delete(f.paths[0]);
+//                        Files.delete(f.paths[0]);
+                        f.delete();
                         i++;
                     }catch(Exception x){
                         report(x);
                     }
-                    updateProgress(index1+i+2, list.length+leftFolders.size());
+                    updateProgress(index1+i+2, list.size()+leftFolders.size());
                 }
                 updateProgress(1,1);
                 updateMessage("FINISHED");
@@ -315,13 +351,13 @@ public class TaskFactory {
             
         };
     }
-    public ExtTask deleteFiles(Collection<String> fileList){
+    public ExtTask deleteFiles(Collection<ExtPath> fileList){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
-                ActionFile[] list = prepareForDelete(populateExtPathList(fileList));
-                for(int i=0; i<list.length; i++){
+                ArrayList<ActionFile> list = prepareForDelete(fileList);
+                for(int i=0; i<list.size(); i++){
                     while(this.isPaused()){
                         Thread.sleep(getRefreshDuration());
                         if(this.isCancelled()){
@@ -331,16 +367,26 @@ public class TaskFactory {
                     if(this.isCancelled()){
                         return null;
                     }
-                    str = "Deleting: \t"+list[i].paths[0];
+                    
+                    str = "Deleting: \t"+list.get(i).paths[0];
                     updateMessage(str);
-                    updateProgress(i+0.5, list.length);
+                    updateProgress(i+0.5, list.size());
                     try{
                         
-                        Files.deleteIfExists(list[i].paths[0]);
+//                        ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileOptimized(
+//                                LocationAPI.getInstance().getFileOptimized(
+//                                        list.get(i).paths[0]).getParent(i));
+                        final ActionFile f = list.get(i);
+                        f.delete();
+//                        CLI.startNewJavaProcess("DeleteFiles", f.paths[0]).call();
+                        
+//                        parent.update();
+                        Thread.sleep(refreshDuration);
+                        
                     }catch(Exception e){
                         ErrorReport.report(e);
                     }
-                    updateProgress(i+1, list.length);
+                    updateProgress(i+1, list.size());
 
                 }
                 updateProgress(1,1);
@@ -379,7 +425,7 @@ public class TaskFactory {
         String path = folder.getAbsoluteDirectory();
         String newName = name;
         int i=0;
-        while(folder.files.containsKey(newName)){
+        while(folder.hasFileIgnoreCase(newName)){
             newName = "New "+newName;
         }
         return path+newName;
@@ -525,10 +571,10 @@ public class TaskFactory {
             
             case(1):{
                 try{
-                    Files.copy(action.paths[1], action.paths[0],StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+                    Files.copy(Paths.get(action.paths[1]), Paths.get(action.paths[0]),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(action.paths[0])){
+                    if(Files.isDirectory(Paths.get(action.paths[0]))){
 //                        Files.setLastModifiedTime(action.paths[0], Files.getLastModifiedTime(action.paths[1]));
                         entry.isModified = false;
                     }
@@ -537,20 +583,21 @@ public class TaskFactory {
                 break;
             }case(2):{
                 try{
-                    Files.copy(action.paths[0], action.paths[1], StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
+                    Files.copy(Paths.get(action.paths[0]), Paths.get(action.paths[1]), StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(action.paths[1])){
+                    if(Files.isDirectory(Paths.get(action.paths[1]))){
 //                        Files.setLastModifiedTime(action.paths[1], Files.getLastModifiedTime(action.paths[0]));
                         entry.isModified = false;
                     }
                 }
                 break;
             }case(3):{
-                Files.delete(action.paths[0]); 
+                
+                Files.delete(Paths.get(action.paths[0])); 
                 break;
             }case(4):{
-                Files.delete(action.paths[1]);
+                Files.delete(Paths.get(action.paths[1]));
                 break;
             }default:{
                 break;

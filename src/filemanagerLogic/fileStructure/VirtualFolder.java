@@ -52,8 +52,8 @@ public class VirtualFolder extends ExtFolder {
         
     }
     @Override
-    public Collection<ExtPath> getListRecursive(){
-        ArrayList<ExtPath> listRecursive = new ArrayList(super.getListRecursive());
+    public Collection<ExtPath> getListRecursive(boolean applyDisable){
+        ArrayList<ExtPath> listRecursive = new ArrayList(super.getListRecursive(applyDisable));
         listRecursive.remove(0);
         return listRecursive;
     }

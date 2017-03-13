@@ -138,7 +138,7 @@ public void updateLists(){
     virtual.update();
     ArrayList<ExtPath> array = new ArrayList<>();
     if(recursive.selectedProperty().get()){
-        this.virtual.getListRecursive().stream().forEach(file->{
+        this.virtual.getListRecursive(true).stream().forEach(file->{
             array.add(file);
         });
     }else{

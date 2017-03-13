@@ -6,6 +6,7 @@
 package filemanagerLogic.fileStructure;
 
 import LibraryLB.Log;
+import LibraryLB.Threads.RepeatableTask;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -79,31 +80,27 @@ public class ExtPath{
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
     
-    
-    private AtomicBoolean sizeTaskComplete = new AtomicBoolean(true);
-    private AtomicBoolean dateTaskComplete = new AtomicBoolean(true);
     private static final ExecutorService executor = Executors.newFixedThreadPool(10);
-    private Callable getSizeTask = new Callable(){
+    private Callable getSizeTask = new RepeatableTask(new Callable() {
             @Override
-            public Void call() throws Exception {
-                
-//                Log.write("getSizeTask ",absolutePath);
+            public Object call() throws Exception {
+//                Log.write("getSizeTask" ,absolutePath);
                 size =  Files.size(toPath());
                 propertySize.set(size);
-                sizeTaskComplete.set(true);
+//                sizeTaskComplete.set(true);
                 return null;
             }
-        };
-    private Callable getDateTask = new Callable(){
+    });
+    private Callable getDateTask = new RepeatableTask(new Callable() {
             @Override
             public Void call() throws Exception {
 //                Log.write("getDateTask ",absolutePath);
                 lastModified =  Files.getLastModifiedTime(toPath()).toMillis();
                 propertyLastModified.set(lastModified);
-                dateTaskComplete.set(true);
+//                dateTaskComplete.set(true);
                 return null;
             }
-        };
+        });
     public ExtPath(String str,Object...optional){
         str = str.trim();
         if(str.endsWith(File.separator)){
@@ -118,9 +115,10 @@ public class ExtPath{
     }
     public Path toPath(){
         if(this.path == null){
-            this.path = Paths.get(absolutePath);
+            this.path = Paths.get(this.getAbsoluteDirectory());
         }
         return this.path;
+//        return Paths.get(this.getAbsoluteDirectory());
     }
     private void init(){
         this.propertyName = new SimpleStringProperty(this.getName(true));
@@ -129,9 +127,7 @@ public class ExtPath{
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
-                if(sizeTaskComplete.compareAndSet(true, false)){
-                    ExtPath.executor.submit(getSizeTask);
-                }                
+                ExtPath.executor.submit(getSizeTask);                
                 return size;
                     
             }
@@ -139,11 +135,7 @@ public class ExtPath{
         this.propertyLastModified = new SimpleLongProperty(){
             @Override
             public long get() {
-                if(dateTaskComplete.get()){
-                   dateTaskComplete.compareAndSet(true, false);
-                   ExtPath.executor.submit(getDateTask);
-                }
-//                new Thread((getDateTask)).start();
+                ExtPath.executor.submit(getDateTask);
                 return lastModified;
                     
             }
@@ -194,9 +186,9 @@ public class ExtPath{
             };
         };
     }
-    public Collection<ExtPath> getListRecursive(){
+    public Collection<ExtPath> getListRecursive(boolean applyDisable){
         ArrayList<ExtPath> list = new ArrayList<>();
-        if(!this.isDisabled.get()){
+        if(!applyDisable || !this.isDisabled.get()){
             list.add(this);
         }
         return list; 
@@ -280,6 +272,10 @@ public class ExtPath{
     }
     public String relativeTo(String possibleChild){
         return new PathStringCommands(absolutePath).relativePathTo(possibleChild);
+    }
+    
+    public PathStringCommands getPathCommands(){
+        return new PathStringCommands(absolutePath);
     }
     @Override
     public String toString(){
