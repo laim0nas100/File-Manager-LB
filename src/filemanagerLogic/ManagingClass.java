@@ -103,21 +103,23 @@ public class ManagingClass {
         cacheIndex = folderCache.size()-1;
     }
     
-    public void createNewFolder() throws IOException{
+    public ExtPath createNewFolder() throws IOException{
         String newName = "New Folder";
         newName = TaskFactory.resolveAvailablePath(currentDir, newName);
         Files.createDirectory(Paths.get(newName));
         ExtFolder folder = new ExtFolder(newName);
         LocationInRoot location = new LocationInRoot(newName);
         LocationAPI.getInstance().putByLocation(location, folder);
+        return folder;
     }
-    public void createNewFile() throws IOException{
+    public ExtPath createNewFile() throws IOException{
         String newName = "New File";
         newName = TaskFactory.resolveAvailablePath(currentDir, newName);
         Files.createFile(Paths.get(newName));
         ExtPath file = new ExtPath(newName);
         LocationInRoot location = new LocationInRoot(newName);
         LocationAPI.getInstance().putByLocation(location, file);
+        return file;
     }
     public boolean hasPrev(){
         return this.cacheIndex!=0;

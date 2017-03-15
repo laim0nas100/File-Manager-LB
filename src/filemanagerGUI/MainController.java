@@ -44,13 +44,10 @@ import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
-import filemanagerLogic.LocationInRootNode;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
@@ -269,10 +266,8 @@ public class MainController extends BaseController{
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(MC.currentDir);
     }
-    public void restart(){
-        Platform.runLater(() ->{
-            FileManagerLB.reInit();
-        });
+    public void restart() throws InterruptedException{
+        FileManagerLB.restart();
     }
     public void advancedRenameFolder(){
         if(!MC.currentDir.isAbsoluteRoot.get()){
@@ -335,6 +330,9 @@ public class MainController extends BaseController{
 //            
 //        ViewManager.getInstance().newProgressDialog(copyFiles);
 
+//        CodeSource codeSource = FileManagerLB.class.getProtectionDomain().getCodeSource();
+//        File jarFile = new File(codeSource.getLocation().toURI().getPath());       
+//        System.out.println(jarFile.getAbsolutePath());
         Log.write("END TEST");
     }
 
@@ -550,7 +548,8 @@ public class MainController extends BaseController{
         contextMenuItems[0].setOnAction((eh) -> {
             Log.writeln("Create new folder");
             try {
-                MC.createNewFolder();
+                ExtPath createNewFolder = MC.createNewFolder();
+                ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
                 MainController.this.update();
             }catch (Exception ex) {
                 ErrorReport.report(ex);
@@ -595,7 +594,8 @@ public class MainController extends BaseController{
         contextMenuItems[5].setOnAction((eh)->{
             Log.writeln("Create new file");
             try {
-                MC.createNewFile();
+                ExtPath createNewFile = MC.createNewFile();
+                ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
                 MainController.this.update();
             }catch (IOException ex) {
                 ErrorReport.report(ex);
@@ -1180,23 +1180,21 @@ public class MainController extends BaseController{
     }
     
     private void delete(){
-        if(this.propertyDeleteCondition.not().get()){
-            return;
+        if(this.propertyDeleteCondition.get()){
+            Log.writeln("Deleting");
+            ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
+            task.setTaskDescription("Delete selected files");
+            ViewManager.getInstance().newProgressDialog(task);
         }
-        Log.writeln("Deleting");
-        ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
-        task.setTaskDescription("Delete selected files");
-        ViewManager.getInstance().newProgressDialog(task);
+        
     }
     private void rename(){
-        if(this.propertyRenameCondition.not().get()){
-            return;
-        }   
-        
-        Log.writeln("Invoke rename dialog");
-        ExtPath path = (ExtPath)tableView.getSelectionModel().getSelectedItem();
-        ViewManager.getInstance().newRenameDialog(MC.currentDir,path);
-        //Invoke text input dialog
-        
+        if(this.propertyRenameCondition.get()){
+            Log.writeln("Invoke rename dialog");
+            ExtPath path = (ExtPath)tableView.getSelectionModel().getSelectedItem();
+            ViewManager.getInstance().newRenameDialog(MC.currentDir,path);
+            //Invoke text input dialog
+            //
+        }
     }
 }

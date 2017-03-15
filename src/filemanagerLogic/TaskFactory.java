@@ -39,7 +39,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import utility.CLI;
+import LibraryLB.CLI;
 import utility.ErrorReport;
 import utility.FileNameException;
 import utility.PathStringCommands;
@@ -313,9 +313,9 @@ public class TaskFactory {
                     updateMessage(str);
                     updateProgress(index1+0.5, list.size()+leftFolders.size());
                     try{
-                        if(Files.isDirectory(Paths.get(list.get(index1).paths[0]))){
+                        if(Files.isDirectory(list.get(index1).paths[0])){
                             leftFolders.add(list.get(index1));
-                            Files.createDirectory(Paths.get(list.get(index1).paths[1]));
+                            Files.createDirectory(list.get(index1).paths[1]);
                             Log.writeln("Added to folders:"+list.get(index1).paths[1]);
                         }else{
                             list.get(index1).move();
@@ -372,16 +372,8 @@ public class TaskFactory {
                     updateMessage(str);
                     updateProgress(i+0.5, list.size());
                     try{
-                        
-//                        ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileOptimized(
-//                                LocationAPI.getInstance().getFileOptimized(
-//                                        list.get(i).paths[0]).getParent(i));
                         final ActionFile f = list.get(i);
                         f.delete();
-//                        CLI.startNewJavaProcess("DeleteFiles", f.paths[0]).call();
-                        
-//                        parent.update();
-                        Thread.sleep(refreshDuration);
                         
                     }catch(Exception e){
                         ErrorReport.report(e);
@@ -395,27 +387,32 @@ public class TaskFactory {
             }
         };
     } 
-    private void populateRecursiveParallelInner(ExtFolder folder,int depth){
+    private void populateRecursiveParallelInner(ExtFolder folder,int depth, TaskExecutor exe){
         
         if(0<depth){
-            Log.writeln("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
-            folder.updateTask.cancel();
-            if(folder.isVirtual.get()){
-                folder.update();
-            }else{
-                folder.startUpdateTask();
-            }
+            SimpleTask task = new SimpleTask() {
+                @Override
+                protected Void call() throws Exception {
+                    Log.write("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
+                    folder.update();
+                    folder.getFoldersFromFiles().stream().forEach((fold) -> {
+                        populateRecursiveParallelInner(fold, depth-1,exe);
+                    });
+                    return null;
+                }
+            };
+            exe.addTask(task);
             
-            folder.getFoldersFromFiles().stream().forEach((fold) -> {
-                populateRecursiveParallelInner(fold, depth-1);
-            });
         }
     }
     public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
-                populateRecursiveParallelInner(folder,depth);
-            return null;
+                TaskExecutor exe = new TaskExecutor(10,1);
+                
+                populateRecursiveParallelInner(folder,depth,exe);
+                new Thread(exe).start();
+                return null;
             }
         };
     }
@@ -424,7 +421,6 @@ public class TaskFactory {
     public static String resolveAvailablePath(ExtFolder folder,String name){
         String path = folder.getAbsoluteDirectory();
         String newName = name;
-        int i=0;
         while(folder.hasFileIgnoreCase(newName)){
             newName = "New "+newName;
         }
@@ -571,10 +567,10 @@ public class TaskFactory {
             
             case(1):{
                 try{
-                    Files.copy(Paths.get(action.paths[1]), Paths.get(action.paths[0]),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+                    Files.copy(action.paths[1], action.paths[0],StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(Paths.get(action.paths[0]))){
+                    if(Files.isDirectory(action.paths[0])){
 //                        Files.setLastModifiedTime(action.paths[0], Files.getLastModifiedTime(action.paths[1]));
                         entry.isModified = false;
                     }
@@ -583,10 +579,10 @@ public class TaskFactory {
                 break;
             }case(2):{
                 try{
-                    Files.copy(Paths.get(action.paths[0]), Paths.get(action.paths[1]), StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
+                    Files.copy(action.paths[0], action.paths[1], StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
                 }catch(Exception e){
                     ErrorReport.report(e);
-                    if(Files.isDirectory(Paths.get(action.paths[1]))){
+                    if(Files.isDirectory(action.paths[1])){
 //                        Files.setLastModifiedTime(action.paths[1], Files.getLastModifiedTime(action.paths[0]));
                         entry.isModified = false;
                     }
@@ -594,10 +590,10 @@ public class TaskFactory {
                 break;
             }case(3):{
                 
-                Files.delete(Paths.get(action.paths[0])); 
+                Files.delete(action.paths[0]); 
                 break;
             }case(4):{
-                Files.delete(Paths.get(action.paths[1]));
+                Files.delete(action.paths[1]);
                 break;
             }default:{
                 break;

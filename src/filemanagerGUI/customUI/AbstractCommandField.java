@@ -8,6 +8,7 @@ package filemanagerGUI.customUI;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import LibraryLB.Containers.LoopingList;
+import LibraryLB.Log;
 import java.util.HashMap;
 
 /**
@@ -15,7 +16,7 @@ import java.util.HashMap;
  * @author Laimonas Beniušis
  */
 public abstract class AbstractCommandField {
-    public HashMap<Object,Command> commands = new HashMap<>();
+    public HashMap<String,Command> commands = new HashMap<>();
     public TextField field;
     public LoopingList<String> commandHistory = new LoopingList<>();
     public AbstractCommandField(TextField tf){
@@ -40,7 +41,7 @@ public abstract class AbstractCommandField {
         this.commands.put(commandInit, command);
     }
     public abstract void submit(String command);
-    public boolean runCommand(Object commandInit,Object...params) throws Exception{
+    public boolean runCommand(String commandInit,String[] params) throws Exception{
         if(this.commands.containsKey(commandInit)){
             this.commands.get(commandInit).run(params);
             return true;
@@ -48,6 +49,6 @@ public abstract class AbstractCommandField {
         return false;
     }
     public interface Command{
-        public void run(Object...params) throws Exception;
+        public void run(String[] params) throws Exception;
     }
 }

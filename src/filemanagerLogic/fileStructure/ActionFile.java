@@ -15,33 +15,36 @@ import java.nio.file.Paths;
  * @author Laimonas Beniušis
  */
 public class ActionFile {
-    public String[] paths;
+    public Path[] paths;
     public ActionFile(String...strings){
-        paths = strings;
+        paths = new Path[strings.length];
+        for(int i=0; i<strings.length; i++){
+            paths[i] = Paths.get(strings[i]);
+        }
     }
     @Override
     public String toString(){
         String s="";
-        for(String p:paths){
+        for(Path p:paths){
             if(p!=null){
-                s+=p+" | ";
+                s+=" | "+p;
             }
         }
-        return s;
+        return s.substring(3);
     }
     
     public void delete() throws IOException{
-        Files.delete(Paths.get(paths[0]));
+        Files.delete(paths[0]);
     }
     
     public static Path toPath(String s){
         return Paths.get(s);
     }
     public void move() throws IOException{
-        Files.move(toPath(paths[0]), toPath(paths[1]));
+        Files.move(paths[0], paths[1]);
     }
     public void copy() throws IOException{
-        Files.copy(toPath(paths[0]), toPath(paths[1]));
+        Files.copy(paths[0], paths[1]);
     }
     
 }

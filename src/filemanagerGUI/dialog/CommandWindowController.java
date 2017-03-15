@@ -8,7 +8,6 @@ package filemanagerGUI.dialog;
 import LibraryLB.Containers.ParametersMap;
 import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
-import LibraryLB.Parsing.LexerWithStrings;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import LibraryLB.Threads.ExtTask;
@@ -20,6 +19,7 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -29,11 +29,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.Callable;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -79,37 +77,39 @@ public class CommandWindowController extends BaseController {
     public void beforeShow(String title){
         super.beforeShow(title);
         command = new Commander(textField);
-        command.addCommand(commandCopyFolderStructure, (Object... params)->{
+        command.addCommand(commandCopyFolderStructure, (String... params)->{
             Log.write("Copy params",Arrays.asList(params));
-            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized((String)params[1]);
+            String newCom = (String) params[0];
+            newCom = ExtStringUtils.replaceOnce(newCom, commandCopyFolderStructure+" ", "");
+            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
-            Log.write("Copy structure: ",root,dest);
+            Log.write("Copy structure:",root,dest);
             ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true), dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
             ViewManager.getInstance().newProgressDialog(copyFiles);
             
 
         });
-        command.addCommand(commandCancel, (Object... params)->{ 
+        command.addCommand(commandCancel, (String... params)->{ 
                 startExecutor();    
         });
-        command.addCommand(commandGenerate, (Object... params) -> {
+        command.addCommand(commandGenerate, (String... params) -> {
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate+" ", "");
                 command.generate(newCom);
         });
         
-        command.addCommand(commandApply, (Object... params)->{
+        command.addCommand(commandApply, (String... params)->{
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandApply+" ", "");
                 command.apply(newCom);
         });
-        command.addCommand(commandInit, (Object... params)->{
+        command.addCommand(commandInit, (String... params)->{
                 Platform.runLater(()->{
                    FileManagerLB.reInit(); 
                 });
                 
         });
-        command.addCommand(commandListRec, (Object... params)->{
+        command.addCommand(commandListRec, (String... params)->{
                 ArrayDeque<String> deque = new ArrayDeque<>();
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandListRec+" ", "");
@@ -121,7 +121,7 @@ public class CommandWindowController extends BaseController {
                 String desc = "Listing recursive:"+deque.removeFirst();
                 ViewManager.getInstance().newListFrame(desc, deque);
         });
-        command.addCommand(commandList, (Object... params)->{
+        command.addCommand(commandList, (String... params)->{
                 ArrayDeque<String> deque = new ArrayDeque<>();
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandList+" ", "");
@@ -137,20 +137,20 @@ public class CommandWindowController extends BaseController {
                     ViewManager.getInstance().newListFrame(desc, deque);
                 }
         });
-        command.addCommand(commandSetCustom, (Object... params)->{
+        command.addCommand(commandSetCustom, (String... params)->{
                 String newCom = (String) params[0];
                 newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom+" ", "");
                 FileManagerLB.customPath = new PathStringCommands(newCom.trim());
         });
-        command.addCommand(commandClear, (Object... params)->{
+        command.addCommand(commandClear, (String... params)->{
                 textArea.clear();
         });
-        command.addCommand(commandHelp, (Object... params)->{
+        command.addCommand(commandHelp, (String... params)->{
 
                 listParameters();
                 addToTextArea(textArea,"Read Parameters.txt file for info\n");
         });
-        command.addCommand(commandListParams, (Object... params)->{
+        command.addCommand(commandListParams, (String... params)->{
             listParameters();
         });   
         
@@ -292,40 +292,23 @@ public class CommandWindowController extends BaseController {
                     list.add(spl);
                 }
             }
-            Task<Void> task = new Task<Void>(){
+            SimpleTask task = new SimpleTask(){
                 @Override
                 protected Void call() throws Exception {
-                    
-//                    String lexerComm = ExtStringUtils.replace(command, "\\", "\\\\");
-//                    
-//                    LexerWithStrings lexer = new LexerWithStrings(lexerComm);
-//                    ArrayList<Token> remainingTokens = new ArrayList<>();
-//                    try {
-//                        remainingTokens.addAll(lexer.getRemainingTokens());
-//                    } catch (Exception ex) {
-//                        ex.printStackTrace();
-//                    }
-//                    LinkedList<String> commands = new LinkedList<>();
-//                    for(Token token:remainingTokens){
-//                        Literal lit = (Literal) token;
-//                        commands.add(lit.value);
-//                    }
-//                    Log.writeln("After parsing",commands);
+
                     LinkedList<String> coms = new LinkedList<>();
                     coms.addAll(list);
-//                    coms.pollFirst();
                     coms.add(1,command);
                     Log.write(coms);
                     String c = coms.pollFirst();
-                    if(runCommand(c,coms.toArray(new String[1]))){
+                    String[] params = coms.toArray(new String[1]);
+                    Log.write("Params",Arrays.asList(params));
+                    if(runCommand(c,params)){
                         Log.write("Run in-built command");
                         return null;
                     }else{
                         Log.writeln("Run native command");
-                        
-                        ProcessBuilder builder = new ProcessBuilder(list.toArray(new String[1]));
-                        builder.redirectErrorStream(true);
-                        Process process = builder.start();
+                        Process process = LibraryLB.CLI.createNewProcess(list.toArray(new String[1])).call();
                         handleStream(process,textArea,setTextAfterwards,command);
                         return null;
                     }

@@ -29,6 +29,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.stage.Stage;
+import LibraryLB.CLI;
 import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.PathStringCommands;
@@ -57,9 +58,7 @@ public class FileManagerLB extends Application {
         reInit();
         if(DEBUG.not().get()){
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-        }
-        
-        
+        }    
     } 
     public static void main(String[] args) {
         launch(args);
@@ -73,28 +72,23 @@ public class FileManagerLB extends Application {
             }
         }
         for (File root : roots) {
-            //Log.writeln("Root["+i+"]:" + roots[i].getAbsolutePath());
             mountDevice(root.getAbsolutePath());
         }
     }
     public static boolean mountDevice(String name){
         boolean result = false;
         name = name.toUpperCase();
-        Log.write("Mount: ",name);
+        Log.write("Mount: "+name);
         Path path = Paths.get(name);
         if(Files.isDirectory(path)){
             ExtFolder device = new ExtFolder(name);
             int nameCount = path.getNameCount();
-//            Log.write("Is direcory");
             if(nameCount == 0){
                 result = true;
                 String newName = path.getRoot().toString();
-//                Log.writeln("newName= "+newName);
                 device.propertyName.set(newName);
                 if(!ArtificialRoot.files.containsKey(newName)){
                     ArtificialRoot.files.put(newName, device);
-//                    device.update();
-                    
                 }else{
                     result = false;
                 }
@@ -111,13 +105,7 @@ public class FileManagerLB extends Application {
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
     public static Set<String> getRootSet(){
-//        HashSet<String> set = new HashSet<>();
-//        for(ExtPath file:ArtificialRoot.files.values()){
-//            set.add(file.propertyName.get());
-//        }
-        return ArtificialRoot.files.keySet();
-//        return set;
-        
+        return ArtificialRoot.files.keySet();   
     }
     public static void doOnExit(){
         try {           
@@ -149,7 +137,6 @@ public class FileManagerLB extends Application {
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
         ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
-//        VirtualFolders.setPopulated(true);
         if(CommandWindowController.executor!=null){
             CommandWindowController.executor.cancel();
         }
@@ -169,7 +156,6 @@ public class FileManagerLB extends Application {
     public static void readParameters(){
         ArrayDeque<String> list = new ArrayDeque<>();         
         try{
-            //Log.changeStream('f', new File(DIR+"Log.txt"));
             list.addAll(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
         }
         catch(Exception e){
@@ -211,6 +197,36 @@ public class FileManagerLB extends Application {
         CommandWindowController.commandCopyFolderStructure = (String) parameters.defaultGet("code.copyFolderStructure", "copyStructure");
 
 
+        
+    }
+    public static void restart(){
+        
+        new Thread(()->{
+            try {
+                java.security.CodeSource source = FileManagerLB.class.getProtectionDomain().getCodeSource();
+                String path = source.getLocation().getFile();
+                if(path.startsWith("/")){
+                    path = path.substring(1);
+                }
+                Log.write("Launcher", "java","-jar",path);
+                Collection<String> call = CLI.startNewJavaProcess("Launcher", "java","-jar",path).call();
+
+                ArrayDeque<String> output = new ArrayDeque(call);
+                String exitValue = output.pollLast();
+                for(String s:output){
+                    Log.write(s);
+                }
+                if(exitValue.equals("0")){
+                    FileManagerLB.doOnExit();
+                }else{
+                    throw new Exception("Failed to start new instance, check Log");
+                }
+
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
+        }).start();
+        
         
     }
     

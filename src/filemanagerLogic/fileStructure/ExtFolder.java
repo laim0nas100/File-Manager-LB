@@ -17,6 +17,8 @@ import LibraryLB.Log;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.SimpleTask;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,12 +31,6 @@ import utility.ExtStringUtils;
  */
 public class ExtFolder extends ExtPath{
 
-    public SimpleTask updateTask = new SimpleTask() {
-        @Override
-        protected Void call() throws Exception {
-            return null;
-        }
-    };
     protected boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
     
@@ -56,21 +52,23 @@ public class ExtFolder extends ExtPath{
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
                 this.populated = true;
-                Files.newDirectoryStream(Paths.get(parent)).forEach(f->{
-                    String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
-                    String filePathStr = f.toString();
-                    if(Files.exists(f) && !files.containsKey(name)){
-                        ExtPath file;
-                        if(Files.isDirectory(f)){
-                            file = new ExtFolder(filePathStr,f);             
-                        }else if(Files.isSymbolicLink(f)){
-                            file = new ExtLink(filePathStr,f);
-                        }else{
-                            file = new ExtPath(filePathStr,f);
+                try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
+                    dirStream.forEach( f ->{
+                        String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
+                        String filePathStr = f.toString();
+                        if(Files.exists(f) && !files.containsKey(name)){
+                            ExtPath file;
+                            if(Files.isDirectory(f)){
+                                file = new ExtFolder(filePathStr,f);
+                            }else if(Files.isSymbolicLink(f)){
+                                file = new ExtLink(filePathStr,f);
+                            }else{
+                                file = new ExtPath(filePathStr,f);
+                            }
+                            files.put(file.propertyName.get(), file);
                         }
-                        files.put(file.propertyName.get(), file);
-                    }
-                });
+                    });
+                }
             }
             
         }catch(Exception e){
@@ -84,10 +82,11 @@ public class ExtFolder extends ExtPath{
         fold.update();
         Log.writeln("Iteration "+fold.getAbsoluteDirectory());
         for(ExtFolder folder:fold.getFoldersFromFiles()){
+            fold.files.replace(folder.propertyName.get(), folder);
             folder.populateRecursiveInner(folder);
-            fold.files.replace(folder.propertyName.get(), folder);  
+            
         }
-        this.populated = true;
+        fold.populated = true;
         
     };
     public Collection<ExtFolder> getFoldersFromFiles(){
@@ -101,14 +100,16 @@ public class ExtFolder extends ExtPath{
     }
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable){
-        LinkedList<ExtPath> list = new LinkedList<>();
+        ArrayDeque<ExtPath> list = new ArrayDeque<>();
         list.add(this);
-        getRootList(list,this);
-        Iterator<ExtPath> iterator = list.iterator();
-        while(iterator.hasNext()){
-            ExtPath next = iterator.next();
-            if(next.isDisabled.get()){
-                iterator.remove();
+        getRootList(list,this); 
+        if(applyDisable){
+            Iterator<ExtPath> iterator = list.iterator();        
+            while(iterator.hasNext()){
+                ExtPath next = iterator.next();
+                if(next.isDisabled.get()){
+                    iterator.remove();
+                }
             }
         }
         return list; 
@@ -128,88 +129,27 @@ public class ExtFolder extends ExtPath{
         folder.update();
         if(!folder.isDisabled.get()){
             list.addAll(folder.getFilesCollection());
-            for(ExtFolder fold:folder.getFoldersFromFiles()){
+            folder.getFoldersFromFiles().forEach( fold -> {
                 getRootList(list,fold);
-            }
+            });
         }
     }
     public void update(){
         Log.writeln("Update:"+this.getAbsoluteDirectory());
-        if(updateTask!=null){
-            updateTask.cancel();
-        }
         if(isAbsoluteRoot.get()){
             FileManagerLB.remount();
         }
-        if(isPopulated()){
-            
+        if(isPopulated()){           
             for(ExtPath file:getFilesCollection()){
                 if(!Files.exists(file.toPath())){
-                    Log.writeln(file.getAbsolutePath()+" dont exist");
+                    Log.writeln(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
                 }
             }   
         }
         populateFolder();
     }
-    public void startUpdateTask(){
-        if(updateTask!=null){
-            updateTask.cancel();
-        }
-        updateTask = new SimpleTask() {
-        @Override
-        protected Void call() throws Exception {
-            Log.writeln("Update Task:"+getAbsolutePath());
-            if(isAbsoluteRoot.get()){
-                FileManagerLB.remount();
-            }
-            if(isPopulated()){
-                
-                for(ExtPath file:getFilesCollection()){
-                    if(this.isCancelled()){
-                        return null;
-                    }
-                    if(!Files.exists(file.toPath())){
-                        Log.writeln(file.getAbsolutePath()+" dont exist");
-                        files.remove(file.propertyName.get());
-                    }
-                }   
-            }
-            try{
-                if(Files.isDirectory(toPath())){
-                    String parent = getAbsoluteDirectory();
-                    populated = true;
-                    Files.newDirectoryStream(Paths.get(parent)).forEach(f ->{
-                        if(this.isCancelled()){
-                            return;
-                        }
 
-                        String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
-                        String filePathStr = f.toString();
-                        if((!Files.exists(f))&&(!files.containsKey(name))){
-                            
-                            ExtPath file;
-                            if(Files.isDirectory(f)){
-                                file = new ExtFolder(filePathStr,f);             
-                            }else if(Files.isSymbolicLink(f)){
-                                file = new ExtLink(filePathStr,f);
-                            }else{
-                                file = new ExtPath(filePathStr,f);
-                            }
-                            files.put(file.propertyName.get(), file);
-                        }
-                    });
-                }
-                
-            }catch(Exception e){
-                ErrorReport.report(e);
-            }
-            return null;
-        }
-        
-    };
-        new Thread(updateTask).start();
-    }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){
             String request = getKey(name);
