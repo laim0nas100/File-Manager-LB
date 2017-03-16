@@ -538,14 +538,7 @@ public class MediaPlayerController extends BaseController {
                 return;
             }
             
-            if(filePlaying==null){
-                index=0;
-            }else{
-                int potIndex = this.getIndex(filePlaying);
-                if(potIndex!=-1){
-                    index = potIndex;
-                }
-            }
+            updateIndex();
             if(!ignoreModifiers){
                 if(playType.getSelectionModel().getSelectedItem().equals(typeRandom)){
                     index = (int) (Math.random() * table.getItems().size());
@@ -586,15 +579,16 @@ public class MediaPlayerController extends BaseController {
         SimpleTask t = new SimpleTask(){
             @Override
             protected Void call() throws Exception {
-                Iterator iterator = table.getItems().iterator();
+                ArrayDeque deque = new ArrayDeque(table.getItems());
+                Iterator iterator = deque.iterator();
                 while(iterator.hasNext()){
                     ExtPath path = (ExtPath) iterator.next();
                     if(!Files.exists(path.toPath())){
                         iterator.remove();
                     }
                 }
-                extTableView.updateContents(table.getItems());  
-                
+                extTableView.updateContents(deque);  
+                updateIndex();
                 return null;
             }
         };
@@ -719,7 +713,18 @@ public class MediaPlayerController extends BaseController {
             return minutes+":"+seconds;
         }
     }
-    
+    private void updateIndex(){
+        if(filePlaying==null){
+                index=0;
+            }else{
+                int potIndex = this.getIndex(filePlaying);
+                if(potIndex!=-1){
+                    index = potIndex;
+                }else{
+                    index = 0;
+                }
+            }
+    }
     
     public String[] getOptions(){
         ArrayList<String> options = new ArrayList<>();   

@@ -141,6 +141,10 @@ public class FileManagerLB extends Application {
         }
         readParameters();
         try{
+            Path userdir = Paths.get(USER_DIR);
+            if(!Files.isDirectory(userdir)){
+                Files.createDirectories(userdir);
+            }
             Log.changeStream('f',USER_DIR+"Log.txt");
         }catch(Exception e){
             ErrorReport.report(e);
