@@ -93,7 +93,7 @@ code.commandApply=apply//command to load script
 code.init=init//reinitialize application
 code.list=list//list all files that have specified folder as parent
 code.listRec=listRec//recursive list
-code.copyFolderStructure=copyStructure//copy structure of a src folder to custom folder
+code.copyFolderStructure=copyStructure//copy structure of a src folder to custom path
 code.cancel=cancel
 
 virtualPrefix=V

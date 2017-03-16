@@ -16,6 +16,7 @@ import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -46,7 +49,7 @@ public class FileManagerLB extends Application {
     public static int MAX_THREADS_FOR_TASK = 10;
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-    
+    public static String logPath;
     public static int DEPTH = 1;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
@@ -111,7 +114,7 @@ public class FileManagerLB extends Application {
         try {           
 //            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
-            Collection<Runnable> makeNewCopy = BM.makeNewCopy(USER_DIR+"Log.txt");
+            Collection<Runnable> makeNewCopy = BM.makeNewCopy(logPath);
             makeNewCopy.forEach(th ->{
                 th.run();
             });
@@ -121,7 +124,12 @@ public class FileManagerLB extends Application {
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
-        Log.getInstance().close();
+        
+        try {
+            Log.getInstance().close();
+            Files.delete(Paths.get(logPath));
+        } catch (IOException ex) {
+        }
     }
     public static void reInit(){
         Log.write("INITIALIZE");
@@ -140,12 +148,13 @@ public class FileManagerLB extends Application {
             CommandWindowController.executor.cancel();
         }
         readParameters();
+        logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss")+" Log.txt";
         try{
             Path userdir = Paths.get(USER_DIR);
             if(!Files.isDirectory(userdir)){
                 Files.createDirectories(userdir);
             }
-            Log.changeStream('f',USER_DIR+"Log.txt");
+            Log.changeStream('f',logPath);
         }catch(Exception e){
             ErrorReport.report(e);
         }
@@ -203,10 +212,16 @@ public class FileManagerLB extends Application {
         
     }
     public static void restart(){
-        Log.write("Restart Request");
-        FileManagerLB.doOnExit();  
-        System.err.println("Restart request");//Message to parent process
-              
+        try {
+            Log.write("Restart request");
+            FileManagerLB.doOnExit();
+            System.err.println("Restart request");//Message to parent process
+            Thread.sleep(10000);
+            System.err.println("Failed to respond");
+            System.err.println("Terminating");
+        } catch (InterruptedException ex) {
+        }
+        System.exit(707);
     }
     
 }

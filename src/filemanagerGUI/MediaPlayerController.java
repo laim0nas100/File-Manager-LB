@@ -329,7 +329,7 @@ public class MediaPlayerController extends BaseController {
         nameCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyName);
         TableColumn<ExtPath, String> indexCol = new TableColumn<>("");
         indexCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> {
-            return new SimpleStringProperty(getIndex(cellData.getValue())+"");
+            return new SimpleStringProperty(1+getIndex(cellData.getValue())+"");
         });
         TableColumn<ExtPath, String> selectedCol = new TableColumn<>("");
         selectedCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> {
