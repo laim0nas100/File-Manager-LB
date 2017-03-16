@@ -76,6 +76,7 @@ public class MainController extends BaseController{
     
     private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
     
+    
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
     public static ObservableList<ExtPath> dragList;
@@ -262,6 +263,7 @@ public class MainController extends BaseController{
     }
     public void closeAllWindows(){
         FileManagerLB.doOnExit();
+        System.exit(0);
     }
     public void createNewWindow(){
         ViewManager.getInstance().newWindow(MC.currentDir);
@@ -718,8 +720,7 @@ public class MainController extends BaseController{
         
         contextMenuItems[19] = new MenuItem("Delete selected");
         contextMenuItems[19].setOnAction(eh ->{
-            ExtTask task = TaskFactory.getInstance().deleteFiles(
-                    TaskFactory.getInstance().populateStringFileList(markedView.getSelectionModel().getSelectedItems()));
+            ExtTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
             task.setTaskDescription("Delete marked files");
             ViewManager.getInstance().newProgressDialog(task);
         });

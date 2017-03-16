@@ -5,9 +5,11 @@
  */
 package utility;
 
+import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.DEBUG;
 import filemanagerGUI.MainController;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
@@ -27,6 +29,7 @@ public class ErrorReport {
             ex.printStackTrace();
         }
         MainController.errorLog.add(0, error);
+        Log.write("Exception:",ex.toString());
     }
     private final SimpleStringProperty errorName;
     private final Exception errorCause;
@@ -59,7 +62,7 @@ public class ErrorReport {
     }
     private String getOnlyError(Exception e){
         String err = e.toString();
-        int index = err.lastIndexOf(":");
+        int index = err.indexOf(":");
         if(index>0){
             return err.substring(0,index);
         }else{

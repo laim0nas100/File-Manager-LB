@@ -29,7 +29,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.stage.Stage;
-import LibraryLB.CLI;
 import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.PathStringCommands;
@@ -55,6 +54,7 @@ public class FileManagerLB extends Application {
     public static PathStringCommands customPath = new PathStringCommands(USER_DIR);
     @Override
     public void start(Stage primaryStage) {
+        System.err.println("STARTING");
         reInit();
         if(DEBUG.not().get()){
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
@@ -122,7 +122,6 @@ public class FileManagerLB extends Application {
             ErrorReport.report(ex);
         }
         Log.getInstance().close();
-        System.exit(0);
     }
     public static void reInit(){
         Log.write("INITIALIZE");
@@ -200,34 +199,10 @@ public class FileManagerLB extends Application {
         
     }
     public static void restart(){
-        
-        new Thread(()->{
-            try {
-                java.security.CodeSource source = FileManagerLB.class.getProtectionDomain().getCodeSource();
-                String path = source.getLocation().getFile();
-                if(path.startsWith("/")){
-                    path = path.substring(1);
-                }
-                Log.write("Launcher", "java","-jar",path);
-                Collection<String> call = CLI.startNewJavaProcess("Launcher", "java","-jar",path).call();
-
-                ArrayDeque<String> output = new ArrayDeque(call);
-                String exitValue = output.pollLast();
-                for(String s:output){
-                    Log.write(s);
-                }
-                if(exitValue.equals("0")){
-                    FileManagerLB.doOnExit();
-                }else{
-                    throw new Exception("Failed to start new instance, check Log");
-                }
-
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
-        }).start();
-        
-        
+        Log.write("Restart Request");
+        FileManagerLB.doOnExit();  
+        System.err.println("Restart request");//Message to parent process
+              
     }
     
 }

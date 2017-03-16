@@ -5,6 +5,8 @@
  */
 package filemanagerGUI;
 
+import filemanagerLogic.Enums.FrameTitle;
+import java.util.HashMap;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -13,12 +15,25 @@ import javafx.stage.Stage;
  * @author Laimonas Beniušis
  */
 public class Frame {
+    public static class Pos{
+        public double x,y;
+        public Pos(double X, double Y){
+            this.x = X;
+            this.y = Y;
+        }
+        public String toString(){
+            return "["+x+":"+y+"]";
+        }
+    }
+    public static HashMap<String,Pos> positionMemoryMap = new HashMap<>();
     private Stage stage;
     private BaseController controller;
-
-    public Frame(Stage stage, BaseController controller) {
+    private String frameType;
+    
+    public Frame(Stage stage, BaseController controller, String frameType) {
         this.stage = stage;
         this.controller = controller;
+        this.frameType = frameType;
     }
     
     public BaseController getController(){
@@ -41,5 +56,8 @@ public class Frame {
     }
     public String getID(){
         return this.controller.getID();
+    }
+    public String getFrameTitle(){
+        return this.frameType;
     }
 }

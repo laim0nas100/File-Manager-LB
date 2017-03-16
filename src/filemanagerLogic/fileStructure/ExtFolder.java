@@ -9,19 +9,16 @@ import filemanagerGUI.FileManagerLB;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import utility.ErrorReport;
 import LibraryLB.Log;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
-import filemanagerLogic.SimpleTask;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.LinkedList;
 import utility.ExtStringUtils;
 
 /**
@@ -138,6 +135,7 @@ public class ExtFolder extends ExtPath{
         Log.writeln("Update:"+this.getAbsoluteDirectory());
         if(isAbsoluteRoot.get()){
             FileManagerLB.remount();
+            return;
         }
         if(isPopulated()){           
             for(ExtPath file:getFilesCollection()){

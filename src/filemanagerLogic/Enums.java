@@ -46,7 +46,7 @@ public class Enums {
         MEDIA_PLAYER("Media Payer","fxml/MediaPlayer.fxml"),
         COMMAND_DIALOG("Command Dialog","fxml/CommandWindow.fxml");
         public final String recourse;
-        private final String title;
+        public final String title;
         public String getTitle(){
             return this.title+" ";
         }

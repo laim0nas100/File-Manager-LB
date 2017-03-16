@@ -604,7 +604,7 @@ public class TaskFactory {
     
     
     public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
-        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,1);
+        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,0);
             for(int i=0; i<array.size();i++){
                 
                 Task<Long> task;

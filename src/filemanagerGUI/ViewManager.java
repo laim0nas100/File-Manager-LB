@@ -338,12 +338,24 @@ public class ViewManager {
         Stage stage = new Stage();
         stage.setTitle(title);
         stage.setScene(new Scene(root));
+        
         BaseController controller = loader.getController();
         stage.setOnCloseRequest((WindowEvent we) -> {
             controller.exit();
         });
         controller.windowID = title;
-        Frame frame = new Frame(stage,controller);
+        boolean containsKey = Frame.positionMemoryMap.containsKey(info.title);
+        if(containsKey){
+            Frame.Pos pos = Frame.positionMemoryMap.get(info.title);
+            stage.setX(pos.x);
+            stage.setY(pos.y);
+            Log.write("Set:",info.title,pos);
+        }else{
+            Frame.Pos pos = new Frame.Pos(stage.getX(), stage.getY());
+            Frame.positionMemoryMap.put(info.title,pos );
+            Log.write("New pos:",info.title,pos);
+        }
+        Frame frame = new Frame(stage,controller,info.title);
         this.frames.put(frame.getTitle(),frame);
         
         return frame;
@@ -353,7 +365,12 @@ public class ViewManager {
         if(this.initStart){
             return;
         }
-        frames.get(windowID).getStage().close();
+        
+        Frame frame = frames.get(windowID);
+        Frame.Pos pos = new Frame.Pos(frame.getStage().getX(),frame.getStage().getY());
+        Frame.positionMemoryMap.put(frame.getFrameTitle(), pos);
+        frame.getStage().close();
+        
         frames.remove(windowID);
         windows.remove(windowID);
         if(windows.isEmpty()){
