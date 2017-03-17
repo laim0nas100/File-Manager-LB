@@ -35,42 +35,51 @@ public class ManagingClass {
         folderCache = new ArrayList<>();
         cacheIndex = 0;
         currentDir = dir;
-        isVirtual.bind(currentDir.isVirtual);
-        isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
+        rebind();
+    }
+    private void setCurrentDir(ExtPath path){
+        if(path instanceof ExtFolder){
+            currentDir = (ExtFolder) path;
+            rebind();
+        }
         
     }
     public void changeDirTo(ExtFolder file){
-        currentDir = file;
-        isVirtual.bind(currentDir.isVirtual);
-        isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
+        setCurrentDir(file);
         addCacheNode(currentDir);
         
+    }
+    private void rebind(){
+        isVirtual.bind(currentDir.isVirtual);
+        isAbsoluteRoot.bind(currentDir.isAbsoluteRoot);
     }
     public void changeToForward(){
        
         if(cacheIndex+1 < folderCache.size()){
-            currentDir = (ExtFolder) folderCache.get(++cacheIndex);
+            cacheIndex++;
+            setCurrentDir(folderCache.get(cacheIndex));
         } 
         Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToPrevious(){
         
         if(cacheIndex > 0){
-            currentDir = (ExtFolder) folderCache.get(--cacheIndex);
+            cacheIndex--;
+            setCurrentDir(folderCache.get(cacheIndex));
         }
         Log.writeln(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
-        if(!currentDir.isAbsoluteRoot.get()){
+        if(hasParent()){
             try {
                 if(currentDir.isRoot()||(currentDir.equals(FileManagerLB.VirtualFolders))){
-                    this.changeDirTo(FileManagerLB.ArtificialRoot);
+                    changeDirTo(FileManagerLB.ArtificialRoot);
                 }else if(currentDir instanceof VirtualFolder){
-                    this.changeDirTo(FileManagerLB.VirtualFolders);
+                    changeDirTo(FileManagerLB.VirtualFolders);
                 }else{
                     LocationInRoot location = new LocationInRoot(currentDir.getAbsoluteDirectory());
                     ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
-                    this.changeDirTo(folder);
+                    changeDirTo(folder);
                 }
             } catch (Exception ex) {
                 ErrorReport.report(ex);

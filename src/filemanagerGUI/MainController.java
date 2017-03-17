@@ -72,6 +72,8 @@ public class MainController extends BaseController{
     
     @FXML public CheckMenuItem autoClose;
     @FXML public CheckMenuItem autoStart;
+    @FXML public CheckMenuItem pinDialogs;
+    @FXML public CheckMenuItem pinTextInput;
     @FXML public SplitPane splitPane;
     
     @FXML public TableView tableView;
@@ -135,9 +137,9 @@ public class MainController extends BaseController{
     private FileAddressField fileAddress;
     private ManagingClass MC;
     private Finder finder;
-    private DATA_SIZE unitSize;
-    private SimpleStringProperty propertyUnitSizeName;
-    private SimpleLongProperty propertyUnitSize;
+    private DATA_SIZE unitSize = DATA_SIZE.KB;
+    private SimpleStringProperty  propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
+    private SimpleLongProperty    propertyUnitSize = new SimpleLongProperty(unitSize.size);
     private SimpleBooleanProperty propertyUnitSizeAuto = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty propertyReadyToSearch = new SimpleBooleanProperty(true);
     private SimpleBooleanProperty propertyDeleteCondition = new SimpleBooleanProperty(false);
@@ -171,20 +173,14 @@ public class MainController extends BaseController{
         MC = new ManagingClass(currentDir);
         
         menuItemTest.visibleProperty().bind(FileManagerLB.DEBUG);
-        unitSize = DATA_SIZE.KB;
-        propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
-        propertyUnitSize = new SimpleLongProperty(unitSize.size);
         
         
-        
-        
-        
-        
-        
-        
+
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
-        
+        pinDialogs.selectedProperty().bindBidirectional(ViewManager.getInstance().pinProgressDialogs);
+        pinTextInput.selectedProperty().bindBidirectional(ViewManager.getInstance().pinTextInputDialogs);
+
         propertyDeleteCondition.bind(writeableFolder.and(propertySelectedSize.greaterThan(0)));
         propertyRenameCondition.bind(writeableFolder.and(propertySelectedSize.isEqualTo(1)));
         
@@ -208,13 +204,14 @@ public class MainController extends BaseController{
         extTableView.prepareChangeListeners();
         
         changeToDir(currentDir);
+        
+        //default sort order
         TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
         TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
         typeCol.setSortType(TableColumn.SortType.DESCENDING);
         nameCol.setSortType(TableColumn.SortType.ASCENDING);
         tableView.getSortOrder().add(typeCol);
         tableView.getSortOrder().add(nameCol);
-        update();
     }
     
     @Override
@@ -335,16 +332,29 @@ public class MainController extends BaseController{
 //        Field f = this.getClass().getField("autoClose");
 //        CheckMenuItem get = (CheckMenuItem) f.get(ViewManager.getInstance().getFrame(windowID).getController());
 //        get.selectedProperty().set(true);
-
-        
 //        ExtTask copyFiles = TaskFactory.getInstance().copyFiles(MC.currentDir.getListRecursiveFolders(true), LocationAPI.getInstance().getFileOptimized("E:\\Dev\\dest"),
-//                LocationAPI.getInstance().getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));
-//            
+//                LocationAPI.getInstance().getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));      
 //        ViewManager.getInstance().newProgressDialog(copyFiles);
 
 //        CodeSource codeSource = FileManagerLB.class.getProtectionDomain().getCodeSource();
 //        File jarFile = new File(codeSource.getLocation().toURI().getPath());       
 //        System.out.println(jarFile.getAbsolutePath());
+
+
+//        ExtPath path = new ExtPath("E:\\FileZZZ\\General Music Folder\\[CHILLSTEP]\\Unsorted\\2 Senses - Found.mp3");
+//        LocationInRoot folder = new LocationInRoot("E:\\FileZZZ\\General Music Folder\\[CHILLSTEP]");
+//        LocationInRoot file = new LocationInRoot(path.getAbsoluteDirectory());
+//        ExtPath closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
+//        Log.write("Closest",closestFileByLocation);   
+//        LocationAPI.getInstance().putByLocation(file, path);
+//        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
+//        Log.write("folder",LocationAPI.getInstance().existByLocation(folder));
+//        Log.write("Closest",closestFileByLocation);
+//        Log.write("file",LocationAPI.getInstance().existByLocation(file));
+//        LocationAPI.getInstance().removeByLocation(file);
+//        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
+//        Log.write("file",LocationAPI.getInstance().existByLocation(file));
+//        Log.write("Closest",closestFileByLocation);
         Log.write("END TEST");
     }
 

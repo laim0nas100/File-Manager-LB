@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
+<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.101" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MainController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -39,6 +39,8 @@
                      <items>
                         <CheckMenuItem fx:id="autoClose" mnemonicParsing="false" text="Auto Close Progress Dialogs" />
                         <CheckMenuItem fx:id="autoStart" mnemonicParsing="false" text="Auto Start Progress Dialogs" />
+                        <CheckMenuItem fx:id="pinDialogs" mnemonicParsing="false" selected="true" text="Pin Progress Dialogs" />
+                        <CheckMenuItem fx:id="pinTextInput" mnemonicParsing="false" selected="true" text="Pin Rename Dialogs" />
                         <Menu fx:id="menuSizeUnits" mnemonicParsing="false" text="Size Units">
                           <items>
                             <MenuItem mnemonicParsing="false" text="B" />

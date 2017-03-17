@@ -45,10 +45,14 @@ import utility.ErrorReport;
 public class ViewManager {
     public SimpleBooleanProperty autoCloseProgressDialogs;
     public SimpleBooleanProperty autoStartProgressDialogs;
+    public SimpleBooleanProperty pinProgressDialogs;
+    public SimpleBooleanProperty pinTextInputDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
     protected ViewManager(){
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
         this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
+        this.pinProgressDialogs = new SimpleBooleanProperty(false);
+        this.pinTextInputDialogs = new SimpleBooleanProperty(false);
         this.frames = new HashMap<>();
         this.windows = new HashSet<>();
 
@@ -129,6 +133,7 @@ public class ViewManager {
                 frame.getStage().setMinHeight(250);
                 frame.getStage().setMinWidth(400);
                 frame.getStage().show();
+                frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
                 controller.afterShow(task);
                 frame.getStage().requestFocus();
                 frame.getStage().toFront();         
@@ -152,9 +157,10 @@ public class ViewManager {
                     frame.getStage().setMinHeight(200);
                     frame.getStage().setMinWidth(500);
                     frame.getStage().show();
-                    frame.getStage().setAlwaysOnTop(true);
+                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinTextInputDialogs.get());
                     controller.afterShow(folder,itemToRename);
-                    frame.getStage().toFront();           
+                    frame.getStage().requestFocus();
+                    frame.getStage().toFront();            
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }

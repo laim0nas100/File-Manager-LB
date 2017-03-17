@@ -10,12 +10,9 @@ import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import LibraryLB.Log;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import utility.ErrorReport;
 
 /**
@@ -23,30 +20,85 @@ import utility.ErrorReport;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
-//    private static class LocationInRootWalker{
-//        public LocationInRootWalker(LocationInRoot location,UnaryOperator<ExtFolder> midway){
-//            int i = 0;
-//            ExtFolder folder = FileManagerLB.ArtificialRoot;
-//            //Log.writeln(location.toString());
-//            while (i< location.length()-1) {
-//                if(location.isUppercase()){
-//                    if (folder.hasFileIgnoreCase(location.at(i))) {
-//                        folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
-//                    } else {
-//                        return false;
-//                    } 
-//                }else{
-//                    if (folder.files.containsKey(location.at(i))) {
-//                        folder = (ExtFolder) folder.files.get(location.at(i));
-//                    } else {
-//                        return false;
-//                    } 
-//                }
-//                i++;
-//            }
-//            
-//        }
-//    }
+    private static class LocationWalker{
+        public LocationInRoot location;
+        
+        private int index;
+        public ExtFolder folderBefore;
+        public ExtFolder currentFolder;
+        public ExtPath currentFile;
+        public LocationWalker(LocationInRoot location){
+           this.location = location;
+           reset();
+        }
+        public boolean reachedEnd(){
+            return index == this.location.length();
+        }
+        public String nextCoordinate(){
+            if(index>= location.length()){
+                return null;
+            }
+            return this.location.at(index);
+        }
+        public boolean iteration(){
+            if(location.isUppercase()){
+                if (currentFolder.hasFileIgnoreCase(location.at(index))) {
+                    currentFile = currentFolder.getIgnoreCase(location.at(index));
+                } else {
+                    return false;
+                } 
+            }else{
+                if (currentFolder.files.containsKey(location.at(index))) {
+                    currentFile = currentFolder.files.get(location.at(index));
+                } else {
+                    return false;
+                } 
+            }
+            if(currentFile instanceof ExtFolder){
+                folderBefore = currentFolder;
+                currentFolder = (ExtFolder) currentFile;
+            }
+            index++;
+            return true;
+        }
+        public boolean canDoStep(boolean existTest){
+            ExtPath path = null;
+            if(index>= location.length()){
+                return false;
+            }
+            if(location.isUppercase()){
+                if (currentFolder.hasFileIgnoreCase(location.at(index))) {
+                    path = currentFolder.getIgnoreCase(location.at(index));
+                } else {
+                    return false;
+                } 
+            }else{
+                if (currentFolder.files.containsKey(location.at(index))) {
+                    path = currentFolder.files.get(location.at(index));
+                } else {
+                    return false;
+                } 
+            }
+            if(path==null){
+                return false;
+            }
+            if(!existTest ){
+               return path instanceof ExtFolder; 
+            }
+            return true;
+            
+        }
+        public boolean isUppercase(){
+            return location.isUppercase();
+        }
+        public final void reset(){
+            index = 0;
+            folderBefore = FileManagerLB.ArtificialRoot;
+            currentFolder = FileManagerLB.ArtificialRoot;
+            currentFile = FileManagerLB.ArtificialRoot;
+        }
+        
+    }
     private static final LocationAPI INSTANCE = new LocationAPI();
     protected LocationAPI() {};
     public static LocationAPI getInstance(){
@@ -56,9 +108,7 @@ public class LocationAPI {
         return new LocationInRoot(path);
     }
     public ExtPath getFileAndPopulate(String pathl){
-        ExtPath file = FileManagerLB.ArtificialRoot;
-        //pathl = ExtStringUtils.upperCase(pathl);
-        
+        ExtPath file = FileManagerLB.ArtificialRoot; 
         pathl = pathl.trim();
         Log.write("getFileAndPopulate:"+pathl);
         if(!pathl.isEmpty() && !pathl.equals(FileManagerLB.ROOT_NAME)){
@@ -78,11 +128,11 @@ public class LocationAPI {
                 }catch(Exception e){
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
-                LocationInRoot loc = new LocationInRoot(pathl);
+                LocationInRoot loc = new LocationInRoot(pathl,false);
                 Log.write("Location:",loc);
-                this.populateByLocation(loc.getParentLocation());
+                populateByLocation(loc.getParentLocation());
                 
-                file = getClosestFileByLocation(loc);
+                file = getFileByLocation(loc);
                 
             }catch(Exception e){
                 ErrorReport.report(e);
@@ -92,133 +142,69 @@ public class LocationAPI {
             
     }
     public boolean existByLocation(LocationInRoot location) {
-        int i = 0;
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
-        //Log.writeln(location.toString());
-        while (i< location.length()-1) {
-            if(location.isUppercase()){
-                if (folder.hasFileIgnoreCase(location.at(i))) {
-                    folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
-                } else {
-                    return false;
-                } 
-            }else{
-                if (folder.files.containsKey(location.at(i))) {
-                    folder = (ExtFolder) folder.files.get(location.at(i));
-                } else {
-                    return false;
-                } 
-            }
-            i++;
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
         }
-        return folder.hasFileIgnoreCase(location.getName());
+        return walker.reachedEnd();
+        
+        
     }
-    
     public void removeByLocation(LocationInRoot location) {
-        int i = 0;
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
-        while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
         }
-        String key = folder.getKey(location.at(i));
-        folder.files.remove(key);
+        if(walker.reachedEnd()){
+            String key;
+            if(location.isUppercase()){
+                key = walker.currentFolder.getKey(location.getName());
+            }else{
+                key = location.getName();
+            }
+            walker.currentFolder.files.remove(key);
+            Log.write("Remove by location success");
+        }
     }
-
     public void putByLocation(LocationInRoot location, ExtPath file) {
-        int i = 0;
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
-        //Log.writeln("Put by location:"+location.toString());
-        while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
-
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
         }
-        folder.files.put(file.propertyName.get(), file);
+        if(walker.nextCoordinate().equals(location.getName())){
+            walker.currentFolder.files.put(file.propertyName.get(), file);
+            Log.write("Put by location success");
+        }
+        
     }
     public void putByLocationRecursive(LocationInRoot location, ExtPath file) {
-        int i = 0;
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
-        
-        while (i < location.length() - 1) {
-            folder = (ExtFolder) folder.getIgnoreCase(location.at(i++));
-            //Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
-            folder.update();
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
+            walker.currentFolder.update();
         }
-        folder.files.put(file.propertyName.get(), file);
+        walker.currentFolder.files.put(file.propertyName.get(), file);
     }
     private void populateByLocation(LocationInRoot location){
-//        int i = 0;
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
         Log.writeln("Populate by location",location);
-        //folder.update();
-        for(String s:location.coordinates) {
-            
-            if(folder.hasFileIgnoreCase(s)){
-                folder = (ExtFolder) folder.getIgnoreCase(s);
-            }else{
-                return;
-            }
-            folder.update();
-            
-            //Log.writeln(i+" "+location.length()+" Current:"+folder.getAbsolutePath());
-            
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
+            walker.currentFolder.update();
         }
     }
     public ExtPath getFileByLocation(LocationInRoot location) {
-        if(location.length()==0){
-            return FileManagerLB.ArtificialRoot;
+        Log.writeln("Get file by location",location);
+        LocationWalker walker = new LocationWalker(location);
+        while(walker.canDoStep(true)){
+            walker.iteration();
         }
-        try{
-            ExtFolder folder = FileManagerLB.ArtificialRoot;
-            ExtPath file = FileManagerLB.ArtificialRoot;
-            //Log.writeln("Request:" + location.toString());
-            for (String s:location.coordinates) {
-                if(folder.hasFileIgnoreCase(s)){
-                    file = folder.getIgnoreCase(s);
-                    if(file.getIdentity().equals(Enums.Identity.FOLDER)){
-                        folder = (ExtFolder) file; 
-                    }else{
-                        return file;
-                    }
-                }else{
-                    return folder;
-                }
-                //Log.writeln(folder.propertyName.get());
-            }
-        
-        return file;
-        }catch(Exception x){
-            ErrorReport.report(x);
-            return null;
-        }
+        return walker.currentFile;
        
-    }
-    public ExtPath getClosestFileByLocation(LocationInRoot location){
-        if(location.length()==0){
-            return FileManagerLB.ArtificialRoot;
-        }
-        ExtFolder folder = FileManagerLB.ArtificialRoot;
-        ExtPath file = FileManagerLB.ArtificialRoot;
-        try{
-            for (String s:location.coordinates) {
-                if(folder.hasFileIgnoreCase(s)){
-                    file = folder.getIgnoreCase(s);
-                    if(file.getIdentity().equals(Enums.Identity.FOLDER)){
-                        folder = (ExtFolder) folder.getIgnoreCase(s);        
-                    }else{
-                        return file;
-                    }
-                }else{
-                    return folder;
-                }
-            }
-        }catch(Exception x){
-            ErrorReport.report(x);
-        }
-        return file;
     }
     public ExtPath getFileOptimized(String path){
         LocationInRoot loc = new LocationInRoot(path);
-        if(!this.existByLocation(loc)){
+        if(!existByLocation(loc)){
             return getFileAndPopulate(path);
         }else{
             return getFileByLocation(loc);
