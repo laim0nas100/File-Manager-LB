@@ -39,6 +39,7 @@ import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
 import LibraryLB.Threads.TimeoutTask;
+import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
@@ -51,9 +52,11 @@ import java.io.File;
 import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
@@ -135,14 +138,16 @@ public class MainController extends BaseController{
     private DATA_SIZE unitSize;
     private SimpleStringProperty propertyUnitSizeName;
     private SimpleLongProperty propertyUnitSize;
-    private SimpleBooleanProperty propertyUnitSizeAuto;
-    private SimpleBooleanProperty propertyReadyToSearch;
-    private SimpleBooleanProperty propertyDeleteCondition;
-    private SimpleBooleanProperty propertyRenameCondition;
-    private SimpleBooleanProperty propertyIsVirtualFolders;
-    private SimpleIntegerProperty propertyMarkedSize;
-    private SimpleIntegerProperty propertySelectedSize;
-    private SimpleIntegerProperty propertyMarkedSelectedSize;
+    private SimpleBooleanProperty propertyUnitSizeAuto = new SimpleBooleanProperty(false);
+    private SimpleBooleanProperty propertyReadyToSearch = new SimpleBooleanProperty(true);
+    private SimpleBooleanProperty propertyDeleteCondition = new SimpleBooleanProperty(false);
+    private SimpleBooleanProperty propertyRenameCondition = new SimpleBooleanProperty(false);
+    private SimpleBooleanProperty propertyIsVirtualFolders = new SimpleBooleanProperty(false);
+    private SimpleIntegerProperty propertyMarkedSize = new SimpleIntegerProperty(0);
+    private SimpleIntegerProperty propertySelectedSize = new SimpleIntegerProperty(0);
+    private SimpleIntegerProperty propertyMarkedSelectedSize = new SimpleIntegerProperty(0);
+    private SimpleBooleanProperty selectedIsFolder = new SimpleBooleanProperty(false);
+    private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
     private Task searchTask;
    
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
@@ -156,6 +161,8 @@ public class MainController extends BaseController{
             search();
         });
     });
+
+    
     
     public ExtTableView extTableView;
     public void beforeShow(String title,ExtFolder currentDir){
@@ -167,18 +174,19 @@ public class MainController extends BaseController{
         unitSize = DATA_SIZE.KB;
         propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
         propertyUnitSize = new SimpleLongProperty(unitSize.size);
-        propertyUnitSizeAuto = new SimpleBooleanProperty(false);
-        propertyReadyToSearch = new SimpleBooleanProperty(true);
-        propertyDeleteCondition = new SimpleBooleanProperty(false);
-        propertyRenameCondition = new SimpleBooleanProperty(false);
-        propertyIsVirtualFolders = new SimpleBooleanProperty(false);
-        propertyMarkedSelectedSize = new SimpleIntegerProperty(0);
-        propertyMarkedSize = new SimpleIntegerProperty(0);
-        propertySelectedSize = new SimpleIntegerProperty(0);
+        
+        
+        
+        
+        
+        
+        
+        
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
-        propertyDeleteCondition.bind(MC.isVirtual.not().and(propertySelectedSize.greaterThan(0)));
-        propertyRenameCondition.bind(MC.isVirtual.not().and(propertySelectedSize.isEqualTo(1)));
+        
+        propertyDeleteCondition.bind(writeableFolder.and(propertySelectedSize.greaterThan(0)));
+        propertyRenameCondition.bind(writeableFolder.and(propertySelectedSize.isEqualTo(1)));
         
 
         finder = new Finder("",useRegex.selectedProperty());
@@ -211,6 +219,8 @@ public class MainController extends BaseController{
     
     @Override
     public void afterShow(){
+       
+        
         
     }
     @Override
@@ -237,11 +247,11 @@ public class MainController extends BaseController{
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
             this.buttonParent.setDisable(!MC.hasParent());
-            this.miAdvancedRenameFolder.setDisable(MC.currentDir.isAbsoluteOrVirtualFolders());
+            this.miAdvancedRenameFolder.setDisable(MC.currentDir.isNotWriteable());
             this.miDuplicateFinderFolder.disableProperty().bind(miAdvancedRenameFolder.disableProperty());
             this.miAdvancedRenameMarked.disableProperty().bind(Bindings.size(MainController.markedList).isEqualTo(0));
             this.miDuplicateFinderMarked.disableProperty().bind(miAdvancedRenameMarked.disableProperty());
-            
+            this.writeableFolder.set(!MC.currentDir.isNotWriteable());
 
             
             if(MC.currentDir.isAbsoluteRoot.get()){
@@ -412,7 +422,7 @@ public class MainController extends BaseController{
                     } catch (Exception ex) {
                         ErrorReport.report(ex);
                     }
-                }else if(!MC.currentDir.isAbsoluteOrVirtualFolders() && !MC.currentDir.isAbsoluteRoot.get()){
+                }else if(!MC.currentDir.isNotWriteable() && !MC.currentDir.isAbsoluteRoot.get()){
                     try {
                         for(ExtPath file:MC.currentDir.getFilesCollection()){
                             Files.walkFileTree(file.toPath(), finder);
@@ -498,13 +508,13 @@ public class MainController extends BaseController{
     
     
     
-    private void selectInverted(MultipleSelectionModel sm){
-        ObservableList<Integer> selected = sm.getSelectedIndices();
-        ArrayList<Integer> array = new ArrayList<>();
-        array.addAll(selected);
-        sm.selectAll();
-        array.stream().forEach(sm::clearSelection);
-    }
+//    private void selectInverted(MultipleSelectionModel sm){
+//        ObservableList<Integer> selected = sm.getSelectedIndices();
+//        ArrayList<Integer> array = new ArrayList<>();
+//        array.addAll(selected);
+//        sm.selectAll();
+//        array.stream().forEach(sm::clearSelection);
+//    }
     private void handleOpen(ExtPath file){
         if(file instanceof ExtFolder){
             Log.write("Change to dir "+file.getAbsoluteDirectory());
@@ -711,6 +721,8 @@ public class MainController extends BaseController{
             ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
         });
         
+        contextMenuItems[17].visibleProperty().bind(selectedIsFolder);
+        
         contextMenuItems[18] = new MenuItem("Open");
         contextMenuItems[18].setOnAction(eh ->{
             ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
@@ -726,19 +738,19 @@ public class MainController extends BaseController{
         });
         contextMenuItems[19].visibleProperty().bind(contextMenuItems[8].visibleProperty());
         
-        //For search View
-        contextMenuItems[20] = new MenuItem("Invert Selection");
-        contextMenuItems[20].setOnAction(eh ->{
-            selectInverted(searchView.getSelectionModel());
-        });
-        contextMenuItems[20].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
-        
-        //For table View
-        contextMenuItems[22] = new MenuItem("Invert Selection");
-        contextMenuItems[22].setOnAction(eh ->{
-            selectInverted(tableView.getSelectionModel());
-        });
-        contextMenuItems[22].visibleProperty().bind(propertySelectedSize.greaterThan(0));
+//        //For search View
+//        contextMenuItems[20] = new MenuItem("Invert Selection");
+//        contextMenuItems[20].setOnAction(eh ->{
+//            selectInverted(searchView.getSelectionModel());
+//        });
+//        contextMenuItems[20].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
+//        
+//        //For table View
+//        contextMenuItems[22] = new MenuItem("Invert Selection");
+//        contextMenuItems[22].setOnAction(eh ->{
+//            selectInverted(tableView.getSelectionModel());
+//        });
+//        contextMenuItems[22].visibleProperty().bind(propertySelectedSize.greaterThan(0));
         
         contextMenuItems[23] = new MenuItem("Mark selected");
         contextMenuItems[23].setOnAction(eh ->{
@@ -829,8 +841,7 @@ public class MainController extends BaseController{
        
         searchContextMenu.getItems().setAll(
                 contextMenuItems[12],
-                contextMenuItems[23],
-                contextMenuItems[20]
+                contextMenuItems[23]
         );
         
         errorContextMenu.getItems().setAll(
@@ -858,7 +869,6 @@ public class MainController extends BaseController{
                 submenuCreate,
                 contextMenuItems[1],    //Rename dialog
                 contextMenuItems[2],     //Delete dialog
-                contextMenuItems[22],
                 contextMenuItems[24],
                 contextMenuItems[25],
                 contextMenuItems[26],
@@ -911,22 +921,18 @@ public class MainController extends BaseController{
         disabledCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().isDisabled.asString());
         tableView.getColumns().addAll(nameCol,typeCol,sizeCol,dateCol,disabledCol);
 
-        
-        //TABLE VIEW ACTIONS
-        
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        CosmeticsFX.wrapSelectContextMenu(tableView);
+        //TABLE VIEW ACTIONS
+        
+        
+
+        
         tableView.setOnMousePressed((MouseEvent event) -> {
             hideAllContextMenus();
-            if (event.isSecondaryButtonDown()) {
-                if(propertySelectedSize.greaterThan(0).get()){
-                    ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-                    contextMenuItems[17].setVisible(file instanceof ExtFolder && propertySelectedSize.isEqualTo(1).get());
-                }else{
-                    contextMenuItems[17].setVisible(false);
-                }
-                
-            } else if(event.isPrimaryButtonDown()){
+            
+            if(event.isPrimaryButtonDown()){
                 if(!tableView.getSelectionModel().isEmpty()){
                     if(event.getClickCount() >1){
                         ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
@@ -935,6 +941,8 @@ public class MainController extends BaseController{
                         selectedList = tableView.getSelectionModel().getSelectedItems();
                     }
                 } 
+            }else{
+                selectedIsFolder.set(tableView.getSelectionModel().getSelectedItem() instanceof ExtFolder);
             }
         });  
         tableView.setOnKeyReleased(eh->{
@@ -946,7 +954,7 @@ public class MainController extends BaseController{
             }
         });
         tableView.setOnDragDetected((MouseEvent event) -> {
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isNotWriteable()){
                 return;
             }
             TaskFactory.dragInitWindowID = this.windowID;
@@ -968,7 +976,7 @@ public class MainController extends BaseController{
 
         
         tableView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isNotWriteable()){
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
@@ -1012,11 +1020,14 @@ public class MainController extends BaseController{
         markedView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         markedView.setItems(MainController.markedList);
         IntegerBinding size = Bindings.size(markedView.getItems());
-        this.markedSize.textProperty().bind(size.asString());
+        markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
+        CosmeticsFX.wrapSelectContextMenu(this.markedView);
+
+        
         markedView.setOnDragDetected((MouseEvent event) -> {
             TaskFactory.dragInitWindowID = "MARKED";
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isNotWriteable()){
                 return;
             }
             
@@ -1034,7 +1045,7 @@ public class MainController extends BaseController{
         }); //drag
         
         markedView.setOnDragOver((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isNotWriteable()){
                 return;
             }
             // data is dragged over the target
@@ -1048,7 +1059,7 @@ public class MainController extends BaseController{
         });
 
         markedView.setOnDragDropped((DragEvent event) -> {
-            if(MC.currentDir.isAbsoluteOrVirtualFolders()){
+            if(MC.currentDir.isNotWriteable()){
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -1069,10 +1080,14 @@ public class MainController extends BaseController{
         searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
+        CosmeticsFX.wrapSelectContextMenu(searchView);
+
         //***************************************
         //Link View
         
         linkView.setContextMenu(linksContextMenu);
+        CosmeticsFX.wrapSelectContextMenu(linkView);
+
         linkView.setItems(links);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){
             @Override
@@ -1109,6 +1124,8 @@ public class MainController extends BaseController{
         //Error View
         errorView.setItems(errorLog);
         errorView.setContextMenu(errorContextMenu);
+        CosmeticsFX.wrapSelectContextMenu(errorView);
+
         errorView.setCellFactory(new Callback<ListView<ErrorReport>, ListCell<ErrorReport>>(){
             @Override
             public ListCell<ErrorReport> call(ListView<ErrorReport> p) {  
@@ -1193,9 +1210,8 @@ public class MainController extends BaseController{
         if(this.propertyRenameCondition.get()){
             Log.writeln("Invoke rename dialog");
             ExtPath path = (ExtPath)tableView.getSelectionModel().getSelectedItem();
-            ViewManager.getInstance().newRenameDialog(MC.currentDir,path);
-            //Invoke text input dialog
-            //
+            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileOptimized(path.getParent(1));
+            ViewManager.getInstance().newRenameDialog(parent,path);
         }
     }
 }

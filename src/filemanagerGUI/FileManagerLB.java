@@ -111,25 +111,22 @@ public class FileManagerLB extends Application {
         return ArtificialRoot.files.keySet();   
     }
     public static void doOnExit(){
+        ViewManager.getInstance().closeAllFramesNoExit();
         try {           
 //            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
+            Log.getInstance().close();
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(logPath);
             makeNewCopy.forEach(th ->{
                 th.run();
             });
             BM.cleanUp().run();
-            
+            Files.delete(Paths.get(logPath));
             
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
-        
-        try {
-            Log.getInstance().close();
-            Files.delete(Paths.get(logPath));
-        } catch (IOException ex) {
-        }
+
     }
     public static void reInit(){
         Log.write("INITIALIZE");

@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -211,7 +210,7 @@ public class ExtPath{
     public void setIsAbsoluteRoot(boolean b){
         this.isAbsoluteRoot.set(b);
     }
-    public boolean isAbsoluteOrVirtualFolders(){
+    public boolean isNotWriteable(){
         return (this.isAbsoluteRoot.get()||(this.equals(FileManagerLB.VirtualFolders)));
     }
     public long size(){

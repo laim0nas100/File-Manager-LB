@@ -20,7 +20,7 @@ import utility.ExtStringUtils;
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
-    
+    private boolean upperCase;
     public LinkedList<String> coordinates =  new LinkedList<>();
     
     private LocationInRoot(){
@@ -62,17 +62,21 @@ public class LocationInRoot {
         return co;
     }
     public LocationInRoot(String path){
+        this.upperCase = true;
         this.coordinates = resolveFromString(this.coordinates,path,true);
     }
     public LocationInRoot(String path,boolean doUppercase){
+        this.upperCase = doUppercase;
         this.coordinates = resolveFromString(this.coordinates,path,doUppercase);
     }
     public LocationInRoot(LocationInRoot loc){
+        this.upperCase = loc.upperCase;
         this.coordinates.addAll(loc.coordinates);
     }
-    private LocationInRoot(List<String> coord){
+    private LocationInRoot(List<String> coord,boolean upperCase){
         coordinates = new LinkedList<>();
         coordinates.addAll(coord);
+        this.upperCase = upperCase;
         
     }
     public String getName(){
@@ -83,13 +87,14 @@ public class LocationInRoot {
         }
     }
     public void setName(String name){
-        this.coordinates.set((this.coordinates.size()-1),name);
+        this.coordinates.pollLast();
+        this.coordinates.addLast(name);
     }
     public LocationInRoot getRoot(){
         LinkedList<String> list = new LinkedList<>();
         list.add(this.coordinates.getFirst());
         list.add(this.coordinates.get(1));
-        return new LocationInRoot(list);
+        return new LocationInRoot(list,this.upperCase);
     }
     public int length(){
         return this.coordinates.size();
@@ -101,7 +106,10 @@ public class LocationInRoot {
         LinkedList<String> list = new LinkedList<>();
         list.addAll(this.coordinates);
         list.removeLast();
-        return new LocationInRoot(list);
+        return new LocationInRoot(list,this.upperCase);
+    }
+    public boolean isUppercase(){
+        return this.upperCase;
     }
     @Override
     public String toString(){

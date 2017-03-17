@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import utility.ErrorReport;
 
 /**
@@ -21,6 +23,30 @@ import utility.ErrorReport;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
+//    private static class LocationInRootWalker{
+//        public LocationInRootWalker(LocationInRoot location,UnaryOperator<ExtFolder> midway){
+//            int i = 0;
+//            ExtFolder folder = FileManagerLB.ArtificialRoot;
+//            //Log.writeln(location.toString());
+//            while (i< location.length()-1) {
+//                if(location.isUppercase()){
+//                    if (folder.hasFileIgnoreCase(location.at(i))) {
+//                        folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
+//                    } else {
+//                        return false;
+//                    } 
+//                }else{
+//                    if (folder.files.containsKey(location.at(i))) {
+//                        folder = (ExtFolder) folder.files.get(location.at(i));
+//                    } else {
+//                        return false;
+//                    } 
+//                }
+//                i++;
+//            }
+//            
+//        }
+//    }
     private static final LocationAPI INSTANCE = new LocationAPI();
     protected LocationAPI() {};
     public static LocationAPI getInstance(){
@@ -70,12 +96,20 @@ public class LocationAPI {
         ExtFolder folder = FileManagerLB.ArtificialRoot;
         //Log.writeln(location.toString());
         while (i< location.length()-1) {
-            if (folder.hasFileIgnoreCase(location.at(i))) {
-                folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
-                i++;
-            } else {
-                return false;
+            if(location.isUppercase()){
+                if (folder.hasFileIgnoreCase(location.at(i))) {
+                    folder = (ExtFolder) folder.getIgnoreCase(location.at(i));
+                } else {
+                    return false;
+                } 
+            }else{
+                if (folder.files.containsKey(location.at(i))) {
+                    folder = (ExtFolder) folder.files.get(location.at(i));
+                } else {
+                    return false;
+                } 
             }
+            i++;
         }
         return folder.hasFileIgnoreCase(location.getName());
     }
