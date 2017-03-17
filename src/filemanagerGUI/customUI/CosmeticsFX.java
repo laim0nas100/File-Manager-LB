@@ -11,14 +11,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
+import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.ListView;
@@ -242,8 +242,6 @@ public class CosmeticsFX {
         });
         selectInverted.visibleProperty().bind(Bindings.size(model.getSelectedItems()).greaterThan(0).and(selectAll.visibleProperty()));
         
-        
-        
         MenuItem selectNone = new MenuItem("None");
         selectNone.setOnAction(eh -> {
             model.clearSelection();
@@ -260,5 +258,16 @@ public class CosmeticsFX {
         sm.selectAll();
         array.stream().forEach(sm::clearSelection);
     }
+    public static MenuItem simpleMenuItem(String name,EventHandler onAction, BooleanProperty visibleProperty){
+        MenuItem item = new MenuItem(name);
+        item.setOnAction(onAction);
+        if(visibleProperty !=null){
+            item.visibleProperty().bind(visibleProperty);
+        }
+        return item;
+        
+    }
+    
+    
 
 }
