@@ -9,6 +9,7 @@ import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
+import static filemanagerGUI.MainController.markedList;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -29,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.stage.Stage;
@@ -67,7 +69,7 @@ public class FileManagerLB extends Application {
         launch(args);
     }
     public static void remount(){
-        
+        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
         File[] roots = File.listRoots();
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
             if((!Files.isDirectory(f.toPath()))&&!(f.getIdentity().equals(Identity.VIRTUAL))){
@@ -137,10 +139,10 @@ public class FileManagerLB extends Application {
         MainController.errorLog = FXCollections.observableArrayList();
         MainController.links = FXCollections.observableArrayList();
         MainController.markedList = FXCollections.observableArrayList();
+        MainController.propertyMarkedSize = Bindings.size(markedList);
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
-        ArtificialRoot.files.put(VirtualFolders.getName(true),VirtualFolders);
         if(CommandWindowController.executor!=null){
             CommandWindowController.executor.cancel();
         }

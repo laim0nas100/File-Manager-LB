@@ -28,7 +28,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -49,14 +48,15 @@ import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
@@ -86,6 +86,7 @@ public class MainController extends BaseController{
     public static ObservableList<ErrorReport> errorLog;
     public static ObservableList<ExtPath> dragList;
     public static ObservableList<ExtPath> markedList;
+    public static IntegerBinding propertyMarkedSize;
     public static ArrayList<ExtPath> actionList;
     
     
@@ -130,9 +131,8 @@ public class MainController extends BaseController{
     private ContextMenu searchContextMenu;
     private ContextMenu linksContextMenu;
     private ContextMenu errorContextMenu;
-    private MenuItem[] contextMenuItems;
-    private Menu submenuMarked;
-    private Menu submenuCreate;    
+//    private Menu submenuMarked;
+//    private Menu submenuCreate;    
     
     private FileAddressField fileAddress;
     private ManagingClass MC;
@@ -145,7 +145,7 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty propertyDeleteCondition = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty propertyRenameCondition = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty propertyIsVirtualFolders = new SimpleBooleanProperty(false);
-    private SimpleIntegerProperty propertyMarkedSize = new SimpleIntegerProperty(0);
+    
     private SimpleIntegerProperty propertySelectedSize = new SimpleIntegerProperty(0);
     private SimpleIntegerProperty propertyMarkedSelectedSize = new SimpleIntegerProperty(0);
     private SimpleBooleanProperty selectedIsFolder = new SimpleBooleanProperty(false);
@@ -194,7 +194,6 @@ public class MainController extends BaseController{
         
         LOAD();
         fileAddress = new FileAddressField(currentDirText);
-        propertyMarkedSize.bind(Bindings.size(MainController.markedList));
         propertyIsVirtualFolders.bind(MC.isAbsoluteRoot.not().and(miAdvancedRenameFolder.disableProperty()));
         propertySelectedSize.bind(Bindings.size(selectedList));
         propertyMarkedSelectedSize.bind(Bindings.size(markedView.getSelectionModel().getSelectedItems()));
@@ -518,13 +517,7 @@ public class MainController extends BaseController{
     
     
     
-//    private void selectInverted(MultipleSelectionModel sm){
-//        ObservableList<Integer> selected = sm.getSelectedIndices();
-//        ArrayList<Integer> array = new ArrayList<>();
-//        array.addAll(selected);
-//        sm.selectAll();
-//        array.stream().forEach(sm::clearSelection);
-//    }
+    
     private void handleOpen(ExtPath file){
         if(file instanceof ExtFolder){
             Log.write("Change to dir "+file.getAbsoluteDirectory());
@@ -558,7 +551,6 @@ public class MainController extends BaseController{
         searchContextMenu.hide();
     }
     private void setUpContextMenus(){
-        contextMenuItems = new MenuItem[30];
         tableDragContextMenu = new ContextMenu();
         tableContextMenu = new ContextMenu();
         markedContextMenu = new ContextMenu();
@@ -566,326 +558,226 @@ public class MainController extends BaseController{
         linksContextMenu = new ContextMenu();
         errorContextMenu = new ContextMenu();
         
-        contextMenuItems[0] = new MenuItem("Create New Folder");
-        contextMenuItems[0].setOnAction((eh) -> {
-            Log.writeln("Create new folder");
-            try {
-                ExtPath createNewFolder = MC.createNewFolder();
-                ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
-                MainController.this.update();
-            }catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
-        });
-        contextMenuItems[0].visibleProperty().bind(MC.isVirtual.not());
         
-        contextMenuItems[1] = new MenuItem("Rename");
-        contextMenuItems[1].setOnAction((eh)->{
-            rename();
-        });
-        contextMenuItems[1].visibleProperty().bind(propertyRenameCondition);
-        
-        contextMenuItems[2] = new MenuItem("Delete");
-        contextMenuItems[2].setOnAction((eh)->{
-            delete();
-        });
-        contextMenuItems[2].visibleProperty().bind(propertyDeleteCondition);
-                
-                
-        contextMenuItems[3] = new MenuItem("Copy Here");
-        contextMenuItems[3].setOnAction((eh)->{
-            Log.writeln("Copy Marked");
-            
-            ExtTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
-            task.setTaskDescription("Copy marked files");
-            ViewManager.getInstance().newProgressDialog(task);
-        });
-        contextMenuItems[3].visibleProperty().bind(propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not()));
-                
-        contextMenuItems[4] = new MenuItem("Move Here");
-        contextMenuItems[4].setOnAction((eh)->{
-            Log.writeln("Move Marked");
-            ExtTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
-            task.setTaskDescription("Move marked files");
-            ViewManager.getInstance().newProgressDialog(task);
-        });
-        contextMenuItems[4].visibleProperty().bind(contextMenuItems[3].visibleProperty());
-
-        
-        contextMenuItems[5] = new MenuItem("Create New File");
-        contextMenuItems[5].setOnAction((eh)->{
-            Log.writeln("Create new file");
-            try {
-                ExtPath createNewFile = MC.createNewFile();
-                ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
-                MainController.this.update();
-            }catch (IOException ex) {
-                ErrorReport.report(ex);
-            }
-        });
-        contextMenuItems[5].visibleProperty().bind(MC.isVirtual.not());
-        
-        
-        contextMenuItems[6] = new MenuItem("Add to marked");
-        contextMenuItems[6].setOnAction((eh)->{
-            selectedList.stream().forEach((file) -> {
-                TaskFactory.getInstance().addToMarked(file);
-            });  
-        });
-        contextMenuItems[6].visibleProperty().bind(miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0)));
-        
-        contextMenuItems[7] = new MenuItem("Clean this list");
-        contextMenuItems[7].setOnAction((e)->{
-            //MainController.markedList.clear();
-            this.markedView.getItems().clear();
-        });
-        
-        contextMenuItems[7].visibleProperty().bind(propertyMarkedSize.greaterThan(0));
-        
-        contextMenuItems[8] = new MenuItem("Remove selected");
-        contextMenuItems[8].setOnAction(eh ->{        
-            ObservableList selectedItems = markedView.getSelectionModel().getSelectedItems();
-            MainController.markedList.removeAll(selectedItems);
-        });
-        contextMenuItems[8].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).and(Bindings.size(markedView.getSelectionModel().getSelectedItems()).greaterThan(0)));
-        
-        
-        contextMenuItems[9] = new MenuItem("Delete all marked");
-        contextMenuItems[9].setOnAction(eh ->{
-            ExtTask task = TaskFactory.getInstance().deleteFiles(markedList);
-            task.setTaskDescription("Delete marked files");
-            ViewManager.getInstance().newProgressDialog(task);
-            
-        });
-        contextMenuItems[9].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0));
-        
-        
-        //DRAG
-        contextMenuItems[10] = new MenuItem("Move here selected");
-        contextMenuItems[10].setOnAction(eh ->{   
-            MainController.actionList.clear();
-            MainController.actionList.addAll(MainController.dragList);
-            ExtTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
-            task.setTaskDescription("Move Dragged files");
-            ViewManager.getInstance().newProgressDialog(task);
-        });
-        contextMenuItems[11] = new MenuItem("Copy here selected");
-        contextMenuItems[11].setOnAction(eh ->{        
-            //Log.writeln("Copy Dragger");
-             MainController.actionList.clear();
-            MainController.actionList.addAll(MainController.dragList);
-            ExtTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
-            task.setTaskDescription("Copy Dragged files");
-            ViewManager.getInstance().newProgressDialog(task);
-        });
-        
-        contextMenuItems[12] = new MenuItem("Go to");
-        contextMenuItems[12].setOnAction((ActionEvent eh) -> {
-            String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
-            try{
-                Path path = Paths.get(selectedItem);
-                if(Files.isDirectory(path)){
-                    changeToCustomDir(selectedItem);
-                }else{
-                    changeToCustomDir(path.getParent().toString());
-                }
-            }catch(Exception ex){
-                ErrorReport.report(ex);
-            }
-        });
-        contextMenuItems[12].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).isEqualTo(1));
-        
-        contextMenuItems[13] = new MenuItem("Add current directory as link");
-        contextMenuItems[13].setOnAction(eh ->{
-            FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(),MC.currentDir);
-            if(!links.contains(link)){
-               links.add(link); 
-            }
-            
-            
-        });
-//        contextMenuItems[13].visibleProperty().bind(Bindings.size(this.linkView.getSelectionModel().getSelectedIndices()).greaterThan(0));
-        
-        contextMenuItems[14] = new MenuItem("Remove this link");
-        contextMenuItems[14].setOnAction(eh ->{
-            links.remove(linkView.getSelectionModel().getSelectedIndex());
-        });
-        contextMenuItems[14].visibleProperty().bind(Bindings.size(this.linkView.getSelectionModel().getSelectedItems()).greaterThan(0));
-
-        contextMenuItems[15] = new MenuItem("Remove this entry");
-        contextMenuItems[15].setOnAction(eh ->{
-            errorLog.remove(errorView.getSelectionModel().getSelectedIndex());
-        });
-        contextMenuItems[15].visibleProperty().bind(Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0));
-
-        
-        contextMenuItems[16] = new MenuItem("Clean this list");
-        contextMenuItems[16].setOnAction(eh ->{
-            errorLog.clear();
-        });
-        contextMenuItems[16].visibleProperty().bind(contextMenuItems[15].visibleProperty());
-        
-        //Manual
-        contextMenuItems[17] = new MenuItem("Open in new window");
-        contextMenuItems[17].setOnAction(eh ->{
-            ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
-        });
-        
-        contextMenuItems[17].visibleProperty().bind(selectedIsFolder);
-        
-        contextMenuItems[18] = new MenuItem("Open");
-        contextMenuItems[18].setOnAction(eh ->{
-            ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-            handleOpen(file);
-        });
-        contextMenuItems[18].visibleProperty().bind(propertySelectedSize.isEqualTo(1));
-        
-        contextMenuItems[19] = new MenuItem("Delete selected");
-        contextMenuItems[19].setOnAction(eh ->{
-            ExtTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
-            task.setTaskDescription("Delete marked files");
-            ViewManager.getInstance().newProgressDialog(task);
-        });
-        contextMenuItems[19].visibleProperty().bind(contextMenuItems[8].visibleProperty());
-        
-//        //For search View
-//        contextMenuItems[20] = new MenuItem("Invert Selection");
-//        contextMenuItems[20].setOnAction(eh ->{
-//            selectInverted(searchView.getSelectionModel());
-//        });
-//        contextMenuItems[20].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
-//        
-//        //For table View
-//        contextMenuItems[22] = new MenuItem("Invert Selection");
-//        contextMenuItems[22].setOnAction(eh ->{
-//            selectInverted(tableView.getSelectionModel());
-//        });
-//        contextMenuItems[22].visibleProperty().bind(propertySelectedSize.greaterThan(0));
-        
-        contextMenuItems[23] = new MenuItem("Mark selected");
-        contextMenuItems[23].setOnAction(eh ->{
-            Platform.runLater(()->{
-                ArrayList<String> list = new ArrayList<>();
-                list.addAll(searchView.getSelectionModel().getSelectedItems());
-                ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
-                new Thread(markFiles).start();
-            });
-                       
-        });
-        contextMenuItems[23].visibleProperty().bind(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0));
-        
-        contextMenuItems[24] = new MenuItem("Copy Absolute Path");
-        contextMenuItems[24].setOnAction(eh ->{
-            String absolutePath = selectedList.get(0).getAbsolutePath();
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
-        });
-        contextMenuItems[24].visibleProperty().bind(this.propertyRenameCondition);
-        
-        contextMenuItems[25] = new MenuItem("Toggle Enable/Disable");
-        contextMenuItems[25].setOnAction(eh ->{
-            Platform.runLater(()->{
-                selectedList.stream().forEach(c ->{
-                    c.isDisabled.setValue(c.isDisabled.not().get());
-                });
-            });
-        });
-        contextMenuItems[25].visibleProperty().bind(this.propertyDeleteCondition);
-        
-        contextMenuItems[26] = new MenuItem("Create Virtual Folder");
-        contextMenuItems[26].setOnAction(eh ->{
-            Platform.runLater(()->{
-                VirtualFolder.createVirtualFolder();
-                update();
-            });
-        });
-        contextMenuItems[26].visibleProperty().bind(propertyIsVirtualFolders);
-
-          
-        contextMenuItems[27] = new MenuItem("Add Marked to Virtual Folder");
-        contextMenuItems[27].setOnAction(eh ->{
-            Platform.runLater(()->{
-                for(ExtPath f:MainController.markedList){
-                        MC.currentDir.files.put(f.propertyName.get(), f);
-                    }
-                update();
-            });
-        });
-        
-        contextMenuItems[27].visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).and(propertyIsVirtualFolders.not()).and(MC.isAbsoluteRoot.not()).and(MC.isVirtual));
-        
-        
-        contextMenuItems[28] = new MenuItem("Remove selected from Virtual Folder");
-        contextMenuItems[28].setOnAction(eh ->{
-            Platform.runLater(()->{
-                ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
-                for(ExtPath item:selectedItems){
-                    MC.currentDir.files.remove(item.propertyName.get());
-                }
-                update();
-            });
-        });
-        contextMenuItems[28].visibleProperty().bind(MC.isVirtual.and(propertySelectedSize.greaterThan(0)).and(MC.isAbsoluteRoot.not()));
-        
-        
-        
-        submenuMarked = new Menu("Marked...");
-        submenuMarked.getItems().setAll(
-                contextMenuItems[6],        //Add to marked
-                contextMenuItems[3],        //Copy
-                contextMenuItems[4],        //Move
-                contextMenuItems[9],        //Delete marked
-                contextMenuItems[27]        //Add Marked to virtual
-        );
-//        submenuMarked.visibleProperty().bind(this.propertyMarkedSize.greaterThan(0).or(this.propertySelectedSize.greaterThan(0)));
-        submenuMarked.visibleProperty().bind(contextMenuItems[6].visibleProperty().or(
-                contextMenuItems[3].visibleProperty()).or(contextMenuItems[4].visibleProperty()).or(
-                        contextMenuItems[9].visibleProperty()).or(contextMenuItems[27].visibleProperty()));
-        submenuCreate = new Menu("Create...");
+        Menu submenuCreate = new Menu("Create...");
         submenuCreate.getItems().setAll(
-                contextMenuItems[0],
-                contextMenuItems[5]
-        );
-        submenuCreate.visibleProperty().bind(MC.isVirtual.not());
-         
+            CosmeticsFX.simpleMenuItem("Create New Folder",
+                event -> {
+                    Log.writeln("Create new folder");
+                    try {
+                        ExtPath createNewFolder = MC.createNewFolder();
+                        ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
+                        MainController.this.update();
+                    }catch (Exception ex) {
+                        ErrorReport.report(ex);
+                    }
+                }, MC.isVirtual.not()),
+            CosmeticsFX.simpleMenuItem("Create New File",
+                event -> {
+                    Log.writeln("Create new file");
+                    try {
+                        ExtPath createNewFile = MC.createNewFile();
+                        ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
+                        MainController.this.update();
+                    }catch (IOException ex) {
+                        ErrorReport.report(ex);
+                    }
+                }, MC.isVirtual.not()));       
         
-       
         searchContextMenu.getItems().setAll(
-                contextMenuItems[12],
-                contextMenuItems[23]
+            CosmeticsFX.simpleMenuItem("Go to",
+                event ->{
+                    String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
+                    try{
+                        Path path = Paths.get(selectedItem);
+                        if(Files.isDirectory(path)){
+                            changeToCustomDir(selectedItem);
+                        }else{
+                            changeToCustomDir(path.getParent().toString());
+                        }
+                    }catch(Exception ex){
+                        ErrorReport.report(ex);
+                    }
+                }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).isEqualTo(1)),
+            CosmeticsFX.simpleMenuItem("Mark selected",
+                event -> {
+                    Platform.runLater(()->{
+                        ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
+                        ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
+                        new Thread(markFiles).start();
+                    });
+                }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
         );
+        
+        
         
         errorContextMenu.getItems().setAll(
-                contextMenuItems[15],
-                contextMenuItems[16]
+            CosmeticsFX.simpleMenuItem("Remove this entry",
+                event -> {
+                    errorLog.remove(errorView.getSelectionModel().getSelectedIndex());
+                }, Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0)),
+            CosmeticsFX.simpleMenuItem("Clean this list",
+                event -> {
+                    errorLog.clear();
+                }, Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0))
         
         );
+        
         linksContextMenu.getItems().setAll(
-                contextMenuItems[13],
-                contextMenuItems[14]
+            CosmeticsFX.simpleMenuItem("Add current directory as link",
+                event -> {
+                    FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(),MC.currentDir);
+                    if(!links.contains(link)){
+                       links.add(link); 
+                    }
+                }, null),
+            CosmeticsFX.simpleMenuItem("Remove this link",
+                event -> {
+                    links.remove(linkView.getSelectionModel().getSelectedIndex());
+                }, Bindings.size(this.linkView.getSelectionModel().getSelectedItems()).greaterThan(0))
         );
-        markedContextMenu.getItems().setAll(
-                contextMenuItems[7],
-                contextMenuItems[8],
-                contextMenuItems[19]
         
+        
+        markedContextMenu.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Clean this list",
+                event -> {
+                    markedView.getItems().clear();
+                }, propertyMarkedSize.greaterThan(0)),
+            CosmeticsFX.simpleMenuItem("Remove selected",
+                event -> {
+                    ObservableList selectedItems = markedView.getSelectionModel().getSelectedItems();
+                    MainController.markedList.removeAll(selectedItems);
+                }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
+                        markedView.getSelectionModel().getSelectedItems()).greaterThan(0))),
+            CosmeticsFX.simpleMenuItem("Delete selected",
+                event -> {
+                    ExtTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
+                    task.setTaskDescription("Delete selected marked files");
+                    ViewManager.getInstance().newProgressDialog(task); 
+                }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
+                        markedView.getSelectionModel().getSelectedItems()).greaterThan(0)))
         );
+        
+        
+        
         tableDragContextMenu.getItems().setAll(
-                contextMenuItems[10],
-                contextMenuItems[11]
+            CosmeticsFX.simpleMenuItem("Move here selected",
+                event -> {
+                    MainController.actionList.clear();
+                    MainController.actionList.addAll(MainController.dragList);
+                    ExtTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
+                    task.setTaskDescription("Move Dragged files");
+                    ViewManager.getInstance().newProgressDialog(task);  
+                }, null),
+            CosmeticsFX.simpleMenuItem("Copy here selected",
+                event -> {
+                    MainController.actionList.clear();
+                    MainController.actionList.addAll(MainController.dragList);
+                    ExtTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
+                    task.setTaskDescription("Copy Dragged files");
+                    ViewManager.getInstance().newProgressDialog(task); 
+                }, null)
         );
+
+        
+        Menu submenuMarked = new Menu("Marked...");
+        submenuMarked.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Copy here marked", 
+                event -> {
+                    Log.writeln("Copy Marked");
+                    ExtTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
+                    task.setTaskDescription("Copy marked files");
+                    ViewManager.getInstance().newProgressDialog(task);
+                }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
+            CosmeticsFX.simpleMenuItem("Move here marked",
+                event ->{
+                    Log.writeln("Move Marked");
+                    ExtTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
+                    task.setTaskDescription("Move marked files");
+                    ViewManager.getInstance().newProgressDialog(task);
+                }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
+            CosmeticsFX.simpleMenuItem("Add to marked", 
+                event -> {
+                    selectedList.stream().forEach((file) -> {
+                        TaskFactory.getInstance().addToMarked(file);
+                    });  
+                }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
+            CosmeticsFX.simpleMenuItem("Delete all marked", 
+                event -> {
+                    ExtTask task = TaskFactory.getInstance().deleteFiles(markedList);
+                    task.setTaskDescription("Delete marked files");
+                    ViewManager.getInstance().newProgressDialog(task); 
+                }, propertyMarkedSize.greaterThan(0)),
+            CosmeticsFX.simpleMenuItem("Add Marked to Virtual Folder", 
+                event -> {
+                    Platform.runLater(()->{
+                        MainController.markedList.forEach((f) -> {
+                            MC.currentDir.files.put(f.propertyName.get(), f);
+                        });
+                        update();
+                    });   
+                }, propertyMarkedSize.greaterThan(0).and(writeableFolder).and(MC.isVirtual))
+        );
+        
+        
         tableContextMenu.getItems().setAll(
-                contextMenuItems[18],       //Open
-                contextMenuItems[17],       //Open in new window
+            CosmeticsFX.simpleMenuItem("Open", 
+                event -> {
+                    handleOpen((ExtPath) tableView.getSelectionModel().getSelectedItem());
+                }, propertySelectedSize.isEqualTo(1)),
+            CosmeticsFX.simpleMenuItem("Open in new window", 
+                event -> {
+                    ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
+                }, selectedIsFolder),
+                
+            CosmeticsFX.simpleMenuItem("Rename",
+                event -> {
+                   rename(); 
+                }, propertyRenameCondition),
+            
+            CosmeticsFX.simpleMenuItem("Delete",
+                event -> {
+                    delete();
+                }, propertyDeleteCondition),
+            CosmeticsFX.simpleMenuItem("Copy path",
+                event -> {
+                    String absolutePath = selectedList.get(0).getAbsolutePath();
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
+                }, propertyRenameCondition),
+            CosmeticsFX.simpleMenuItem("Toggle Enable/Disable",
+                event -> {
+                    Platform.runLater(()->{
+                        selectedList.stream().forEach(c ->{
+                            c.isDisabled.setValue(c.isDisabled.not().get());
+                        });
+                    });
+                }, propertyDeleteCondition),
+            CosmeticsFX.simpleMenuItem("Create Virtual Folder",
+                event -> {
+                    Platform.runLater(()->{
+                        VirtualFolder.createVirtualFolder();
+                        update();
+                    });
+                }, propertyIsVirtualFolders),
+            CosmeticsFX.simpleMenuItem("Remove selected from Virtual Folder",
+                event -> {
+                    Platform.runLater(()->{
+                        ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
+                        selectedItems.forEach((item) -> {
+                            ExtPath remove = MC.currentDir.files.remove(item.propertyName.get());
+                            if(remove instanceof ExtFolder){
+                                ExtFolder folder = (ExtFolder) remove;
+                                folder.files.clear();
+                            }
+                        });
+                        update();
+                    });
+                }, MC.isVirtual.and(propertySelectedSize.greaterThan(0))),
                 submenuCreate,
-                contextMenuItems[1],    //Rename dialog
-                contextMenuItems[2],     //Delete dialog
-                contextMenuItems[24],
-                contextMenuItems[25],
-                contextMenuItems[26],
-                contextMenuItems[28],
                 submenuMarked
         );
         
+ 
     }
     private void setUpTableView(){
         //TABLE VIEW SETUP
@@ -933,7 +825,8 @@ public class MainController extends BaseController{
 
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        CosmeticsFX.wrapSelectContextMenu(tableView);
+        CosmeticsFX.wrapSelectContextMenu(tableView.getContextMenu(),tableView.getSelectionModel());
+        CosmeticsFX.simpleMenuBindingWrap(tableView.getContextMenu());
         //TABLE VIEW ACTIONS
         
         
@@ -1032,8 +925,8 @@ public class MainController extends BaseController{
         IntegerBinding size = Bindings.size(markedView.getItems());
         markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(this.markedView);
-
+        CosmeticsFX.wrapSelectContextMenu(markedView.getContextMenu(),markedView.getSelectionModel());
+        CosmeticsFX.simpleMenuBindingWrap(markedView.getContextMenu());
         
         markedView.setOnDragDetected((MouseEvent event) -> {
             TaskFactory.dragInitWindowID = "MARKED";
@@ -1090,13 +983,14 @@ public class MainController extends BaseController{
         searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(searchView);
+        CosmeticsFX.wrapSelectContextMenu(searchView.getContextMenu(),searchView.getSelectionModel());
+        CosmeticsFX.simpleMenuBindingWrap(searchView.getContextMenu());
 
         //***************************************
         //Link View
         
         linkView.setContextMenu(linksContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(linkView);
+        CosmeticsFX.wrapSelectContextMenu(linkView.getContextMenu(),linkView.getSelectionModel());
 
         linkView.setItems(links);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){
@@ -1134,7 +1028,8 @@ public class MainController extends BaseController{
         //Error View
         errorView.setItems(errorLog);
         errorView.setContextMenu(errorContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(errorView);
+        CosmeticsFX.wrapSelectContextMenu(errorView.getContextMenu(),errorView.getSelectionModel());
+        CosmeticsFX.simpleMenuBindingWrap(errorView.getContextMenu());
 
         errorView.setCellFactory(new Callback<ListView<ErrorReport>, ListCell<ErrorReport>>(){
             @Override

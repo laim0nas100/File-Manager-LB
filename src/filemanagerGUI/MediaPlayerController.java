@@ -6,7 +6,9 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
+import LibraryLB.Threads.ExtTask;
 import LibraryLB.Threads.TimeoutTask;
+import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums.Identity;
@@ -30,8 +32,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -50,6 +54,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.util.Callback;
 import javax.swing.JFrame;
 import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
@@ -284,7 +289,7 @@ public class MediaPlayerController extends BaseController {
             playNext(1,true);
         });
         
-        setUpTable();  
+        
         
         Platform.runLater(()->{
             execService.scheduleAtFixedRate(()->{
@@ -326,7 +331,12 @@ public class MediaPlayerController extends BaseController {
     public void setUpTable(){
         this.extTableView = new ExtTableView(table);
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
-        nameCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> cellData.getValue().propertyName);
+        nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtPath, String> cellData) {
+                return cellData.getValue().propertyName;
+            }
+        });
         TableColumn<ExtPath, String> indexCol = new TableColumn<>("");
         indexCol.setCellValueFactory((TableColumn.CellDataFeatures<ExtPath, String> cellData) -> {
             return new SimpleStringProperty(1+getIndex(cellData.getValue())+"");
@@ -414,6 +424,7 @@ public class MediaPlayerController extends BaseController {
     }
     @Override
     public void afterShow(){
+        setUpTable();  
         MenuTree tree = new MenuTree(null);
         MenuItem addToMarked = new MenuItem("Add to marked");
         addToMarked.setOnAction(event->{
@@ -422,6 +433,7 @@ public class MediaPlayerController extends BaseController {
                 TaskFactory.getInstance().addToMarked(item);
             });
         });
+        addToMarked.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         MenuItem remove = new MenuItem("Remove");
         remove.setOnAction(event ->{
             ArrayList<ExtPath> full = new ArrayList<>(table.getItems());
@@ -442,14 +454,25 @@ public class MediaPlayerController extends BaseController {
                 addIfAbsent(item);
             });
         });
-        addMarked.visibleProperty().bind(Bindings.size(MainController.markedList).greaterThan(0));
-        Menu marked = new Menu("Marked:");
+        addMarked.visibleProperty().bind(MainController.propertyMarkedSize.greaterThan(0));
+        Menu marked = new Menu("Marked");
         tree.addMenuItem(marked, marked.getText());
         tree.addMenuItem(addToMarked, marked.getText(),addToMarked.getText());
         tree.addMenuItem(addMarked, marked.getText(),addMarked.getText());
         marked.visibleProperty().bind(remove.visibleProperty().or(addMarked.visibleProperty()));
         tree.addMenuItem(remove, remove.getText());
+        MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem("Delete",
+            event -> {
+                Log.writeln("Deleting");
+                ExtTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
+                task.setTaskDescription("Delete selected files");
+                ViewManager.getInstance().newProgressDialog(task);
+            }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
+        tree.addMenuItem(deleteMenuItem, deleteMenuItem.getText());
         table.setContextMenu(tree.constructContextMenu());
+        CosmeticsFX.wrapSelectContextMenu(table.getContextMenu(),table.getSelectionModel());
+        CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
+        
         extTableView.prepareChangeListeners();
 
     }
@@ -740,6 +763,9 @@ public class MediaPlayerController extends BaseController {
         return options.toArray(new String[1]);
     }
     public boolean isSelected(ExtPath path){
+        if(path == null){
+            return false;
+        }
         return path.equals(this.filePlaying);
     }
     public int getIndex(ExtPath path){

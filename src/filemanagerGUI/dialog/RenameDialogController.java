@@ -6,10 +6,12 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.Threads.TimeoutTask;
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
+import java.util.concurrent.Future;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -60,7 +62,7 @@ public class RenameDialogController extends TextInputDialogController {
         this.textField.textProperty().addListener(listener->{
             checkAvailable();
         });
-        
+
     }
     @Override
     public void beforeShow(String title){
@@ -83,7 +85,6 @@ public class RenameDialogController extends TextInputDialogController {
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
                 TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),fallback.getName(true));
                 exit();
-                update();
             }catch(FileNameException ex){
                 this.nameAvailable.setText(ex.getMessage());
             } catch (Exception ex) {

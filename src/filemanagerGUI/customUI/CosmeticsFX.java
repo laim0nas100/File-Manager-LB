@@ -5,13 +5,23 @@
  */
 package filemanagerGUI.customUI;
 
+import LibraryLB.Log;
+import LibraryLB.Threads.ExtTask;
 import LibraryLB.Threads.TimeoutTask;
+import filemanagerGUI.ViewManager;
+import filemanagerLogic.LocationAPI;
+import filemanagerLogic.TaskFactory;
+import filemanagerLogic.fileStructure.ExtFolder;
+import filemanagerLogic.fileStructure.ExtPath;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -187,10 +197,10 @@ public class CosmeticsFX {
         public void updateContents(Collection collection){
             ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
             table.setItems(FXCollections.observableArrayList(collection));
-            //Workaround to update table
-            for(Integer i:selectedIndices){
+            //Work-around to update table
+            selectedIndices.forEach((i) -> {
                 table.getSelectionModel().select(i);
-            }
+            });
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);
             get.setVisible(true);
@@ -202,63 +212,43 @@ public class CosmeticsFX {
             setSortPreferences();
         }
         public void selectInverted(){
-            TableView.TableViewSelectionModel selectionModel = this.table.getSelectionModel();
-            ObservableList<Integer> selected = selectionModel.getSelectedIndices();
-            ArrayList<Integer> array = new ArrayList<>();
-            array.addAll(selected);
-            selectionModel.selectAll();
-            array.stream().forEach((Integer index) -> {
-                selectionModel.clearSelection(index);
-            });
+            CosmeticsFX.selectInverted(table.getSelectionModel());
         }
     }
     
-    public static void wrapSelectContextMenu(Control node){
-        MultipleSelectionModel model;
-        ObservableList items = FXCollections.observableArrayList();
-        if(node instanceof ListView){
-            ListView view = (ListView) node;
-            model = view.getSelectionModel();
-            Bindings.bindContent(items, view.getItems());
-        }else if(node instanceof TableView){
-            TableView view = (TableView) node;
-            model = view.getSelectionModel();
-            Bindings.bindContent(items, view.getItems());
-        }else{
-            return;
-        }
+    public static void wrapSelectContextMenu(ContextMenu menu,MultipleSelectionModel model){
+        
+        BooleanBinding greaterThan1 = Bindings.size(model.getSelectedItems()).greaterThan(0);
         Menu select = new Menu("Select");
-        select.visibleProperty().bind(Bindings.size(model.getSelectedItems()).greaterThan(0));
+        select.visibleProperty().bind(greaterThan1);
         
         MenuItem selectAll = new MenuItem("All");
         selectAll.setOnAction(eh -> {
             model.selectAll();
         });
-        selectAll.visibleProperty().bind(model.selectionModeProperty().isEqualTo(SelectionMode.MULTIPLE));
+        selectAll.visibleProperty().bind(model.selectionModeProperty().isEqualTo(SelectionMode.MULTIPLE).and(greaterThan1));
         
         MenuItem selectInverted = new MenuItem("Invert selection");
         selectInverted.setOnAction(eh -> {
             selectInverted(model);
         });
-        selectInverted.visibleProperty().bind(Bindings.size(model.getSelectedItems()).greaterThan(0).and(selectAll.visibleProperty()));
+        selectInverted.visibleProperty().bind(selectAll.visibleProperty());
         
         MenuItem selectNone = new MenuItem("None");
         selectNone.setOnAction(eh -> {
             model.clearSelection();
         });
+        selectNone.visibleProperty().bind(greaterThan1);
         select.getItems().setAll(selectAll,selectNone,selectInverted);
-        
-        node.getContextMenu().getItems().add(select);
+        menu.getItems().add(select);
         
     }
     public static void selectInverted(MultipleSelectionModel sm){
-        ObservableList<Integer> selected = sm.getSelectedIndices();
-        ArrayList<Integer> array = new ArrayList<>();
-        array.addAll(selected);
+        ArrayDeque<Integer> array = new ArrayDeque<>(sm.getSelectedIndices());
         sm.selectAll();
         array.stream().forEach(sm::clearSelection);
     }
-    public static MenuItem simpleMenuItem(String name,EventHandler onAction, BooleanProperty visibleProperty){
+    public static MenuItem simpleMenuItem(String name,EventHandler onAction, BooleanExpression visibleProperty){
         MenuItem item = new MenuItem(name);
         item.setOnAction(onAction);
         if(visibleProperty !=null){
@@ -267,7 +257,32 @@ public class CosmeticsFX {
         return item;
         
     }
-    
-    
-
+    public static void simpleMenuBindingWrap(Menu menu){
+        final ArrayDeque<BooleanExpression> list = new ArrayDeque<>();
+        menu.getItems().forEach(item ->{
+            if(item instanceof Menu){
+                simpleMenuBindingWrap((Menu) item);
+            }
+            list.add(item.visibleProperty());
+        });
+        if(list.isEmpty()){
+            return;
+        }
+        if(list.size()==1){
+            menu.visibleProperty().bind(list.pollFirst());
+        }else if(list.size()>1){
+            BooleanBinding bind = list.pollFirst().or(list.pollFirst());
+            for(BooleanExpression b:list){
+                bind = bind.or(b);
+            }
+            menu.visibleProperty().bind(bind);
+        }
+    }
+    public static void simpleMenuBindingWrap(ContextMenu menu){
+        menu.getItems().forEach(item ->{
+            if(item instanceof Menu){
+                simpleMenuBindingWrap((Menu) item);
+            }
+        }); 
+    }
 }

@@ -89,7 +89,7 @@ public class TaskFactory {
     };
     
 //RENAME
-    public void renameTo(String fileToRename, String newName,String fallbackName) throws IOException, FileNameException{
+    public String renameTo(String fileToRename, String newName,String fallbackName) throws IOException, FileNameException{
         for(Character c:newName.toCharArray()){
             if(illegalCharacters.contains(c)){
                 throw new FileNameException(newName+" contains illegal character "+c);
@@ -110,6 +110,7 @@ public class TaskFactory {
         }else{
             Files.move(Paths.get(path1), Paths.get(path2));
         }
+        return path2;
     }
     
 //PREPARE FOR TASKS
@@ -427,7 +428,7 @@ public class TaskFactory {
         return path+newName;
     }
     
-    public ExtTask markFiles(List<String> list){
+    public ExtTask markFiles(Collection<String> list){
         return new SimpleTask(){
             @Override
             protected Void call(){
