@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
+import utility.DesktopApi;
 import utility.ExtStringUtils;
 
 /**
@@ -119,6 +121,48 @@ public class LocationInRoot {
         }
         str+=getName();
         return "<"+str+">";
+    }
+
+    /**
+     *
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals(Object o){
+        if(this == o){
+            return true;
+        }
+        if(o instanceof LocationInRoot){
+            LocationInRoot otherLoc = (LocationInRoot) o;
+            boolean same = otherLoc.length() == this.length();
+            if(!same){
+                return false;
+            }
+            if(this.upperCase || ((LocationInRoot) o).upperCase){              
+                for(int i = 0; i<this.length(); i++){
+                    if(!this.at(i).equalsIgnoreCase(otherLoc.at(i))){
+                        same = false;
+                    }
+                }
+            }else{
+                for(int i = 0; i<this.length(); i++){
+                    if(!this.at(i).equals(otherLoc.at(i))){
+                        same = false;
+                    }
+                }
+            }
+            return same;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 11 * hash + (this.upperCase ? 1 : 0);
+        hash = 11 * hash + Objects.hashCode(this.coordinates);
+        return hash;
     }
     
 }

@@ -6,6 +6,7 @@
 package filemanagerGUI.dialog;
 
 import filemanagerGUI.BaseController;
+import filemanagerGUI.FileManagerLB;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class ListController extends BaseController {
     }
     public void save() throws FileNotFoundException, UnsupportedEncodingException{
         String text = this.pathToSave.getText();
-        LibraryLB.FileManaging.FileReader.writeToFile(text, this.listView.getItems());
+        LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.USER_DIR+text, this.listView.getItems());
     }
             
     

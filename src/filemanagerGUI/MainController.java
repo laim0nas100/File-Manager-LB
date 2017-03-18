@@ -529,9 +529,9 @@ public class MainController extends BaseController{
                     ExtLink link = (ExtLink) file;
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if(link.isPointsToDirectory()){
-                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileByLocation(location));
+                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileIfExists(location));
                     }else{
-                        DesktopApi.open(LocationAPI.getInstance().getFileByLocation(location).toPath().toFile());
+                        DesktopApi.open(LocationAPI.getInstance().getFileIfExists(location).toPath().toFile());
                     }
                 }else if(file.getIdentity().equals(Enums.Identity.FILE)){
                     DesktopApi.open(file.toPath().toFile());
@@ -825,7 +825,7 @@ public class MainController extends BaseController{
 
         tableView.setContextMenu(tableContextMenu);
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        CosmeticsFX.wrapSelectContextMenu(tableView.getContextMenu(),tableView.getSelectionModel());
+        tableView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(tableView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(tableView.getContextMenu());
         //TABLE VIEW ACTIONS
         
@@ -925,7 +925,7 @@ public class MainController extends BaseController{
         IntegerBinding size = Bindings.size(markedView.getItems());
         markedSize.textProperty().bind(size.asString());
         markedView.setContextMenu(markedContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(markedView.getContextMenu(),markedView.getSelectionModel());
+        markedView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(markedView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(markedView.getContextMenu());
         
         markedView.setOnDragDetected((MouseEvent event) -> {
@@ -983,14 +983,14 @@ public class MainController extends BaseController{
         searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(searchView.getContextMenu(),searchView.getSelectionModel());
+        searchView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(searchView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(searchView.getContextMenu());
 
         //***************************************
         //Link View
         
         linkView.setContextMenu(linksContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(linkView.getContextMenu(),linkView.getSelectionModel());
+        linkView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(linkView.getSelectionModel()));
 
         linkView.setItems(links);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>(){
@@ -1028,7 +1028,7 @@ public class MainController extends BaseController{
         //Error View
         errorView.setItems(errorLog);
         errorView.setContextMenu(errorContextMenu);
-        CosmeticsFX.wrapSelectContextMenu(errorView.getContextMenu(),errorView.getSelectionModel());
+        errorView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(errorView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(errorView.getContextMenu());
 
         errorView.setCellFactory(new Callback<ListView<ErrorReport>, ListCell<ErrorReport>>(){

@@ -415,7 +415,7 @@ public class MediaPlayerController extends BaseController {
         });   
     }
     public void addIfAbsent(ExtPath item){
-        if(item.getIdentity().equals(Identity.FILE)){
+        if(item!=null && item.getIdentity().equals(Identity.FILE)){
             if(!table.getItems().contains(item)){
                 table.getItems().add(item);
             }
@@ -470,7 +470,7 @@ public class MediaPlayerController extends BaseController {
             }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         tree.addMenuItem(deleteMenuItem, deleteMenuItem.getText());
         table.setContextMenu(tree.constructContextMenu());
-        CosmeticsFX.wrapSelectContextMenu(table.getContextMenu(),table.getSelectionModel());
+        table.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
         
         extTableView.prepareChangeListeners();
@@ -787,7 +787,7 @@ public class MediaPlayerController extends BaseController {
         int i =0;
         for(Object item:table.getItems()){
             ExtPath path = (ExtPath) item;
-            state.root.add(new LocationInRoot(path.getAbsolutePath(),false),i++);
+            state.root.add(new LocationInRoot(path.getAbsoluteDirectory(),false),i++);
         }
         return state;
     }  
@@ -796,9 +796,7 @@ public class MediaPlayerController extends BaseController {
         this.table.getItems().clear();
         state.root.resolve(false).forEach(item ->{
             ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
-            if(item.equals(file.getAbsolutePath())){
-                addIfAbsent(file);
-            }
+            addIfAbsent(file);
         });
         Platform.runLater(()->{
             this.playType.getSelectionModel().select(state.type);

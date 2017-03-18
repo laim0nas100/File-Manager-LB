@@ -96,8 +96,8 @@ public class TaskFactory {
             }
         }
         LocationInRoot location  = new LocationInRoot(fileToRename);
-        ExtPath file = LocationAPI.getInstance().getFileByLocation(location);
-        ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
+        ExtPath file = LocationAPI.getInstance().getFileIfExists(location);
+        ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(location.getParentLocation());
         String path1 = file.getAbsolutePath();
         String path2 = parent.getAbsoluteDirectory()+newName;
         String fPath = parent.getAbsoluteDirectory()+fallbackName;
@@ -149,7 +149,7 @@ public class TaskFactory {
         for(ExtPath file:fileList){
             Collection<ExtPath> listRecursive = new ArrayList<>();
             listRecursive.addAll(file.getListRecursive(true));
-            ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getInstance().getFileIfExists(file.getMapping().getParentLocation());
             for(ExtPath f:listRecursive){
                 String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
                 list.add(new ActionFile(f.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath));
@@ -221,7 +221,7 @@ public class TaskFactory {
         ArrayList<ActionFile> list = new ArrayList<>();
         for(ExtPath file:fileList){
             Collection<ExtPath> listRecursive = file.getListRecursive(true);
-            ExtPath parentFile = LocationAPI.getInstance().getFileByLocation(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getInstance().getFileIfExists(file.getMapping().getParentLocation());
             for(ExtPath f:listRecursive){
                 try{
                 String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
@@ -433,7 +433,7 @@ public class TaskFactory {
             @Override
             protected Void call(){
                 list.forEach(file ->{
-                    addToMarked(LocationAPI.getInstance().getFileOptimized(file));
+                    addToMarked(LocationAPI.getInstance().getFileOptimized(file));    
                 });
                 return null;
             }

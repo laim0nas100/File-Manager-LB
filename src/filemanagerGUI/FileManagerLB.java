@@ -69,16 +69,17 @@ public class FileManagerLB extends Application {
         launch(args);
     }
     public static void remount(){
-        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
+        
         File[] roots = File.listRoots();
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
-            if((!Files.isDirectory(f.toPath()))&&!(f.getIdentity().equals(Identity.VIRTUAL))){
+            if(!Files.isDirectory(f.toPath())){
                 ArtificialRoot.files.remove(f.propertyName.get());
             }
         }
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
+        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
     }
     public static boolean mountDevice(String name){
         boolean result = false;

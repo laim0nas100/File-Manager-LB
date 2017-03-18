@@ -78,7 +78,7 @@ public class ManagingClass {
                     changeDirTo(FileManagerLB.VirtualFolders);
                 }else{
                     LocationInRoot location = new LocationInRoot(currentDir.getAbsoluteDirectory());
-                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileByLocation(location.getParentLocation());
+                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileIfExists(location.getParentLocation());
                     changeDirTo(folder);
                 }
             } catch (Exception ex) {

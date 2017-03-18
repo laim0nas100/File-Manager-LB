@@ -216,7 +216,7 @@ public class CosmeticsFX {
         }
     }
     
-    public static void wrapSelectContextMenu(ContextMenu menu,MultipleSelectionModel model){
+    public static MenuItem wrapSelectContextMenu(MultipleSelectionModel model){
         
         BooleanBinding greaterThan1 = Bindings.size(model.getSelectedItems()).greaterThan(0);
         Menu select = new Menu("Select");
@@ -240,7 +240,7 @@ public class CosmeticsFX {
         });
         selectNone.visibleProperty().bind(greaterThan1);
         select.getItems().setAll(selectAll,selectNone,selectInverted);
-        menu.getItems().add(select);
+        return select;
         
     }
     public static void selectInverted(MultipleSelectionModel sm){

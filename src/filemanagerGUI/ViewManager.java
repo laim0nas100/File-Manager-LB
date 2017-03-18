@@ -390,7 +390,6 @@ public class ViewManager {
             }
             System.exit(0);
         }
-        System.gc();
     }
     public void closeAllFramesNoExit(){
         this.initStart = true;
@@ -407,9 +406,7 @@ public class ViewManager {
         } catch (InterruptedException ex) {
             Logger.getLogger(ViewManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        this.initStart = false;
-        System.gc();
-        
+        this.initStart = false;        
     }
     
     

@@ -252,7 +252,7 @@ public void apply(){
         TableItemObject ob = (TableItemObject) object;
         
         try {
-            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileByLocation(new LocationInRoot(ob.path1.getParent(1)));
+            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(new LocationInRoot(ob.path1.getParent(1)));
             PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
             TaskFactory.getInstance().renameTo(ob.path1.getPath(),ob.path2.getName(true),fallback.getName(true));
             if(this.virtual.isVirtual.get())

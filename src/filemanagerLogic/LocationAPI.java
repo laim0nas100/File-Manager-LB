@@ -12,7 +12,9 @@ import LibraryLB.Log;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Locale;
+import utility.DesktopApi;
 import utility.ErrorReport;
 
 /**
@@ -115,20 +117,21 @@ public class LocationAPI {
             
             try{
                 try{
-                    if(File.separator.equals("\\")){ //Directory Mounting BS on Windows
+                    if(DesktopApi.getOs().isWindows()){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
                         pathl = path.toAbsolutePath().toString();
                         Log.write("realPath:"+path);
                         if(!FileManagerLB.getRootSet().contains(path.getRoot().toString().toUpperCase(Locale.ROOT))){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
-                                FileManagerLB.ArtificialRoot.update();
+//                                FileManagerLB.ArtificialRoot.update();
+                                Log.write("Mounted",path);
                             }
                         }
                     }
                 }catch(Exception e){
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
-                LocationInRoot loc = new LocationInRoot(pathl,false);
+                LocationInRoot loc = new LocationInRoot(pathl);
                 Log.write("Location:",loc);
                 populateByLocation(loc.getParentLocation());
                 
@@ -202,12 +205,29 @@ public class LocationAPI {
         return walker.currentFile;
        
     }
-    public ExtPath getFileOptimized(String path){
+    public ExtPath getFileOptimized(String path){      
         LocationInRoot loc = new LocationInRoot(path);
         if(!existByLocation(loc)){
-            return getFileAndPopulate(path);
+            getFileAndPopulate(path);
+        }
+        return getFileIfExists(loc);
+    }
+    public ExtPath getFileIfExists(LocationInRoot location){
+        ExtPath fileByLocation = getFileByLocation(location);
+        LocationInRoot mapping = fileByLocation.getMapping();
+        Log.write(location,mapping);
+        if(location.equals(mapping)){
+            Log.write("Equals");
+            return fileByLocation;
         }else{
-            return getFileByLocation(loc);
+            Log.write("Different");
+            return null;
+        }
+    }
+    public void addToCollectionSafe(Collection<ExtPath> collection,LocationInRoot location){
+        ExtPath file = getFileIfExists(location);
+        if(file != null){
+            collection.add(file);
         }
     }
 }

@@ -84,7 +84,8 @@ public class CommandWindowController extends BaseController {
             ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
             Log.write("Copy structure:",root,dest);
-            ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true), dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
+            ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true),
+                    dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
             ViewManager.getInstance().newProgressDialog(copyFiles);
             
 
@@ -174,8 +175,7 @@ public class CommandWindowController extends BaseController {
     public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = reader.readLine();
-            LinkedList<String> lines = new LinkedList<>();
-            lines.add("$:"+command);
+            ArrayDeque<String> lines = new ArrayDeque<>();
             if(!setTextAfterwards){
                 addToTextArea(textArea,"$:"+command);
             }
@@ -211,7 +211,8 @@ public class CommandWindowController extends BaseController {
         }
        
         public void apply(String name) throws IOException, InterruptedException{
-            LinkedList<String> readFromFile = new LinkedList(LibraryLB.FileManaging.FileReader.readFromFile(name));
+            ArrayDeque<String> readFromFile = new ArrayDeque(
+                    LibraryLB.FileManaging.FileReader.readFromFile(FileManagerLB.USER_DIR+name));
             this.setTextAfterwards = true;    
             for(String command:readFromFile){
                 submit(command);
@@ -303,11 +304,12 @@ public class CommandWindowController extends BaseController {
                     String c = coms.pollFirst();
                     String[] params = coms.toArray(new String[1]);
                     Log.write("Params",Arrays.asList(params));
+                    addToTextArea(textArea,"$:"+command);
                     if(runCommand(c,params)){
-                        Log.write("Run in-built command");
+                        Log.write("Run in-built command:",command);
                         return null;
                     }else{
-                        Log.writeln("Run native command");
+                        Log.writeln("Run native command:",command);
                         Process process = LibraryLB.CLI.createNewProcess(list.toArray(new String[1])).call();
                         handleStream(process,textArea,setTextAfterwards,command);
                         return null;
