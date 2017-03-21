@@ -340,7 +340,7 @@ public class ViewManager {
             throw new Exception("Frame:"+title+"Allready exists");
         }
         URL url = getClass().getResource("/filemanagerGUI/"+info.recourse);
-        Log.write("URL=",url.toString());
+        Log.print("URL=",url.toString());
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
         Stage stage = new Stage();
@@ -357,11 +357,11 @@ public class ViewManager {
             Frame.Pos pos = Frame.positionMemoryMap.get(info.title);
             stage.setX(pos.x);
             stage.setY(pos.y);
-            Log.write("Set:",info.title,pos);
+            Log.print("Set:",info.title,pos);
         }else{
             Frame.Pos pos = new Frame.Pos(stage.getX(), stage.getY());
             Frame.positionMemoryMap.put(info.title,pos );
-            Log.write("New pos:",info.title,pos);
+            Log.print("New pos:",info.title,pos);
         }
         Frame frame = new Frame(stage,controller,info.title);
         this.frames.put(frame.getTitle(),frame);
@@ -396,7 +396,7 @@ public class ViewManager {
         frames.keySet().forEach(key->{
             Frame frame = frames.get(key);
             frame.getController().exit(); 
-            Log.write("Close",frame.getID());
+            Log.print("Close",frame.getID());
             frame.getStage().close();
         });
         frames.clear();

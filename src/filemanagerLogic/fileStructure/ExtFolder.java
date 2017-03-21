@@ -77,7 +77,7 @@ public class ExtFolder extends ExtPath{
     }
     private void populateRecursiveInner(ExtFolder fold){
         fold.update();
-        Log.writeln("Iteration "+fold.getAbsoluteDirectory());
+        Log.print("Iteration "+fold.getAbsoluteDirectory());
         for(ExtFolder folder:fold.getFoldersFromFiles()){
             fold.files.replace(folder.propertyName.get(), folder);
             folder.populateRecursiveInner(folder);
@@ -132,7 +132,7 @@ public class ExtFolder extends ExtPath{
         }
     }
     public void update(){
-        Log.writeln("Update:"+this.getAbsoluteDirectory());
+        Log.print("Update:"+this.getAbsoluteDirectory());
         if(isAbsoluteRoot.get()){
             FileManagerLB.remount();
             return;
@@ -140,7 +140,7 @@ public class ExtFolder extends ExtPath{
         if(isPopulated()){           
             for(ExtPath file:getFilesCollection()){
                 if(!Files.exists(file.toPath())){
-                    Log.writeln(file.getAbsoluteDirectory()+" doesn't exist");
+                    Log.print(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
                 }
             }   

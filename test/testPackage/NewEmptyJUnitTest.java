@@ -74,7 +74,7 @@ public class NewEmptyJUnitTest {
 //        print("123".substring(0, 10));
         LocationInRootNode node = LocationInRootNode.nodeFromFile(LibraryLB.FileManaging.FileReader.readFromFile("file"));
         Log.display = true;
-        Log.write(node.specialString());
+        Log.print(node.specialString());
         node.resolve(true).forEach(item->{
             print(item);
         });

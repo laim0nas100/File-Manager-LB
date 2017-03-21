@@ -9,15 +9,12 @@ import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
-import static filemanagerGUI.MainController.markedList;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
-import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,8 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -56,7 +51,7 @@ public class FileManagerLB extends Application {
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
     public static ParametersMap parameters;
-    public static PathStringCommands customPath = new PathStringCommands(USER_DIR);
+    public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     @Override
     public void start(Stage primaryStage) {
         System.err.println("STARTING");
@@ -84,7 +79,7 @@ public class FileManagerLB extends Application {
     public static boolean mountDevice(String name){
         boolean result = false;
         name = name.toUpperCase();
-        Log.write("Mount: "+name);
+        Log.print("Mount: "+name);
         Path path = Paths.get(name);
         if(Files.isDirectory(path)){
             ExtFolder device = new ExtFolder(name);
@@ -114,11 +109,13 @@ public class FileManagerLB extends Application {
         return ArtificialRoot.files.keySet();   
     }
     public static void doOnExit(){
+        Log.print("Exit call invoked");
         ViewManager.getInstance().closeAllFramesNoExit();
-        try {           
+        try {         
+            
 //            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
             AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
-            Log.getInstance().close();
+            Log.close();
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(logPath);
             makeNewCopy.forEach(th ->{
                 th.run();
@@ -132,7 +129,7 @@ public class FileManagerLB extends Application {
 
     }
     public static void reInit(){
-        Log.write("INITIALIZE");
+        Log.print("INITIALIZE");
         ViewManager.getInstance().closeAllFramesNoExit();
         MediaPlayerController.VLCfound = false;
         MainController.actionList = new ArrayList<>();
@@ -140,7 +137,7 @@ public class FileManagerLB extends Application {
         MainController.errorLog = FXCollections.observableArrayList();
         MainController.links = FXCollections.observableArrayList();
         MainController.markedList = FXCollections.observableArrayList();
-        MainController.propertyMarkedSize = Bindings.size(markedList);
+        MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
@@ -174,7 +171,7 @@ public class FileManagerLB extends Application {
             ErrorReport.report(e);                
         }
         parameters = new ParametersMap(list,"=");
-        Log.writeln("Parameters",parameters);
+        Log.print("Parameters",parameters);
         
         DEBUG.set((boolean) parameters.defaultGet("debug",false));
         DEPTH = (int) parameters.defaultGet("lookDepth",2);
@@ -213,7 +210,7 @@ public class FileManagerLB extends Application {
     }
     public static void restart(){
         try {
-            Log.write("Restart request");
+            Log.print("Restart request");
             FileManagerLB.doOnExit();
             System.err.println("Restart request");//Message to parent process
             Thread.sleep(10000);

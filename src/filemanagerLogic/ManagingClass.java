@@ -59,7 +59,7 @@ public class ManagingClass {
             cacheIndex++;
             setCurrentDir(folderCache.get(cacheIndex));
         } 
-        Log.writeln(cacheIndex+" : "+folderCache);
+        Log.print(cacheIndex+" : "+folderCache);
     }
     public void changeToPrevious(){
         
@@ -67,7 +67,7 @@ public class ManagingClass {
             cacheIndex--;
             setCurrentDir(folderCache.get(cacheIndex));
         }
-        Log.writeln(cacheIndex+" : "+folderCache);
+        Log.print(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
         if(hasParent()){

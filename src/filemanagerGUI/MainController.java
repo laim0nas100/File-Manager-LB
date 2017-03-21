@@ -305,7 +305,7 @@ public class MainController extends BaseController{
 
     }
     public void test() throws Exception{
-        Log.write("TEST");
+        Log.print("TEST");
 //        LocationInRootNode root = new LocationInRootNode("",-1);
 //        int i = 0;
 //        
@@ -354,7 +354,8 @@ public class MainController extends BaseController{
 //        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
 //        Log.write("file",LocationAPI.getInstance().existByLocation(file));
 //        Log.write("Closest",closestFileByLocation);
-        Log.write("END TEST");
+        Log.println(1,2,3);
+        Log.print("END TEST");
     }
 
     
@@ -520,7 +521,7 @@ public class MainController extends BaseController{
     
     private void handleOpen(ExtPath file){
         if(file instanceof ExtFolder){
-            Log.write("Change to dir "+file.getAbsoluteDirectory());
+            Log.print("Change to dir "+file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
         }else {
                             
@@ -563,7 +564,7 @@ public class MainController extends BaseController{
         submenuCreate.getItems().setAll(
             CosmeticsFX.simpleMenuItem("Create New Folder",
                 event -> {
-                    Log.writeln("Create new folder");
+                    Log.print("Create new folder");
                     try {
                         ExtPath createNewFolder = MC.createNewFolder();
                         ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
@@ -574,7 +575,7 @@ public class MainController extends BaseController{
                 }, MC.isVirtual.not()),
             CosmeticsFX.simpleMenuItem("Create New File",
                 event -> {
-                    Log.writeln("Create new file");
+                    Log.print("Create new file");
                     try {
                         ExtPath createNewFile = MC.createNewFile();
                         ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
@@ -684,14 +685,14 @@ public class MainController extends BaseController{
         submenuMarked.getItems().setAll(
             CosmeticsFX.simpleMenuItem("Copy here marked", 
                 event -> {
-                    Log.writeln("Copy Marked");
+                    Log.print("Copy Marked");
                     ExtTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
                     task.setTaskDescription("Copy marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
             CosmeticsFX.simpleMenuItem("Move here marked",
                 event ->{
-                    Log.writeln("Move Marked");
+                    Log.print("Move Marked");
                     ExtTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
                     task.setTaskDescription("Move marked files");
                     ViewManager.getInstance().newProgressDialog(task);
@@ -1083,7 +1084,7 @@ public class MainController extends BaseController{
                    this.propertyUnitSizeAuto.set(false);
                    this.unitSize = DATA_SIZE.valueOf(sizeType);
                    
-                   Log.writeln(unitSize);
+                   Log.print(unitSize);
                    this.propertyUnitSizeName.set("Size "+unitSize.sizename);
                    this.propertyUnitSize.set(unitSize.size);
                    this.update();
@@ -1104,7 +1105,7 @@ public class MainController extends BaseController{
     
     private void delete(){
         if(this.propertyDeleteCondition.get()){
-            Log.writeln("Deleting");
+            Log.print("Deleting");
             ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
             task.setTaskDescription("Delete selected files");
             ViewManager.getInstance().newProgressDialog(task);
@@ -1113,7 +1114,7 @@ public class MainController extends BaseController{
     }
     private void rename(){
         if(this.propertyRenameCondition.get()){
-            Log.writeln("Invoke rename dialog");
+            Log.print("Invoke rename dialog");
             ExtPath path = (ExtPath)tableView.getSelectionModel().getSelectedItem();
             ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileOptimized(path.getParent(1));
             ViewManager.getInstance().newRenameDialog(parent,path);

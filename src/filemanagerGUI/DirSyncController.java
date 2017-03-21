@@ -319,7 +319,7 @@ public class DirSyncController extends BaseController {
             Long date = Instant.now().toEpochMilli();
             try{
                 date = datePicker.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                Log.writeln(date);
+                Log.print(date);
             }catch(Exception e){}
             result = SnapshotAPI.compareSnapshots(snapshot0, snapshot1);
             //Log.writeln(snapshot0,snapshot1);
@@ -439,7 +439,7 @@ public class DirSyncController extends BaseController {
     
     public void synchronize(){
         this.btnSync.setDisable(true);
-        Log.writeln("Syncronize!");
+        Log.print("Syncronize!");
         ArrayList<ExtEntry> list = new ArrayList<>();
         ArrayList<ExtEntry> listDelete = new ArrayList<>();
         table.sort();
@@ -462,7 +462,7 @@ public class DirSyncController extends BaseController {
             list.addAll(listDelete);
         }
         for(ExtEntry en:list){
-            Log.write(en.toString());
+            Log.print(en.toString());
         }
         
         task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom,this.snapshot1.folderCreatedFrom,list);

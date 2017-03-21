@@ -29,7 +29,7 @@ public class ErrorReport {
             ex.printStackTrace();
         }
         MainController.errorLog.add(0, error);
-        Log.write("Exception:",ex.toString());
+        Log.print("Exception:",ex.toString());
     }
     private final SimpleStringProperty errorName;
     private final Exception errorCause;

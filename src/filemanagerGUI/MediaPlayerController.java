@@ -122,11 +122,11 @@ public class MediaPlayerController extends BaseController {
     ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
     TimeoutTask dragTask = new TimeoutTask(300,20,()->{
            float val = seekSlider.valueProperty().divide(100).floatValue();
-           Log.write(getCurrentPlayer().getPosition(),val);
+           Log.print(getCurrentPlayer().getPosition(),val);
            if(Math.abs(getCurrentPlayer().getPosition()-val)>minDelta){
                     val = (float) normalize(val,3);
                     getCurrentPlayer().setPosition(val);
-                    Log.write("Set new seek");
+                    Log.print("Set new seek");
             } 
         });
        
@@ -194,7 +194,7 @@ public class MediaPlayerController extends BaseController {
                 VLCfound = new NativeDiscovery(array[supportedOS]).discover();
             }
             if(VLCfound){
-                Log.write(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
+                Log.print(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
             }else{
                 throw new VLCNotFoundException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
             }
@@ -243,13 +243,13 @@ public class MediaPlayerController extends BaseController {
 
             @Override
             public void finished(MediaPlayer mediaPlayer) {
-                Log.write("Finished",filePlaying.toPath());
+                Log.print("Finished",filePlaying.toPath());
                 playNext(1,false); 
             }
 
             @Override
             public void error(MediaPlayer mediaPlayer) {
-                Log.write("Error at",filePlaying.toPath());
+                Log.print("Error at",filePlaying.toPath());
                 playNext(1,false);  
             }
         });
@@ -367,12 +367,12 @@ public class MediaPlayerController extends BaseController {
         });
         table.setOnDragDetected((MouseEvent event) ->{
             if(this.extTableView.recentlyResized.get()){
-                Log.write("recently resized");
+                Log.print("recently resized");
                 return;
             }
             MainController.dragList = table.getSelectionModel().getSelectedItems();
             TaskFactory.dragInitWindowID = this.windowID;
-            Log.write(TaskFactory.dragInitWindowID,MainController.dragList);
+            Log.print(TaskFactory.dragInitWindowID,MainController.dragList);
             if(!MainController.dragList.isEmpty()){
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                ClipboardContent content = new ClipboardContent();
@@ -463,7 +463,7 @@ public class MediaPlayerController extends BaseController {
         tree.addMenuItem(remove, remove.getText());
         MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem("Delete",
             event -> {
-                Log.writeln("Deleting");
+                Log.print("Deleting");
                 ExtTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
                 task.setTaskDescription("Delete selected files");
                 ViewManager.getInstance().newProgressDialog(task);
@@ -519,7 +519,7 @@ public class MediaPlayerController extends BaseController {
         }
     }
     public void relaunch(){
-        Log.write("Relaunch");
+        Log.print("Relaunch");
         relaunch(getCurrentPlayer().getPosition());
     }
     private void relaunch(float position){
@@ -533,7 +533,7 @@ public class MediaPlayerController extends BaseController {
                     Thread.sleep(10);
                 }while(!playTaskComplete);
                 getCurrentPlayer().setPosition(position);
-                Log.write("Play task over");
+                Log.print("Play task over");
                 return null;
             }
         };
@@ -641,7 +641,7 @@ public class MediaPlayerController extends BaseController {
                     int i =0;
                     do{
                         getCurrentPlayer().stop();
-                        Log.write("Sleep play task " + i++);
+                        Log.print("Sleep play task " + i++);
                         Thread.sleep(10);
                     }while(getCurrentPlayer().isPlaying());
                     getCurrentFrame().setTitle(filePlaying.getName(true));
@@ -671,23 +671,23 @@ public class MediaPlayerController extends BaseController {
         oldplayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
                         @Override
                         public void finished(MediaPlayer mediaPlayer) {
-                            Log.write("Finished old player");
+                            Log.print("Finished old player");
                             int i = 1;
                             while(frames.size()>1){
                                 frames.pollFirst().setVisible(false);
                                 players.pollFirst();
-                                Log.write("Frame/Player collected " + i++);
+                                Log.print("Frame/Player collected " + i++);
                             }
                             
                         }
                         @Override
                         public void stopped(MediaPlayer mediaPlayer) {
-                            Log.write("Finished old player");
+                            Log.print("Finished old player");
                             int i = 1;
                             while(frames.size()>1){
                                 frames.pollFirst().setVisible(false);
                                 players.pollFirst();
-                                Log.write("Frame/Player collected " + i++);
+                                Log.print("Frame/Player collected " + i++);
                             }
                         }
                     });
@@ -715,7 +715,7 @@ public class MediaPlayerController extends BaseController {
                     millis-=100;
                     
                 }
-                Log.write("End volume resize task");
+                Log.print("End volume resize task");
                 getCurrentPlayer().setVolume((int)oldVolume);
                 oldplayer.stop();
                 return null;

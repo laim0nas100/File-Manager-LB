@@ -112,7 +112,7 @@ public class LocationAPI {
     public ExtPath getFileAndPopulate(String pathl){
         ExtPath file = FileManagerLB.ArtificialRoot; 
         pathl = pathl.trim();
-        Log.write("getFileAndPopulate:"+pathl);
+        Log.print("getFileAndPopulate:"+pathl);
         if(!pathl.isEmpty() && !pathl.equals(FileManagerLB.ROOT_NAME)){
             
             try{
@@ -120,11 +120,11 @@ public class LocationAPI {
                     if(DesktopApi.getOs().isWindows()){ //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
                         pathl = path.toAbsolutePath().toString();
-                        Log.write("realPath:"+path);
+                        Log.print("realPath:"+path);
                         if(!FileManagerLB.getRootSet().contains(path.getRoot().toString().toUpperCase(Locale.ROOT))){
                             if(FileManagerLB.mountDevice(path.getRoot().toString())){
 //                                FileManagerLB.ArtificialRoot.update();
-                                Log.write("Mounted",path);
+                                Log.print("Mounted",path);
                             }
                         }
                     }
@@ -132,7 +132,7 @@ public class LocationAPI {
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);
-                Log.write("Location:",loc);
+                Log.print("Location:",loc);
                 populateByLocation(loc.getParentLocation());
                 
                 file = getFileByLocation(loc);
@@ -166,7 +166,7 @@ public class LocationAPI {
                 key = location.getName();
             }
             walker.currentFolder.files.remove(key);
-            Log.write("Remove by location success");
+            Log.print("Remove by location success");
         }
     }
     public void putByLocation(LocationInRoot location, ExtPath file) {
@@ -176,7 +176,7 @@ public class LocationAPI {
         }
         if(walker.nextCoordinate().equals(location.getName())){
             walker.currentFolder.files.put(file.propertyName.get(), file);
-            Log.write("Put by location success");
+            Log.print("Put by location success");
         }
         
     }
@@ -189,7 +189,7 @@ public class LocationAPI {
         walker.currentFolder.files.put(file.propertyName.get(), file);
     }
     private void populateByLocation(LocationInRoot location){
-        Log.writeln("Populate by location",location);
+        Log.print("Populate by location",location);
         LocationWalker walker = new LocationWalker(location);
         while(walker.canDoStep(true)){
             walker.iteration();
@@ -197,7 +197,7 @@ public class LocationAPI {
         }
     }
     public ExtPath getFileByLocation(LocationInRoot location) {
-        Log.writeln("Get file by location",location);
+        Log.print("Get file by location",location);
         LocationWalker walker = new LocationWalker(location);
         while(walker.canDoStep(true)){
             walker.iteration();
@@ -215,12 +215,12 @@ public class LocationAPI {
     public ExtPath getFileIfExists(LocationInRoot location){
         ExtPath fileByLocation = getFileByLocation(location);
         LocationInRoot mapping = fileByLocation.getMapping();
-        Log.write(location,mapping);
+        Log.print(location,mapping);
         if(location.equals(mapping)){
-            Log.write("Equals");
+            Log.print("Equals");
             return fileByLocation;
         }else{
-            Log.write("Different");
+            Log.print("Different");
             return null;
         }
     }

@@ -78,12 +78,12 @@ public class CommandWindowController extends BaseController {
         super.beforeShow(title);
         command = new Commander(textField);
         command.addCommand(commandCopyFolderStructure, (String... params)->{
-            Log.write("Copy params",Arrays.asList(params));
+            Log.print("Copy params",Arrays.asList(params));
             String newCom = (String) params[0];
             newCom = ExtStringUtils.replaceOnce(newCom, commandCopyFolderStructure+" ", "");
             ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
-            Log.write("Copy structure:",root,dest);
+            Log.print("Copy structure:",root,dest);
             ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true),
                     dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
             ViewManager.getInstance().newProgressDialog(copyFiles);
@@ -275,7 +275,7 @@ public class CommandWindowController extends BaseController {
                         commandToAdd+=ExtStringUtils.simpleFormat(index, numbersToAdd);
                     }
                     allCommands.add(commandToAdd);
-                    Log.writeln(command+" => "+commandToAdd);
+                    Log.print(command+" => "+commandToAdd);
                     index++;
                 }
                 ViewManager.getInstance().newListFrame("Script generation", allCommands);
@@ -285,7 +285,7 @@ public class CommandWindowController extends BaseController {
         }
         @Override
         public void submit(String command) {
-            Log.write(command);
+            Log.print(command);
             LinkedList<String> list = new LinkedList<>();
             String[] split = command.split(" ");
             for(String spl:split){
@@ -300,16 +300,16 @@ public class CommandWindowController extends BaseController {
                     LinkedList<String> coms = new LinkedList<>();
                     coms.addAll(list);
                     coms.add(1,command);
-                    Log.write(coms);
+                    Log.print(coms);
                     String c = coms.pollFirst();
                     String[] params = coms.toArray(new String[1]);
-                    Log.write("Params",Arrays.asList(params));
+                    Log.print("Params",Arrays.asList(params));
                     addToTextArea(textArea,"$:"+command);
                     if(runCommand(c,params)){
-                        Log.write("Run in-built command:",command);
+                        Log.print("Run in-built command:",command);
                         return null;
                     }else{
-                        Log.writeln("Run native command:",command);
+                        Log.print("Run native command:",command);
                         Process process = LibraryLB.CLI.createNewProcess(list.toArray(new String[1])).call();
                         handleStream(process,textArea,setTextAfterwards,command);
                         return null;

@@ -35,7 +35,7 @@ public class Snapshot implements Serializable{
         init();
         folder.update();
         this.folderCreatedFrom = folder.getAbsoluteDirectory();
-        Log.writeln("Folder size"+folder.files.size());
+        Log.print("Folder size"+folder.files.size());
         folder.getListRecursive(true).forEach(file ->{
                             
             String relPath = file.relativeFrom(folder.getAbsolutePath());
@@ -53,7 +53,7 @@ public class Snapshot implements Serializable{
         map = new LinkedHashMap<>();
     }
     public void reEvalueateFolder(String folderPath,ArrayList<Entry> list){
-        Log.writeln("Evaluating:"+folderPath);
+        Log.print("Evaluating:"+folderPath);
         if(list == null){
             list = new ArrayList<>();
             for(Entry entry:this.map.values()){
@@ -74,7 +74,7 @@ public class Snapshot implements Serializable{
                     nonModifiedCount++;
                 }
             }
-            Log.write(folderPath,nonModifiedCount,list.size());
+            Log.print(folderPath,nonModifiedCount,list.size());
             if(nonModifiedCount == list.size()){
                 map.get(folderPath).isModified = false;
             }

@@ -29,11 +29,11 @@ public class WebDialogController extends BaseController{
         
         try{
             path = info.address;
-            Log.writeln(path);
+            Log.print(path);
             if(!isInternetReachable(path)){
                 path = "file:///"+System.getProperty("user.dir")+"/"+info.local;
             }
-            Log.writeln("Loading from local");
+            Log.print("Loading from local");
             browser.getEngine().load(path);
             
         }catch(Exception e){
