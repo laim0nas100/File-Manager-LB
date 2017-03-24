@@ -48,8 +48,6 @@ import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import javafx.beans.binding.Bindings;
@@ -371,6 +369,8 @@ public class MainController extends BaseController{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
                 if(!MC.currentDir.equals(fileAndPopulate)){
                     this.changeToDir(fileAndPopulate);
+                }else{
+                    update();
                 }
                 
             }
