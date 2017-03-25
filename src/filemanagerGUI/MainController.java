@@ -169,11 +169,12 @@ public class MainController extends BaseController{
         
         super.beforeShow(title);
         MC = new ManagingClass(currentDir);
-        
+    }
+    
+    @Override
+    public void afterShow(){
         menuItemTest.visibleProperty().bind(FileManagerLB.DEBUG);
-        
-        
-
+       
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
         pinDialogs.selectedProperty().bindBidirectional(ViewManager.getInstance().pinProgressDialogs);
@@ -200,7 +201,7 @@ public class MainController extends BaseController{
         extTableView.sortable = true;
         extTableView.prepareChangeListeners();
         
-        changeToDir(currentDir);
+        changeToDir(MC.currentDir);
         
         //default sort order
         TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
@@ -209,17 +210,10 @@ public class MainController extends BaseController{
         nameCol.setSortType(TableColumn.SortType.ASCENDING);
         tableView.getSortOrder().add(typeCol);
         tableView.getSortOrder().add(nameCol);
-    }
-    
-    @Override
-    public void afterShow(){
-       
-        
-        
+
     }
     @Override
     public void exit(){ 
-//        this.localSearchTask.shutdown();
         ViewManager.getInstance().closeFrame(windowID); 
     }
 
@@ -299,7 +293,7 @@ public class MainController extends BaseController{
         }    
     }
     public void mediaPlayer(){
-        ViewManager.getInstance().newMusicPlayer();
+        ViewManager.getInstance().newMediaPlayer();
 
     }
     public void test() throws Exception{

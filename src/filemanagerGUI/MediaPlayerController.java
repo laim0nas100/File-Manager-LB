@@ -32,7 +32,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -256,76 +255,7 @@ public class MediaPlayerController extends BaseController {
         return newPlayer;
     };
     public void beforeShow(){
-        JFrame tempFrame = new JFrame();
-        tempFrame.setSize(800, 480);
-        frames.add(tempFrame); 
-        getCurrentFrame().setVisible(false);
-        factory = new MediaPlayerFactory();
-//        Log.write("Factory");
-        players.add(getPreparedMediaPlayer());
-        frames.pollFirst().setVisible(false);
-//        Log.write("Player INIT");
-        volumeSlider.valueProperty().addListener(listener->{
-            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
-        });
-        volumeSlider.setValue(100);
-        dragTask.conditionalCheck = (released);
-        seekSlider.setOnMousePressed(event->{
-            dragTask.update();
-            released.set(false);
-        });
-        seekSlider.setOnMouseDragged(value->{
-            dragTask.update();
-
-        });
-        seekSlider.setOnMouseReleased(event->{
-            released.set(true);
-        });
-            
-        buttonPlayPrev.setOnAction(event ->{
-            playNext(-1,true);
-        });
-        buttonPlayNext.setOnAction(event ->{
-            playNext(1,true);
-        });
         
-        
-        
-        Platform.runLater(()->{
-            execService.scheduleAtFixedRate(()->{
-                Platform.runLater(()->{
-                    
-                    if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
-                        updateSeek();
-                }
-                });
-                }, 1000, 300, TimeUnit.MILLISECONDS);
-        
-            execService.scheduleAtFixedRate(()->{
-                if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
-                    volumeSlider.setValue(getCurrentPlayer().getVolume());
-                }
-            }, 1, 3, TimeUnit.SECONDS);
-            
-            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
-            playType.getSelectionModel().select(0);
-            showVideo.selectedProperty().addListener(listener->{
-                boolean visible = showVideo.selectedProperty().get();
-                getCurrentFrame().setVisible(visible);
-                if(visible){
-                    getCurrentFrame().setExtendedState(JFrame.NORMAL);
-                }
-                
-                if(visible && !startedWithVideo){
-                    if(getCurrentPlayer().isPlaying()){
-                        relaunch();
-                    }
-                    
-                }
-
-            });
-            loadState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
-        });
         
     }
     public void setUpTable(){
@@ -424,6 +354,76 @@ public class MediaPlayerController extends BaseController {
     }
     @Override
     public void afterShow(){
+        JFrame tempFrame = new JFrame();
+        tempFrame.setSize(800, 480);
+        frames.add(tempFrame); 
+        getCurrentFrame().setVisible(false);
+        factory = new MediaPlayerFactory();
+//        Log.write("Factory");
+        players.add(getPreparedMediaPlayer());
+        frames.pollFirst().setVisible(false);
+//        Log.write("Player INIT");
+        volumeSlider.valueProperty().addListener(listener->{
+            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
+        });
+        volumeSlider.setValue(100);
+        dragTask.conditionalCheck = (released);
+        seekSlider.setOnMousePressed(event->{
+            dragTask.update();
+            released.set(false);
+        });
+        seekSlider.setOnMouseDragged(value->{
+            dragTask.update();
+
+        });
+        seekSlider.setOnMouseReleased(event->{
+            released.set(true);
+        });
+            
+        buttonPlayPrev.setOnAction(event ->{
+            playNext(-1,true);
+        });
+        buttonPlayNext.setOnAction(event ->{
+            playNext(1,true);
+        });
+        
+        
+        
+        Platform.runLater(()->{
+            execService.scheduleAtFixedRate(()->{
+                Platform.runLater(()->{
+                    
+                    if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                        updateSeek();
+                }
+                });
+                }, 1000, 300, TimeUnit.MILLISECONDS);
+        
+            execService.scheduleAtFixedRate(()->{
+                if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
+                    volumeSlider.setValue(getCurrentPlayer().getVolume());
+                }
+            }, 1, 3, TimeUnit.SECONDS);
+            
+            playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
+            playType.getSelectionModel().select(0);
+            showVideo.selectedProperty().addListener(listener->{
+                boolean visible = showVideo.selectedProperty().get();
+                getCurrentFrame().setVisible(visible);
+                if(visible){
+                    getCurrentFrame().setExtendedState(JFrame.NORMAL);
+                }
+                
+                if(visible && !startedWithVideo){
+                    if(getCurrentPlayer().isPlaying()){
+                        relaunch();
+                    }
+                    
+                }
+
+            });
+            loadState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
+        });
         setUpTable();  
         MenuTree tree = new MenuTree(null);
         MenuItem addToMarked = new MenuItem("Add to marked");

@@ -37,6 +37,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
+import javafx.concurrent.Task;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -150,7 +151,9 @@ public class ViewManager {
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     }
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
         SimpleTask et = new SimpleTask() {
@@ -174,7 +177,9 @@ public class ViewManager {
                 return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     }
     public void newAdvancedRenameDialog(ExtFolder folder){
        
@@ -195,7 +200,9 @@ public class ViewManager {
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     }
     public void newDirSyncDialog(){
         
@@ -216,13 +223,14 @@ public class ViewManager {
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
         
   
     }
     public void newDuplicateFinderDialog(ExtFolder root){
-      
-      
+
         SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -240,7 +248,9 @@ public class ViewManager {
                 return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
    }
     public void newWebDialog(Enums.WebDialog info){     
 
@@ -258,10 +268,13 @@ public class ViewManager {
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
+                
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     } 
     public void newCommandDialog(){
         SimpleTask et = new SimpleTask() {
@@ -281,7 +294,9 @@ public class ViewManager {
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     }
     public void newListFrame(String description, Collection<String> list){
         SimpleTask et = new SimpleTask() {
@@ -302,32 +317,53 @@ public class ViewManager {
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
+        
     } 
-    public void newMusicPlayer(){
+    public void newMediaPlayer(){
         
         SimpleTask et = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-            try {
-                
-                
-                Frame frame = newFrame(FrameTitle.MEDIA_PLAYER);
-                MediaPlayerController controller = (MediaPlayerController) frame.getController();
-                
-                controller.discover();
-                controller.beforeShow();
-                frame.getStage().show();
-                frame.getStage().toFront();
-                controller.afterShow();
-                
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
+                try {
+                    Frame frame = newFrame(FrameTitle.MEDIA_PLAYER);
+                    MediaPlayerController controller = (MediaPlayerController) frame.getController();
+                    SimpleBooleanProperty property = new SimpleBooleanProperty(true);
+                    SimpleTask init = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                            try{
+                                controller.discover();
+                            }catch(Exception e){
+                                ErrorReport.report(e);
+                                property.set(false);
+                            }
+                            return null;
+                        }
+                    };
+                    init.setOnSucceeded(event ->{
+                        if(property.get()){
+                            controller.afterShow();
+                        }else{
+                            closeFrame(controller.windowID);
+                        }
+                    });
+                    frame.getStage().show();
+                    frame.getStage().toFront();
+                    new Thread(init).start();
+
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+
             return null;
             }
         };
-        Platform.runLater(et);
+        new Thread( () ->{
+            Platform.runLater(et);   
+        }).start();
     }
 
     
