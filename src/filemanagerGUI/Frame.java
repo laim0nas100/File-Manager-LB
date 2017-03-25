@@ -7,6 +7,8 @@ package filemanagerGUI;
 
 import filemanagerLogic.Enums.FrameTitle;
 import java.util.HashMap;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -16,15 +18,18 @@ import javafx.stage.Stage;
  */
 public class Frame {
     public static class Pos{
-        public double x,y;
+        public SimpleDoubleProperty x,y;
         public Pos(double X, double Y){
-            this.x = X;
-            this.y = Y;
+            this.x = new SimpleDoubleProperty(X);
+            this.y = new SimpleDoubleProperty(Y);
         }
+        
+        @Override
         public String toString(){
-            return "["+x+":"+y+"]";
+            return "["+x.get()+":"+y.get()+"]";
         }
     }
+    public ChangeListener listenerX,listenerY;
     public static HashMap<String,Pos> positionMemoryMap = new HashMap<>();
     private Stage stage;
     private BaseController controller;

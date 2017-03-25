@@ -31,7 +31,12 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.WeakChangeListener;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -352,19 +357,36 @@ public class ViewManager {
             controller.exit();
         });
         controller.windowID = title;
-        boolean containsKey = Frame.positionMemoryMap.containsKey(info.title);
-        if(containsKey){
-            Frame.Pos pos = Frame.positionMemoryMap.get(info.title);
-            stage.setX(pos.x);
-            stage.setY(pos.y);
-            Log.print("Set:",info.title,pos);
-        }else{
-            Frame.Pos pos = new Frame.Pos(stage.getX(), stage.getY());
-            Frame.positionMemoryMap.put(info.title,pos );
-            Log.print("New pos:",info.title,pos);
-        }
-        Frame frame = new Frame(stage,controller,info.title);
+        Frame frame = new Frame(stage,controller,info.title);       
         this.frames.put(frame.getTitle(),frame);
+        
+        
+        final Frame.Pos[] pos = new Frame.Pos[1];
+        if(!Frame.positionMemoryMap.containsKey(info.title)){
+            pos[0] = new Frame.Pos(stage.getX(), stage.getY());          
+            Frame.positionMemoryMap.put(info.title,pos[0]);
+        }
+        pos[0] = Frame.positionMemoryMap.get(info.title);
+        ChangeListener listenerY = new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                pos[0].y.set((double) newValue);      
+            }
+        };
+        ChangeListener listenerX = new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                pos[0].x.set((double) newValue);      
+            }
+        };
+        
+        stage.setX(pos[0].x.get());
+        stage.setY(pos[0].y.get());
+        frame.listenerX = listenerX;
+        frame.listenerY = listenerY;
+        stage.xProperty().addListener(listenerX);
+        stage.yProperty().addListener(listenerY);
+        
         
         return frame;
        
@@ -375,9 +397,10 @@ public class ViewManager {
         }
         
         Frame frame = frames.get(windowID);
-        Frame.Pos pos = new Frame.Pos(frame.getStage().getX(),frame.getStage().getY());
-        Frame.positionMemoryMap.put(frame.getFrameTitle(), pos);
-        frame.getStage().close();
+        Stage stage = frame.getStage();
+        stage.xProperty().removeListener(frame.listenerX);
+        stage.yProperty().removeListener(frame.listenerY);
+        stage.close();
         
         frames.remove(windowID);
         windows.remove(windowID);
