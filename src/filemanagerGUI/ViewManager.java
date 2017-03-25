@@ -403,17 +403,11 @@ public class ViewManager {
             Frame.positionMemoryMap.put(info.title,pos[0]);
         }
         pos[0] = Frame.positionMemoryMap.get(info.title);
-        ChangeListener listenerY = new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                pos[0].y.set((double) newValue);      
-            }
+        ChangeListener listenerY = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
+            pos[0].y.set((double) newValue);
         };
-        ChangeListener listenerX = new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                pos[0].x.set((double) newValue);      
-            }
+        ChangeListener listenerX = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
+            pos[0].x.set((double) newValue);
         };
         
         stage.setX(pos[0].x.get());
