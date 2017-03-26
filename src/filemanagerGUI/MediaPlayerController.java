@@ -624,7 +624,7 @@ public class MediaPlayerController extends BaseController {
                 return;
             }
             
-            if(opt.length>1&&(boolean)opt[0]){
+            if(this.players.size()==1 && opt.length>1 && (boolean)opt[0]){
                 playSeemless(item,(long)opt[1]);
             }else{
                 play(item);
