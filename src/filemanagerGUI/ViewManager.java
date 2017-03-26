@@ -151,9 +151,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     }
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
         SimpleTask et = new SimpleTask() {
@@ -177,9 +175,7 @@ public class ViewManager {
                 return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     }
     public void newAdvancedRenameDialog(ExtFolder folder){
        
@@ -200,9 +196,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     }
     public void newDirSyncDialog(){
         
@@ -223,9 +217,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
         
   
     }
@@ -248,9 +240,7 @@ public class ViewManager {
                 return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
    }
     public void newWebDialog(Enums.WebDialog info){     
 
@@ -272,9 +262,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     } 
     public void newCommandDialog(){
         SimpleTask et = new SimpleTask() {
@@ -294,9 +282,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     }
     public void newListFrame(String description, Collection<String> list){
         SimpleTask et = new SimpleTask() {
@@ -317,9 +303,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
         
     } 
     public void newMediaPlayer(){
@@ -344,11 +328,18 @@ public class ViewManager {
                         }
                     };
                     init.setOnSucceeded(event ->{
-                        if(property.get()){
-                            controller.afterShow();
-                        }else{
-                            closeFrame(controller.windowID);
-                        }
+                        new SimpleTask() {
+                            @Override
+                            protected Void call() throws Exception {
+                                if(property.get()){
+                                    controller.afterShow();
+                                }else{
+                                    closeFrame(controller.windowID);
+                                }
+                                return null;
+                            }
+                        }.runOnPlatform();
+                        
                     });
                     frame.getStage().show();
                     frame.getStage().toFront();
@@ -361,9 +352,7 @@ public class ViewManager {
             return null;
             }
         };
-        new Thread( () ->{
-            Platform.runLater(et);   
-        }).start();
+        et.runOnPlatform();
     }
 
     

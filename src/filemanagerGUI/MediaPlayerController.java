@@ -563,7 +563,7 @@ public class MediaPlayerController extends BaseController {
         stop();
         
         playTaskComplete = false;
-        SimpleTask task = new SimpleTask() {
+        new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 do{
@@ -573,8 +573,7 @@ public class MediaPlayerController extends BaseController {
                 Log.print("Play task over");
                 return null;
             }
-        };
-        new Thread(task).start();
+        }.toThread().start();
         playNext(0,true);
     }
     @Override
@@ -637,7 +636,7 @@ public class MediaPlayerController extends BaseController {
     }
     @Override
     public void update(){
-        SimpleTask t = new SimpleTask(){
+        new SimpleTask(){
             @Override
             protected Void call() throws Exception {
                 ArrayDeque deque = new ArrayDeque(table.getItems());
@@ -652,8 +651,7 @@ public class MediaPlayerController extends BaseController {
                 updateIndex();
                 return null;
             }
-        };
-        Platform.runLater(t);      
+        }.runOnPlatform();
     }
     public void playSelected(){
         play((ExtPath) table.getSelectionModel().getSelectedItem());
@@ -672,7 +670,7 @@ public class MediaPlayerController extends BaseController {
         }
         filePlaying = item;
         playTaskComplete = false;
-        SimpleTask playTask = new SimpleTask() {
+        new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                     
@@ -700,9 +698,7 @@ public class MediaPlayerController extends BaseController {
                 soundCheckCounter = 11;
                 return null;
             }
-        };
-        Thread t = new Thread(playTask);
-        t.start();
+        }.toThread().start();
         
     }
 
@@ -732,7 +728,7 @@ public class MediaPlayerController extends BaseController {
         });
 
         players.add(getPreparedMediaPlayer());
-        SimpleTask volumeChangeTask = new SimpleTask() {
+        new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 double ratio = ((double)10000/millisLeft);
@@ -759,9 +755,7 @@ public class MediaPlayerController extends BaseController {
                 oldplayer.stop();
                 return null;
             }
-        };
-        Thread t = new Thread(volumeChangeTask);
-        t.start();
+        }.toThread().start();
         
         play(item);
     }
@@ -867,9 +861,7 @@ public class MediaPlayerController extends BaseController {
         task.setOnSucceeded(value ->{
                 labelStatus.setText("Ready");
         });
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start(); 
+        task.toThread().start();
     }
     public void saveState(){
         saveState(FileManagerLB.USER_DIR + saveState.getText().trim());
@@ -900,9 +892,7 @@ public class MediaPlayerController extends BaseController {
         task.setOnSucceeded(value ->{
                 labelStatus.setText("Ready");
         });
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        task.toThread().start();
     }
     public void shuffle(){
         Collections.shuffle(table.getItems());

@@ -218,10 +218,7 @@ public class DirSyncController extends BaseController {
     }
     @Override
     public void afterShow() {
-        super.afterShow();
-        
-//        this.directoryCheckTask.doneCheck.bind(this.isGone);
-        
+        super.afterShow();        
         this.directoryCheckTask.addOnUpdate(()->{
             this.btnCompare.setDisable(true);
         });
@@ -231,7 +228,6 @@ public class DirSyncController extends BaseController {
         this.directory1.textProperty().addListener(onChange ->{
             this.directoryCheckTask.update();
         });
-//        new Thread(this.directoryCheckTask).start();
         
                 
         
@@ -307,7 +303,7 @@ public class DirSyncController extends BaseController {
             executor.setOnSucceeded(eh ->{
                 btnCompare.setDisable(false);
             });
-            new Thread(executor).start();
+            executor.toThread().start();
         }       
     }
     
@@ -481,7 +477,6 @@ public class DirSyncController extends BaseController {
     }
     @Override
     public void exit(){
-//        this.directoryCheckTask.shutdown();
         super.exit();
     }
 }
