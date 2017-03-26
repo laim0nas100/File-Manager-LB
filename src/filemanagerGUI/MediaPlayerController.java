@@ -31,9 +31,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -69,8 +74,7 @@ import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 import utility.ErrorReport;
-import static utility.ExtStringUtils.normalize;
-import static utility.ExtStringUtils.mod;
+import utility.ExtStringUtils;
 
 /**
  * FXML Controller class
@@ -104,6 +108,7 @@ public class MediaPlayerController extends BaseController {
     private MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
     private int index = 0;
+    private int soundCheckCounter = 0;
     private Float minDelta = 0.005f;
     private long currentLength = 0;
     private SimpleBooleanProperty released = new SimpleBooleanProperty(false);
@@ -123,7 +128,7 @@ public class MediaPlayerController extends BaseController {
            float val = seekSlider.valueProperty().divide(100).floatValue();
            Log.print(getCurrentPlayer().getPosition(),val);
            if(Math.abs(getCurrentPlayer().getPosition()-val)>minDelta){
-                    val = (float) normalize(val,3);
+                    val = (float) ExtStringUtils.normalize(val,3);
                     getCurrentPlayer().setPosition(val);
                     Log.print("Set new seek");
             } 
@@ -363,8 +368,32 @@ public class MediaPlayerController extends BaseController {
         players.add(getPreparedMediaPlayer());
         frames.pollFirst().setVisible(false);
 //        Log.write("Player INIT");
-        volumeSlider.valueProperty().addListener(listener->{
-            getCurrentPlayer().setVolume((int) Math.round(volumeSlider.getValue()));
+        SimpleDoubleProperty prop = new SimpleDoubleProperty(100);
+        SimpleBooleanProperty changeResetComplete = new SimpleBooleanProperty(true);
+        TimeoutTask t = new TimeoutTask(100,20,() ->{
+            changeResetComplete.set(true);
+            volumeSlider.valueProperty().setValue(prop.get());
+        });
+        volumeSlider.valueProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                if(players.isEmpty()||!getCurrentPlayer().isPlaying()||stopping){
+                    if(changeResetComplete.get()){
+                        changeResetComplete.set(false);
+                        return;
+                    }
+                    if(!t.isInAction()){
+                        prop.set((double) oldValue);
+                        t.update();
+                    }
+                    
+                    
+                    return;
+                }
+                double volume = volumeSlider.getValue();
+                prop.set(volume);
+                getCurrentPlayer().setVolume((int) Math.round(volume));
+            }
         });
         volumeSlider.setValue(100);
         dragTask.conditionalCheck = (released);
@@ -400,10 +429,18 @@ public class MediaPlayerController extends BaseController {
                 }, 1000, 300, TimeUnit.MILLISECONDS);
         
             execService.scheduleAtFixedRate(()->{
+                if(soundCheckCounter<=0){
+                    return;
+                }
+                
                 if(!stopping&&!players.isEmpty()&&getCurrentPlayer().isPlaying()){
                     volumeSlider.setValue(getCurrentPlayer().getVolume());
+                    soundCheckCounter--;
+                }else{
+                    soundCheckCounter = 0;
                 }
-            }, 1, 3, TimeUnit.SECONDS);
+            }, 1, 1, TimeUnit.SECONDS);
+            
             
             playType.getItems().addAll(typeLoopList,typeLoopSong,typeRandom,typeStopAfterFinish);
             playType.getSelectionModel().select(0);
@@ -581,12 +618,13 @@ public class MediaPlayerController extends BaseController {
             }
                 //default loop song
 
-            index = mod((index + increment ), table.getItems().size());
+            index = ExtStringUtils.mod((index + increment ), table.getItems().size());
             ExtPath item = (ExtPath) table.getItems().get(index);
             if(item==null){
                 playTaskComplete = true;
                 return;
             }
+            
             if(opt.length>1&&(boolean)opt[0]){
                 playSeemless(item,(long)opt[1]);
             }else{
@@ -659,38 +697,39 @@ public class MediaPlayerController extends BaseController {
 
                 });
                 playTaskComplete = true;
+                soundCheckCounter = 11;
                 return null;
             }
         };
         Thread t = new Thread(playTask);
         t.start();
+        
     }
 
     private void playSeemless(ExtPath item,final long millisLeft){
         oldplayer = getCurrentPlayer();
         oldplayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
-                        @Override
-                        public void finished(MediaPlayer mediaPlayer) {
-                            Log.print("Finished old player");
-                            int i = 1;
-                            while(frames.size()>1){
-                                frames.pollFirst().setVisible(false);
-                                players.pollFirst();
-                                Log.print("Frame/Player collected " + i++);
-                            }
-                            
-                        }
-                        @Override
-                        public void stopped(MediaPlayer mediaPlayer) {
-                            Log.print("Finished old player");
-                            int i = 1;
-                            while(frames.size()>1){
-                                frames.pollFirst().setVisible(false);
-                                players.pollFirst();
-                                Log.print("Frame/Player collected " + i++);
-                            }
-                        }
-                    });
+            @Override
+            public void finished(MediaPlayer mediaPlayer) {
+                Log.print("Finished old player");
+                int i = 1;
+                while(frames.size()>1){
+                    frames.pollFirst().setVisible(false);
+                    players.pollFirst();
+                    Log.print("Frame/Player collected " + i++);
+                }
+            }
+            @Override
+            public void stopped(MediaPlayer mediaPlayer) {
+                Log.print("Finished old player");
+                int i = 1;
+                while(frames.size()>1){
+                    frames.pollFirst().setVisible(false);
+                    players.pollFirst();
+                    Log.print("Frame/Player collected " + i++);
+                }
+            }
+        });
 
         players.add(getPreparedMediaPlayer());
         SimpleTask volumeChangeTask = new SimpleTask() {
@@ -700,20 +739,20 @@ public class MediaPlayerController extends BaseController {
                 double oldVolume = oldplayer.getVolume();
                 double difference = 1;
                 double inc =  oldVolume/75 * ratio;
-                
+
                 if(inc<1){
                     inc = 1 * ratio;
                 }
                 long millis = millisLeft;
                 getCurrentPlayer().setVolume(0);
-                
-                while(oldVolume-difference>1 && millis>2000){
+
+                while(oldVolume-difference>1 && millis>1000){
                     oldplayer.setVolume((int) (oldVolume-difference));
                     getCurrentPlayer().setVolume((int)difference);
                     difference+=inc;
                     Thread.sleep(100);
                     millis-=100;
-                    
+
                 }
                 Log.print("End volume resize task");
                 getCurrentPlayer().setVolume((int)oldVolume);

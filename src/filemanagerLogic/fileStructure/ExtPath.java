@@ -7,6 +7,7 @@ package filemanagerLogic.fileStructure;
 
 import LibraryLB.Log;
 import LibraryLB.Threads.RepeatableTask;
+import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -79,6 +80,9 @@ public class ExtPath{
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
     
+    
+    boolean sizeTaskComplete = true;
+    boolean dateTaskComplete = true;
     private static final ExecutorService executor = Executors.newFixedThreadPool(10);
     private Callable getSizeTask = new RepeatableTask(new Callable() {
             @Override
@@ -86,20 +90,23 @@ public class ExtPath{
 //                Log.write("getSizeTask" ,absolutePath);
                 size =  Files.size(toPath());
                 propertySize.set(size);
-//                sizeTaskComplete.set(true);
+                sizeTaskComplete = true;
                 return null;
             }
     });
+    
     private Callable getDateTask = new RepeatableTask(new Callable() {
             @Override
             public Void call() throws Exception {
 //                Log.write("getDateTask ",absolutePath);
                 lastModified =  Files.getLastModifiedTime(toPath()).toMillis();
                 propertyLastModified.set(lastModified);
-//                dateTaskComplete.set(true);
+                dateTaskComplete = true;
                 return null;
             }
         });
+    
+
     public ExtPath(String str,Object...optional){
         str = str.trim();
         if(str.endsWith(File.separator)){
@@ -123,10 +130,15 @@ public class ExtPath{
         this.propertyName = new SimpleStringProperty(this.getName(true));
         this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
         this.isDisabled = new SimpleBooleanProperty(false);
+        
         this.propertySize = new SimpleLongProperty(){
             @Override
             public long get() {
-                ExtPath.executor.submit(getSizeTask);                
+                if(sizeTaskComplete){
+                    sizeTaskComplete = false;
+                    ExtPath.executor.submit(getSizeTask);  
+                }
+                
                 return size;
                     
             }
@@ -134,7 +146,11 @@ public class ExtPath{
         this.propertyLastModified = new SimpleLongProperty(){
             @Override
             public long get() {
-                ExtPath.executor.submit(getDateTask);
+                if(dateTaskComplete){
+                    dateTaskComplete = false;
+                    ExtPath.executor.submit(getDateTask);
+                }
+                
                 return lastModified;
                     
             }
@@ -178,12 +194,7 @@ public class ExtPath{
 
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
-        this.isVirtual = new SimpleBooleanProperty(){
-            @Override
-            public boolean get(){
-                return getIdentity().equals(Identity.VIRTUAL);
-            };
-        };
+        this.isVirtual = new SimpleBooleanProperty(getIdentity().equals(Identity.VIRTUAL));
     }
     public Collection<ExtPath> getListRecursive(boolean applyDisable){
         ArrayList<ExtPath> list = new ArrayList<>();
