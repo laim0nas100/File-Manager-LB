@@ -122,14 +122,17 @@ public class CosmeticsFX {
 
     }
     public static class ExtTableView{
+        private class TableCol{
+            SortType type;
+            TableColumn col;
+        }
+        
         public final long resizeTimeout = 500;
         public SimpleBooleanProperty recentlyResized;
         public TimeoutTask resizeTask = new TimeoutTask(resizeTimeout,10,()->{
             recentlyResized.set(false);
         });
-        
-        public ArrayList<SortType> sortTypes;
-        public ArrayList<TableColumn> sortColumns;
+        public ArrayList<TableCol> cols;
         public int sortByColumn;
         public boolean sortable = true;
         public TableView table;
@@ -142,8 +145,7 @@ public class CosmeticsFX {
             defaultValues(); 
         }
         private void defaultValues(){
-            sortTypes = new ArrayList<>();
-            sortColumns = new ArrayList<>();
+            cols = new ArrayList<>();
             sortByColumn = 0;
             recentlyResized = new SimpleBooleanProperty();            
         }
@@ -173,30 +175,29 @@ public class CosmeticsFX {
             if(!this.sortable){
                 return;
             }
-            sortColumns = new ArrayList<>();
-            sortTypes = new ArrayList<>();
+            cols.clear();
             if (!table.getSortOrder().isEmpty()) {
                 table.getSortOrder().forEach(ob->{
                     TableColumn col = (TableColumn) ob;
-                    sortColumns.add(col);
-                    sortTypes.add(col.getSortType());
+                    TableCol coll = new TableCol();
+                    coll.col = col;
+                    coll.type = col.getSortType();
+                    cols.add(coll);
                 });
                 
             }
         }
         public void setSortPreferences(){     
-            if (!sortColumns.isEmpty()) {
                 table.getSortOrder().clear();
-                for(int i=0;i<sortColumns.size();i++){
-                    table.getSortOrder().add(sortColumns.get(i));
-                    sortColumns.get(i).setSortType(sortTypes.get(i));
-                    sortColumns.get(i).setSortable(true);
+                for(TableCol col:cols){             
+                    table.getSortOrder().add(col.col);
+                    col.col.setSortType(col.type);
+                    col.col.setSortable(true);
                 }
-            }
         }
-        public void updateContents(Collection collection){
+        public void updateContents(ObservableList collection){
             ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
-            table.setItems(FXCollections.observableArrayList(collection));
+            table.setItems(collection);
             //Work-around to update table
             selectedIndices.forEach((i) -> {
                 table.getSelectionModel().select(i);
@@ -208,7 +209,12 @@ public class CosmeticsFX {
         }
         public void updateContentsAndSort(Collection collection){
             saveSortPrefereces();
-            updateContents(collection);
+            if(collection instanceof ObservableList){
+                updateContents((ObservableList) collection);
+            }else{
+                updateContents(FXCollections.observableArrayList(collection));
+            }
+            
             setSortPreferences();
         }
         public void selectInverted(){

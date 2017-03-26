@@ -90,6 +90,10 @@ public class ManagingClass {
         currentDir.update();
         return currentDir.getFilesCollection();       
     }
+    
+    public void getCurrentContents(ObservableList<ExtPath> list){
+        currentDir.update(list);
+    }
     public ObservableList<ExtPath> getAllContents(){
         ObservableList<ExtPath> list = FXCollections.observableArrayList();
         list.addAll(FileManagerLB.ArtificialRoot.getListRecursive(false));

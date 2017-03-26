@@ -19,6 +19,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import utility.ExtStringUtils;
 
 /**
@@ -44,7 +46,7 @@ public class ExtFolder extends ExtPath{
     public Identity getIdentity(){
         return Identity.FOLDER;
     }
-    public void populateFolder(){
+    protected void populateFolder(Collection<ExtPath> list){
         try{
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
@@ -53,8 +55,8 @@ public class ExtFolder extends ExtPath{
                     dirStream.forEach( f ->{
                         String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                         String filePathStr = f.toString();
+                        ExtPath file = null;
                         if(Files.exists(f) && !files.containsKey(name)){
-                            ExtPath file;
                             if(Files.isDirectory(f)){
                                 file = new ExtFolder(filePathStr,f);
                             }else if(Files.isSymbolicLink(f)){
@@ -62,7 +64,16 @@ public class ExtFolder extends ExtPath{
                             }else{
                                 file = new ExtPath(filePathStr,f);
                             }
+                            
                             files.put(file.propertyName.get(), file);
+                            
+                        }
+                        if(list!=null){
+                            Platform.runLater(()->{
+                                if(files.containsKey(name)){
+                                    list.add(files.get(name));
+                                }
+                            }); 
                         }
                     });
                 }
@@ -145,9 +156,21 @@ public class ExtFolder extends ExtPath{
                 }
             }   
         }
-        populateFolder();
+        populateFolder(null);
     }
-
+    public void update(ObservableList<ExtPath> list){
+        
+        Log.print("Update:"+this.getAbsoluteDirectory());
+        if(isPopulated()){           
+            for (ExtPath file : getFilesCollection()) {
+                if(!Files.exists(file.toPath())){
+                    Log.print(file.getAbsoluteDirectory()+" doesn't exist");
+                    files.remove(file.propertyName.get());
+                }
+            }   
+        }
+        populateFolder(list);
+    }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){
             String request = getKey(name);

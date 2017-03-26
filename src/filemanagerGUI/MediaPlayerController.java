@@ -481,7 +481,7 @@ public class MediaPlayerController extends BaseController {
                 }
                 full.remove(item);   
             });
-            extTableView.updateContents(full);
+            extTableView.updateContentsAndSort(full);
             update();
         });
         remove.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
@@ -648,7 +648,7 @@ public class MediaPlayerController extends BaseController {
                         iterator.remove();
                     }
                 }
-                extTableView.updateContents(deque);  
+                extTableView.updateContentsAndSort(deque);  
                 updateIndex();
                 return null;
             }

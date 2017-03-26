@@ -14,7 +14,7 @@ debug=true
 userDir=
 
 //Populating sub-folder depth
-lookDepth=2
+lookDepth=1
 
 //BUP folder subfolder size
 logBackupCount=5

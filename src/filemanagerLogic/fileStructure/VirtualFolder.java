@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import javafx.collections.ObservableList;
 
 /**
  *
@@ -51,6 +52,12 @@ public class VirtualFolder extends ExtFolder {
         }
         
     }
+    
+    @Override
+    public void update(ObservableList<ExtPath> list){
+        update();
+        list.addAll(this.getFilesCollection());
+    }
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable){
         ArrayList<ExtPath> listRecursive = new ArrayList(super.getListRecursive(applyDisable));
@@ -75,7 +82,7 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    public void populateFolder(){
+    public void populateFolder(Collection<ExtPath> list){
         
     }
     

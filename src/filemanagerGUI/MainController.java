@@ -37,6 +37,7 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
+import LibraryLB.Threads.RepeatableTask;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
@@ -44,6 +45,7 @@ import filemanagerGUI.customUI.FileAddressField;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.DATA_SIZE;
 import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -149,7 +151,8 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty selectedIsFolder = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
     private Task searchTask;
-   
+    public ExtTableView extTableView;
+    
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
            localSearch();  
@@ -161,10 +164,42 @@ public class MainController extends BaseController{
             search();
         });
     });
+    private RepeatableTask uniqueLocalSearch = new RepeatableTask(() ->{
+        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
+            
+            
+            Platform.runLater(() ->{
+                
+               extTableView.updateContentsAndSort(newList);
+               
+            });
+            MC.getCurrentContents(newList);
+            
 
+            String lookFor = localSearch.getText().trim();
+            if(lookFor.length()==0){
+                Platform.runLater(() ->{
+                    extTableView.updateContentsAndSort(newList);
+                });
+
+            }else{
+                ArrayList<ExtPath> list = new ArrayList<>();
+                newList.forEach(item ->{
+                    String name = item.propertyName.get();
+                    if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
+                        list.add(item);
+                    }
+                });
+                Platform.runLater(() ->{
+                    extTableView.updateContentsAndSort(list);
+                    
+
+                });
+            }
+    });
     
     
-    public ExtTableView extTableView;
+    
     public void beforeShow(String title,ExtFolder currentDir){
         
         super.beforeShow(title);
@@ -201,15 +236,20 @@ public class MainController extends BaseController{
         extTableView.sortable = true;
         extTableView.prepareChangeListeners();
         
-        changeToDir(MC.currentDir);
+        
         
         //default sort order
-        TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
-        TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
-        typeCol.setSortType(TableColumn.SortType.DESCENDING);
-        nameCol.setSortType(TableColumn.SortType.ASCENDING);
-        tableView.getSortOrder().add(typeCol);
-        tableView.getSortOrder().add(nameCol);
+        Platform.runLater(() ->{
+            changeToDir(MC.currentDir).run();
+            TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
+            TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
+            typeCol.setSortType(TableColumn.SortType.DESCENDING);
+            nameCol.setSortType(TableColumn.SortType.ASCENDING);
+            tableView.getSortOrder().add(typeCol);
+            tableView.getSortOrder().add(nameCol);
+
+        });
+                
 
     }
     @Override
@@ -219,8 +259,9 @@ public class MainController extends BaseController{
 
     @Override
     public void update(){
-        
+//        new Thread( () ->{
         Platform.runLater(()->{
+            
             Iterator<ExtPath> iterator = MainController.markedList.iterator();
             while(iterator.hasNext()){
                 try{
@@ -253,10 +294,10 @@ public class MainController extends BaseController{
             
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
-
             localSearch();
 
         });
+//        }).start();
         
     }
     public void closeAllWindows(){
@@ -357,12 +398,12 @@ public class MainController extends BaseController{
     private void changeToCustomDir(String possibleDir){
         try{
             if(possibleDir.equals(FileManagerLB.ROOT_NAME)||possibleDir.isEmpty()){
-                changeToDir(FileManagerLB.ArtificialRoot);
+                changeToDir(FileManagerLB.ArtificialRoot).start();
             } 
             else{
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
                 if(!MC.currentDir.equals(fileAndPopulate)){
-                    this.changeToDir(fileAndPopulate);
+                    this.changeToDir(fileAndPopulate).start();
                 }else{
                     update();
                 }
@@ -388,12 +429,15 @@ public class MainController extends BaseController{
         this.localSearch.clear();
         update();
     }
-    public void changeToDir(ExtFolder dir){
-       MC.changeDirTo(dir);
-       Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH));
-       t.start();
-       localSearch.clear();
-       update();
+    public Thread changeToDir(ExtFolder dir){
+        return new Thread( ()->{
+            MC.changeDirTo(dir);
+            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH));
+            t.start();
+            localSearch.clear();
+            update();
+        });
+       
       
     }
     
@@ -450,21 +494,52 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
-        Collection<ExtPath> currentContents = MC.getCurrentContents();
         ObservableList<ExtPath> newList = FXCollections.observableArrayList();
-        String lookFor = localSearch.getText().trim();
-        if(lookFor.length()==0){
-            extTableView.updateContentsAndSort(currentContents);
+        SimpleTask r = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+                
             
-        }else{
-            currentContents.forEach(item ->{
-                String name = item.propertyName.get();
-                if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
-                    newList.add(item);
+            
+                Platform.runLater(() ->{
+
+                   extTableView.updateContentsAndSort(newList);
+
+                });
+                MC.getCurrentContents(newList);
+
+
+                String lookFor = localSearch.getText().trim();
+                if(lookFor.length()==0){
+
+
+                }else{
+                    ArrayList<ExtPath> list = new ArrayList<>();
+                    newList.forEach(item ->{
+                        String name = item.propertyName.get();
+                        if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
+                            list.add(item);
+                        }
+                    });
+                    Platform.runLater(() ->{
+                        newList.setAll(list);
+                    });
                 }
-            });
-            extTableView.updateContentsAndSort(newList);
-        }
+                return null;
+            }
+        };
+        r.setOnSucceeded(event  ->{
+            Platform.runLater(() ->{
+
+                   extTableView.updateContentsAndSort(newList);
+
+                });
+        });
+        new Thread(r).start();
+//        Platform.runLater(() ->{
+//                extTableView.updateContentsAndSort(newList);
+//            });
+        
     }
     public void loadSnapshot(){
         try{
@@ -516,7 +591,7 @@ public class MainController extends BaseController{
     private void handleOpen(ExtPath file){
         if(file instanceof ExtFolder){
             Log.print("Change to dir "+file.getAbsoluteDirectory());
-            changeToDir((ExtFolder) file);
+            changeToDir((ExtFolder) file).start();
         }else {
                             
             try{
@@ -524,7 +599,7 @@ public class MainController extends BaseController{
                     ExtLink link = (ExtLink) file;
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if(link.isPointsToDirectory()){
-                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileIfExists(location));
+                        changeToDir((ExtFolder) LocationAPI.getInstance().getFileIfExists(location)).start();
                     }else{
                         DesktopApi.open(LocationAPI.getInstance().getFileIfExists(location).toPath().toFile());
                     }
@@ -1014,7 +1089,7 @@ public class MainController extends BaseController{
             if(eh.isPrimaryButtonDown()){
                 if(eh.getClickCount()>1){
                     FavouriteLink selectedItem = (FavouriteLink) linkView.getSelectionModel().getSelectedItem();
-                    changeToDir((ExtFolder) selectedItem.location);
+                    changeToDir((ExtFolder) selectedItem.location).start();
                 }
             }
         });
