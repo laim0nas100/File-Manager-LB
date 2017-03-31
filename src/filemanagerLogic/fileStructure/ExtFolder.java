@@ -47,14 +47,14 @@ public class ExtFolder extends ExtPath{
         return Identity.FOLDER;
     }
     protected void populateFolder(Collection<ExtPath> list){
+        
         try{
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
-                this.populated = true;
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
                     dirStream.forEach( f ->{
-                        String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
-                        String filePathStr = f.toString();
+                        final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
+                        final String filePathStr = f.toString();
                         ExtPath file = null;
                         if(Files.exists(f) && !files.containsKey(name)){
                             if(Files.isDirectory(f)){
@@ -66,22 +66,28 @@ public class ExtFolder extends ExtPath{
                             }
                             
                             files.put(file.propertyName.get(), file);
-                            
                         }
                         if(list!=null){
-                            Platform.runLater(()->{
-                                if(files.containsKey(name)){
+                            if(file!=null){
+                                final ExtPath addMe = file;
+                                Platform.runLater(()->{
+                                    list.add(addMe);
+                                });  
+                            }else if(files.containsKey(name)){
+                                Platform.runLater(()->{                      
                                     list.add(files.get(name));
-                                }
-                            }); 
+                                }); 
+                            }
                         }
                     });
                 }
+                
             }
             
         }catch(Exception e){
             ErrorReport.report(e);
         }
+        this.populated = true;
     }
     public void populateRecursive(){
         populateRecursiveInner(this);
@@ -167,9 +173,10 @@ public class ExtFolder extends ExtPath{
                     Log.print(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
                 }
-            }   
+            }
         }
-        populateFolder(list);
+        populateFolder(list);  
+        
     }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){

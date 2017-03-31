@@ -52,6 +52,8 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -130,9 +132,7 @@ public class MainController extends BaseController{
     private ContextMenu tableDragContextMenu;
     private ContextMenu searchContextMenu;
     private ContextMenu linksContextMenu;
-    private ContextMenu errorContextMenu;
-//    private Menu submenuMarked;
-//    private Menu submenuCreate;    
+    private ContextMenu errorContextMenu; 
     
     private FileAddressField fileAddress;
     private ManagingClass MC;
@@ -152,50 +152,19 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
     private Task searchTask;
     public ExtTableView extTableView;
+    private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
     
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
            localSearch();  
         });
+        
     });
     
     private TimeoutTask searchTimeoutTask = new TimeoutTask(500,100,()->{
         Platform.runLater(() ->{
             search();
         });
-    });
-    private RepeatableTask uniqueLocalSearch = new RepeatableTask(() ->{
-        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
-            
-            
-            Platform.runLater(() ->{
-                
-               extTableView.updateContentsAndSort(newList);
-               
-            });
-            MC.getCurrentContents(newList);
-            
-
-            String lookFor = localSearch.getText().trim();
-            if(lookFor.length()==0){
-                Platform.runLater(() ->{
-                    extTableView.updateContentsAndSort(newList);
-                });
-
-            }else{
-                ArrayList<ExtPath> list = new ArrayList<>();
-                newList.forEach(item ->{
-                    String name = item.propertyName.get();
-                    if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
-                        list.add(item);
-                    }
-                });
-                Platform.runLater(() ->{
-                    extTableView.updateContentsAndSort(list);
-                    
-
-                });
-            }
     });
     
     
@@ -254,7 +223,8 @@ public class MainController extends BaseController{
     }
     @Override
     public void exit(){ 
-        ViewManager.getInstance().closeFrame(windowID); 
+        ViewManager.getInstance().closeFrame(windowID);
+        this.localSearchExecutor.shutdown();
     }
 
     @Override
@@ -498,22 +468,12 @@ public class MainController extends BaseController{
         SimpleTask r = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                
-            
-            
                 Platform.runLater(() ->{
-
                    extTableView.updateContentsAndSort(newList);
-
                 });
                 MC.getCurrentContents(newList);
-
-
                 String lookFor = localSearch.getText().trim();
-                if(lookFor.length()==0){
-
-
-                }else{
+                if(!lookFor.isEmpty()){
                     ArrayList<ExtPath> list = new ArrayList<>();
                     newList.forEach(item ->{
                         String name = item.propertyName.get();
@@ -525,20 +485,17 @@ public class MainController extends BaseController{
                         newList.setAll(list);
                     });
                 }
+                
                 return null;
             }
         };
         r.setOnSucceeded(event  ->{
             Platform.runLater(() ->{
-
-                   extTableView.updateContentsAndSort(newList);
-
-                });
+                extTableView.updateContentsAndSort(newList);
+            });
         });
-        new Thread(r).start();
-//        Platform.runLater(() ->{
-//                extTableView.updateContentsAndSort(newList);
-//            });
+        localSearchExecutor.submit(r);
+//        new Thread(r).start();
         
     }
     public void loadSnapshot(){
