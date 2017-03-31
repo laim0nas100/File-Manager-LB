@@ -20,8 +20,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import javafx.application.Platform;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -275,15 +277,15 @@ public void apply(){
 private static class TableItemObject{
     public PathStringCommands path1;
     public PathStringCommands path2;
-    public SimpleStringProperty date;
-    public SimpleLongProperty size;
+    public StringProperty date;
+    public LongProperty size;
     public boolean excludeMe;
     public boolean isFolder;
     
     
     public TableItemObject(ExtPath file){
-        this.date = new SimpleStringProperty(file.lastModified()+"");
-        this.size = new SimpleLongProperty(file.size());
+        this.date = file.propertyDate;
+        this.size = file.propertySize;
         this.path1 = new PathStringCommands(file.getAbsolutePath());
         this.path2 = new PathStringCommands(file.getAbsolutePath());
         this.isFolder = file.getIdentity().equals(Enums.Identity.FOLDER);

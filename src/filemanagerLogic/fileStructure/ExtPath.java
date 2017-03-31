@@ -228,23 +228,23 @@ public class ExtPath{
         long get = this.propertySize.get();
         if(get==-1){
             try {
-                this.getSizeTask.call();
+                get = Files.size(toPath());
             } catch (Exception ex) {
                 ErrorReport.report(ex);
             }
         }
-        return this.size;
+        return get;
     }
     public long lastModified(){
         long get = this.propertyLastModified.get();
         if(get==-1){
             try {
-                this.getDateTask.call();
+                get = Files.getLastModifiedTime(toPath()).toMillis();
             } catch (Exception ex) {
                 ErrorReport.report(ex);
             }
         }
-        return this.lastModified;
+        return get;
     }
 
     @Override

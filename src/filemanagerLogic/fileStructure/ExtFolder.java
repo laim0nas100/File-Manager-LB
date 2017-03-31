@@ -69,7 +69,7 @@ public class ExtFolder extends ExtPath{
                             }else{
                                 file = new ExtPath(filePathStr,f);
                             }
-                            
+ 
                             files.put(file.propertyName.get(), file);
                         }
                         if(list!=null){
