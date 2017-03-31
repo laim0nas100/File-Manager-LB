@@ -46,6 +46,11 @@ public class ExtFolder extends ExtPath{
     public Identity getIdentity(){
         return Identity.FOLDER;
     }
+    private void addToList(Collection<ExtPath> list, final ExtPath path){
+        Platform.runLater(()->{
+            list.add(path);
+        });  
+    }
     protected void populateFolder(Collection<ExtPath> list){
         
         try{
@@ -69,14 +74,9 @@ public class ExtFolder extends ExtPath{
                         }
                         if(list!=null){
                             if(file!=null){
-                                final ExtPath addMe = file;
-                                Platform.runLater(()->{
-                                    list.add(addMe);
-                                });  
+                                addToList(list,file);
                             }else if(files.containsKey(name)){
-                                Platform.runLater(()->{                      
-                                    list.add(files.get(name));
-                                }); 
+                                addToList(list,files.get(name));
                             }
                         }
                     });
