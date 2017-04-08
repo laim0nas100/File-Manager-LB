@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import utility.ExtStringUtils;
 
@@ -51,13 +52,13 @@ public class ExtFolder extends ExtPath{
             list.add(path);
         });  
     }
-    protected void populateFolder(Collection<ExtPath> list){
+    protected void populateFolder(Collection<ExtPath> list, BooleanProperty isCanceled){
         
         try{
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
-                    dirStream.forEach( f ->{
+                    for(Path f  :dirStream){
                         final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                         final String filePathStr = f.toString();
                         ExtPath file = null;
@@ -73,13 +74,20 @@ public class ExtFolder extends ExtPath{
                             files.put(file.propertyName.get(), file);
                         }
                         if(list!=null){
+                            if(isCanceled!=null){
+                                if(isCanceled.get()){
+                                    Log.print("Canceled form populate");
+                                    return;
+                                }
+                            }
                             if(file!=null){
                                 addToList(list,file);
                             }else if(files.containsKey(name)){
                                 addToList(list,files.get(name));
                             }
                         }
-                    });
+                        
+                    }
                 }
                 
             }
@@ -162,9 +170,9 @@ public class ExtFolder extends ExtPath{
                 }
             }   
         }
-        populateFolder(null);
+        populateFolder(null,null);
     }
-    public void update(ObservableList<ExtPath> list){
+    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
         
         Log.print("Update:"+this.getAbsoluteDirectory());
         if(isPopulated()){           
@@ -173,9 +181,12 @@ public class ExtFolder extends ExtPath{
                     Log.print(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
                 }
+                if(isCanceled.get()){
+                    return;
+                }
             }
         }
-        populateFolder(list);  
+        populateFolder(list,isCanceled);  
         
     }
     public ExtPath getIgnoreCase(String name){

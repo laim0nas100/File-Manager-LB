@@ -297,8 +297,8 @@ public class DirSyncController extends BaseController {
             });
             
             TaskExecutor executor = new TaskExecutor(2,5);
-            executor.addTask(task0);
-            executor.addTask(task1);
+            executor.submit(task0);
+            executor.submit(task1);
             executor.neverStop = false;
             executor.setOnSucceeded(eh ->{
                 btnCompare.setDisable(false);

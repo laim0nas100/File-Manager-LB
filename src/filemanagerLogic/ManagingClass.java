@@ -17,6 +17,7 @@ import LibraryLB.Log;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.util.Collection;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import utility.ErrorReport;
 
@@ -91,8 +92,8 @@ public class ManagingClass {
         return currentDir.getFilesCollection();       
     }
     
-    public void getCurrentContents(ObservableList<ExtPath> list){
-        currentDir.update(list);
+    public void getCurrentContents(ObservableList<ExtPath> list, BooleanProperty isCanceled){
+        currentDir.update(list, isCanceled);
     }
     public ObservableList<ExtPath> getAllContents(){
         ObservableList<ExtPath> list = FXCollections.observableArrayList();

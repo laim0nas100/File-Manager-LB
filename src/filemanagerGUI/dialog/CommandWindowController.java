@@ -316,7 +316,7 @@ public class CommandWindowController extends BaseController {
                     }
                 }                
             };
-            executor.addTask(task);
+            executor.submit(task);
         }
         
     }

@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 
 /**
@@ -54,9 +55,9 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    public void update(ObservableList<ExtPath> list){
+    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
         update();
-        list.addAll(this.getFilesCollection());
+        list.setAll(this.getFilesCollection());
     }
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable){
@@ -82,7 +83,7 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    public void populateFolder(Collection<ExtPath> list){
+    public void populateFolder(Collection<ExtPath> list, BooleanProperty isCanceled){
         
     }
     

@@ -405,14 +405,14 @@ public class TaskFactory {
                     return null;
                 }
             };
-            exe.addTask(task);
+            exe.submit(task);
             
         }
     }
     public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
         return new SimpleTask(){
             @Override protected Void call() throws Exception {
-                TaskExecutor exe = new TaskExecutor(10,1);
+                TaskExecutor exe = new TaskExecutor(10,1,false);
                 
                 populateRecursiveParallelInner(folder,depth,exe);
                 new Thread(exe).start();
@@ -618,7 +618,7 @@ public class TaskFactory {
                     task = duplicateCompareTaskLookUp(i,array,ratio,list,map);
 
                 }
-                executor.addTask(task);
+                executor.submit(task);
             }
         return executor;
                     

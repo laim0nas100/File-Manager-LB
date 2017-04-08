@@ -37,7 +37,7 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
-import LibraryLB.Threads.RepeatableTask;
+import LibraryLB.Threads.TaskExecutor;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
@@ -51,7 +51,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.beans.binding.Bindings;
@@ -152,11 +151,13 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
     private Task searchTask;
     public ExtTableView extTableView;
-    private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
+    
+//    private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
+    private TaskExecutor localSearchExecutor = new TaskExecutor(1,100,true);
     
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
-           localSearch();  
+           localSearch();       
         });
         
     });
@@ -173,6 +174,7 @@ public class MainController extends BaseController{
         
         super.beforeShow(title);
         MC = new ManagingClass(currentDir);
+        
     }
     
     @Override
@@ -218,18 +220,18 @@ public class MainController extends BaseController{
             tableView.getSortOrder().add(nameCol);
 
         });
+        localSearchExecutor.toThread().start();
                 
 
     }
     @Override
     public void exit(){ 
         ViewManager.getInstance().closeFrame(windowID);
-        this.localSearchExecutor.shutdown();
+        this.localSearchExecutor.cancel();
     }
 
     @Override
     public void update(){
-//        new Thread( () ->{
         Platform.runLater(()->{
             
             Iterator<ExtPath> iterator = MainController.markedList.iterator();
@@ -264,11 +266,10 @@ public class MainController extends BaseController{
             
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
-            localSearch();
+            
 
         });
-//        }).start();
-        
+        localSearch();
     }
     public void closeAllWindows(){
         FileManagerLB.doOnExit();
@@ -464,14 +465,20 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
+        
         ObservableList<ExtPath> newList = FXCollections.observableArrayList();
-        SimpleTask r = new SimpleTask() {
+        final SimpleBooleanProperty isCanceled = new SimpleBooleanProperty(false);
+        ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
                 Platform.runLater(() ->{
-                   extTableView.updateContentsAndSort(newList);
+                    extTableView.updateContentsAndSort(newList);
                 });
-                MC.getCurrentContents(newList);
+                MC.getCurrentContents(newList,isCanceled);
+                if(isCanceled.get()){
+                    Log.print("Canceled from task");
+                    return null;
+                }
                 String lookFor = localSearch.getText().trim();
                 if(!lookFor.isEmpty()){
                     ArrayList<ExtPath> list = new ArrayList<>();
@@ -484,8 +491,7 @@ public class MainController extends BaseController{
                     Platform.runLater(() ->{
                         newList.setAll(list);
                     });
-                }
-                
+                }              
                 return null;
             }
         };
@@ -494,8 +500,10 @@ public class MainController extends BaseController{
                 extTableView.updateContentsAndSort(newList);
             });
         });
-        localSearchExecutor.submit(r);
-//        new Thread(r).start();
+        r.setOnCancelled(event ->{
+            isCanceled.set(true);
+        });
+        localSearchExecutor.stopEverythingStartThis(r);
         
     }
     public void loadSnapshot(){
