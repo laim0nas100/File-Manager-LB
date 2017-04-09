@@ -216,7 +216,7 @@ public class MainController extends BaseController{
         
         //default sort order
         Platform.runLater(() ->{
-            changeToDir(MC.currentDir).run();
+            changeToDir(MC.currentDir).start();
             TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
             TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
             typeCol.setSortType(TableColumn.SortType.DESCENDING);
@@ -364,7 +364,10 @@ public class MainController extends BaseController{
 //        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
 //        Log.write("file",LocationAPI.getInstance().existByLocation(file));
 //        Log.write("Closest",closestFileByLocation);
-        Log.println(1,2,3);
+//        Log.println(1,2,3);
+//            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
+//            t.start();
+            TaskFactory.getInstance().populateRecursiveParallelNew(MC.currentDir, 4);
         Log.print("END TEST");
     }
 
@@ -409,13 +412,12 @@ public class MainController extends BaseController{
     public Thread changeToDir(ExtFolder dir){
         return new Thread( ()->{
             MC.changeDirTo(dir);
-            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(dir,FileManagerLB.DEPTH));
-            t.start();
+            TaskFactory.getInstance().populateRecursiveParallelNew(dir,FileManagerLB.DEPTH);
+//            t.start();
             localSearch.clear();
             update();
         });
-       
-      
+
     }
     
     public void searchTyped(){
@@ -477,13 +479,7 @@ public class MainController extends BaseController{
             action.cancel(true);
         });
         deq.clear();
-        if(MC.isVirtual.get()){
-            Platform.runLater(() ->{
-                extTableView.updateContentsAndSort(MC.getCurrentContents());
-            });
-            return;
-        }
-        FXTask r = new FXTask() {
+        ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
                 

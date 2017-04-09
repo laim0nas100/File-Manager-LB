@@ -18,6 +18,7 @@ import filemanagerLogic.Enums.Identity;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Iterator;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -72,20 +73,17 @@ public class ExtFolder extends ExtPath{
                             }
  
                             files.put(file.propertyName.get(), file);
-                        }
-                        if(list!=null){
-                            if(isCanceled!=null){
-                                if(isCanceled.get()){
-                                    Log.print("Canceled form populate");
-                                    return;
+                            if(list!=null){
+                                addToList(list,file);
+                                if(isCanceled!=null){
+                                    if(isCanceled.get()){
+                                        Log.print("Canceled form populate");
+                                        return;
+                                    }
                                 }
                             }
-                            if(file!=null){
-                                addToList(list,file);
-                            }else if(files.containsKey(name)){
-                                addToList(list,files.get(name));
-                            }
                         }
+                        
                         
                     }
                 }
@@ -173,21 +171,25 @@ public class ExtFolder extends ExtPath{
         populateFolder(null,null);
     }
     public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
-        
         Log.print("Update:"+this.getAbsoluteDirectory());
         if(isPopulated()){           
             for (ExtPath file : getFilesCollection()) {
                 if(!Files.exists(file.toPath())){
                     Log.print(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
+                }else{
+                    addToList(list,file);
                 }
                 if(isCanceled.get()){
                     return;
                 }
-            }
+            }   
         }
-        populateFolder(list,isCanceled);  
         
+        populateFolder(list,isCanceled);
+        Platform.runLater(() ->{
+            list.setAll(getFilesCollection());
+        });
     }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){

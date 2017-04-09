@@ -11,8 +11,8 @@ import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import LibraryLB.Threads.DynamicTaskExecutor;
+import LibraryLB.Threads.ExtTask;
 import LibraryLB.Threads.FXTask;
-import LibraryLB.Threads.FXTaskPooler;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -20,7 +20,6 @@ import filemanagerGUI.ViewManager;
 import filemanagerGUI.customUI.AbstractCommandField;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
-import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -32,9 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.concurrent.Callable;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 
@@ -214,7 +211,7 @@ public class CommandWindowController extends BaseController {
         public void generate(String command){
             try{
             
-                System.out.println(MainController.markedList);
+//                System.out.println(MainController.markedList);
                 LinkedList<String> l = new LinkedList<>();
                 MainController.markedList.forEach(item ->{
                     l.add(item.getAbsolutePath());
@@ -286,7 +283,7 @@ public class CommandWindowController extends BaseController {
                     list.add(spl);
                 }
             }
-            FXTask task = new FXTask(){
+            ExtTask task = new ExtTask(){
                 @Override
                 protected Void call() throws Exception {
 
