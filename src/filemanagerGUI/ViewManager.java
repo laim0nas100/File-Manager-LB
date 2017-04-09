@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import LibraryLB.Log;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
@@ -85,7 +85,7 @@ public class ViewManager {
     
 // WINDOW ACTIONS
     public void newWindow(ExtFolder currentFolder){
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -127,9 +127,9 @@ public class ViewManager {
     }
     
 //DIALOG ACTIONS
-    public void newProgressDialog(ExtTask task){
+    public void newProgressDialog(FXTask task){
         
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -154,7 +154,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -180,7 +180,7 @@ public class ViewManager {
     public void newAdvancedRenameDialog(ExtFolder folder){
        
        
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -200,7 +200,7 @@ public class ViewManager {
     }
     public void newDirSyncDialog(){
         
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -223,7 +223,7 @@ public class ViewManager {
     }
     public void newDuplicateFinderDialog(ExtFolder root){
 
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                try {
@@ -244,7 +244,7 @@ public class ViewManager {
    }
     public void newWebDialog(Enums.WebDialog info){     
 
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
         @Override
             protected Void call() throws Exception {
                 try {
@@ -265,7 +265,7 @@ public class ViewManager {
         et.runOnPlatform();
     } 
     public void newCommandDialog(){
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -285,7 +285,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
     public void newListFrame(String description, Collection<String> list){
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
             try {
@@ -308,7 +308,7 @@ public class ViewManager {
     } 
     public void newMediaPlayer(){
         
-        SimpleTask et = new SimpleTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {

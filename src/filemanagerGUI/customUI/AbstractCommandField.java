@@ -10,6 +10,10 @@ import javafx.scene.input.KeyCode;
 import LibraryLB.Containers.LoopingList;
 import LibraryLB.Log;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import utility.ErrorReport;
 
 /**
  *
@@ -43,7 +47,14 @@ public abstract class AbstractCommandField {
     public abstract void submit(String command);
     public boolean runCommand(String commandInit,String[] params) throws Exception{
         if(this.commands.containsKey(commandInit)){
-            this.commands.get(commandInit).run(params);
+            Platform.runLater(() ->{
+                try {
+                    this.commands.get(commandInit).run(params);
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+            });
+            
             return true;
         }
         return false;

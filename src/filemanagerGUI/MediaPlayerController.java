@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
@@ -501,7 +501,7 @@ public class MediaPlayerController extends BaseController {
         MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem("Delete",
             event -> {
                 Log.print("Deleting");
-                ExtTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
+                FXTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
                 task.setTaskDescription("Delete selected files");
                 ViewManager.getInstance().newProgressDialog(task);
             }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));

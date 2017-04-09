@@ -5,14 +5,7 @@
  */
 package filemanagerGUI.customUI;
 
-import LibraryLB.Log;
-import LibraryLB.Threads.ExtTask;
 import LibraryLB.Threads.TimeoutTask;
-import filemanagerGUI.ViewManager;
-import filemanagerLogic.LocationAPI;
-import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtFolder;
-import filemanagerLogic.fileStructure.ExtPath;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +15,6 @@ import java.util.TreeMap;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -30,8 +22,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Control;
-import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.MultipleSelectionModel;

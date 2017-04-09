@@ -5,7 +5,7 @@
  */
 package filemanagerGUI;
 
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.LocationInRoot;
@@ -37,7 +37,9 @@ import utility.ErrorReport;
 import utility.FavouriteLink;
 import utility.Finder;
 import LibraryLB.Log;
-import LibraryLB.Threads.TaskExecutor;
+import LibraryLB.Threads.DynamicTaskExecutor;
+import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTaskPooler;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
@@ -53,12 +55,17 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 import utility.ExtStringUtils;
@@ -151,10 +158,8 @@ public class MainController extends BaseController{
     private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
     private Task searchTask;
     public ExtTableView extTableView;
-    
-//    private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
-    private TaskExecutor localSearchExecutor = new TaskExecutor(1,100,true);
-    
+    public ArrayDeque<Future> deq = new ArrayDeque<>();
+    private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
            localSearch();       
@@ -174,7 +179,7 @@ public class MainController extends BaseController{
         
         super.beforeShow(title);
         MC = new ManagingClass(currentDir);
-        
+
     }
     
     @Override
@@ -220,14 +225,15 @@ public class MainController extends BaseController{
             tableView.getSortOrder().add(nameCol);
 
         });
-        localSearchExecutor.toThread().start();
-                
+        
+//        localSearchExecutor.setPriorityRunnerSize(0);
+//        localSearchExecutor.setRunnerSize(1);        
 
     }
     @Override
     public void exit(){ 
         ViewManager.getInstance().closeFrame(windowID);
-        this.localSearchExecutor.cancel();
+//        this.localSearchExecutor.cancel();
     }
 
     @Override
@@ -266,10 +272,10 @@ public class MainController extends BaseController{
             
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
-            
+            localSearch();
 
         });
-        localSearch();
+        
     }
     public void closeAllWindows(){
         FileManagerLB.doOnExit();
@@ -465,16 +471,31 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
-        
         ObservableList<ExtPath> newList = FXCollections.observableArrayList();
         final SimpleBooleanProperty isCanceled = new SimpleBooleanProperty(false);
-        ExtTask r = new ExtTask() {
+        deq.forEach(action ->{
+            action.cancel(true);
+        });
+        deq.clear();
+        if(MC.isVirtual.get()){
+            Platform.runLater(() ->{
+                extTableView.updateContentsAndSort(MC.getCurrentContents());
+            });
+            return;
+        }
+        FXTask r = new FXTask() {
             @Override
             protected Void call() throws Exception {
+                
+                if(isCanceled.get()){
+                    Log.print("Canceled from task before start");
+                    return null;
+                }
                 Platform.runLater(() ->{
                     extTableView.updateContentsAndSort(newList);
                 });
                 MC.getCurrentContents(newList,isCanceled);
+                
                 if(isCanceled.get()){
                     Log.print("Canceled from task");
                     return null;
@@ -495,15 +516,17 @@ public class MainController extends BaseController{
                 return null;
             }
         };
-        r.setOnSucceeded(event  ->{
+        deq.addFirst(r);
+        r.setOnSucceeded(event -> {
             Platform.runLater(() ->{
                 extTableView.updateContentsAndSort(newList);
             });
         });
-        r.setOnCancelled(event ->{
+        r.setOnCancelled(event ->{   
+            Log.print("Actually canceled");
             isCanceled.set(true);
         });
-        localSearchExecutor.stopEverythingStartThis(r);
+        this.localSearchExecutor.submit(r);
         
     }
     public void loadSnapshot(){
@@ -619,8 +642,7 @@ public class MainController extends BaseController{
                     }
                 }, MC.isVirtual.not()));       
         
-        searchContextMenu.getItems().setAll(
-            CosmeticsFX.simpleMenuItem("Go to",
+        searchContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Go to",
                 event ->{
                     String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
                     try{
@@ -638,7 +660,7 @@ public class MainController extends BaseController{
                 event -> {
                     Platform.runLater(()->{
                         ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
-                        ExtTask markFiles = TaskFactory.getInstance().markFiles(list);
+                        FXTask markFiles = TaskFactory.getInstance().markFiles(list);
                         new Thread(markFiles).start();
                     });
                 }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
@@ -673,8 +695,7 @@ public class MainController extends BaseController{
         );
         
         
-        markedContextMenu.getItems().setAll(
-            CosmeticsFX.simpleMenuItem("Clean this list",
+        markedContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Clean this list",
                 event -> {
                     markedView.getItems().clear();
                 }, propertyMarkedSize.greaterThan(0)),
@@ -686,7 +707,7 @@ public class MainController extends BaseController{
                         markedView.getSelectionModel().getSelectedItems()).greaterThan(0))),
             CosmeticsFX.simpleMenuItem("Delete selected",
                 event -> {
-                    ExtTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
+                    FXTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
                     task.setTaskDescription("Delete selected marked files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
@@ -695,12 +716,11 @@ public class MainController extends BaseController{
         
         
         
-        tableDragContextMenu.getItems().setAll(
-            CosmeticsFX.simpleMenuItem("Move here selected",
+        tableDragContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Move here selected",
                 event -> {
                     MainController.actionList.clear();
                     MainController.actionList.addAll(MainController.dragList);
-                    ExtTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
+                    FXTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
                     task.setTaskDescription("Move Dragged files");
                     ViewManager.getInstance().newProgressDialog(task);  
                 }, null),
@@ -708,7 +728,7 @@ public class MainController extends BaseController{
                 event -> {
                     MainController.actionList.clear();
                     MainController.actionList.addAll(MainController.dragList);
-                    ExtTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
+                    FXTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
                     task.setTaskDescription("Copy Dragged files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, null)
@@ -716,18 +736,17 @@ public class MainController extends BaseController{
 
         
         Menu submenuMarked = new Menu("Marked...");
-        submenuMarked.getItems().setAll(
-            CosmeticsFX.simpleMenuItem("Copy here marked", 
+        submenuMarked.getItems().setAll(CosmeticsFX.simpleMenuItem("Copy here marked", 
                 event -> {
                     Log.print("Copy Marked");
-                    ExtTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
+                    FXTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
                     task.setTaskDescription("Copy marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
             CosmeticsFX.simpleMenuItem("Move here marked",
                 event ->{
                     Log.print("Move Marked");
-                    ExtTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
+                    FXTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
                     task.setTaskDescription("Move marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
@@ -739,7 +758,7 @@ public class MainController extends BaseController{
                 }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
             CosmeticsFX.simpleMenuItem("Delete all marked", 
                 event -> {
-                    ExtTask task = TaskFactory.getInstance().deleteFiles(markedList);
+                    FXTask task = TaskFactory.getInstance().deleteFiles(markedList);
                     task.setTaskDescription("Delete marked files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, propertyMarkedSize.greaterThan(0)),
@@ -1140,7 +1159,7 @@ public class MainController extends BaseController{
     private void delete(){
         if(this.propertyDeleteCondition.get()){
             Log.print("Deleting");
-            ExtTask task = TaskFactory.getInstance().deleteFiles(selectedList);
+            FXTask task = TaskFactory.getInstance().deleteFiles(selectedList);
             task.setTaskDescription("Delete selected files");
             ViewManager.getInstance().newProgressDialog(task);
         }

@@ -84,7 +84,7 @@ public class ExtPath{
     boolean sizeTaskComplete = true;
     boolean dateTaskComplete = true;
     private static final ExecutorService executor = Executors.newFixedThreadPool(10);
-    private Callable getSizeTask = new RepeatableTask(new Callable() {
+    private Runnable getSizeTask = new RepeatableTask(new Callable() {
             @Override
             public Object call() throws Exception {
 //                Log.write("getSizeTask" ,absolutePath);
@@ -95,7 +95,7 @@ public class ExtPath{
             }
     });
     
-    private Callable getDateTask = new RepeatableTask(new Callable() {
+    private Runnable getDateTask = new RepeatableTask(new Callable() {
             @Override
             public Void call() throws Exception {
 //                Log.write("getDateTask ",absolutePath);

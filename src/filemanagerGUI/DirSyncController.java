@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -40,7 +40,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
-import LibraryLB.Threads.TaskExecutor;
+import LibraryLB.Threads.FXTaskPooler;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
@@ -296,7 +296,7 @@ public class DirSyncController extends BaseController {
 
             });
             
-            TaskExecutor executor = new TaskExecutor(2,5);
+            FXTaskPooler executor = new FXTaskPooler(2,5);
             executor.submit(task0);
             executor.submit(task1);
             executor.neverStop = false;
@@ -449,7 +449,7 @@ public class DirSyncController extends BaseController {
         }
         listDelete.sort(cmpAsc.reversed());
         list.sort(cmpAsc);
-        ExtTask task;
+        FXTask task;
         
         
         if(checkDeleteFirst.selectedProperty().get()){

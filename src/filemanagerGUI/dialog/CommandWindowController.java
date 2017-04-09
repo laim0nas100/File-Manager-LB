@@ -10,8 +10,9 @@ import LibraryLB.Log;
 import LibraryLB.Parsing.Lexer;
 import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
-import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.TaskExecutor;
+import LibraryLB.Threads.DynamicTaskExecutor;
+import LibraryLB.Threads.FXTask;
+import LibraryLB.Threads.FXTaskPooler;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -51,7 +52,7 @@ public class CommandWindowController extends BaseController {
     @FXML TextField textField;
     @FXML TextArea textArea;
     private Commander command;
-    public static TaskExecutor executor;
+    public static DynamicTaskExecutor executor = new DynamicTaskExecutor();
     public static int maxExecutablesAtOnce;
     public static int truncateAfter;
     public static String  commandGenerate,
@@ -65,14 +66,6 @@ public class CommandWindowController extends BaseController {
                     commandCancel,
                     commandCopyFolderStructure,
                     commandHelp;
-    public static void startExecutor(){
-        if(executor!=null){
-            executor.cancel();
-        }
-        executor = new TaskExecutor(maxExecutablesAtOnce,1);
-        executor.neverStop = true;
-        new Thread(executor).start();
-    }
     @Override
     public void beforeShow(String title){
         super.beforeShow(title);
@@ -84,14 +77,14 @@ public class CommandWindowController extends BaseController {
             ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
             Log.print("Copy structure:",root,dest);
-            ExtTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true),
+            FXTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true),
                     dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
             ViewManager.getInstance().newProgressDialog(copyFiles);
             
 
         });
         command.addCommand(commandCancel, (String... params)->{ 
-                startExecutor();    
+                executor.stopEverything();
         });
         command.addCommand(commandGenerate, (String... params) -> {
                 String newCom = (String) params[0];
@@ -293,7 +286,7 @@ public class CommandWindowController extends BaseController {
                     list.add(spl);
                 }
             }
-            SimpleTask task = new SimpleTask(){
+            FXTask task = new FXTask(){
                 @Override
                 protected Void call() throws Exception {
 

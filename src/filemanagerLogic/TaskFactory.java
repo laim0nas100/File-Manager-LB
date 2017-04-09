@@ -5,7 +5,7 @@
  */
 package filemanagerLogic;
 
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -19,7 +19,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import LibraryLB.Parsing.StringOperations;
-import LibraryLB.Threads.TaskExecutor;
+import LibraryLB.Threads.FXTaskPooler;
 import com.sun.jna.platform.FileUtils;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -40,6 +40,9 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import LibraryLB.CLI;
+import LibraryLB.Threads.DynamicTaskExecutor;
+import LibraryLB.Threads.ExtTask;
+import java.util.concurrent.Callable;
 import utility.ErrorReport;
 import utility.FileNameException;
 import utility.PathStringCommands;
@@ -247,8 +250,8 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public ExtTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
-        return new SimpleTask(){
+    public FXTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
+        return new FXTask(){
             protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
@@ -292,8 +295,8 @@ public class TaskFactory {
             }
         };
     }
-    public ExtTask moveFiles(Collection<ExtPath> fileList, ExtPath dest){
-        return new SimpleTask(){
+    public FXTask moveFiles(Collection<ExtPath> fileList, ExtPath dest){
+        return new FXTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
                 String str;
@@ -344,7 +347,7 @@ public class TaskFactory {
                         f.delete();
                         i++;
                     }catch(Exception x){
-                        report(x);
+                        ErrorReport.report(x);
                     }
                     updateProgress(index1+i+2, list.size()+leftFolders.size());
                 }
@@ -355,8 +358,8 @@ public class TaskFactory {
             
         };
     }
-    public ExtTask deleteFiles(Collection<ExtPath> fileList){
-        return new SimpleTask(){
+    public FXTask deleteFiles(Collection<ExtPath> fileList){
+        return new FXTask(){
             @Override protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for deletion");
@@ -391,7 +394,7 @@ public class TaskFactory {
             }
         };
     } 
-    private void populateRecursiveParallelInner(ExtFolder folder,int depth, TaskExecutor exe){
+    private void populateRecursiveParallelInner(ExtFolder folder,int depth, DynamicTaskExecutor exe){
         
         if(0<depth){
             SimpleTask task = new SimpleTask() {
@@ -410,12 +413,12 @@ public class TaskFactory {
         }
     }
     public ExtTask populateRecursiveParallel(ExtFolder folder, int depth){
-        return new SimpleTask(){
+        return new ExtTask(){
             @Override protected Void call() throws Exception {
-                TaskExecutor exe = new TaskExecutor(10,1,false);
-                
+                DynamicTaskExecutor exe = new DynamicTaskExecutor();
+                exe.setRunnerSize(10);
                 populateRecursiveParallelInner(folder,depth,exe);
-                new Thread(exe).start();
+//                new Thread(exe).start();
                 return null;
             }
         };
@@ -431,8 +434,8 @@ public class TaskFactory {
         return path+newName;
     }
     
-    public ExtTask markFiles(Collection<String> list){
-        return new SimpleTask(){
+    public FXTask markFiles(Collection<String> list){
+        return new FXTask(){
             @Override
             protected Void call(){
                 list.forEach(file ->{
@@ -452,7 +455,7 @@ public class TaskFactory {
         };
     }
     public ExtTask snapshotCreateWriteTask(String windowID,ExtFolder folder,File file){
-        return new SimpleTask(){
+        return new ExtTask(){
             @Override
             protected Void call() throws Exception {
 
@@ -485,8 +488,8 @@ public class TaskFactory {
   
         };
     }
-    public ExtTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
-        return new SimpleTask(){
+    public FXTask snapshotLoadTask(String windowID,ExtFolder folder,File nextSnap){
+        return new FXTask(){
             @Override
             protected Void call() throws Exception {
                     
@@ -531,8 +534,8 @@ public class TaskFactory {
         };
     }  
     
-    public ExtTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
-         return new SimpleTask(){
+    public FXTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst){
+         return new FXTask(){
             @Override
             protected Void call() throws InterruptedException{
                 
@@ -607,16 +610,14 @@ public class TaskFactory {
     }
     
     
-    public ExtTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
-        TaskExecutor executor = new TaskExecutor(FileManagerLB.MAX_THREADS_FOR_TASK,0);
+    public FXTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
+        FXTaskPooler executor = new FXTaskPooler(FileManagerLB.MAX_THREADS_FOR_TASK,0);
             for(int i=0; i<array.size();i++){
-                
-                Task<Long> task;
+                ExtTask<Long> task;
                 if(map==null){
                     task = duplicateCompareTask(i,array,ratio,list);
                 }else{
                     task = duplicateCompareTaskLookUp(i,array,ratio,list,map);
-
                 }
                 executor.submit(task);
             }
@@ -624,10 +625,10 @@ public class TaskFactory {
                     
         
     }
-    public Task<Long> duplicateCompareTaskLookUp(int index,ArrayList<PathStringCommands>array,double ratio,List list,Map map){
-        return new Task<Long>(){
+    public ExtTask<Long> duplicateCompareTaskLookUp(int index,ArrayList<PathStringCommands>array,double ratio,List list,Map map){
+        return new ExtTask<Long>(){
             @Override
-            protected Long call() throws Exception{
+            public Long call() throws Exception{
                 long progress = index;
                 PathStringCommands file = array.get(index);
                 String name = file.getName(true);
@@ -657,11 +658,12 @@ public class TaskFactory {
                 return progress;
             };
         };
+        
     }
-    public Task<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,List list){
-        return new Task<Long>(){
+    public ExtTask<Long> duplicateCompareTask(int index,ArrayList<PathStringCommands>array,double ratio,List list){
+        return new ExtTask<Long>(){
             @Override
-            protected Long call() throws Exception{
+            public Long call() throws Exception{
                 long progress = index;
                 PathStringCommands file = array.get(index);
                 String name = file.getName(true);

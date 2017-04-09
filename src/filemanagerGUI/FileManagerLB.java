@@ -54,11 +54,15 @@ public class FileManagerLB extends Application {
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     @Override
     public void start(Stage primaryStage) {
-        System.err.println("STARTING");
-        reInit();
-        if(DEBUG.not().get()){
-            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-        }    
+       
+//        new Thread( ()->{
+            System.err.println("STARTING");
+            reInit();
+            if(DEBUG.not().get()){
+                ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+            }   
+//        }).start();
+         
     } 
     public static void main(String[] args) {
         launch(args);
@@ -142,7 +146,7 @@ public class FileManagerLB extends Application {
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
         if(CommandWindowController.executor!=null){
-            CommandWindowController.executor.cancel();
+            CommandWindowController.executor.stopEverything();
         }
         readParameters();
         logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss")+" Log.txt";
@@ -155,12 +159,16 @@ public class FileManagerLB extends Application {
         }catch(Exception e){
             ErrorReport.report(e);
         }
-        CommandWindowController.startExecutor();
-        Platform.runLater(()->{
+        Log.print("Before start executor");
+        CommandWindowController.executor.setRunnerSize(CommandWindowController.maxExecutablesAtOnce);
+        Log.print("After start executor");
+//        Platform.runLater(()->{
             ArtificialRoot.propertyName.set(ROOT_NAME);
             MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
             ViewManager.getInstance().newWindow(ArtificialRoot);
-        });
+//        });
+        Log.print("After new window");
+        
     }
     public static void readParameters(){
         ArrayDeque<String> list = new ArrayDeque<>();         

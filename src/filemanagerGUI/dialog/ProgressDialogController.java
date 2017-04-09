@@ -5,7 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import java.util.Arrays;
@@ -36,11 +36,11 @@ public class ProgressDialogController extends BaseController {
     @FXML public Label timeWasted;
     @FXML public Label labelProgress;
     protected CustomClock clock;
-    private ExtTask task;
+    private FXTask task;
     private SimpleBooleanProperty paused;
     private String fullText = "";
     
-    public void afterShow(ExtTask newTask){
+    public void afterShow(FXTask newTask){
         super.afterShow();
         boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);

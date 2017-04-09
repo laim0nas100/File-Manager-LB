@@ -6,6 +6,8 @@
 package filemanagerLogic;
 
 import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
+import javafx.application.Platform;
 import utility.ErrorReport;
 
 /**
@@ -13,7 +15,6 @@ import utility.ErrorReport;
  * @author Lemmin
  */
 public abstract class SimpleTask extends ExtTask{
-
     
     @Override
     protected abstract Void call() throws Exception;
@@ -30,5 +31,10 @@ public abstract class SimpleTask extends ExtTask{
             };
         };
     }
-    
+    public void runOnPlatform(){
+        new Thread( ()->{
+            Platform.runLater(this);
+        }).start();
+        
+    }
 }

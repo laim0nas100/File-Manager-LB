@@ -6,6 +6,7 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.LocationAPI;
@@ -54,9 +55,9 @@ public class DuplicateFinderController extends BaseController{
     private Double ratio;
     private MenuTree menuTree;
     private ExtFolder root;
-    private ExtTask task;
+    private FXTask task;
     public void beforeShow(String title,ExtFolder root) {
-        task = SimpleTask.temp();
+        task = FXTask.temp();
         super.beforeShow(title);
         this.root = root;
         
