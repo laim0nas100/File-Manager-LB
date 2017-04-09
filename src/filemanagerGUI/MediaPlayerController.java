@@ -859,7 +859,9 @@ public class MediaPlayerController extends BaseController {
             }
         };
         task.setOnSucceeded(value ->{
+            Platform.runLater(() ->{
                 labelStatus.setText("Ready");
+            });  
         });
         task.toThread().start();
     }
@@ -890,7 +892,9 @@ public class MediaPlayerController extends BaseController {
             
         };
         task.setOnSucceeded(value ->{
+            Platform.runLater(() ->{
                 labelStatus.setText("Ready");
+            });   
         });
         task.toThread().start();
     }
