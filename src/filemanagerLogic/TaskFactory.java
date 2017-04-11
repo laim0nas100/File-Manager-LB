@@ -42,6 +42,7 @@ import javafx.concurrent.Task;
 import LibraryLB.CLI;
 import LibraryLB.Threads.DynamicTaskExecutor;
 import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.TaskPooler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -409,8 +410,18 @@ public class TaskFactory {
     private ExecutorService service = Executors.newFixedThreadPool(10);
 
     public void populateRecursiveParallelNew(ExtFolder folder, int depth){
-        populateRecursiveParallelInner(folder,depth,service);  
+        TaskPooler pooler = new TaskPooler(5);
+        
+        populateRecursiveParallelInner(folder,depth,pooler); 
+        new Thread(pooler).start();
     }
+//    public Runnable populateRecursiveParallel(ExtFolder folder, int depth){
+//        TaskPooler pooler = new TaskPooler();
+////        pooler.setRunnerSize(4);
+//        
+//        populateRecursiveParallelInner(folder,depth,pooler);  
+//        return null;
+//    }
     
  //MISC
     public static String resolveAvailablePath(ExtFolder folder,String name){

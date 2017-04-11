@@ -186,12 +186,15 @@ public class CosmeticsFX {
                 }
         }
         public void updateContents(ObservableList collection){
-            ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
+//            ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
             table.setItems(collection);
-            //Work-around to update table
-            selectedIndices.forEach((i) -> {
-                table.getSelectionModel().select(i);
-            });
+//            //Work-around to update table
+//            for(int i:selectedIndices){
+//               table.getSelectionModel().select(i); 
+//            }
+//            selectedIndices.forEach((i) -> {
+//                table.getSelectionModel().select(i);
+//            });
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);
             get.setVisible(true);
