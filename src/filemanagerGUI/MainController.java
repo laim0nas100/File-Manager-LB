@@ -494,22 +494,18 @@ public class MainController extends BaseController{
         final ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
         Thread toThread = asynchronousSortTask.toThread();
         ExtFolder folderInitiated = MC.currentDir;
-        SimpleBooleanProperty checkSize = new SimpleBooleanProperty(true);
         ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
                 Platform.runLater(() ->{
-                    extTableView.saveSortPrefereces();
-//                    extTableView.setSortPreferences();
-                    
+                    extTableView.saveSortPrefereces();                    
                 });
                 toThread.start();
                 if(canceled.get()){
                     Log.print("Canceled from task before start");
                     return null;
                 }
-                
-                
+
                 SimpleBooleanProperty can = new SimpleBooleanProperty(canceled.get());
                 can.bind(canceled);
                 folderInitiated.update(newList,can);
@@ -517,9 +513,9 @@ public class MainController extends BaseController{
                     Log.print("Canceled from task");
                     return null;
                 }
+                newList.setAll(folderInitiated.files.values());
                 String lookFor = localSearch.getText().trim();
                 if(!lookFor.isEmpty()){
-                    checkSize.set(false);
                     ArrayList<ExtPath> list = new ArrayList<>();
                     newList.forEach(item ->{
                         ExtPath path = (ExtPath) item;
@@ -529,7 +525,7 @@ public class MainController extends BaseController{
                         }
                     });
                     newList.setAll(list);
-                }              
+                }            
                 return null;
             }
         };

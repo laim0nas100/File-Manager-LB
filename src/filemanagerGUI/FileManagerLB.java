@@ -73,7 +73,7 @@ public class FileManagerLB extends Application {
     }
     public static void remount(){
         remountUpdateList.clear();
-        remountUpdateList.add(VirtualFolders);
+//        remountUpdateList.add(VirtualFolders);
         
         ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
