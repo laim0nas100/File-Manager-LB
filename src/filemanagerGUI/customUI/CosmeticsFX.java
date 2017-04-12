@@ -204,87 +204,50 @@ public class CosmeticsFX {
             this.updateLock.unlockWrite();
         }
         public void updateContents(ObservableList collection){
-            this.updateLock.lockWrite();
+//            this.updateLock.lockWrite();
             table.setItems(collection);
             //Work-around to update table
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);
             get.setVisible(true);
-            this.updateLock.unlockWrite();
+//            this.updateLock.unlockWrite();
             
         }
         public void updateContentsAndSort(Collection collection){
             
             saveSortPrefereces();
-            if(collection instanceof ObservableList){
-                updateContents((ObservableList) collection);
-            }else{
-                updateContents(FXCollections.observableArrayList(collection));
-            }
-            
+//            if(collection instanceof ObservableList){
+//                updateContents((ObservableList) collection);
+//            }else{
+//                
+//            }
+            updateContents(FXCollections.observableArrayList(collection));
             setSortPreferences();
             
         }
         public void selectInverted(){
             CosmeticsFX.selectInverted(table.getSelectionModel());
         }
-        public ExtTask asynchronousSortTask(){
+        public ExtTask asynchronousSortTask(ObservableList backingList){
+            Runnable run = () ->{
+                Log.print("RESORT");                          
+                updateContentsAndSort(backingList);
+            };
             ExtTask task = new ExtTask() {
                 @Override
                 protected Object call() throws Exception {
-//                    try {
-//                            Thread.sleep(100);
-//                        } catch (InterruptedException ex) {
-//                        }
-                    do{
-                    Log.print("RESORT");
-                        
-                        updateLock.lockWrite();    
-//                    Platform.runLater(() ->{
-                        
+//                    ArrayList main = new ArrayList<>();    
+//                    Bindings.bindContent(main, backingList);
+                    
+                    Platform.runLater(run);
+                    do{  
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(500);
+                            Platform.runLater(run);
                         } catch (InterruptedException ex) {
                         }
-
-                        
-                        
-                        Callable call = () ->{
-                            ObservableList sortOrder = FXCollections.observableArrayList();
-
-                            for(TableCol col:cols){
-    //                            TableCol col = (TableCol) iterator.next();
-                                sortOrder.add(col.col);
-                                col.col.setSortType(col.type);
-                                col.col.setSortable(true);
-                            }
-                            Log.print("Sort order size:",sortOrder.size());
-//                            ObservableList saveList;
-//
-//                            saveList = table.getItems();
-//                            table.setItems(FXCollections.observableArrayList());                    
-
-//                            table.setItems(saveList);
-                            table.getSortOrder().setAll(sortOrder);
-                            return 0;
-                        };
-                        FutureTask task = new FutureTask(call);
-                        updateTasks.clear();
-                        updateTasks.addLast(task);
-                        final int size = table.getItems().size();
-                        Platform.runLater(() ->{
-                            FutureTask pollFirst = updateTasks.pollFirst();
-                            if(pollFirst!=null && size == table.getItems().size()){
-                                pollFirst.run();
-//                                updateTasks.clear();
-                            }
-                        });
-//                    });
-                    updateLock.unlockWrite();
-                    
                     }while(!this.canceled.get());
-//                    updateTasks.clear();
-
+                    
                     Log.print("Sorter task finished");
                     return 0;
                 }

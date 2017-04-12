@@ -52,11 +52,11 @@ public class ExtFolder extends ExtPath{
     }
 
 
-    protected void populateFolder(Collection<ExtPath> list, BooleanProperty isCanceled){
+    protected void populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled){
         
         try{
             
-            ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list,10);
+            
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
@@ -74,7 +74,7 @@ public class ExtFolder extends ExtPath{
                             }
  
                             files.put(file.propertyName.get(), file);
-                            if(list!=null){
+                            if(buffer!=null){
                                 buffer.add(file);
                                 if(isCanceled!=null){
                                     if(isCanceled.get()){
@@ -87,7 +87,7 @@ public class ExtFolder extends ExtPath{
                     }
                 }              
             }
-            if(list!=null){
+            if(buffer!=null){
                 buffer.flush();
             }
             
@@ -174,6 +174,7 @@ public class ExtFolder extends ExtPath{
     }
     public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
         Log.print("Update:"+this.getAbsoluteDirectory());
+        ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list,5);
         if(isPopulated()){           
             for (ExtPath file : getFilesCollection()) {
                 if(!Files.exists(file.toPath())){
@@ -185,11 +186,8 @@ public class ExtFolder extends ExtPath{
                 }
             }   
         }
-        list.addAll(getFilesCollection());
-        populateFolder(list,isCanceled);
-//        Platform.runLater(() ->{
-            list.setAll(getFilesCollection());
-//        });
+        buffer.addAll(getFilesCollection());
+        populateFolder(buffer,isCanceled);
     }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){

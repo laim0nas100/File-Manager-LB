@@ -495,30 +495,34 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
-//        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
-        ExtObservableList newList = new ExtObservableList();
-        final SimpleBooleanProperty isCanceled = new SimpleBooleanProperty(false);
+        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
         deq.forEach(action ->{
             action.cancel(true);
         });
         deq.clear();
-        final ExtTask asynchronousSortTask = extTableView.asynchronousSortTask();
+        final ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
+        Thread toThread = asynchronousSortTask.toThread();
+        ExtFolder folderInitiated = MC.currentDir;
         ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
-                asynchronousSortTask.toThread().start();
-                if(isCanceled.get()){
+                Platform.runLater(() ->{
+                    extTableView.saveSortPrefereces();
+//                    extTableView.setSortPreferences();
+                    
+                });
+                toThread.start();
+                if(canceled.get()){
                     Log.print("Canceled from task before start");
                     return null;
                 }
                 
-                Platform.runLater( ()->{
-                    extTableView.updateContentsAndSort(newList); 
-                });
                 
-                MC.getCurrentContents(newList,isCanceled);
+                SimpleBooleanProperty can = new SimpleBooleanProperty(canceled.get());
+                can.bind(canceled);
+                folderInitiated.update(newList,can);
                 
-                if(isCanceled.get()){
+                if(canceled.get()){
                     Log.print("Canceled from task");
                     return null;
                 }
@@ -542,15 +546,24 @@ public class MainController extends BaseController{
         deq.addFirst(r);
         r.setOnCancelled(event ->{   
             Log.print("Actually canceled");
-            isCanceled.set(true);
         });
         r.setOnDone(event ->{
-
-            asynchronousSortTask.cancel();
-            
+            asynchronousSortTask.setOnDone(handle ->{
+                if(r.canceled.get()){
+                    return;
+                }
+                final int viewSize = extTableView.table.getItems().size();
+                final int neededSize = folderInitiated.getFilesCollection().size();
+                Log.print("View size",viewSize,"Needed size",neededSize); 
+                if(viewSize!=neededSize){
+                    Platform.runLater(() ->{
+                        extTableView.updateContentsAndSort(folderInitiated.getFilesCollection());
+                    });
+                }
+            });
+            asynchronousSortTask.cancel(); 
         });
         localSearchExecutor.submit(r);
-//        localSearchExecutor1.submit(asynchronousSortTask);
     }
     public void loadSnapshot(){
         try{

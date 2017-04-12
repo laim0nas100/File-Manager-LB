@@ -72,8 +72,8 @@ public class FileManagerLB extends Application {
     }
     public static void remount(){
         remountUpdateList.clear();
-        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
-        remountUpdateList.add(VirtualFolders);
+        
+        
         File[] roots = File.listRoots();
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
             if(!Files.isDirectory(f.toPath())){
@@ -82,6 +82,8 @@ public class FileManagerLB extends Application {
                 remountUpdateList.add(f);
             }
         }
+        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
+        remountUpdateList.add(VirtualFolders);
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }

@@ -5,6 +5,7 @@
  */
 package filemanagerLogic.fileStructure;
 
+import LibraryLB.Containers.ObjectBuffer;
 import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
@@ -96,7 +97,7 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    public void populateFolder(Collection<ExtPath> list, BooleanProperty isCanceled){
+    public void populateFolder(ObjectBuffer list, BooleanProperty isCanceled){
         
     }
     
