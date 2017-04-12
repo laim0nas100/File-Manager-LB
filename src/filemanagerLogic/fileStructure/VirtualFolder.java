@@ -6,6 +6,8 @@
 package filemanagerLogic.fileStructure;
 
 import LibraryLB.Containers.ObjectBuffer;
+import LibraryLB.FX.FXTask;
+import LibraryLB.Log;
 import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
@@ -53,23 +55,27 @@ public class VirtualFolder extends ExtFolder {
         }
         
         if(this.isAbsoluteRoot.get()){
-            ExtTask task = new ExtTask() {
+            FXTask task = new FXTask() {
                 @Override
-                protected Object call() throws Exception {
+                protected Void call() throws Exception {
+                    Log.print("Start update");
                     FileManagerLB.remountUpdateList = list;
                     FileManagerLB.remount();
+                    Log.print("End update");
                     return null;
                 }
             };
-            task.toThread().run();
-            return;
-        }
-        Iterator<ExtPath> iter = this.getFilesCollection().iterator();
-        while(iter.hasNext()){
-            if(!Files.exists(iter.next().toPath())){
-                iter.remove();
+            task.run();
+            
+        }else{
+            Iterator<ExtPath> iter = this.getFilesCollection().iterator();
+            while(iter.hasNext()){
+                if(!Files.exists(iter.next().toPath())){
+                    iter.remove();
+                }
             }
         }
+        
         
         
     }

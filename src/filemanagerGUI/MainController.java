@@ -494,6 +494,7 @@ public class MainController extends BaseController{
         final ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
         Thread toThread = asynchronousSortTask.toThread();
         ExtFolder folderInitiated = MC.currentDir;
+        SimpleBooleanProperty checkSize = new SimpleBooleanProperty(true);
         ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
@@ -512,13 +513,13 @@ public class MainController extends BaseController{
                 SimpleBooleanProperty can = new SimpleBooleanProperty(canceled.get());
                 can.bind(canceled);
                 folderInitiated.update(newList,can);
-                
                 if(canceled.get()){
                     Log.print("Canceled from task");
                     return null;
                 }
                 String lookFor = localSearch.getText().trim();
                 if(!lookFor.isEmpty()){
+                    checkSize.set(false);
                     ArrayList<ExtPath> list = new ArrayList<>();
                     newList.forEach(item ->{
                         ExtPath path = (ExtPath) item;
@@ -527,9 +528,7 @@ public class MainController extends BaseController{
                             list.add( path);
                         }
                     });
-                    Platform.runLater(() ->{
-                        newList.setAll(list);
-                    });
+                    newList.setAll(list);
                 }              
                 return null;
             }
@@ -544,11 +543,11 @@ public class MainController extends BaseController{
                     return;
                 }
                 final int viewSize = extTableView.table.getItems().size();
-                final int neededSize = folderInitiated.getFilesCollection().size();
+                final int neededSize = newList.size();
                 Log.print("View size",viewSize,"Needed size",neededSize); 
                 if(viewSize!=neededSize){
                     Platform.runLater(() ->{
-                        extTableView.updateContentsAndSort(folderInitiated.getFilesCollection());
+                        extTableView.updateContentsAndSort(newList);
                     });
                 }
             });

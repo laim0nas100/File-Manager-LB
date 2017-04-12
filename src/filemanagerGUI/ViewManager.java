@@ -80,7 +80,7 @@ public class ViewManager {
     
 // WINDOW ACTIONS
     public void newWindow(ExtFolder currentFolder){
-        ExtTask et = new ExtTask() {
+        FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -97,16 +97,15 @@ public class ViewManager {
             }
         };
 //        et.toThread().start();
-        Platform.runLater(et);
+        et.runOnPlatform();
+//        Platform.runLater(et);
         
     }
     public void updateAllWindows(){
-//        Platform.runLater(()->{
-            for(String s:windows){
-                MainController controller = (MainController) frames.get(s).getController();
-                controller.update();
-            }
-//        }); 
+        for(String s:windows){
+            MainController controller = (MainController) frames.get(s).getController();
+            controller.update();
+        }
     }
     public void updateAllFrames(){
         frames.values().forEach( frame ->{

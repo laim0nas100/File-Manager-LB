@@ -240,13 +240,14 @@ public class CosmeticsFX {
 //                    Bindings.bindContent(main, backingList);
                     
                     Platform.runLater(run);
-                    do{  
-                        try {
-                            Thread.sleep(500);
-                            Platform.runLater(run);
-                        } catch (InterruptedException ex) {
-                        }
-                    }while(!this.canceled.get());
+                    try{
+                        do{  
+
+                                Thread.sleep(500);
+                                Platform.runLater(run);
+
+                        }while(!this.canceled.get());
+                    }catch(InterruptedException e){}
                     
                     Log.print("Sorter task finished");
                     return 0;

@@ -22,6 +22,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -72,21 +73,23 @@ public class FileManagerLB extends Application {
     }
     public static void remount(){
         remountUpdateList.clear();
+        remountUpdateList.add(VirtualFolders);
         
-        
-        File[] roots = File.listRoots();
+        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
-            if(!Files.isDirectory(f.toPath())){
+            if(!Files.isDirectory(f.toPath()) && !f.isVirtual.get()){
                 ArtificialRoot.files.remove(f.propertyName.get());
             }else{
                 remountUpdateList.add(f);
             }
         }
-        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
-        remountUpdateList.add(VirtualFolders);
+        
+        
+        File[] roots = File.listRoots();
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
+        remountUpdateList.setAll(ArtificialRoot.getFilesCollection());
     }
     public static boolean mountDevice(String name){
         boolean result = false;

@@ -35,7 +35,6 @@ public class ExtFolder extends ExtPath{
 
     protected boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
-    public ObservableList<ExtPath> fileRepresentation = FXCollections.observableArrayList();
   
     public ExtFolder(String src,Object...optional){
         super(src,optional);
