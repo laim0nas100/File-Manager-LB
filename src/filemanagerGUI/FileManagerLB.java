@@ -28,6 +28,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import utility.ErrorReport;
 import utility.FavouriteLink;
@@ -52,6 +53,8 @@ public class FileManagerLB extends Application {
     public static int LogBackupCount = 1;
     public static ParametersMap parameters;
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
+    public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
+    
     @Override
     public void start(Stage primaryStage) {
        
@@ -68,17 +71,20 @@ public class FileManagerLB extends Application {
         launch(args);
     }
     public static void remount(){
-        
+        remountUpdateList.clear();
+        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
+        remountUpdateList.add(VirtualFolders);
         File[] roots = File.listRoots();
         for(ExtPath f:ArtificialRoot.getFilesCollection()){
             if(!Files.isDirectory(f.toPath())){
                 ArtificialRoot.files.remove(f.propertyName.get());
+            }else{
+                remountUpdateList.add(f);
             }
         }
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
-        ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
     }
     public static boolean mountDevice(String name){
         boolean result = false;
@@ -94,6 +100,10 @@ public class FileManagerLB extends Application {
                 device.propertyName.set(newName);
                 if(!ArtificialRoot.files.containsKey(newName)){
                     ArtificialRoot.files.put(newName, device);
+                    if(!remountUpdateList.contains(device)){
+                        remountUpdateList.add(device);
+                    }
+                    
                 }else{
                     result = false;
                 }
@@ -145,9 +155,10 @@ public class FileManagerLB extends Application {
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
-        if(CommandWindowController.executor!=null){
+//        if(CommandWindowController.executor!=null){
             CommandWindowController.executor.stopEverything();
-        }
+            CommandWindowController.executor.setRunnerSize(0);
+//        }
         readParameters();
         logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss")+" Log.txt";
         try{
@@ -162,11 +173,9 @@ public class FileManagerLB extends Application {
         Log.print("Before start executor");
         CommandWindowController.executor.setRunnerSize(CommandWindowController.maxExecutablesAtOnce);
         Log.print("After start executor");
-//        Platform.runLater(()->{
-            ArtificialRoot.propertyName.set(ROOT_NAME);
-            MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
-            ViewManager.getInstance().newWindow(ArtificialRoot);
-//        });
+        ArtificialRoot.propertyName.set(ROOT_NAME);
+        MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
+        ViewManager.getInstance().newWindow(ArtificialRoot);
         Log.print("After new window");
         
     }

@@ -5,13 +5,27 @@
  */
 package filemanagerGUI.customUI;
 
+import LibraryLB.Log;
+import LibraryLB.Threads.ExtTask;
+import LibraryLB.Threads.Sync.ReadWriteLock;
+import LibraryLB.Threads.Sync.UninterruptibleReadWriteLock;
 import LibraryLB.Threads.TimeoutTask;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
@@ -72,13 +86,11 @@ public class CosmeticsFX {
         }
         public ContextMenu constructContextMenu(){
             ContextMenu cm = new ContextMenu();
-
             for(MenuTree mapping:this.leafs.values()){
                 MenuItem item = constructMenuFromTree(mapping);
                 if(item!= null){
                     cm.getItems().add(item);
                 }
-
             }
             return cm;
         }
@@ -115,6 +127,7 @@ public class CosmeticsFX {
         private class TableCol{
             SortType type;
             TableColumn col;
+            
         }
         
         public final long resizeTimeout = 500;
@@ -123,16 +136,17 @@ public class CosmeticsFX {
             recentlyResized.set(false);
         });
         public ArrayList<TableCol> cols;
+        private ConcurrentLinkedDeque<FutureTask> updateTasks = new ConcurrentLinkedDeque<>();
         public int sortByColumn;
         public boolean sortable = true;
         public TableView table;
-        
+        private UninterruptibleReadWriteLock updateLock = new UninterruptibleReadWriteLock();
         public ExtTableView(TableView table){
             this.table = table; 
             defaultValues();
         }
         public ExtTableView(){
-            defaultValues(); 
+            this(null);
         }
         private void defaultValues(){
             cols = new ArrayList<>();
@@ -141,8 +155,7 @@ public class CosmeticsFX {
         }
         public void prepareChangeListeners(){
             try{
-                table.getColumns().forEach(col ->{
-                   
+                table.getColumns().forEach(col ->{                 
                     TableColumn c = (TableColumn) col;
                     changeListener(c);
                     c.setPrefWidth(90);//optional
@@ -165,42 +178,43 @@ public class CosmeticsFX {
             if(!this.sortable){
                 return;
             }
+            this.updateLock.lockWrite();
             cols.clear();
             if (!table.getSortOrder().isEmpty()) {
-                table.getSortOrder().forEach(ob->{
-                    TableColumn col = (TableColumn) ob;
+                Iterator iterator = table.getSortOrder().iterator();
+                while(iterator.hasNext()){
+                    TableColumn col = (TableColumn) iterator.next();
                     TableCol coll = new TableCol();
                     coll.col = col;
                     coll.type = col.getSortType();
                     cols.add(coll);
-                });
-                
-            }
-        }
-        public void setSortPreferences(){     
-                table.getSortOrder().clear();
-                for(TableCol col:cols){             
-                    table.getSortOrder().add(col.col);
-                    col.col.setSortType(col.type);
-                    col.col.setSortable(true);
                 }
+            }
+            this.updateLock.unlockWrite();
+        }
+        public void setSortPreferences(){    
+            this.updateLock.lockWrite();
+            table.getSortOrder().clear();
+            ObservableList sortOrder = table.getSortOrder();
+            for(TableCol col:cols){             
+                sortOrder.add(col.col);
+                col.col.setSortType(col.type);
+                col.col.setSortable(true);
+            }
+            this.updateLock.unlockWrite();
         }
         public void updateContents(ObservableList collection){
-//            ObservableList<Integer> selectedIndices = table.getSelectionModel().getSelectedIndices();
+            this.updateLock.lockWrite();
             table.setItems(collection);
-//            //Work-around to update table
-//            for(int i:selectedIndices){
-//               table.getSelectionModel().select(i); 
-//            }
-//            selectedIndices.forEach((i) -> {
-//                table.getSelectionModel().select(i);
-//            });
+            //Work-around to update table
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);
             get.setVisible(true);
+            this.updateLock.unlockWrite();
             
         }
         public void updateContentsAndSort(Collection collection){
+            
             saveSortPrefereces();
             if(collection instanceof ObservableList){
                 updateContents((ObservableList) collection);
@@ -209,9 +223,73 @@ public class CosmeticsFX {
             }
             
             setSortPreferences();
+            
         }
         public void selectInverted(){
             CosmeticsFX.selectInverted(table.getSelectionModel());
+        }
+        public ExtTask asynchronousSortTask(){
+            ExtTask task = new ExtTask() {
+                @Override
+                protected Object call() throws Exception {
+//                    try {
+//                            Thread.sleep(100);
+//                        } catch (InterruptedException ex) {
+//                        }
+                    do{
+                    Log.print("RESORT");
+                        
+                        updateLock.lockWrite();    
+//                    Platform.runLater(() ->{
+                        
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                        }
+
+                        
+                        
+                        Callable call = () ->{
+                            ObservableList sortOrder = FXCollections.observableArrayList();
+
+                            for(TableCol col:cols){
+    //                            TableCol col = (TableCol) iterator.next();
+                                sortOrder.add(col.col);
+                                col.col.setSortType(col.type);
+                                col.col.setSortable(true);
+                            }
+                            Log.print("Sort order size:",sortOrder.size());
+//                            ObservableList saveList;
+//
+//                            saveList = table.getItems();
+//                            table.setItems(FXCollections.observableArrayList());                    
+
+//                            table.setItems(saveList);
+                            table.getSortOrder().setAll(sortOrder);
+                            return 0;
+                        };
+                        FutureTask task = new FutureTask(call);
+                        updateTasks.clear();
+                        updateTasks.addLast(task);
+                        final int size = table.getItems().size();
+                        Platform.runLater(() ->{
+                            FutureTask pollFirst = updateTasks.pollFirst();
+                            if(pollFirst!=null && size == table.getItems().size()){
+                                pollFirst.run();
+//                                updateTasks.clear();
+                            }
+                        });
+//                    });
+                    updateLock.unlockWrite();
+                    
+                    }while(!this.canceled.get());
+//                    updateTasks.clear();
+
+                    Log.print("Sorter task finished");
+                    return 0;
+                }
+            };
+            return task;
         }
     }
     

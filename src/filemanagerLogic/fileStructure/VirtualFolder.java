@@ -5,6 +5,7 @@
  */
 package filemanagerLogic.fileStructure;
 
+import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
@@ -38,11 +40,27 @@ public class VirtualFolder extends ExtFolder {
     
     @Override
     public void update(){
-        if(this.isAbsoluteRoot.get()){
-            FileManagerLB.remount();
+        update(FXCollections.observableArrayList(),null);
+    }
+    
+    @Override
+    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
+        
+        if(this.equals(FileManagerLB.VirtualFolders)){
+            list.setAll(this.getFilesCollection());
             return;
         }
-        if(this.equals(FileManagerLB.VirtualFolders)){
+        
+        if(this.isAbsoluteRoot.get()){
+            ExtTask task = new ExtTask() {
+                @Override
+                protected Object call() throws Exception {
+                    FileManagerLB.remountUpdateList = list;
+                    FileManagerLB.remount();
+                    return null;
+                }
+            };
+            task.toThread().run();
             return;
         }
         Iterator<ExtPath> iter = this.getFilesCollection().iterator();
@@ -52,12 +70,7 @@ public class VirtualFolder extends ExtFolder {
             }
         }
         
-    }
-    
-    @Override
-    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled){
-        update();
-        list.setAll(this.getFilesCollection());
+        
     }
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable){

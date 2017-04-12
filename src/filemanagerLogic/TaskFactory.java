@@ -5,7 +5,7 @@
  */
 package filemanagerLogic;
 
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -19,7 +19,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import LibraryLB.Log;
 import LibraryLB.Parsing.StringOperations;
-import LibraryLB.Threads.FXTaskPooler;
+import LibraryLB.FX.FXTaskPooler;
 import com.sun.jna.platform.FileUtils;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -407,7 +407,6 @@ public class TaskFactory {
             exe.submit(task);   
         }
     }
-    private ExecutorService service = Executors.newFixedThreadPool(10);
 
     public void populateRecursiveParallelNew(ExtFolder folder, int depth){
         TaskPooler pooler = new TaskPooler(5);
@@ -415,13 +414,12 @@ public class TaskFactory {
         populateRecursiveParallelInner(folder,depth,pooler); 
         new Thread(pooler).start();
     }
-//    public Runnable populateRecursiveParallel(ExtFolder folder, int depth){
-//        TaskPooler pooler = new TaskPooler();
-////        pooler.setRunnerSize(4);
-//        
-//        populateRecursiveParallelInner(folder,depth,pooler);  
-//        return null;
-//    }
+    public Runnable populateRecursiveParallel(ExtFolder folder, int depth){
+        TaskPooler pooler = new TaskPooler(5); 
+        populateRecursiveParallelInner(folder,depth,pooler); 
+        return pooler;
+    }
+
     
  //MISC
     public static String resolveAvailablePath(ExtFolder folder,String name){
@@ -498,11 +496,11 @@ public class TaskFactory {
                         frame.snapshotView.getItems().clear();
                         frame.snapshotView.getItems().add("Snapshot Loading");
                     });
-                    TaskFactory.getInstance().populateRecursiveParallelNew(folder, 50);
-//                    Thread thread = new Thread(populateRecursiveParallel);
-//                    thread.setDaemon(true);
-//                    thread.start();
-//                    thread.join();
+//                    TaskFactory.getInstance().populateRecursiveParallelNew(folder, 50);
+                    Thread thread = new Thread(TaskFactory.getInstance().populateRecursiveParallel(folder, 50));
+                    thread.setDaemon(true);
+                    thread.start();
+                    thread.join();
 
                     
                     ObjectMapper mapper = new ObjectMapper();

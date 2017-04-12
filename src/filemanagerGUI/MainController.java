@@ -5,7 +5,8 @@
  */
 package filemanagerGUI;
 
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.ExtObservableList;
+import LibraryLB.FX.FXTask;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.LocationInRoot;
@@ -39,7 +40,7 @@ import utility.Finder;
 import LibraryLB.Log;
 import LibraryLB.Threads.DynamicTaskExecutor;
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.FXTaskPooler;
+import LibraryLB.FX.FXTaskPooler;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
@@ -53,6 +54,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -160,13 +162,15 @@ public class MainController extends BaseController{
     public ExtTableView extTableView;
     public ArrayDeque<Future> deq = new ArrayDeque<>();
     private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService localSearchExecutor1 = Executors.newSingleThreadExecutor();
+
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
            localSearch();       
         });
         
     });
-    
+    private boolean firstTime = true;
     private TimeoutTask searchTimeoutTask = new TimeoutTask(500,100,()->{
         Platform.runLater(() ->{
             search();
@@ -215,15 +219,25 @@ public class MainController extends BaseController{
         
         
         //default sort order
+        
         Platform.runLater(() ->{
-            changeToDir(MC.currentDir).start();
+            
+            
             TableColumn typeCol = (TableColumn) tableView.getColumns().get(1);
             TableColumn nameCol = (TableColumn) tableView.getColumns().get(0);
             typeCol.setSortType(TableColumn.SortType.DESCENDING);
             nameCol.setSortType(TableColumn.SortType.ASCENDING);
+            tableView.getSortOrder().clear();
             tableView.getSortOrder().add(typeCol);
             tableView.getSortOrder().add(nameCol);
-
+//            tableView.getItems().add(MC.currentDir);
+//            try {
+//                //            changeToDir(MC.currentDir).start();
+//                Thread.sleep(4000);
+//            } catch (InterruptedException ex) {
+//                Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+            update();
         });
         
 //        localSearchExecutor.setPriorityRunnerSize(0);
@@ -272,7 +286,12 @@ public class MainController extends BaseController{
             
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
-            localSearch();
+            if(firstTime){
+                firstTime = false;
+            }else{
+                localSearch();
+            }
+            
 
         });
         
@@ -414,7 +433,10 @@ public class MainController extends BaseController{
             MC.changeDirTo(dir);
             TaskFactory.getInstance().populateRecursiveParallelNew(dir,FileManagerLB.DEPTH);
 //            t.start();
-            localSearch.clear();
+            if(!localSearch.getText().isEmpty()){
+                localSearch.clear();
+            }
+                
             update();
         });
 
@@ -473,23 +495,27 @@ public class MainController extends BaseController{
         localSearchTask.update();
     }
     public void localSearch(){
-        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
+//        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
+        ExtObservableList newList = new ExtObservableList();
         final SimpleBooleanProperty isCanceled = new SimpleBooleanProperty(false);
         deq.forEach(action ->{
             action.cancel(true);
         });
         deq.clear();
+        final ExtTask asynchronousSortTask = extTableView.asynchronousSortTask();
         ExtTask r = new ExtTask() {
             @Override
             protected Void call() throws Exception {
-                
+                asynchronousSortTask.toThread().start();
                 if(isCanceled.get()){
                     Log.print("Canceled from task before start");
                     return null;
                 }
-                Platform.runLater(() ->{
-                    extTableView.updateContentsAndSort(newList);
+                
+                Platform.runLater( ()->{
+                    extTableView.updateContentsAndSort(newList); 
                 });
+                
                 MC.getCurrentContents(newList,isCanceled);
                 
                 if(isCanceled.get()){
@@ -500,9 +526,10 @@ public class MainController extends BaseController{
                 if(!lookFor.isEmpty()){
                     ArrayList<ExtPath> list = new ArrayList<>();
                     newList.forEach(item ->{
-                        String name = item.propertyName.get();
+                        ExtPath path = (ExtPath) item;
+                        String name = path.propertyName.get();
                         if(ExtStringUtils.containsIgnoreCase(name,lookFor)){
-                            list.add(item);
+                            list.add( path);
                         }
                     });
                     Platform.runLater(() ->{
@@ -513,17 +540,17 @@ public class MainController extends BaseController{
             }
         };
         deq.addFirst(r);
-        r.setOnSucceeded(event -> {
-            Platform.runLater(() ->{
-                extTableView.updateContentsAndSort(newList);
-            });
-        });
         r.setOnCancelled(event ->{   
             Log.print("Actually canceled");
             isCanceled.set(true);
         });
-        this.localSearchExecutor.submit(r);
-        
+        r.setOnDone(event ->{
+
+            asynchronousSortTask.cancel();
+            
+        });
+        localSearchExecutor.submit(r);
+//        localSearchExecutor1.submit(asynchronousSortTask);
     }
     public void loadSnapshot(){
         try{

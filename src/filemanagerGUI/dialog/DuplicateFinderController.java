@@ -6,7 +6,7 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.LocationAPI;

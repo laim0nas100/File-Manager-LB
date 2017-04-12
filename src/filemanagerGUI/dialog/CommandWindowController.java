@@ -12,7 +12,7 @@ import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import LibraryLB.Threads.DynamicTaskExecutor;
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;

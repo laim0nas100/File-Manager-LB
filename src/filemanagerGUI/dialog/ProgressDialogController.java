@@ -5,7 +5,7 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import java.util.Arrays;

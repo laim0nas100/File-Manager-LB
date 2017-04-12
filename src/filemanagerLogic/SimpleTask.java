@@ -6,7 +6,7 @@
 package filemanagerLogic;
 
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import javafx.application.Platform;
 import utility.ErrorReport;
 

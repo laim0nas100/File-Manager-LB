@@ -6,8 +6,9 @@
 package filemanagerGUI;
 
 
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import LibraryLB.Log;
+import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerGUI.dialog.DuplicateFinderController;
@@ -21,23 +22,17 @@ import filemanagerLogic.SimpleTask;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.beans.value.WeakChangeListener;
-import javafx.concurrent.Task;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -85,7 +80,7 @@ public class ViewManager {
     
 // WINDOW ACTIONS
     public void newWindow(ExtFolder currentFolder){
-        FXTask et = new FXTask() {
+        ExtTask et = new ExtTask() {
             @Override
             protected Void call() throws Exception {
                 try {
@@ -101,6 +96,7 @@ public class ViewManager {
                 return null;
             }
         };
+//        et.toThread().start();
         Platform.runLater(et);
         
     }

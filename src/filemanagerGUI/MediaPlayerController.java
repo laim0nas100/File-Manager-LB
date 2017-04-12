@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 import LibraryLB.Log;
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;

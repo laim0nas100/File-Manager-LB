@@ -5,6 +5,7 @@
  */
 package filemanagerLogic.fileStructure;
 
+import LibraryLB.Containers.ObjectBuffer;
 import filemanagerGUI.FileManagerLB;
 import java.io.File;
 import java.nio.file.Files;
@@ -18,10 +19,10 @@ import filemanagerLogic.Enums.Identity;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Iterator;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.ExtStringUtils;
 
@@ -34,12 +35,13 @@ public class ExtFolder extends ExtPath{
 
     protected boolean populated;
     public ConcurrentHashMap <String,ExtPath> files;
-    
+    public ObservableList<ExtPath> fileRepresentation = FXCollections.observableArrayList();
   
     public ExtFolder(String src,Object...optional){
         super(src,optional);
         files = new ConcurrentHashMap<>(1,0.75f,2);        
         populated = false;
+        
     }
     public Collection<ExtPath> getFilesCollection(){
         return files.values();
@@ -48,14 +50,13 @@ public class ExtFolder extends ExtPath{
     public Identity getIdentity(){
         return Identity.FOLDER;
     }
-    private void addToList(Collection<ExtPath> list, final ExtPath path){
-        Platform.runLater(()->{
-            list.add(path);
-        });  
-    }
+
+
     protected void populateFolder(Collection<ExtPath> list, BooleanProperty isCanceled){
         
         try{
+            
+            ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list,10);
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
@@ -74,7 +75,7 @@ public class ExtFolder extends ExtPath{
  
                             files.put(file.propertyName.get(), file);
                             if(list!=null){
-                                addToList(list,file);
+                                buffer.add(file);
                                 if(isCanceled!=null){
                                     if(isCanceled.get()){
                                         Log.print("Canceled form populate");
@@ -82,13 +83,14 @@ public class ExtFolder extends ExtPath{
                                     }
                                 }
                             }
-                        }
-                        
-                        
+                        }  
                     }
-                }
-                
+                }              
             }
+            if(list!=null){
+                buffer.flush();
+            }
+            
             
         }catch(Exception e){
             ErrorReport.report(e);
@@ -177,19 +179,17 @@ public class ExtFolder extends ExtPath{
                 if(!Files.exists(file.toPath())){
                     Log.print(file.getAbsoluteDirectory()+" doesn't exist");
                     files.remove(file.propertyName.get());
-                }else{
-                    addToList(list,file);
                 }
                 if(isCanceled.get()){
                     return;
                 }
             }   
         }
-        
+        list.addAll(getFilesCollection());
         populateFolder(list,isCanceled);
-        Platform.runLater(() ->{
+//        Platform.runLater(() ->{
             list.setAll(getFilesCollection());
-        });
+//        });
     }
     public ExtPath getIgnoreCase(String name){
         if(hasFileIgnoreCase(name)){

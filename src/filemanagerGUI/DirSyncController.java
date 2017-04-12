@@ -6,7 +6,7 @@
 package filemanagerGUI;
 
 
-import LibraryLB.Threads.FXTask;
+import LibraryLB.FX.FXTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -40,7 +40,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import LibraryLB.Log;
-import LibraryLB.Threads.FXTaskPooler;
+import LibraryLB.FX.FXTaskPooler;
 import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.Enums;
