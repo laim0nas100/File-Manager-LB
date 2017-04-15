@@ -31,12 +31,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -135,17 +132,25 @@ public class MediaPlayerController extends BaseController {
         });
        
     private MediaPlayer getCurrentPlayer(){
+        if(players.isEmpty()){
+            throw new VLCException("No available players");
+        }
         return this.players.getLast();
     }
     private JFrame getCurrentFrame(){
+        if(frames.isEmpty()){
+            throw new VLCException("No available frames");
+        }
         return this.frames.getLast();
     }
-    public class VLCNotFoundException extends Exception{
-        VLCNotFoundException(String str){
+    
+    
+    public static class VLCException extends RuntimeException{
+        VLCException(String str){
             super(str);
         }
     }
-    public void discover() throws InterruptedException, VLCNotFoundException{    
+    public static void discover() throws InterruptedException, VLCException{    
         if(!VLCfound){
             NativeDiscoveryStrategy[] array = new StandardNativeDiscoveryStrategy[]{
                 new DefaultWindowsNativeDiscoveryStrategy(),
@@ -200,7 +205,7 @@ public class MediaPlayerController extends BaseController {
             if(VLCfound){
                 Log.print(RuntimeUtil.getLibVlcLibraryName()+" "+LibVlc.INSTANCE.libvlc_get_version());
             }else{
-                throw new VLCNotFoundException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
+                throw new VLCException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
             }
         }  
     }

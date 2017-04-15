@@ -323,21 +323,25 @@ public class ViewManager {
                         }
                     };
                     init.setOnSucceeded(event ->{
-                        new SimpleTask() {
+                        SimpleTask task = new SimpleTask() {
                             @Override
                             protected Void call() throws Exception {
                                 if(property.get()){
+                                    
+                                    frame.getStage().show();
+                                    frame.getStage().toFront();
                                     controller.afterShow();
+                                    
                                 }else{
                                     closeFrame(controller.windowID);
                                 }
                                 return null;
                             }
-                        }.runOnPlatform();
+                        };
+                        task.runOnPlatform();
                         
                     });
-                    frame.getStage().show();
-                    frame.getStage().toFront();
+                    
                     new Thread(init).start();
 
                 } catch (Exception ex) {

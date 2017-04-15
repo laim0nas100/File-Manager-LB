@@ -42,6 +42,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import utility.ErrorReport;
+import utility.ExtInputStream;
 import utility.FileNameException;
 import utility.PathStringCommands;
 
@@ -244,6 +245,7 @@ public class TaskFactory {
 //TASKS    
     public FXTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
         return new FXTask(){
+            @Override
             protected Void call() throws Exception {
                 String str;
                 updateMessage("Populating list for copy");
@@ -271,9 +273,15 @@ public class TaskFactory {
                     str = "Source: \t\t"+list.get(i).paths[0]+"\n";
                     str +="Destination: \t"+list.get(i).paths[1];
                     updateMessage(str);
-                    updateProgress(i+0.5, list.size());
+                    updateProgress(i, list.size());
                     try{
-                        list.get(i).copy();
+                        final int currentIndex = i;
+                        ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
+                        stream.progress.addListener(listener ->{
+                            updateProgress(currentIndex+stream.progress.get(),list.size());
+                        });
+                        Files.copy(stream, list.get(i).paths[1]);
+//                        list.get(i).copy();
                         Log.print("OK:"+list.get(i));
                         
                     }catch(Exception e){
