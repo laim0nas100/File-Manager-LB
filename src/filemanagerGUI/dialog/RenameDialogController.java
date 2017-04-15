@@ -6,12 +6,10 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.Threads.TimeoutTask;
-import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.nio.file.Files;
-import java.util.concurrent.Future;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

@@ -5,12 +5,10 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.Threads.ExtTask;
 import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
 import filemanagerLogic.LocationAPI;
-import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import java.util.ArrayList;

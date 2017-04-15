@@ -23,8 +23,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -82,7 +80,6 @@ public class ExtPath{
     
     boolean sizeTaskComplete = true;
     boolean dateTaskComplete = true;
-//    private static final ExecutorService executor = Executors.newFixedThreadPool(TaskFactory.PROCESSOR_COUNT);
     private Runnable getSizeTask = new RepeatableTask(new Callable() {
             @Override
             public Object call() throws Exception {

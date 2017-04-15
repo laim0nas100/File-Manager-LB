@@ -7,7 +7,6 @@ package filemanagerGUI.customUI;
 
 import LibraryLB.Log;
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.Threads.Sync.ReadWriteLock;
 import LibraryLB.Threads.Sync.UninterruptibleReadWriteLock;
 import LibraryLB.Threads.TimeoutTask;
 import java.util.ArrayDeque;
@@ -17,14 +16,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -136,7 +127,6 @@ public class CosmeticsFX {
             recentlyResized.set(false);
         });
         public ArrayList<TableCol> cols;
-        private ConcurrentLinkedDeque<FutureTask> updateTasks = new ConcurrentLinkedDeque<>();
         public int sortByColumn;
         public boolean sortable = true;
         public TableView table;
@@ -216,11 +206,6 @@ public class CosmeticsFX {
         public void updateContentsAndSort(Collection collection){
             
             saveSortPrefereces();
-//            if(collection instanceof ObservableList){
-//                updateContents((ObservableList) collection);
-//            }else{
-//                
-//            }
             updateContents(FXCollections.observableArrayList(collection));
             setSortPreferences();
             
@@ -236,16 +221,10 @@ public class CosmeticsFX {
             ExtTask task = new ExtTask() {
                 @Override
                 protected Object call() throws Exception {
-//                    ArrayList main = new ArrayList<>();    
-//                    Bindings.bindContent(main, backingList);
-                    
-//                    Platform.runLater(run);
                     try{
                         do{  
-                                Platform.runLater(run);
-                                Thread.sleep(500);
-                                
-
+                            Platform.runLater(run);
+                            Thread.sleep(500);        
                         }while(!this.canceled.get());
                     }catch(InterruptedException e){}
                     

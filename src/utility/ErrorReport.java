@@ -9,7 +9,6 @@ import LibraryLB.Log;
 import static filemanagerGUI.FileManagerLB.DEBUG;
 import filemanagerGUI.MainController;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
