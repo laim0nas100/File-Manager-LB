@@ -28,7 +28,7 @@ public class ExtInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        bytesRead+=1;
+        bytesRead+= 1;
         updateProgress(bytesRead,bytesLength);
         return stream.read();
     }

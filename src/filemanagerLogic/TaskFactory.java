@@ -275,13 +275,16 @@ public class TaskFactory {
                     updateMessage(str);
                     updateProgress(i, list.size());
                     try{
-                        final int currentIndex = i;
-                        ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
-                        stream.progress.addListener(listener ->{
-                            updateProgress(currentIndex+stream.progress.get(),list.size());
-                        });
-                        Files.copy(stream, list.get(i).paths[1]);
-//                        list.get(i).copy();
+                        if(Files.isDirectory(list.get(i).paths[0])){
+                            list.get(i).copy();
+                        }else{
+                            final int currentIndex = i;
+                            ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
+                            stream.progress.addListener(listener ->{
+                                updateProgress(currentIndex+stream.progress.get(),list.size());
+                            });
+                            Files.copy(stream, list.get(i).paths[1]); 
+                        }                        
                         Log.print("OK:"+list.get(i));
                         
                     }catch(Exception e){
