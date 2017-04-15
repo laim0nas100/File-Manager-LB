@@ -10,6 +10,7 @@ import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationInRoot;
+import filemanagerLogic.TaskFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,7 +82,7 @@ public class ExtPath{
     
     boolean sizeTaskComplete = true;
     boolean dateTaskComplete = true;
-    private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+//    private static final ExecutorService executor = Executors.newFixedThreadPool(TaskFactory.PROCESSOR_COUNT);
     private Runnable getSizeTask = new RepeatableTask(new Callable() {
             @Override
             public Object call() throws Exception {
@@ -134,7 +135,7 @@ public class ExtPath{
             public long get() {
                 if(sizeTaskComplete){
                     sizeTaskComplete = false;
-                    ExtPath.executor.submit(getSizeTask);  
+                    TaskFactory.mainExecutor.submit(getSizeTask);  
                 }
                 
                 return size;
@@ -146,7 +147,7 @@ public class ExtPath{
             public long get() {
                 if(dateTaskComplete){
                     dateTaskComplete = false;
-                    ExtPath.executor.submit(getDateTask);
+                    TaskFactory.mainExecutor.submit(getDateTask);
                 }
                 
                 return lastModified;

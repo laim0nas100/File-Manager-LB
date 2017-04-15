@@ -239,12 +239,12 @@ public class CosmeticsFX {
 //                    ArrayList main = new ArrayList<>();    
 //                    Bindings.bindContent(main, backingList);
                     
-                    Platform.runLater(run);
+//                    Platform.runLater(run);
                     try{
                         do{  
-
-                                Thread.sleep(500);
                                 Platform.runLater(run);
+                                Thread.sleep(500);
+                                
 
                         }while(!this.canceled.get());
                     }catch(InterruptedException e){}

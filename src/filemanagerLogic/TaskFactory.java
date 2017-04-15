@@ -59,16 +59,16 @@ import utility.PathStringCommands;
 //
 public class TaskFactory {
     
-    
-    private final HashSet<Character> illegalCharacters;
+    public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
+    private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
+    public static final ExecutorService mainExecutor = Executors.newFixedThreadPool(PROCESSOR_COUNT);
     public static String dragInitWindowID ="";
     public static TaskFactory getInstance(){
         
         return INSTANCE;
     }
     protected TaskFactory(){
-        illegalCharacters = new HashSet<>();
         Character[] arrayWindows = new Character[] {
                 '\\',
                 '/',
@@ -408,14 +408,11 @@ public class TaskFactory {
         }
     }
 
-    public void populateRecursiveParallelNew(ExtFolder folder, int depth){
-        TaskPooler pooler = new TaskPooler(5);
-        
-        populateRecursiveParallelInner(folder,depth,pooler); 
-        new Thread(pooler).start();
+    public void populateRecursiveParallelContained(ExtFolder folder, int depth){
+        populateRecursiveParallelInner(folder,depth,mainExecutor); 
     }
     public Runnable populateRecursiveParallel(ExtFolder folder, int depth){
-        TaskPooler pooler = new TaskPooler(5); 
+        TaskPooler pooler = new TaskPooler(PROCESSOR_COUNT); 
         populateRecursiveParallelInner(folder,depth,pooler); 
         return pooler;
     }
@@ -456,7 +453,7 @@ public class TaskFactory {
             @Override
             protected Void call() throws Exception {
 
-                    TaskFactory.getInstance().populateRecursiveParallelNew(folder, 50);
+                    TaskFactory.getInstance().populateRecursiveParallelContained(folder, 50);
 //                    Thread thread = new Thread(populateRecursiveParallel);
 //                    thread.setDaemon(true);
 //                    thread.start();

@@ -153,7 +153,6 @@ public class MainController extends BaseController{
     public ExtTableView extTableView;
     public ArrayDeque<Future> deq = new ArrayDeque<>();
     private ExecutorService localSearchExecutor = Executors.newSingleThreadExecutor();
-    private ExecutorService localSearchExecutor1 = Executors.newSingleThreadExecutor();
 
     private TimeoutTask localSearchTask = new TimeoutTask(1000,10,() ->{
         Platform.runLater(()->{
@@ -244,7 +243,11 @@ public class MainController extends BaseController{
     @Override
     public void update(){
         Platform.runLater(()->{
-            
+            if(firstTime){
+                firstTime = false;
+            }else{
+                localSearch();
+            }
             Iterator<ExtPath> iterator = MainController.markedList.iterator();
             while(iterator.hasNext()){
                 try{
@@ -277,13 +280,6 @@ public class MainController extends BaseController{
             
             fileAddress.folder = MC.currentDir;
             fileAddress.f = null;
-            if(firstTime){
-                firstTime = false;
-            }else{
-                localSearch();
-            }
-            
-
         });
         
     }
@@ -377,7 +373,7 @@ public class MainController extends BaseController{
 //        Log.println(1,2,3);
 //            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
 //            t.start();
-            TaskFactory.getInstance().populateRecursiveParallelNew(MC.currentDir, 4);
+            TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
         Log.print("END TEST");
     }
 
@@ -421,14 +417,18 @@ public class MainController extends BaseController{
     }
     public Thread changeToDir(ExtFolder dir){
         return new Thread( ()->{
-            MC.changeDirTo(dir);
-            TaskFactory.getInstance().populateRecursiveParallelNew(dir,FileManagerLB.DEPTH);
+            
+            TaskFactory.getInstance().populateRecursiveParallelContained(dir,FileManagerLB.DEPTH);
 //            t.start();
             if(!localSearch.getText().isEmpty()){
                 localSearch.clear();
             }
-                
-            update();
+            Platform.runLater(() ->{
+                MC.changeDirTo(dir);
+                update();  
+            });
+              
+            
         });
 
     }
@@ -498,9 +498,10 @@ public class MainController extends BaseController{
             @Override
             protected Void call() throws Exception {
                 Platform.runLater(() ->{
-                    extTableView.saveSortPrefereces();                    
+                    extTableView.saveSortPrefereces();
+                    toThread.start();                    
                 });
-                toThread.start();
+                
                 if(canceled.get()){
                     Log.print("Canceled from task before start");
                     return null;

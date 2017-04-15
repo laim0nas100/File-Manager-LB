@@ -20,9 +20,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.ExtStringUtils;
 
@@ -54,8 +52,6 @@ public class ExtFolder extends ExtPath{
     protected void populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled){
         
         try{
-            
-            
             if(Files.isDirectory(toPath())){
                 String parent = getAbsoluteDirectory();
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
