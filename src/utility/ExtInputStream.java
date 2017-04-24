@@ -5,6 +5,7 @@
  */
 package utility;
 
+import LibraryLB.Threads.Sync.ConditionalWait;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import javafx.beans.property.SimpleDoubleProperty;
  */
 public class ExtInputStream extends InputStream {
     public final SimpleDoubleProperty progress = new SimpleDoubleProperty(0);
+    public final ConditionalWait waitingTool = new ConditionalWait();
     private InputStream stream;
     private final long bytesLength;
     private long bytesRead;
@@ -28,20 +30,21 @@ public class ExtInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
+        waitingTool.conditionalWait();
         bytesRead+= 1;
         updateProgress(bytesRead,bytesLength);
         return stream.read();
     }
     @Override
     public int read(byte[] b) throws IOException{
-       
+        waitingTool.conditionalWait();
         bytesRead+= b.length;
         updateProgress(bytesRead,bytesLength);
         return stream.read(b);
     }
     @Override
     public int read(byte[] b, int off, int len) throws IOException{
-        
+        waitingTool.conditionalWait();
         bytesRead+= b.length;
         updateProgress(bytesRead,bytesLength);
         return stream.read(b, off, len);

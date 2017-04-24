@@ -280,6 +280,13 @@ public class TaskFactory {
                         }else{
                             final int currentIndex = i;
                             ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
+                            this.paused.addListener(listener ->{
+                                if(paused.get()){
+                                    stream.waitingTool.requestWait();
+                                }else{
+                                    stream.waitingTool.wakeUp();
+                                }
+                            });
                             stream.progress.addListener(listener ->{
                                 updateProgress(currentIndex+stream.progress.get(),list.size());
                             });
