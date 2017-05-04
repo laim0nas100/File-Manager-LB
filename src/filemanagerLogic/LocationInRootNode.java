@@ -15,16 +15,21 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- *
+ * create file tree
+ * 
+ * start with an empty root node and add files to it
+ * 
  * @author Lemmin
  */
 public class LocationInRootNode {
-    public HashMap<String,LocationInRootNode> leafs;
-    public String self;
-    public int index;
     public final static String folderStart = "\\";
     public final static String folderEnd="/";
     public final static Character indexEnd = ':';
+    
+    public HashMap<String,LocationInRootNode> leafs;
+    public String self;
+    public int index;
+    
     public LocationInRootNode(String self,int i){
         this.self = self;
         this.index = i;
