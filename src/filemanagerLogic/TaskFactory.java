@@ -41,9 +41,11 @@ import LibraryLB.Threads.TaskPooler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javafx.beans.property.DoubleProperty;
 import utility.ErrorReport;
 import utility.ExtInputStream;
 import utility.FileNameException;
+import utility.FileUtils;
 import utility.PathStringCommands;
 
 /**
@@ -269,29 +271,38 @@ public class TaskFactory {
                     if(this.isCancelled()){
                         return null;
                     }
-                    
-                    str = "Source: \t\t"+list.get(i).paths[0]+"\n";
-                    str +="Destination: \t"+list.get(i).paths[1];
+                    ActionFile file = list.get(i);
+                    str = "Source: \t\t"+file.paths[0]+"\n";
+                    str +="Destination: \t"+file.paths[1];
                     updateMessage(str);
                     updateProgress(i, list.size());
                     try{
-                        if(Files.isDirectory(list.get(i).paths[0])){
-                            list.get(i).copy();
-                        }else{
-                            final int currentIndex = i;
-                            ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
-                            this.paused.addListener(listener ->{
-                                if(paused.get()){
-                                    stream.waitingTool.requestWait();
-                                }else{
-                                    stream.waitingTool.wakeUp();
-                                }
-                            });
-                            stream.progress.addListener(listener ->{
-                                updateProgress(currentIndex+stream.progress.get(),list.size());
-                            });
-                            Files.copy(stream, list.get(i).paths[1]); 
-                        }                        
+                        final int currentIndex = i;
+                        ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], true);
+                        DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
+                        progress.addListener(listener ->{
+                            updateProgress(currentIndex + progress.get(), list.size());
+                        });
+                        copy.paused.bind(this.paused);
+                        copy.run();
+                        
+//                        if(Files.isDirectory(list.get(i).paths[0])){
+//                            list.get(i).copy();
+//                        }else{
+//                            final int currentIndex = i;
+//                            ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
+//                            this.paused.addListener(listener ->{
+//                                if(paused.get()){
+//                                    stream.waitingTool.requestWait();
+//                                }else{
+//                                    stream.waitingTool.wakeUp();
+//                                }
+//                            });
+//                            stream.progress.addListener(listener ->{
+//                                updateProgress(currentIndex+stream.progress.get(),list.size());
+//                            });
+//                            Files.copy(stream, list.get(i).paths[1]); 
+//                        }                        
                         Log.print("OK:"+list.get(i));
                         
                     }catch(Exception e){
@@ -324,18 +335,26 @@ public class TaskFactory {
                     if(this.isCancelled()){
                         return null;
                     }
-                    
-                    str = "Source: \t\t"+list.get(index1).paths[0]+"\n";
-                    str +="Destination: \t"+list.get(index1).paths[1];
+                    ActionFile file = list.get(index1);
+                    str = "Source: \t\t"+file.paths[0]+"\n";
+                    str +="Destination: \t"+file.paths[1];
                     updateMessage(str);
                     updateProgress(index1+0.5, list.size()+leftFolders.size());
                     try{
-                        if(Files.isDirectory(list.get(index1).paths[0])){
+                        if(Files.isDirectory(file.paths[0])){
                             leftFolders.add(list.get(index1));
-                            Files.createDirectory(list.get(index1).paths[1]);
-                            Log.print("Added to folders:"+list.get(index1).paths[1]);
-                        }else{
-                            list.get(index1).move();
+                            Files.createDirectory(file.paths[1]);
+                            Log.print("Added to folders:"+file.paths[1]);
+                        }
+                        else{
+                            final int currentIndex = index1;
+                            ExtTask move = FileUtils.move(file.paths[0], file.paths[1], true);
+                            DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
+                            progress.addListener(listener ->{
+                                updateProgress(currentIndex + progress.get(), list.size());
+                            });
+                            move.paused.bind(paused);
+                            move.run();
 //                            Files.move(list.get(index1).paths[0],list.get(index1).paths[1]);
                             
                             Log.print("OK:"+list.get(index1));
@@ -615,8 +634,7 @@ public class TaskFactory {
         }
         entry.actionCompleted.set(true);
     }
-    
-    
+       
     public FXTask duplicateFinderTask(ArrayList<PathStringCommands> array,double ratio,List list,Map map){
         FXTaskPooler executor = new FXTaskPooler(FileManagerLB.MAX_THREADS_FOR_TASK,0);
             for(int i=0; i<array.size();i++){
