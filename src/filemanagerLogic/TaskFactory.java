@@ -43,9 +43,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.beans.property.DoubleProperty;
 import utility.ErrorReport;
-import utility.ExtInputStream;
+import LibraryLB.FileManaging.ExtInputStream;
 import utility.FileNameException;
-import utility.FileUtils;
+import LibraryLB.FileManaging.FileUtils;
+import javafx.beans.property.SimpleDoubleProperty;
 import utility.PathStringCommands;
 
 /**
@@ -566,7 +567,7 @@ public class TaskFactory {
             protected Void call() throws InterruptedException{
                 
                 int i=0;
-                int size = listFirst.size();
+                final int size = listFirst.size();
                 Log.print("List");
                 for(ExtEntry e:listFirst){
                     Log.print(e.relativePath,"  ",e.action.get());
@@ -579,13 +580,27 @@ public class TaskFactory {
                             break;
                         }
                     }
-                    
+                    final int current = i;
                     ActionFile actionFile = new ActionFile(folder1+entry.relativePath,folder2+entry.relativePath);
-                    try{
-                        action(actionFile,entry);
-                    }catch(Exception e){
-                        ErrorReport.report(e);
+                    ExtTask task = actionTask(actionFile,entry);
+                    DoubleProperty progress = (DoubleProperty) task.valueMap.get(FileUtils.PROGRESS_KEY);
+                    progress.addListener(listener ->{
+                        updateProgress(current+progress.get(),size);
+                    });
+                    task.setOnDone(handle ->{
+                        Log.print("Lol done");
+                    });
+                    task.run();
+                    
+                    if(task.failed.get()){
+                        Log.print("Task failed");
+                        ErrorReport.report(task.getException());
                     }
+//                    try{
+//                        action(actionFile,entry);
+//                    }catch(Exception e){
+//                        ErrorReport.report(e);
+//                    }
                     this.updateProgress(++i, size);
                     this.updateMessage(entry.action.get()+"\n"+entry.relativePath);
                 }
@@ -593,6 +608,69 @@ public class TaskFactory {
             
             }
         };
+    }
+    private ExtTask actionTask(ActionFile action, ExtEntry entry){
+        Log.print(action);
+        final int type = entry.actionType.get();
+        DoubleProperty progress = new SimpleDoubleProperty(0);
+        ExtTask task = new ExtTask() {
+            @Override
+            protected Object call() throws Exception {
+                switch(type){
+            
+                    case(1):{
+                        try{
+                            
+                            ExtTask t = FileUtils.copy(action.paths[1], action.paths[0], true, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+                            DoubleProperty other = (DoubleProperty)t.valueMap.get(FileUtils.PROGRESS_KEY);
+                            other.addListener(listener->{
+                                progress.set(other.get());
+                            });
+                            
+                            t.run();
+                            if(t.failed.get()){
+                                ErrorReport.report(t.getException());
+                            }
+                        }catch(Exception e){
+                            ErrorReport.report(e);
+
+                        }
+                        break;
+                    }case(2):{
+                        try{
+                            ExtTask t = FileUtils.copy(action.paths[0], action.paths[1],true, StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);  
+                            DoubleProperty other = (DoubleProperty)t.valueMap.get(FileUtils.PROGRESS_KEY);
+                            other.addListener(listener->{
+                                progress.set(other.get());
+                            });
+                            t.run();
+                            if(t.failed.get()){
+                                ErrorReport.report(t.getException());
+                            }
+                        }catch(Exception e){
+                            ErrorReport.report(e);
+                        }
+                        break;
+                    }case(3):{
+
+                        Files.delete(action.paths[0]); 
+                        break;
+                    }case(4):{
+                        Files.delete(action.paths[1]);
+                        break;
+                    }default:{
+                        break;
+                    }
+                }
+                entry.actionCompleted.set(true);
+                progress.set(1);
+                return null;
+            }
+        };
+        
+        task.addObject(FileUtils.PROGRESS_KEY,progress);
+
+        return task;
     }
     private void action(ActionFile action,ExtEntry entry) throws Exception{
         Log.print(action);

@@ -76,7 +76,7 @@ public class ExtPath{
     public StringProperty propertyDate;
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
-    
+    public ExtPath parent;
     
     boolean sizeTaskComplete = true;
     boolean dateTaskComplete = true;
@@ -102,7 +102,7 @@ public class ExtPath{
             }
         });
     
-
+    
     public ExtPath(String str,Object...optional){
         str = str.trim();
         if(str.endsWith(File.separator)){
@@ -242,7 +242,9 @@ public class ExtPath{
         }
         return get;
     }
-
+    
+    
+    
     @Override
     public int hashCode() {
         int hash = 5;
