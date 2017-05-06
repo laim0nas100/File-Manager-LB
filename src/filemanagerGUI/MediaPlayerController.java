@@ -20,7 +20,9 @@ import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
 import java.awt.Color;
+import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +81,7 @@ import utility.ExtStringUtils;
  * @author Lemmin
  */
 public class MediaPlayerController extends BaseController {
-    
+    public final static String PLAYLIST_DIR = "PLAYLISTS";
     public final static String PLAY_SYMBOL = "✓";
     public final static String PLAYLIST_FILE_NAME = "DEFAULT_PLAYLIST";
     public static String VLC_SEARCH_PATH;
@@ -130,7 +132,9 @@ public class MediaPlayerController extends BaseController {
                     Log.print("Set new seek");
             } 
         });
-       
+    public static String getPlaylistsDir(){
+        return FileManagerLB.USER_DIR+PLAYLIST_DIR+File.separator;
+    }
     private MediaPlayer getCurrentPlayer(){
         if(players.isEmpty()){
             throw new VLCException("No available players");
@@ -460,11 +464,14 @@ public class MediaPlayerController extends BaseController {
                     if(getCurrentPlayer().isPlaying()){
                         relaunch();
                     }
-                    
                 }
-
             });
-            loadState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
+            try{
+                loadState(getPlaylistsDir()+PLAYLIST_FILE_NAME);
+            }catch(Exception e){
+                ErrorReport.report(e);
+            }
+            
         });
         setUpTable();  
         MenuTree tree = new MenuTree(null);
@@ -592,7 +599,7 @@ public class MediaPlayerController extends BaseController {
         frames.forEach(frame->{
             frame.setVisible(false);
         });
-        saveState(FileManagerLB.USER_DIR+PLAYLIST_FILE_NAME);
+        saveState(MediaPlayerController.getPlaylistsDir()+PLAYLIST_FILE_NAME);
         super.exit();
     }
     public void playNext(int increment,boolean ignoreModifiers,Object... opt){
@@ -871,10 +878,10 @@ public class MediaPlayerController extends BaseController {
         task.toThread().start();
     }
     public void saveState(){
-        saveState(FileManagerLB.USER_DIR + saveState.getText().trim());
+        saveState(getPlaylistsDir() + saveState.getText().trim());
     }
     public void loadState(){
-        loadState(FileManagerLB.USER_DIR + loadState.getText().trim());
+        loadState(getPlaylistsDir() + loadState.getText().trim());
     }
     private void loadState(String path){
         labelStatus.setText("Busy");

@@ -182,6 +182,14 @@ public class FileManagerLB extends Application {
         MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Log.print("After new window");
+        //Create directories
+        try{
+            Files.createDirectories(Paths.get(FileManagerLB.USER_DIR+MediaPlayerController.PLAYLIST_DIR));
+        }catch(Exception e){
+            ErrorReport.report(e);
+        }
+
+        
         
     }
     public static void readParameters(){
