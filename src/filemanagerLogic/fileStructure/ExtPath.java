@@ -76,7 +76,6 @@ public class ExtPath{
     public StringProperty propertyDate;
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
-    public ExtPath parent;
     
     boolean sizeTaskComplete = true;
     boolean dateTaskComplete = true;

@@ -18,12 +18,6 @@ import javafx.stage.Stage;
 
 public abstract class BaseController implements Initializable{
     protected String windowID;
-    public final SimpleBooleanProperty isGone = new SimpleBooleanProperty(){
-            @Override
-            public boolean get(){
-                return !ViewManager.getInstance().frameIsVisible(windowID)||!getStage().isShowing();
-            }
-        };
             
     @Override
     public void initialize(URL url, ResourceBundle rb) {

@@ -5,7 +5,6 @@
  */
 package filemanagerGUI;
 
-import filemanagerLogic.Enums.FrameTitle;
 import java.util.HashMap;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;

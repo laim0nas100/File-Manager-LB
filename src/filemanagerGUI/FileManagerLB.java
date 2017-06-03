@@ -5,6 +5,7 @@
  */
 package filemanagerGUI;
 
+import LibraryLB.Containers.BasicProperty;
 import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
@@ -52,6 +53,7 @@ public class FileManagerLB extends Application {
     public static int DEPTH = 1;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
+    public static BasicProperty<Boolean> useBufferedFileStreams = new BasicProperty<>(true);
     public static ParametersMap parameters;
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
@@ -209,6 +211,7 @@ public class FileManagerLB extends Application {
         ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
         MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
         USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath()+File.separator;
+        FileManagerLB.useBufferedFileStreams.setValue((boolean) parameters.defaultGet("bufferedFileStreams", true));
         VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
         MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands((String) parameters.defaultGet("vlcPath", HOME_DIR+"lib")).getPath()+File.separator;
         PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");

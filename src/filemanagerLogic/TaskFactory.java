@@ -279,7 +279,7 @@ public class TaskFactory {
                     updateProgress(i, list.size());
                     try{
                         final int currentIndex = i;
-                        ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], true);
+                        ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
                         DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
                         progress.addListener(listener ->{
                             updateProgress(currentIndex + progress.get(), list.size());
@@ -349,7 +349,7 @@ public class TaskFactory {
                         }
                         else{
                             final int currentIndex = index1;
-                            ExtTask move = FileUtils.move(file.paths[0], file.paths[1], true);
+                            ExtTask move = FileUtils.move(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
                             DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
                             progress.addListener(listener ->{
                                 updateProgress(currentIndex + progress.get(), list.size());

@@ -15,6 +15,7 @@ import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ListController;
 import filemanagerGUI.dialog.ProgressDialogController;
 import filemanagerGUI.dialog.RenameDialogController;
+import filemanagerGUI.dialog.RenameDialogController.FileCallback;
 import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
@@ -37,6 +38,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import utility.ErrorReport;
@@ -149,6 +151,10 @@ public class ViewManager {
         et.runOnPlatform();
     }
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
+        newRenameDialog(folder,itemToRename,null);
+    }
+   
+    public void newRenameDialog(ExtFolder folder,ExtPath itemToRename,FileCallback callback){
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -162,6 +168,7 @@ public class ViewManager {
                     frame.getStage().show();
                     frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinTextInputDialogs.get());
                     controller.afterShow(folder,itemToRename);
+                    controller.callback = callback;
                     frame.getStage().requestFocus();
                     frame.getStage().toFront();            
                 } catch (Exception ex) {
@@ -172,6 +179,8 @@ public class ViewManager {
         };
         et.runOnPlatform();
     }
+    
+    
     public void newAdvancedRenameDialog(ExtFolder folder){
        
        
@@ -368,14 +377,16 @@ public class ViewManager {
         if(frames.containsKey(title)){
             throw new Exception("Frame:"+title+"Allready exists");
         }
-        URL url = getClass().getResource("/filemanagerGUI/"+info.recourse);
+        URL url = getClass().getResource("/resources/"+info.recourse);
         Log.print("URL=",url.toString());
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
         Stage stage = new Stage();
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/resources/images/ico.png")));
+        
         stage.setTitle(title);
         stage.setScene(new Scene(root));
-        
+        stage.getScene().getStylesheets().add("resources/css/fxml.css");
         BaseController controller = loader.getController();
         stage.setOnCloseRequest((WindowEvent we) -> {
             controller.exit();

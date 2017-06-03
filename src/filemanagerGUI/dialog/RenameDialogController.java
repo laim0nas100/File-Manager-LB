@@ -6,6 +6,7 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.Threads.TimeoutTask;
+import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
@@ -28,10 +29,13 @@ import utility.PathStringCommands;
 public class RenameDialogController extends TextInputDialogController {
     
     
+    public static interface FileCallback{
+        public void callback(ExtPath path);
+    }
     
     @FXML public Label nameAvailable;
    
-    
+    public FileCallback callback;
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
@@ -42,9 +46,7 @@ public class RenameDialogController extends TextInputDialogController {
                 nameAvailable.setText("Available");   
                 nameIsAvailable.set(true);
             }
-        });
-            
-        
+        }); 
     });
 
     @Override
@@ -81,7 +83,11 @@ public class RenameDialogController extends TextInputDialogController {
         if(nameIsAvailable.get()){
             try {
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
-                TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),fallback.getName(true));
+                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),fallback.getName(true));
+                if(callback!=null){
+                    ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(renameTo);
+                    callback.callback(fileOptimized);
+                }
                 exit();
             }catch(FileNameException ex){
                 this.nameAvailable.setText(ex.getMessage());

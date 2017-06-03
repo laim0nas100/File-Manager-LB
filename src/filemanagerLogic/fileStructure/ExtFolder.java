@@ -67,7 +67,6 @@ public class ExtFolder extends ExtPath{
                             }else{
                                 file = new ExtPath(filePathStr,f);
                             }
-                            file.parent = this;
                             files.put(file.propertyName.get(), file);
                             if(buffer!=null){
                                 buffer.add(file);

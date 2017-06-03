@@ -11,18 +11,19 @@ import LibraryLB.Threads.TimeoutTask;
 import filemanagerGUI.customUI.CosmeticsFX;
 import filemanagerGUI.customUI.CosmeticsFX.ExtTableView;
 import filemanagerGUI.customUI.CosmeticsFX.MenuTree;
+import filemanagerGUI.dialog.RenameDialogController.FileCallback;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.LocationInRootNode;
 import filemanagerLogic.SimpleTask;
 import filemanagerLogic.TaskFactory;
+import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -358,14 +359,7 @@ public class MediaPlayerController extends BaseController {
             event.consume();
         });   
     }
-    public void addIfAbsent(ExtPath item){
-        if(item!=null && item.getIdentity().equals(Identity.FILE)){
-            if(!table.getItems().contains(item)){
-                table.getItems().add(item);
-            }
-        }
-        
-    }
+    
     @Override
     public void afterShow(){
         JFrame tempFrame = new JFrame();
@@ -512,12 +506,22 @@ public class MediaPlayerController extends BaseController {
         tree.addMenuItem(remove, remove.getText());
         MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem("Delete",
             event -> {
-                Log.print("Deleting");
                 FXTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
                 task.setTaskDescription("Delete selected files");
                 ViewManager.getInstance().newProgressDialog(task);
             }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         tree.addMenuItem(deleteMenuItem, deleteMenuItem.getText());
+        MenuItem renameMenuItem = CosmeticsFX.simpleMenuItem("Rename ", 
+                event -> {
+                    FileCallback cb = (filePath) ->{
+                        addIfAbsent(filePath);
+                    };
+                    ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
+                    String parent = selected.getParent(1);
+                    ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getFileOptimized(parent), selected, cb);
+                }, Bindings.size(table.getSelectionModel().getSelectedItems()).isEqualTo(1));
+        tree.addMenuItem(renameMenuItem, renameMenuItem.getText());
+
         table.setContextMenu(tree.constructContextMenu());
         table.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
@@ -815,6 +819,14 @@ public class MediaPlayerController extends BaseController {
     }
     public int getIndex(ExtPath path){
         return table.getItems().indexOf(path);
+    }
+    public void addIfAbsent(ExtPath item){
+        if(item!=null && item.getIdentity().equals(Identity.FILE)){
+            if(!table.getItems().contains(item)){
+                table.getItems().add(item);
+            }
+        }
+        
     }
     
     public static class PlaylistState{

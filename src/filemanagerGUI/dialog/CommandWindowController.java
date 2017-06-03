@@ -294,7 +294,7 @@ public class CommandWindowController extends BaseController {
                     String c = coms.pollFirst();
                     String[] params = coms.toArray(new String[1]);
                     Log.print("Params",Arrays.asList(params));
-                    addToTextArea(textArea,"$:"+command);
+                    addToTextArea(textArea,"$:"+command+"\n");
                     if(runCommand(c,params)){
                         Log.print("Run in-built command:",command);
                         return null;
