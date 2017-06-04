@@ -960,6 +960,8 @@ public class MainController extends BaseController{
                 return;
             }
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                
+                
                 return;
             }
             // data is dragged over the target
@@ -973,6 +975,7 @@ public class MainController extends BaseController{
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
+//            Log.print("Drag dropped");
             if(MC.currentDir.isVirtual.get()){
                 return;
             }
@@ -988,6 +991,8 @@ public class MainController extends BaseController{
                 tableDragContextMenu.getOwnerWindow().requestFocus();
                 //ViewManager.getInstance().windows.get(title).getStage().requestFocus();
                 success = true;
+            }else{
+                Log.print("Drag list is empty");
             }
             event.setDropCompleted(success);
             event.consume();

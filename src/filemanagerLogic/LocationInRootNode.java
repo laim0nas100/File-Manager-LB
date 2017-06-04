@@ -5,12 +5,12 @@
  */
 package filemanagerLogic;
 
-import LibraryLB.Log;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -21,7 +21,7 @@ import java.util.List;
  * 
  * @author Lemmin
  */
-public class LocationInRootNode {
+public class LocationInRootNode implements Comparable{
     public final static String folderStart = "\\";
     public final static String folderEnd="/";
     public final static Character indexEnd = ':';
@@ -78,7 +78,7 @@ public class LocationInRootNode {
     public String specialString(){
         boolean isFolder = !leafs.values().isEmpty();
         String res = "";
-        Collection<LocationInRootNode> values = new ArrayList<>();
+        ArrayList<LocationInRootNode> values = new ArrayList<>();
         if(isFolder){
             ArrayList<LocationInRootNode> folders = new ArrayList<>();
             ArrayList<LocationInRootNode> files = new ArrayList<>();
@@ -98,13 +98,25 @@ public class LocationInRootNode {
         if(isFolder){
             res+=folderStart + self + "\n";
         }
+        Collections.sort(values);
         for(LocationInRootNode node:values){
             res+=node.specialString();
+            
         }
         if(isFolder){
             res+=folderEnd + "\n";
         }
         return res;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        LocationInRootNode other = (LocationInRootNode)o;
+        boolean isFolder = !leafs.values().isEmpty();
+        if(isFolder){
+            return 1;
+        }
+        return this.index - other.index;
     }
     private class StringWithIndex{
         public String str;

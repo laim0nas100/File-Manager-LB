@@ -5,13 +5,13 @@
  */
 package filemanagerGUI;
 
-import LibraryLB.Containers.BasicProperty;
 import LibraryLB.FileManaging.AutoBackupMaker;
 import LibraryLB.FileManaging.FileReader;
 import LibraryLB.Log;
 import LibraryLB.Containers.ParametersMap;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
+import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.VirtualFolder;
@@ -23,10 +23,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -235,7 +233,7 @@ public class FileManagerLB extends Application {
         CommandWindowController.commandSetCustom = (String) parameters.defaultGet("code.setCustom", "setCustom");
         CommandWindowController.commandHelp = (String) parameters.defaultGet("code.help", "help");
         CommandWindowController.commandListParams = (String) parameters.defaultGet("code.listParameters", "listParams");
-        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", 5);
+        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
         CommandWindowController.commandCopyFolderStructure = (String) parameters.defaultGet("code.copyFolderStructure", "copyStructure");
 
 

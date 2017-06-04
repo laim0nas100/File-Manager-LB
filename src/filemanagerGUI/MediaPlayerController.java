@@ -51,9 +51,11 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
@@ -273,6 +275,9 @@ public class MediaPlayerController extends BaseController {
         
         
     }
+    private Integer dragIndex = null;
+    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
+
     public void setUpTable(){
         this.extTableView = new ExtTableView(table);
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
@@ -310,6 +315,56 @@ public class MediaPlayerController extends BaseController {
                 }
             }
         });
+//        table.setRowFactory( rf -> {
+//            TableRow<ExtPath> row = new TableRow<>();
+//            row.setOnDragDetected(event -> {
+//                MainController.dragList = table.getSelectionModel().getSelectedItems();
+//                TaskFactory.dragInitWindowID = this.windowID;
+//                if (! row.isEmpty()) {
+//                    Integer index = row.getIndex();
+//                    Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
+//                    db.setDragView(row.snapshot(null, null));
+//                    ClipboardContent cc = new ClipboardContent();
+//                    cc.put(SERIALIZED_MIME_TYPE, index);
+//                    db.setContent(cc);
+//                    event.consume();
+//                }
+//            });
+//
+//            row.setOnDragOver(event -> {
+//                Dragboard db = event.getDragboard();
+//                if (db.hasContent(SERIALIZED_MIME_TYPE)) {
+//                    if (row.getIndex() != ((Integer)db.getContent(SERIALIZED_MIME_TYPE)).intValue()) {
+//                        event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+//                        event.consume();
+//                    }
+//                }
+//            });
+//
+//            row.setOnDragDropped(event -> {
+//                Dragboard db = event.getDragboard();
+//                if (db.hasContent(SERIALIZED_MIME_TYPE)) {
+//                    int draggedIndex = (Integer) db.getContent(SERIALIZED_MIME_TYPE);
+//                    ExtPath draggedPerson = (ExtPath) table.getItems().remove(draggedIndex);
+//
+//                    int dropIndex ; 
+//
+//                    if (row.isEmpty()) {
+//                        dropIndex = table.getItems().size() ;
+//                    } else {
+//                        dropIndex = row.getIndex();
+//                    }
+//
+//                    table.getItems().add(dropIndex, draggedPerson);
+//
+//                    event.setDropCompleted(true);
+//                    table.getSelectionModel().select(dropIndex);
+//                    event.consume();
+//                }
+//            });
+//            return row;
+//            
+//        });
         table.setOnDragDetected((MouseEvent event) ->{
             if(this.extTableView.recentlyResized.get()){
                 Log.print("recently resized");
@@ -320,9 +375,10 @@ public class MediaPlayerController extends BaseController {
             Log.print(TaskFactory.dragInitWindowID,MainController.dragList);
             if(!MainController.dragList.isEmpty()){
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
-               ClipboardContent content = new ClipboardContent();
+                ClipboardContent content = new ClipboardContent();
+                dragIndex = table.getSelectionModel().getSelectedIndex();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                    content.putString("Ready");
+                content.putString("Ready");
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -343,7 +399,9 @@ public class MediaPlayerController extends BaseController {
             event.consume();
         });
         table.setOnDragDropped((DragEvent event)-> {
+            Log.println("Drag dropped!",MainController.dragList);
             if(this.windowID.equals(TaskFactory.dragInitWindowID)){
+                Log.print("Same window");
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -354,6 +412,7 @@ public class MediaPlayerController extends BaseController {
                 });
                 update();
                 success = true;
+            
             }
             event.setDropCompleted(success);
             event.consume();
@@ -825,8 +884,14 @@ public class MediaPlayerController extends BaseController {
             if(!table.getItems().contains(item)){
                 table.getItems().add(item);
             }
+        }  
+    }
+    public void addIfAbsent(ExtPath item, int index){
+        if(item!=null && item.getIdentity().equals(Identity.FILE)){
+            if(!table.getItems().contains(item)){
+                table.getItems().add(index,item);
+            }
         }
-        
     }
     
     public static class PlaylistState{
