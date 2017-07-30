@@ -128,9 +128,7 @@ public class TaskFactory {
             if(file!=null&&!MainController.markedList.contains(file)){
                 MainController.markedList.add(file);
             } 
-        });
-        
-        
+        });  
     }
 
     public Collection<String> populateStringFileList(Collection<ExtPath> filelist){
@@ -155,10 +153,7 @@ public class TaskFactory {
             for(ExtPath f:listRecursive){
                 String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
                 list.add(new ActionFile(f.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath));
-            }
-
-            
-           
+            }  
         }
         list.sort(cmpDesc);
         Log.print("List after computing");

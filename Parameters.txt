@@ -84,7 +84,7 @@ code.setCustom=setCustom
 */
 
 //Multi-threading for commands-line tasks
-code.maxThreadsForCommand=5
+code.maxThreadsForCommand=
 
 
 code.listParameters=listParam

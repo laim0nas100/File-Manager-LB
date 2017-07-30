@@ -311,48 +311,46 @@ public class ViewManager {
         
     } 
     public void newMediaPlayer(){
+        SimpleBooleanProperty property = new SimpleBooleanProperty(true);
+        Frame[] frame = new Frame[1];
+        SimpleTask init = new SimpleTask() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    MediaPlayerController.discover();
+                } catch(Exception e){
+                    ErrorReport.report(e);
+                    property.set(false);
+                }
+                return null;
+            }
+        };
+        init.setOnSucceeded(event ->{
+            SimpleTask task = new SimpleTask() {
+                @Override
+                protected Void call() throws Exception {
+                    if(property.get()){
+                        frame[0].getStage().show();
+                        frame[0].getStage().toFront();
+                        frame[0].getController().afterShow();
+                    }
+                    else{
+                        closeFrame(frame[0].getController().windowID);
+                    }
+                    return null;
+                }
+            };
+            task.runOnPlatform();
+
+        });
+
         
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {
-                    Frame frame = newFrame(FrameTitle.MEDIA_PLAYER);
-                    MediaPlayerController controller = (MediaPlayerController) frame.getController();
-                    SimpleBooleanProperty property = new SimpleBooleanProperty(true);
-                    SimpleTask init = new SimpleTask() {
-                        @Override
-                        protected Void call() throws Exception {
-                            try{
-                                controller.discover();
-                            }catch(Exception e){
-                                ErrorReport.report(e);
-                                property.set(false);
-                            }
-                            return null;
-                        }
-                    };
-                    init.setOnSucceeded(event ->{
-                        SimpleTask task = new SimpleTask() {
-                            @Override
-                            protected Void call() throws Exception {
-                                if(property.get()){
-                                    
-                                    frame.getStage().show();
-                                    frame.getStage().toFront();
-                                    controller.afterShow();
-                                    
-                                }else{
-                                    closeFrame(controller.windowID);
-                                }
-                                return null;
-                            }
-                        };
-                        task.runOnPlatform();
-                        
-                    });
-                    
+                    frame[0] = newFrame(FrameTitle.MEDIA_PLAYER);     
                     new Thread(init).start();
-
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }

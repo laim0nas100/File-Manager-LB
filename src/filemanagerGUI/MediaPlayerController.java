@@ -690,7 +690,7 @@ public class MediaPlayerController extends BaseController {
                     }
                 }
             }
-                //default loop song
+            //default loop song
 
             index = ExtStringUtils.mod((index + increment ), table.getItems().size());
             ExtPath item = (ExtPath) table.getItems().get(index);
@@ -836,7 +836,7 @@ public class MediaPlayerController extends BaseController {
     }
     
     private String formatToMinutesAndSeconds(long millis){
-        long minutes = (millis / 1000)  / 60;
+        long minutes = (millis / 1000) / 60;
         long seconds = (millis / 1000) % 60;
         if(seconds<10){
             return minutes+":0"+seconds;
@@ -846,15 +846,16 @@ public class MediaPlayerController extends BaseController {
     }
     private void updateIndex(){
         if(filePlaying==null){
-                index=0;
+            index=0;
+        }
+        else{
+            int potIndex = this.getIndex(filePlaying);
+            if(potIndex!=-1){
+                index = potIndex;
             }else{
-                int potIndex = this.getIndex(filePlaying);
-                if(potIndex!=-1){
-                    index = potIndex;
-                }else{
-                    index = 0;
-                }
+                index = 0;
             }
+        }
     }
     
     public String[] getOptions(){
@@ -980,7 +981,7 @@ public class MediaPlayerController extends BaseController {
             };
             
         };
-        task.setOnSucceeded(value ->{
+        task.setOnDone(value ->{
             Platform.runLater(() ->{
                 labelStatus.setText("Ready");
             });   
@@ -988,8 +989,7 @@ public class MediaPlayerController extends BaseController {
         task.toThread().start();
     }
     public void shuffle(){
-        Collections.shuffle(table.getItems());
-        
+        Collections.shuffle(table.getItems());    
     }
     
 }

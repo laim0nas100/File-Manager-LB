@@ -142,58 +142,59 @@ public class CommandWindowController extends BaseController {
                 addToTextArea(textArea,"Read Parameters.txt file for info\n");
         });
         command.addCommand(commandListParams, (String... params)->{
-            listParameters();
-        });   
-        
+                listParameters();
+        });      
     }
+    
     public void listParameters(){
         ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
-            Collections.sort(list);
-            list.forEach(key->{
-                ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
-                addToTextArea(textArea, parameter.toString()+"\n");
-            });
+        Collections.sort(list);
+        list.forEach(key->{
+            ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
+            addToTextArea(textArea, parameter.toString()+"\n");
+        });
     }
+    
     public void addToTextArea(TextArea textA,String text){
-            Platform.runLater(()->{
-                String newString = textA.getText()+text;
-                textA.setText(newString.substring(Math.max(newString.length()-truncateAfter,0)));
-                textA.positionCaret(textA.getLength());
-            });
-            
-        } 
+        Platform.runLater(()->{
+            String newString = textA.getText()+text;
+            textA.setText(newString.substring(Math.max(newString.length()-truncateAfter,0)));
+            textA.positionCaret(textA.getLength());
+        });
+    }
+    
     public void handleStream(Process process,TextArea textArea,boolean setTextAfterwards,String command) throws IOException{
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine();
-            ArrayDeque<String> lines = new ArrayDeque<>();
-            if(!setTextAfterwards){
-                addToTextArea(textArea,"$:"+command);
-            }
-            while(line!=null){
-                if(setTextAfterwards){
-                    lines.add(line+"\n");
-                }else{ 
-                    addToTextArea(textArea,line+"\n");
-                }
-                line = reader.readLine();
-            }
-            final int errorCode = process.exitValue();
-            if(setTextAfterwards){
-                    lines.add("Error Code:"+errorCode+"\n\n");
-                }else{
-                    addToTextArea(textArea,"Error Code:"+errorCode+"\n\n");
-            }
-            if(setTextAfterwards){
-                Platform.runLater(()->{
-                    String main = textArea.getText();
-                    for(String ln:lines){
-                        main+=ln.trim()+"\n";
-                    }
-                    addToTextArea(textArea,main);
-                });
-            }
-            
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = reader.readLine();
+        ArrayDeque<String> lines = new ArrayDeque<>();
+        if(!setTextAfterwards){
+            addToTextArea(textArea,"$:"+command);
         }
+        while(line!=null){
+            if(setTextAfterwards){
+                lines.add(line+"\n");
+            }else{ 
+                addToTextArea(textArea,line+"\n");
+            }
+            line = reader.readLine();
+        }
+        final int errorCode = process.exitValue();
+        if(setTextAfterwards){
+                lines.add("Error Code:"+errorCode+"\n\n");
+            }else{
+                addToTextArea(textArea,"Error Code:"+errorCode+"\n\n");
+        }
+        if(setTextAfterwards){
+            Platform.runLater(()->{
+                String main = textArea.getText();
+                for(String ln:lines){
+                    main+=ln.trim()+"\n";
+                }
+                addToTextArea(textArea,main);
+            });
+        }
+    }
+    
     public class Commander extends AbstractCommandField{
         private boolean setTextAfterwards = false;
         public Commander(TextField tf) {

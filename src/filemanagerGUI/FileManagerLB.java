@@ -59,13 +59,11 @@ public class FileManagerLB extends Application {
     @Override
     public void start(Stage primaryStage) {
        
-//        new Thread( ()->{
-            System.err.println("STARTING");
-            reInit();
-            if(DEBUG.not().get()){
-                ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-            }   
-//        }).start();
+        System.err.println("STARTING");
+        reInit();
+        if(DEBUG.not().get()){
+            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+        }   
          
     } 
     public static void main(String[] args) {
@@ -160,10 +158,8 @@ public class FileManagerLB extends Application {
         ArtificialRoot = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
-//        if(CommandWindowController.executor!=null){
-            CommandWindowController.executor.stopEverything();
-            CommandWindowController.executor.setRunnerSize(0);
-//        }
+        CommandWindowController.executor.stopEverything();
+        CommandWindowController.executor.setRunnerSize(0);
         readParameters();
         logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss")+" Log.txt";
         try{
@@ -205,9 +201,9 @@ public class FileManagerLB extends Application {
         
         DEBUG.set((boolean) parameters.defaultGet("debug",false));
         DEPTH = (int) parameters.defaultGet("lookDepth",2);
-        LogBackupCount = (int) parameters.defaultGet("logBackupCount", 2);
+        LogBackupCount = (int) parameters.defaultGet("logBackupCount", 5);
         ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
-        MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", 15);
+        MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
         USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath()+File.separator;
         FileManagerLB.useBufferedFileStreams.setValue((boolean) parameters.defaultGet("bufferedFileStreams", true));
         VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
