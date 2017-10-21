@@ -108,6 +108,16 @@ public class LocationAPI {
     public LocationInRoot getLocationMapping(String path){
         return new LocationInRoot(path);
     }
+    private Path recursiveRootResolve(Path start, int limmit){
+        Path parent = start.getParent();
+        if(parent == null || limmit == 0){
+            return start;
+        }else{
+            limmit--;
+            return recursiveRootResolve(parent,limmit);
+        }
+    }
+    
     public ExtPath getFileAndPopulate(String pathl){
         ExtPath file = FileManagerLB.ArtificialRoot; 
         pathl = pathl.trim();
@@ -120,14 +130,20 @@ public class LocationAPI {
                         Path path = Paths.get(pathl).toRealPath();
                         pathl = path.toAbsolutePath().toString();
                         Log.print("realPath:"+path);
-                        if(!FileManagerLB.getRootSet().contains(path.getRoot().toString().toUpperCase(Locale.ROOT))){
-                            if(FileManagerLB.mountDevice(path.getRoot().toString())){
+                        Path potentialRoot = path.getRoot();
+                        if(potentialRoot == null){
+                            potentialRoot = recursiveRootResolve(path,100);
+                        }
+                        String rootStr = potentialRoot.toString().toUpperCase(Locale.ROOT);
+                        if(!FileManagerLB.getRootSet().contains(rootStr)){
+                            if(FileManagerLB.mountDevice(rootStr)){
 //                                FileManagerLB.ArtificialRoot.update();
                                 Log.print("Mounted",path);
                             }
                         }
                     }
                 }catch(Exception e){
+                    ErrorReport.report(e);
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);

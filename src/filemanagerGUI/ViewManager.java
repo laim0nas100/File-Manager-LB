@@ -8,7 +8,6 @@ package filemanagerGUI;
 
 import LibraryLB.FX.FXTask;
 import LibraryLB.Log;
-import LibraryLB.Threads.ExtTask;
 import filemanagerGUI.dialog.AdvancedRenameController;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerGUI.dialog.DuplicateFinderController;
@@ -20,6 +19,7 @@ import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
 import filemanagerLogic.SimpleTask;
+import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -106,13 +105,26 @@ public class ViewManager {
     public void updateAllWindows(){
         for(String s:windows){
             MainController controller = (MainController) frames.get(s).getController();
-            controller.update();
+            Runnable run  = new Runnable() {
+                @Override
+                public void run() {
+                    controller.update();
+                }
+            };
+            TaskFactory.mainExecutor.submit(run);
         }
     }
     public void updateAllFrames(){
-        frames.values().forEach( frame ->{
-            frame.getController().update();
-        });
+        
+        for(Frame frame:frames.values()){
+            Runnable run  = new Runnable() {
+                @Override
+                public void run() {
+                    frame.getController().update();
+                }
+            };
+            TaskFactory.mainExecutor.submit(run);
+        }
     }
     public Frame getFrame(String windowID){
         return frames.get(windowID);

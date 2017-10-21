@@ -22,6 +22,7 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
@@ -112,6 +113,7 @@ public class MediaPlayerController extends BaseController {
     private int index = 0;
     private int soundCheckCounter = 0;
     private Float minDelta = 0.005f;
+    private long seamlessSecondsMax = 12;
     private long currentLength = 0;
     private SimpleBooleanProperty released = new SimpleBooleanProperty(false);
     private boolean stopping = false;
@@ -251,7 +253,10 @@ public class MediaPlayerController extends BaseController {
         jframe.setSize(getCurrentFrame().getSize());
         jframe.setLocation(getCurrentFrame().getLocation());
         frames.add(jframe);
-        newPlayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
+        newPlayer.addMediaPlayerEventListener(defaultPlayerEventAdapter);
+        return newPlayer;
+    };
+    MediaPlayerEventAdapter defaultPlayerEventAdapter = new MediaPlayerEventAdapter(){
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
 
@@ -268,8 +273,6 @@ public class MediaPlayerController extends BaseController {
                 Log.print("Error at",filePlaying.toPath());
                 playNext(1,false);  
             }
-        });
-        return newPlayer;
     };
     public void beforeShow(){
         
@@ -302,10 +305,12 @@ public class MediaPlayerController extends BaseController {
         indexCol.setSortable(false);
         selectedCol.setSortable(false);
         nameCol.setSortable(false);
-        selectedCol.setMinWidth(20);
-        selectedCol.setMaxWidth(20);
+        selectedCol.setPrefWidth(30);
+        selectedCol.setMaxWidth(30);
+        selectedCol.setMinWidth(30);
         indexCol.setMinWidth(30);
-        indexCol.setMaxWidth(50);
+        indexCol.setMaxWidth(60);
+        indexCol.setPrefWidth(50);
         table.getColumns().addAll(indexCol,selectedCol,nameCol);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setOnMousePressed((MouseEvent event)->{
@@ -608,8 +613,8 @@ public class MediaPlayerController extends BaseController {
         
         currentLength = getCurrentPlayer().getLength();
         labelDuration.setText("/ "+formatToMinutesAndSeconds(currentLength));
-        double secondsLeft = (this.currentLength - millisPassed) /1000;
-        if((secondsLeft>2)&&(secondsLeft <10) && seamless.selectedProperty().get()){
+        double secondsLeft = (double)(this.currentLength - millisPassed) /1000;
+        if(seamless.selectedProperty().get() && (secondsLeft < seamlessSecondsMax) && (secondsLeft>2)){
             playNext(1,false,true,this.currentLength - millisPassed);
             
         }
@@ -660,7 +665,9 @@ public class MediaPlayerController extends BaseController {
             player.release();
         });
         frames.forEach(frame->{
-            frame.setVisible(false);
+//            frame.setVisible(false);
+//            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+            frame.dispose();
         });
         saveState(MediaPlayerController.getPlaylistsDir()+PLAYLIST_FILE_NAME);
         super.exit();
@@ -671,7 +678,6 @@ public class MediaPlayerController extends BaseController {
                 playTaskComplete = true;
                 return;
             }
-            
             updateIndex();
             if(!ignoreModifiers){
                 if(playType.getSelectionModel().getSelectedItem().equals(typeRandom)){
@@ -691,7 +697,6 @@ public class MediaPlayerController extends BaseController {
                 }
             }
             //default loop song
-
             index = ExtStringUtils.mod((index + increment ), table.getItems().size());
             ExtPath item = (ExtPath) table.getItems().get(index);
             if(item==null){
@@ -779,14 +784,16 @@ public class MediaPlayerController extends BaseController {
 
     private void playSeemless(ExtPath item,final long millisLeft){
         oldplayer = getCurrentPlayer();
+        oldplayer.removeMediaPlayerEventListener(defaultPlayerEventAdapter);
         oldplayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter(){
             @Override
             public void finished(MediaPlayer mediaPlayer) {
                 Log.print("Finished old player");
                 int i = 1;
-                while(frames.size()>1){
-                    frames.pollFirst().setVisible(false);
-                    players.pollFirst();
+                while(players.size()>1){
+                    frames.pollFirst().dispose();
+                    players.pollFirst().release();
+//                    oldplayer.release();
                     Log.print("Frame/Player collected " + i++);
                 }
             }
@@ -794,40 +801,62 @@ public class MediaPlayerController extends BaseController {
             public void stopped(MediaPlayer mediaPlayer) {
                 Log.print("Finished old player");
                 int i = 1;
-                while(frames.size()>1){
-                    frames.pollFirst().setVisible(false);
-                    players.pollFirst();
+                while(players.size()>1){
+                    frames.pollFirst().dispose();
+                    players.pollFirst().release();
+//                    oldplayer.release();
                     Log.print("Frame/Player collected " + i++);
                 }
             }
         });
-
         players.add(getPreparedMediaPlayer());
         new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                double ratio = ((double)10000/millisLeft);
+               
+                double timeChangeMillis = 500;
                 double oldVolume = oldplayer.getVolume();
-                double difference = 1;
-                double inc =  oldVolume/75 * ratio;
-
-                if(inc<1){
-                    inc = 1 * ratio;
-                }
+                double overTime = millisLeft;
+                
+                double inc = oldVolume / (overTime / timeChangeMillis);
+                double difference = inc;
+                /*
+                    oldVolume 100
+                    over 12 seconds
+                    change volume each 500 millis
+                    12000 / 500 = 24 iterations
+                    100 / 24 ~ 4.16
+                
+                
+                    oldVolume 100
+                    over 8 seconds
+                
+                    8000 / 500 = 16 iterations
+                    100 / 16 ~ 6.25
+                
+                */
                 long millis = millisLeft;
                 getCurrentPlayer().setVolume(0);
-
-                while(oldVolume-difference>1 && millis>1000){
+                
+                while(oldVolume-difference>1 && millis>10){
+                    
+                    
                     oldplayer.setVolume((int) (oldVolume-difference));
                     getCurrentPlayer().setVolume((int)difference);
+                    long time = System.currentTimeMillis();
+                    Thread.sleep((long) timeChangeMillis);
+                    time = System.currentTimeMillis() - time;
+                    millis-=time;
                     difference+=inc;
-                    Thread.sleep(100);
-                    millis-=100;
+
 
                 }
                 Log.print("End volume resize task");
                 getCurrentPlayer().setVolume((int)oldVolume);
-                oldplayer.stop();
+//                if(oldplayer.isPlaying()){
+//                    oldplayer.stop();
+//                }
+                
                 return null;
             }
         }.toThread().start();
