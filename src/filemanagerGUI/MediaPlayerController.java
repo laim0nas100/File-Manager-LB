@@ -22,7 +22,6 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
@@ -52,7 +51,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
@@ -736,6 +734,7 @@ public class MediaPlayerController extends BaseController {
     public void playSelected(){
         play((ExtPath) table.getSelectionModel().getSelectedItem());
     }
+    private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
     private void play(ExtPath item){
         update();
         int i = this.getIndex(item);
@@ -750,6 +749,7 @@ public class MediaPlayerController extends BaseController {
         }
         filePlaying = item;
         playTaskComplete = false;
+        SimpleTask task =
         new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -778,7 +778,14 @@ public class MediaPlayerController extends BaseController {
                 soundCheckCounter = 11;
                 return null;
             }
-        }.toThread().start();
+        };
+        task.setOnDone(r ->{
+            while(!onPlayTaskComplete.isEmpty()){
+                onPlayTaskComplete.pollFirst().run();
+            }
+        });
+        
+        task.toThread().start();
         
     }
 
@@ -836,8 +843,8 @@ public class MediaPlayerController extends BaseController {
                 
                 */
                 long millis = millisLeft;
-                getCurrentPlayer().setVolume(0);
                 
+                getCurrentPlayer().setVolume(0);
                 while(oldVolume-difference>1 && millis>10){
                     
                     
@@ -853,15 +860,16 @@ public class MediaPlayerController extends BaseController {
                 }
                 Log.print("End volume resize task");
                 getCurrentPlayer().setVolume((int)oldVolume);
-//                if(oldplayer.isPlaying()){
-//                    oldplayer.stop();
-//                }
                 
                 return null;
             }
         }.toThread().start();
-        
+        this.onPlayTaskComplete.add(() ->{
+            getCurrentPlayer().setVolume(0);  
+        });
         play(item);
+        
+        
     }
     
     private String formatToMinutesAndSeconds(long millis){

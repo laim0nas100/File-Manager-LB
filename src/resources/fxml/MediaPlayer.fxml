@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox maxHeight="1000.0" maxWidth="1000.0" minHeight="200.0" minWidth="200.0" prefHeight="400.0" prefWidth="610.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MediaPlayerController">
+<VBox maxHeight="1000.0" maxWidth="1000.0" minHeight="200.0" minWidth="200.0" prefHeight="400.0" prefWidth="610.0" xmlns="http://javafx.com/javafx/8.0.151" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.MediaPlayerController">
    <children>
       <HBox alignment="CENTER_LEFT" minHeight="-Infinity">
          <VBox.margin>
@@ -38,13 +38,19 @@
             <Slider fx:id="seekSlider" minWidth="-Infinity" prefHeight="14.0" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets />
-               </HBox.margin>
-               <padding>
-                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-               </padding></Slider>
-            <Label fx:id="labelTimePassed" minWidth="-Infinity" prefHeight="17.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
-            <Label fx:id="labelDuration" minHeight="-Infinity" minWidth="-Infinity" prefHeight="17.0" prefWidth="50.0" HBox.hgrow="ALWAYS" />
+               </HBox.margin></Slider>
+            <Label fx:id="labelTimePassed" HBox.hgrow="ALWAYS">
+               <HBox.margin>
+                  <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+               </HBox.margin></Label>
+            <Label fx:id="labelDuration" HBox.hgrow="ALWAYS">
+               <HBox.margin>
+                  <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+               </HBox.margin></Label>
          </children>
+         <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </VBox.margin>
       </HBox>
       <FlowPane snapToPixel="false" VBox.vgrow="NEVER">
          <VBox.margin>

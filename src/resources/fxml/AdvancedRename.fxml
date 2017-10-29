@@ -15,11 +15,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
+<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.151" xmlns:fx="http://javafx.com/fxml/1" fx:controller="filemanagerGUI.dialog.AdvancedRenameController">
   <items>
       <VBox>
          <children>
-            <TabPane prefHeight="180.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE">
+            <TabPane tabClosingPolicy="UNAVAILABLE">
               <tabs>
                 <Tab closable="false" text="Specific Rename">
                   <content>
@@ -138,7 +138,7 @@
                   </Tab>
               </tabs>
             </TabPane>
-            <FlowPane alignment="CENTER" columnHalignment="CENTER" prefHeight="28.0" prefWidth="600.0">
+            <FlowPane alignment="CENTER" columnHalignment="CENTER">
                <children>
                 <Button mnemonicParsing="false" onAction="#update" text="Update">
                      <padding>
@@ -166,7 +166,7 @@
                   </Button>
                </children>
             </FlowPane>
-            <FlowPane alignment="CENTER" columnHalignment="CENTER" prefHeight="24.0" prefWidth="600.0">
+            <FlowPane alignment="CENTER" columnHalignment="CENTER">
                <children>
                   <CheckBox fx:id="showFullPath" mnemonicParsing="false" text="Show full path">
                      <padding>
