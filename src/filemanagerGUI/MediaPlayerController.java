@@ -54,7 +54,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
@@ -276,8 +275,7 @@ public class MediaPlayerController extends BaseController {
         
         
     }
-    private Integer dragIndex = null;
-    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
+
 
     public void setUpTable(){
         this.extTableView = new ExtTableView(table);
@@ -379,7 +377,6 @@ public class MediaPlayerController extends BaseController {
             if(!MainController.dragList.isEmpty()){
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
-                dragIndex = table.getSelectionModel().getSelectedIndex();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
                 content.putString("Ready");
                 //content.putString(selected.getAbsolutePath());
@@ -736,6 +733,9 @@ public class MediaPlayerController extends BaseController {
     }
     private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
     private void play(ExtPath item){
+        play(item,null);
+    }
+    private void play(ExtPath item, final Integer volume){
         update();
         int i = this.getIndex(item);
         if(i<0){
@@ -768,6 +768,17 @@ public class MediaPlayerController extends BaseController {
                         
                     }else{
                         getCurrentPlayer().start();
+                        int tryCount = 200;
+                        if(volume!=null && (volume>=0 && volume < 200)){
+                            while(getCurrentPlayer().getVolume() != volume){
+                                getCurrentPlayer().setVolume(volume);
+                                Thread.sleep(10);
+                                if(tryCount<=0){
+                                    break;
+                                }
+                                tryCount--;
+                            }
+                        }
                     }
                 Platform.runLater(()->{
                         labelCurrent.setText(filePlaying.getAbsolutePath());
@@ -867,7 +878,7 @@ public class MediaPlayerController extends BaseController {
         this.onPlayTaskComplete.add(() ->{
             getCurrentPlayer().setVolume(0);  
         });
-        play(item);
+        play(item,0);
         
         
     }

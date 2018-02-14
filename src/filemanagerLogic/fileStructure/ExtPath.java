@@ -17,18 +17,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.util.Callback;
 import utility.ErrorReport;
 import utility.PathStringCommands;
 
@@ -61,6 +65,33 @@ public class ExtPath{
         }
         return Double.parseDouble(s) * multiplier;
     }
+    
+    
+    public static Predicate<ExtPath> IS_FOLDER = new Predicate<ExtPath>() {
+        @Override
+        public boolean test(ExtPath t) {
+            return t.getIdentity().equals(Enums.Identity.FOLDER);
+        }
+    };
+    
+    public static Predicate<ExtPath> IS_FILE = new Predicate<ExtPath>() {
+        @Override
+        public boolean test(ExtPath t) {
+            return t.getIdentity().equals(Enums.Identity.FILE);
+        }
+    };
+    
+    public static Predicate<ExtPath> IS_DISABLED = new Predicate<ExtPath>() {
+        @Override
+        public boolean test(ExtPath t) {
+            return t.isDisabled.get();
+        }
+    };
+    
+    
+    
+    
+    
     
     private Path path;
     private final String absolutePath;
@@ -198,6 +229,20 @@ public class ExtPath{
         }
         return list; 
     }
+    public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate){
+        ArrayDeque<ExtPath> list = new ArrayDeque<>();
+        if(predicate.test(this)){
+            list.add(this);
+        }
+        return list;
+    }
+    
+    public void collectRecursive(Predicate<ExtPath> predicate, Callback<ExtPath,Void> call){
+        if(predicate.test(this)){
+            call.call(this);
+        }
+    }
+    
     public boolean isRoot(){
         return FileManagerLB.getRootSet().contains(this.getAbsoluteDirectory());
     }

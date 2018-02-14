@@ -54,7 +54,6 @@ public abstract class AbstractCommandField {
                     ErrorReport.report(ex);
                 }
             });
-            
             return true;
         }
         return false;

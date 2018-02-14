@@ -46,6 +46,7 @@ import utility.ErrorReport;
 import LibraryLB.FileManaging.ExtInputStream;
 import utility.FileNameException;
 import LibraryLB.FileManaging.FileUtils;
+import LibraryLB.Jobs.JobsExecutor;
 import javafx.beans.property.SimpleDoubleProperty;
 import utility.PathStringCommands;
 
@@ -62,7 +63,9 @@ public class TaskFactory {
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
     public static final ExecutorService mainExecutor = Executors.newFixedThreadPool(PROCESSOR_COUNT);
+    public static final JobsExecutor jobsExecutor = new JobsExecutor(Executors.newCachedThreadPool());
     public static String dragInitWindowID ="";
+    
     public static TaskFactory getInstance(){
         
         return INSTANCE;

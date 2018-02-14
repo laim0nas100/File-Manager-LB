@@ -50,6 +50,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -665,7 +666,8 @@ public class MainController extends BaseController{
                     }
                 }, MC.isVirtual.not()));       
         
-        searchContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Go to",
+        searchContextMenu.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Go to",
                 event ->{
                     String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
                     try{
@@ -718,7 +720,8 @@ public class MainController extends BaseController{
         );
         
         
-        markedContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Clean this list",
+        markedContextMenu.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Clean this list",
                 event -> {
                     markedView.getItems().clear();
                 }, propertyMarkedSize.greaterThan(0)),
@@ -739,7 +742,8 @@ public class MainController extends BaseController{
         
         
         
-        tableDragContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Move here selected",
+        tableDragContextMenu.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Move here selected",
                 event -> {
                     MainController.actionList.clear();
                     MainController.actionList.addAll(MainController.dragList);
@@ -758,8 +762,46 @@ public class MainController extends BaseController{
         );
 
         
+        Menu submenuMarkFiles = new Menu("Mark...");
+        Callback<ExtPath,Void> addToMarkedCallback = (ExtPath p) -> {
+            TaskFactory.getInstance().addToMarked(p);
+            return null;
+        };
+        submenuMarkFiles.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Selected", 
+                event -> {
+                    selectedList.stream().forEach((file) -> {
+                        TaskFactory.getInstance().addToMarked(file);
+                    });  
+                }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
+                
+            CosmeticsFX.simpleMenuItem("Recursive only files",
+                    event -> {
+                    selectedList.stream().forEach((file) -> {
+                        
+                        Runnable run = () ->{
+                            file.collectRecursive(ExtPath.IS_DISABLED.negate().and(ExtPath.IS_FILE),addToMarkedCallback );
+                        };
+                        TaskFactory.mainExecutor.submit(run);
+                        
+                        
+                    });  
+                }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
+            CosmeticsFX.simpleMenuItem("Recursive only folders",
+                    event -> {
+                    selectedList.stream().forEach((file) -> {
+                        Runnable run = () ->{
+                            file.collectRecursive(ExtPath.IS_DISABLED.negate().and(ExtPath.IS_FOLDER),addToMarkedCallback );
+                        };
+                        TaskFactory.mainExecutor.submit(run);
+                    });  
+                }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0)))
+                
+        );
+                
         Menu submenuMarked = new Menu("Marked...");
-        submenuMarked.getItems().setAll(CosmeticsFX.simpleMenuItem("Copy here marked", 
+        submenuMarked.getItems().setAll(
+            CosmeticsFX.simpleMenuItem("Copy here marked", 
                 event -> {
                     Log.print("Copy Marked");
                     FXTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
@@ -773,12 +815,8 @@ public class MainController extends BaseController{
                     task.setTaskDescription("Move marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
-            CosmeticsFX.simpleMenuItem("Add to marked", 
-                event -> {
-                    selectedList.stream().forEach((file) -> {
-                        TaskFactory.getInstance().addToMarked(file);
-                    });  
-                }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
+            
+            
             CosmeticsFX.simpleMenuItem("Delete all marked", 
                 event -> {
                     FXTask task = TaskFactory.getInstance().deleteFiles(markedList);
@@ -851,7 +889,8 @@ public class MainController extends BaseController{
                     });
                 }, MC.isVirtual.and(propertySelectedSize.greaterThan(0))),
                 submenuCreate,
-                submenuMarked
+                submenuMarked,
+                submenuMarkFiles
         );
         
  

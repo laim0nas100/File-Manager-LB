@@ -20,8 +20,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
+import javafx.util.Callback;
 import utility.ExtStringUtils;
 
 /**
@@ -114,6 +116,21 @@ public class ExtFolder extends ExtPath{
         }
         return folders;   
     }
+    
+    
+    
+    @Override
+    public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate){
+        Collection<ExtPath> listRecursive = this.getListRecursive(false);
+        Iterator<ExtPath> iterator = listRecursive.iterator();
+        while(iterator.hasNext()){
+            ExtPath path = iterator.next();
+            if(!predicate.test(path)){
+                iterator.remove();
+            }
+        }
+        return listRecursive;
+    }
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable){
         ArrayDeque<ExtPath> list = new ArrayDeque<>();
@@ -143,13 +160,24 @@ public class ExtFolder extends ExtPath{
     }
     private void getRootList(Collection<ExtPath> list,ExtFolder folder){
         folder.update();
-        if(!folder.isDisabled.get()){
+//        if(!folder.isDisabled.get()){
             list.addAll(folder.getFilesCollection());
             folder.getFoldersFromFiles().forEach( fold -> {
                 getRootList(list,fold);
             });
-        }
+//        }
     }
+    
+    @Override
+    public void collectRecursive(Predicate<ExtPath> predicate, Callback<ExtPath,Void> call){
+        this.update();
+        super.collectRecursive(predicate, call);
+        this.getFilesCollection().forEach(f ->{
+            f.collectRecursive(predicate, call);
+        });
+        
+    }
+    
     public void update(){
         Log.print("Update:"+this.getAbsoluteDirectory());
         if(isAbsoluteRoot.get()){

@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
@@ -168,11 +170,11 @@ public class CommandWindowController extends BaseController {
         String line = reader.readLine();
         ArrayDeque<String> lines = new ArrayDeque<>();
         if(!setTextAfterwards){
-            addToTextArea(textArea,"$:"+command);
+            addToTextArea(textArea,"Begin: "+command);
         }
         while(line!=null){
             if(setTextAfterwards){
-                lines.add(line+"\n");
+                lines.add(line);
             }else{ 
                 addToTextArea(textArea,line+"\n");
             }
@@ -180,18 +182,14 @@ public class CommandWindowController extends BaseController {
         }
         final int errorCode = process.exitValue();
         if(setTextAfterwards){
-                lines.add("Error Code:"+errorCode+"\n\n");
-            }else{
-                addToTextArea(textArea,"Error Code:"+errorCode+"\n\n");
-        }
-        if(setTextAfterwards){
-            Platform.runLater(()->{
-                String main = textArea.getText();
-                for(String ln:lines){
-                    main+=ln.trim()+"\n";
-                }
-                addToTextArea(textArea,main);
-            });
+            lines.add("Error Code:"+errorCode+"\n");
+            StringBuilder main = new StringBuilder();
+            for(String ln:lines){
+                main.append(ln).append("\n");
+            }
+            addToTextArea(textArea,main.toString());
+        }else{
+            addToTextArea(textArea,"Error Code:"+errorCode+"\n\n");
         }
     }
     
@@ -284,32 +282,33 @@ public class CommandWindowController extends BaseController {
                     list.add(spl);
                 }
             }
-            ExtTask task = new ExtTask(){
-                @Override
-                protected Void call() throws Exception {
-
-                    LinkedList<String> coms = new LinkedList<>();
-                    coms.addAll(list);
-                    coms.add(1,command);
-                    Log.print(coms);
-                    String c = coms.pollFirst();
-                    String[] params = coms.toArray(new String[1]);
-                    Log.print("Params",Arrays.asList(params));
-                    addToTextArea(textArea,"$:"+command+"\n");
-                    if(runCommand(c,params)){
-                        Log.print("Run in-built command:",command);
-                        return null;
-                    }else{
-                        Log.print("Run native command:",command);
-                        Process process = LibraryLB.CLI.createNewProcess(list.toArray(new String[1])).call();
-                        handleStream(process,textArea,setTextAfterwards,command);
-                        return null;
-                    }
-                }                
-            };
-            executor.submit(task);
+            LinkedList<String> coms = new LinkedList<>();
+            coms.addAll(list);
+            coms.add(1,command);
+            Log.print(coms);
+            String c = coms.pollFirst();
+            String[] params = coms.toArray(new String[1]);
+            Log.print("Params",Arrays.asList(params));
+            addToTextArea(textArea,"$:"+command+"\n");
+            try {
+                if(runCommand(c,params)){
+                    Log.print("Run in-built command:",command);
+                }else{
+                    ExtTask task = new ExtTask(){
+                        @Override
+                        protected Void call() throws Exception {
+                            Log.print("Run native command:",command);
+                            Process process = LibraryLB.CLI.createNewProcess(list.toArray(new String[1])).call();
+                            handleStream(process,textArea,setTextAfterwards,command);
+                            return null;
+                        }                
+                    };
+                    executor.submit(task);
+                }
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
         }
-        
     }
     
     @Override
