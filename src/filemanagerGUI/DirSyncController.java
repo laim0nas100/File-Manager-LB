@@ -463,7 +463,7 @@ public class DirSyncController extends BaseController {
         
         task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom,this.snapshot1.folderCreatedFrom,list);
 
-        task.setTaskDescription("Synchronization: "+"\n"+
+        task.setDescription("Synchronization: "+"\n"+
                 "Source:"+this.snapshot0.folderCreatedFrom +"\n"+
                 "Compared:"+this.snapshot1.folderCreatedFrom);
         

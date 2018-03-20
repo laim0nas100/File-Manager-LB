@@ -43,12 +43,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.beans.property.DoubleProperty;
 import utility.ErrorReport;
-import LibraryLB.FileManaging.ExtInputStream;
 import utility.FileNameException;
 import LibraryLB.FileManaging.FileUtils;
 import LibraryLB.Jobs.JobsExecutor;
 import javafx.beans.property.SimpleDoubleProperty;
+import utility.ContinousCombinedTask;
 import utility.PathStringCommands;
+import utility.SimpleTask;
 
 /**
  *  
@@ -62,7 +63,7 @@ public class TaskFactory {
     public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
-    public static final ExecutorService mainExecutor = Executors.newFixedThreadPool(PROCESSOR_COUNT);
+    public static final ExecutorService mainExecutor = Executors.newFixedThreadPool(PROCESSOR_COUNT*2);
     public static final JobsExecutor jobsExecutor = new JobsExecutor(Executors.newCachedThreadPool());
     public static String dragInitWindowID ="";
     
@@ -89,13 +90,6 @@ public class TaskFactory {
         }
     }
         
-    private static final Comparator<ActionFile> cmpDesc = (ActionFile f1, ActionFile f2) -> {
-        return f1.paths[0].compareTo(f2.paths[0]);
-    };
-    private static final Comparator<ActionFile> cmpAsc = (ActionFile f1, ActionFile f2) -> {
-        return f2.paths[0].compareTo(f1.paths[0]);
-    };
-    
 //RENAME
     public String renameTo(String fileToRename, String newName,String fallbackName) throws IOException, FileNameException{
         for(Character c:newName.toCharArray()){
@@ -158,7 +152,7 @@ public class TaskFactory {
                 list.add(new ActionFile(f.getAbsoluteDirectory(),dest.getAbsoluteDirectory()+relativePath));
             }  
         }
-        list.sort(cmpDesc);
+        list.sort(ActionFile.COMP_DESCENDING);
         Log.print("List after computing");
         for (ActionFile array1 : list) {
             Log.print(array1.paths[0]+" -> "+array1.paths[1]);
@@ -181,7 +175,7 @@ public class TaskFactory {
             list.add(af);
 //            Log.write("Add",af);
         }
-        list.sort(cmpDesc);
+        list.sort(ActionFile.COMP_DESCENDING);
         Log.print("List after computing");
 
         
@@ -204,7 +198,7 @@ public class TaskFactory {
                 list.add(new ActionFile(f.getAbsoluteDirectory()));
             }
         }
-        list.sort(cmpAsc);
+        list.sort(ActionFile.COMP_ASCENDING);
         Log.print("List after computing");
         for(ActionFile file:list){
             Log.print(file.toString());
@@ -235,7 +229,7 @@ public class TaskFactory {
             }
            
         }
-        list.sort(cmpDesc);
+        list.sort(ActionFile.COMP_DESCENDING);
         Log.print("List after computing");
         for (ActionFile array1 : list) {
             Log.print(array1.paths[0]+" -> "+array1.paths[1]);
@@ -244,7 +238,56 @@ public class TaskFactory {
     }
     
 //TASKS    
-    public FXTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
+    
+    public ContinousCombinedTask copyFilesEx(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
+        
+        ContinousCombinedTask fullTask = new ContinousCombinedTask() {
+            @Override
+            protected void preparation() throws Exception {
+                List<ActionFile> list;
+                if(root == null){
+                   list = prepareForCopy(fileList,dest);
+                }else{
+                    Log.print("Test copy");
+                    list = prepareForCopy(fileList,dest,root);
+                }
+                Log.print("In a task now");
+                Log.print(list);
+                
+                
+                for(int i=0; i<list.size(); i++){
+                    String str;
+                    ActionFile file = list.get(i);
+                    str = "Source: \t\t"+file.paths[0]+"\n";
+                    str +="Destination: \t"+file.paths[1];
+                    String strmsg = str;
+                    SimpleTask nested = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                            this.updateMessage(strmsg);
+                            ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
+                            DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
+                            progress.addListener(listener ->{
+                                Platform.runLater( () ->{
+                                    this.progressProperty.set(progress.get());
+                                });
+                            });
+                            
+                            copy.paused.bind(this.paused);
+                            copy.run();
+                            return null;
+                        };
+                    };
+                    nested.setDescription(str);
+                    this.addTask(nested);
+                }
+            }
+        };
+        return fullTask;
+    }
+    
+    
+    private FXTask copyFiles(Collection<ExtPath> fileList, ExtPath dest,ExtPath root){  
         return new FXTask(){
             @Override
             protected Void call() throws Exception {
@@ -315,7 +358,7 @@ public class TaskFactory {
             }
         };
     }
-    public FXTask moveFiles(Collection<ExtPath> fileList, ExtPath dest){
+    private FXTask moveFiles(Collection<ExtPath> fileList, ExtPath dest){
         return new FXTask(){
             @Override protected Void call() throws Exception {
                 ArrayList<ActionFile> leftFolders = new ArrayList<>();
@@ -367,7 +410,7 @@ public class TaskFactory {
                 updateMessage("Deleting leftover folders");
                 int i=0;
                 Log.print("Folders size: "+leftFolders.size());
-                leftFolders.sort(cmpDesc);
+                leftFolders.sort(ActionFile.COMP_DESCENDING);
                 for(ActionFile f:leftFolders){
                     try{
                         Log.print("Deleting "+f.paths[0]);
@@ -386,7 +429,83 @@ public class TaskFactory {
             
         };
     }
-    public FXTask deleteFiles(Collection<ExtPath> fileList){
+    
+    public ContinousCombinedTask moveFilesEx(Collection<ExtPath> fileList, ExtPath dest){
+        ContinousCombinedTask finalTask = new ContinousCombinedTask() {
+            @Override
+            protected void preparation() throws Exception {
+                ArrayList<ActionFile> leftFolders = new ArrayList<>();
+                String str;
+                updateMessage("Populating list for move");
+                List<ActionFile> list = prepareForMove(fileList,dest);
+                updateMessage("Begin");
+                int index1 = 0;
+                for(; index1<list.size(); index1++){
+                    
+                    ActionFile file = list.get(index1);
+                    str = "Source: \t\t"+file.paths[0]+"\n";
+                    str +="Destination: \t"+file.paths[1];
+                    String msgStr = str;
+                    
+                    SimpleTask task = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                            updateMessage(msgStr);
+                            try{
+                                if(Files.isDirectory(file.paths[0])){
+                                    leftFolders.add(file);
+                                    Files.createDirectory(file.paths[1]);
+                                    Log.print("Added to folders:"+file.paths[1]);
+                                }
+                                else{
+                                    ExtTask move = FileUtils.move(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
+                                    DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
+                                    progress.addListener(listener ->{
+                                        Platform.runLater( () ->{
+                                            this.progressProperty.set(progress.get());
+                                        });
+                                    });
+                                    move.paused.bind(paused);
+                                    move.run();
+                                }
+                            }catch(Exception e){
+                                ErrorReport.report(e); 
+
+                            }
+                            return null;
+                        }
+                    };
+                    task.setDescription(msgStr);
+                    this.addTask(task);
+                }
+                
+                SimpleTask deleteTask = new SimpleTask() {
+                    @Override
+                    protected Void call() throws Exception {
+                        updateMessage("Deleting leftover folders");
+                        Log.print("Folders size: "+leftFolders.size());
+                        leftFolders.sort(ActionFile.COMP_DESCENDING);
+                        for(ActionFile f:leftFolders){
+                            try{
+                                Log.print("Deleting "+f.paths[0]);
+                                f.delete();
+                            }catch(Exception x){
+                                ErrorReport.report(x);
+                            }
+                        }
+                        return null;
+                    }
+                };
+                deleteTask.setDescription("Delete leftover folders");
+                this.addTask(deleteTask);
+            }
+            
+        };
+        return finalTask;
+    }
+    
+    
+    private FXTask deleteFiles(Collection<ExtPath> fileList){
         return new FXTask(){
             @Override protected Void call() throws Exception {
                 String str;
@@ -422,18 +541,43 @@ public class TaskFactory {
             }
         };
     } 
+    
+    public ContinousCombinedTask deleteFilesEx(Collection<ExtPath> fileList){
+        ContinousCombinedTask finalTask = new ContinousCombinedTask() {
+            @Override
+            protected void preparation() throws Exception {
+                ArrayList<ActionFile> list = prepareForDelete(fileList);
+                for(ActionFile file:list){
+                    SimpleTask deleteTask = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                            try{
+                                file.delete();
+                            }catch (Exception e){
+                                this.report(e);
+                            }
+                            return null;
+                        }
+                    };
+                    String str = "Delete: \t"+file.paths[0];
+                    deleteTask.setDescription(str);
+                    this.addTask(deleteTask);
+                }
+            };
+        };
+        finalTask.setDescription("Delete files");
+        return finalTask;
+    }
+    
     private void populateRecursiveParallelInner(ExtFolder folder,int depth, ExecutorService exe){
         if(0<depth){
-            Callable task = new Callable() {
-                @Override
-                public Void call() throws Exception {
-                    Log.print("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
-                    folder.update();
-                    for(ExtFolder fold:folder.getFoldersFromFiles()){
-                        populateRecursiveParallelInner(fold, depth-1,exe);
-                    }
-                    return null;
+            Callable task = (Callable) () -> {
+                Log.print("Folder Iteration "+depth+"::"+folder.getAbsoluteDirectory());
+                folder.update();
+                for(ExtFolder fold:folder.getFoldersFromFiles()){
+                    populateRecursiveParallelInner(fold, depth-1,exe);
                 }
+                return null;
             };
             exe.submit(task);   
         }

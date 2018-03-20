@@ -6,17 +6,22 @@
 package filemanagerLogic.fileStructure;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 
 /**
  *
  * @author Laimonas Beniušis
  */
 public class ActionFile {
+    public static final Comparator<ActionFile> COMP_DESCENDING = (ActionFile f1, ActionFile f2) -> {
+        return f1.paths[0].compareTo(f2.paths[0]);
+    };
+    public static final Comparator<ActionFile> COMP_ASCENDING = COMP_DESCENDING.reversed();
+    
+    
     public Path[] paths;
     public ActionFile(String...strings){
         paths = new Path[strings.length];

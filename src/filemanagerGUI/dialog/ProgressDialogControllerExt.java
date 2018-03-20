@@ -6,25 +6,36 @@
 package filemanagerGUI.dialog;
 
 import LibraryLB.FX.FXTask;
+import LibraryLB.Log;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
+import java.util.ArrayList;
 import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
+import utility.ContinousCombinedTask;
 import utility.CustomClock;
+import utility.ErrorReport;
+import utility.SimpleTask;
 
 /**
  * FXML Controller class
  *
  * @author Laimonas Beniušis
  */
-public class ProgressDialogController extends BaseController {
+public class ProgressDialogControllerExt extends BaseController {
 
+    @FXML public CheckBox checkboxTasks;
+    @FXML public TreeView treeView;
     @FXML public VBox base;
     
     @FXML public Button okButton;
@@ -36,21 +47,69 @@ public class ProgressDialogController extends BaseController {
     @FXML public Label timeWasted;
     @FXML public Label labelProgress;
     protected CustomClock clock;
-    private FXTask task;
+    private ContinousCombinedTask task;
     private SimpleBooleanProperty paused;
     private String fullText = "";
     
-    public void afterShow(FXTask newTask){
+    
+    private <T> TreeItem<T> buildTree(TreeItem<T> node,SimpleTask task, Callback<SimpleTask,TreeItem<T>> form){
+        TreeItem leaf = form.call(task);
+        if(node != null){
+            node.getChildren().add(leaf);
+        }
+        if(task instanceof ContinousCombinedTask){
+            ContinousCombinedTask nested = (ContinousCombinedTask)task;
+            for(SimpleTask child:nested.tasks){
+                buildTree(leaf,child,form);
+            }
+        }
+        return leaf;
+    }
+    
+    public void afterShow(ContinousCombinedTask newTask){
         super.afterShow();
         boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
+        Log.println("Start paused:"+paused);
         this.task = newTask;
         task.paused.bind(paused);
-        
+        treeView.visibleProperty().bind(checkboxTasks.selectedProperty());
         progressBar.progressProperty().bind(task.progressProperty());
+        progressBar.progressProperty().addListener(listener ->{
+            
+            
+        });
+        
+        
+        newTask.prepared.addListener(listener ->{
+//            TreeItem<String> root = new TreeItem();
+//            root.setValue(newTask.getDescription());
+//            root.setExpanded(true);
+//            ArrayList<TreeItem<String>> children = new ArrayList<>();
+//            for(SimpleTask t:task.tasks){
+//                TreeItem<String> node = new TreeItem();
+//                node.setValue(t.getDescription());
+//                children.add(node);
+//            }
+//            Platform.runLater(() ->{
+//                root.getChildren().setAll(children);
+//                this.treeView.setRoot(root);
+//            });
+
+            TreeItem<String> treeRoot = this.buildTree(null, task, (SimpleTask param) -> {
+                TreeItem<String> node = new TreeItem();
+                node.setValue(param.getDescription());
+                return node;
+            });
+            Platform.runLater(() ->{
+                this.treeView.setRoot(treeRoot);
+            });
+            
+        });
+        
         this.labelProgress.textProperty().bind(this.progressBar.progressProperty().multiply(100).asString("%1$.2f").concat("%"));
         
-        cancelButton.disableProperty().bind(task.runningProperty().not());
+        cancelButton.disableProperty().bind(task.running.not());
         okButton.disableProperty().bind(cancelButton.disableProperty().not());
         pauseButton.disableProperty().bind(cancelButton.disabledProperty());
         text.textProperty().bind(task.messageProperty());
@@ -61,19 +120,24 @@ public class ProgressDialogController extends BaseController {
         
         taskDescription.setText(task.getDescription());
         
-        Thread t = new Thread(task);
+        
         clock = new CustomClock();
         
-        t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
         
         task.setOnSucceeded((e)->{
-            clock.stopTimer();
+            Log.print("Task succeeded");
+            Platform.runLater(() ->{
+                clock.stopTimer();
+            });
+            
             if(task.childTask!=null){
                 task.run();
             }
-            if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
+            boolean doAutoClose = ViewManager.getInstance().autoCloseProgressDialogs.get();
+            Log.print("autoClose:"+doAutoClose);
+            if(doAutoClose){
                 this.exit();
             }
         });
@@ -82,6 +146,7 @@ public class ProgressDialogController extends BaseController {
             pauseButton.setText("START");
         }
         Platform.runLater(()->{
+            Thread t = new Thread(task);
             t.start();
             
         });
@@ -101,10 +166,13 @@ public class ProgressDialogController extends BaseController {
         exit();
     }
     public void pauseTask(){
-        if(task.isPaused()&&task.isRunning()){
+        if(!task.running.get()){
+            return;
+        }
+        if(task.paused.get()){
             pauseButton.setText("PAUSE");
             paused.set(false);
-        }else if(!task.isPaused()&&task.isRunning()){
+        }else {
             pauseButton.setText("CONTINUE");
             paused.set(true);
         }
@@ -115,7 +183,12 @@ public class ProgressDialogController extends BaseController {
     }
     @Override
     public void exit(){
+        try{
+        Log.print("Call exit");
         super.exit();
+        }catch(Exception e){
+            ErrorReport.report(e);
+        }
     }
     
 }

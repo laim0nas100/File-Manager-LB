@@ -34,6 +34,7 @@ public class Enums {
     public static enum FrameTitle{
         WINDOW("File Manager LB","fxml/Main.fxml"),
         PROGRESS_DIALOG("Progress Dialog","fxml/ProgressDialog.fxml"),
+        PROGRESS_DIALOG_EXT("Progress Dialog","fxml/ProgressDialogExt.fxml"),
         TEXT_INPUT_DIALOG("Text Input Dialog","fxml/RenameDialog.fxml"),
         MESSAGE_DIALOG("Message Dialog",""),
         ADVANCED_RENAME_DIALOG("Advanced Rename","fxml/AdvancedRename.fxml"),

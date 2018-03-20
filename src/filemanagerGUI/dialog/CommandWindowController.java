@@ -12,7 +12,6 @@ import LibraryLB.Parsing.Literal;
 import LibraryLB.Parsing.Token;
 import LibraryLB.Threads.DynamicTaskExecutor;
 import LibraryLB.Threads.ExtTask;
-import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.FileManagerLB;
 import filemanagerGUI.MainController;
@@ -31,16 +30,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 
 import javafx.scene.control.TextField;
+import javafx.util.Callback;
+import utility.ContinousCombinedTask;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 import utility.PathStringCommands;
+import utility.SimpleTask;
 
 /**
  * FXML Controller class
@@ -76,9 +76,41 @@ public class CommandWindowController extends BaseController {
             ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
             Log.print("Copy structure:",root,dest);
-            FXTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursiveFolders(true),
-                    dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
-            ViewManager.getInstance().newProgressDialog(copyFiles);
+            
+            ContinousCombinedTask finalTask = new ContinousCombinedTask() {
+                @Override
+                protected void preparation() throws Exception {
+                    ArrayList<ExtPath> collection = new ArrayList<>();
+                    Callback<ExtPath,Void> call = new Callback<ExtPath,Void>() {
+                        @Override
+                        public Void call(ExtPath param) {
+                            collection.add(param);
+                            return null;
+                        }
+                    };
+                    SimpleTask collectFolders = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                             root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), call);
+                             return null;
+                        }
+                    };
+                    collectFolders.setDescription("Collect folders");
+                    this.addTask(collectFolders);
+                   
+                    ExtPath parent = LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1));
+                    ContinousCombinedTask copyFiles = TaskFactory.getInstance().copyFilesEx(collection, dest, parent);
+                    this.addTask(copyFiles);
+                    
+                    
+                }
+            };
+            finalTask.setDescription("Copy folder structure");
+            
+//            FXTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursive(true),
+//                    dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
+//            ViewManager.getInstance().newProgressDialog(copyFiles);
+            ViewManager.getInstance().newProgressDialog(finalTask);
             
 
         });

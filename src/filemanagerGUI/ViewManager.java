@@ -13,12 +13,13 @@ import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerGUI.dialog.DuplicateFinderController;
 import filemanagerGUI.dialog.ListController;
 import filemanagerGUI.dialog.ProgressDialogController;
+import filemanagerGUI.dialog.ProgressDialogControllerExt;
 import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.RenameDialogController.FileCallback;
 import filemanagerGUI.dialog.WebDialogController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
-import filemanagerLogic.SimpleTask;
+import utility.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -40,6 +42,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import utility.ContinousCombinedTask;
 import utility.ErrorReport;
 
 /**
@@ -162,6 +165,34 @@ public class ViewManager {
         };
         et.runOnPlatform();
     }
+    
+    public void newProgressDialog(ContinousCombinedTask task){
+        
+        FXTask et = new FXTask() {
+            @Override
+            protected Void call() throws Exception {
+            try {
+
+                Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG_EXT);
+                ProgressDialogControllerExt controller = (ProgressDialogControllerExt) frame.getController();
+                controller.beforeShow(frame.getStage().getTitle());
+//                frame.getStage().setMaxHeight(300);
+                frame.getStage().setMinHeight(250);
+                frame.getStage().setMinWidth(400);
+                frame.getStage().show();
+                frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
+                controller.afterShow(task);
+                frame.getStage().requestFocus();
+                frame.getStage().toFront();         
+            } catch (Exception ex) {
+               ErrorReport.report(ex);
+            }    
+            return null;
+            }
+        };
+        et.runOnPlatform();
+    }
+    
     public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
         newRenameDialog(folder,itemToRename,null);
     }
@@ -434,24 +465,29 @@ public class ViewManager {
         if(this.initStart){
             return;
         }
+        Platform.runLater(() ->{
+            
         
-        Frame frame = frames.get(windowID);
-        Stage stage = frame.getStage();
-        stage.xProperty().removeListener(frame.listenerX);
-        stage.yProperty().removeListener(frame.listenerY);
-        stage.close();
-        
-        frames.remove(windowID);
-        windows.remove(windowID);
-        if(windows.isEmpty()){
-            closeAllFramesNoExit();
-            try{
-                FileManagerLB.doOnExit();
-            }catch(Exception e){
-                ErrorReport.report(e);
+            
+
+            Frame frame = frames.get(windowID);
+            Stage stage = frame.getStage();
+            stage.xProperty().removeListener(frame.listenerX);
+            stage.yProperty().removeListener(frame.listenerY);
+            stage.close();
+
+            frames.remove(windowID);
+            windows.remove(windowID);
+            if(windows.isEmpty()){
+                closeAllFramesNoExit();
+                try{
+                    FileManagerLB.doOnExit();
+                }catch(Exception e){
+                    ErrorReport.report(e);
+                }
+                System.exit(0);
             }
-            System.exit(0);
-        }
+        });
     }
     public void closeAllFramesNoExit(){
         this.initStart = true;

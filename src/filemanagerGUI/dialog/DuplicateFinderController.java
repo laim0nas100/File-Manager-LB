@@ -156,9 +156,7 @@ public class DuplicateFinderController extends BaseController{
         root.update();
     }
     public void cancel(){
-        if(task!=null){
-            task.cancel();
-        }
+        task.cancel();
     }
     public static class SimpleTableItem{
         public PathStringCommands f1;

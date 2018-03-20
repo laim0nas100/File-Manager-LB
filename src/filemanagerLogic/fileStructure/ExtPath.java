@@ -61,7 +61,12 @@ public class ExtPath{
             s = s.replace("(GB) ", "");
             multiplier = Enums.DATA_SIZE.GB.size;
         } else{
-            return (double)0;
+            try{
+                return Double.parseDouble(s);
+            }catch(NumberFormatException ex){
+                ErrorReport.report(ex);
+            }
+            return 0d;
         }
         return Double.parseDouble(s) * multiplier;
     }
@@ -81,10 +86,10 @@ public class ExtPath{
         }
     };
     
-    public static Predicate<ExtPath> IS_DISABLED = new Predicate<ExtPath>() {
+    public static Predicate<ExtPath> IS_NOT_DISABLED = new Predicate<ExtPath>() {
         @Override
         public boolean test(ExtPath t) {
-            return t.isDisabled.get();
+            return !t.isDisabled.get();
         }
     };
     

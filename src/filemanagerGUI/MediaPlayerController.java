@@ -16,7 +16,7 @@ import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.LocationInRoot;
 import filemanagerLogic.LocationInRootNode;
-import filemanagerLogic.SimpleTask;
+import utility.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
@@ -73,6 +73,7 @@ import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import utility.ContinousCombinedTask;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 
@@ -565,8 +566,8 @@ public class MediaPlayerController extends BaseController {
         tree.addMenuItem(remove, remove.getText());
         MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem("Delete",
             event -> {
-                FXTask task = TaskFactory.getInstance().deleteFiles(table.getSelectionModel().getSelectedItems());
-                task.setTaskDescription("Delete selected files");
+                ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(table.getSelectionModel().getSelectedItems());
+                task.setDescription("Delete selected files");
                 ViewManager.getInstance().newProgressDialog(task);
             }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         tree.addMenuItem(deleteMenuItem, deleteMenuItem.getText());

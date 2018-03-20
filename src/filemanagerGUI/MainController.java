@@ -62,6 +62,7 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
+import utility.ContinousCombinedTask;
 import utility.ExtStringUtils;
 
 /**
@@ -416,7 +417,7 @@ public class MainController extends BaseController{
         this.localSearch.clear();
         update();
     }
-    public Thread changeToDir(ExtFolder dir){
+    private Thread changeToDir(ExtFolder dir){
         return new Thread( ()->{
             
             TaskFactory.getInstance().populateRecursiveParallelContained(dir,FileManagerLB.DEPTH);
@@ -686,7 +687,7 @@ public class MainController extends BaseController{
                     Platform.runLater(()->{
                         ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
                         FXTask markFiles = TaskFactory.getInstance().markFiles(list);
-                        new Thread(markFiles).start();
+                        TaskFactory.mainExecutor.submit(markFiles);
                     });
                 }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
         );
@@ -733,8 +734,8 @@ public class MainController extends BaseController{
                         markedView.getSelectionModel().getSelectedItems()).greaterThan(0))),
             CosmeticsFX.simpleMenuItem("Delete selected",
                 event -> {
-                    FXTask task = TaskFactory.getInstance().deleteFiles(markedView.getSelectionModel().getSelectedItems());
-                    task.setTaskDescription("Delete selected marked files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedView.getSelectionModel().getSelectedItems());
+                    task.setDescription("Delete selected marked files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
                         markedView.getSelectionModel().getSelectedItems()).greaterThan(0)))
@@ -747,16 +748,16 @@ public class MainController extends BaseController{
                 event -> {
                     MainController.actionList.clear();
                     MainController.actionList.addAll(MainController.dragList);
-                    FXTask task = TaskFactory.getInstance().moveFiles(MainController.actionList,MC.currentDir);
-                    task.setTaskDescription("Move Dragged files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(MainController.actionList,MC.currentDir);
+                    task.setDescription("Move Dragged files");
                     ViewManager.getInstance().newProgressDialog(task);  
                 }, null),
             CosmeticsFX.simpleMenuItem("Copy here selected",
                 event -> {
                     MainController.actionList.clear();
                     MainController.actionList.addAll(MainController.dragList);
-                    FXTask task = TaskFactory.getInstance().copyFiles(MainController.actionList,MC.currentDir,null);
-                    task.setTaskDescription("Copy Dragged files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(MainController.actionList,MC.currentDir,null);
+                    task.setDescription("Copy Dragged files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, null)
         );
@@ -780,7 +781,7 @@ public class MainController extends BaseController{
                     selectedList.stream().forEach((file) -> {
                         
                         Runnable run = () ->{
-                            file.collectRecursive(ExtPath.IS_DISABLED.negate().and(ExtPath.IS_FILE),addToMarkedCallback );
+                            file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE),addToMarkedCallback );
                         };
                         TaskFactory.mainExecutor.submit(run);
                         
@@ -791,7 +792,7 @@ public class MainController extends BaseController{
                     event -> {
                     selectedList.stream().forEach((file) -> {
                         Runnable run = () ->{
-                            file.collectRecursive(ExtPath.IS_DISABLED.negate().and(ExtPath.IS_FOLDER),addToMarkedCallback );
+                            file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER),addToMarkedCallback );
                         };
                         TaskFactory.mainExecutor.submit(run);
                     });  
@@ -804,23 +805,23 @@ public class MainController extends BaseController{
             CosmeticsFX.simpleMenuItem("Copy here marked", 
                 event -> {
                     Log.print("Copy Marked");
-                    FXTask task = TaskFactory.getInstance().copyFiles(markedList,MC.currentDir,null);
-                    task.setTaskDescription("Copy marked files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(markedList,MC.currentDir,null);
+                    task.setDescription("Copy marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
             CosmeticsFX.simpleMenuItem("Move here marked",
                 event ->{
                     Log.print("Move Marked");
-                    FXTask task = TaskFactory.getInstance().moveFiles(markedList,MC.currentDir);
-                    task.setTaskDescription("Move marked files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(markedList,MC.currentDir);
+                    task.setDescription("Move marked files");
                     ViewManager.getInstance().newProgressDialog(task);
                 }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
             
             
             CosmeticsFX.simpleMenuItem("Delete all marked", 
                 event -> {
-                    FXTask task = TaskFactory.getInstance().deleteFiles(markedList);
-                    task.setTaskDescription("Delete marked files");
+                    ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedList);
+                    task.setDescription("Delete marked files");
                     ViewManager.getInstance().newProgressDialog(task); 
                 }, propertyMarkedSize.greaterThan(0)),
             CosmeticsFX.simpleMenuItem("Add Marked to Virtual Folder", 
@@ -1226,8 +1227,8 @@ public class MainController extends BaseController{
     private void delete(){
         if(this.propertyDeleteCondition.get()){
             Log.print("Deleting");
-            FXTask task = TaskFactory.getInstance().deleteFiles(selectedList);
-            task.setTaskDescription("Delete selected files");
+            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(selectedList);
+            task.setDescription("Delete selected files");
             ViewManager.getInstance().newProgressDialog(task);
         }
         
