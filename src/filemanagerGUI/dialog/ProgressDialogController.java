@@ -5,17 +5,15 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.FX.FXTask;
 import filemanagerGUI.BaseController;
 import filemanagerGUI.ViewManager;
 import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import lt.lb.commons.javafx.FXTask;
 import utility.CustomClock;
 
 /**
@@ -25,86 +23,98 @@ import utility.CustomClock;
  */
 public class ProgressDialogController extends BaseController {
 
-    @FXML public VBox base;
-    
-    @FXML public Button okButton;
-    @FXML public Button cancelButton;
-    @FXML public Button pauseButton;
-    @FXML public ProgressBar progressBar;
-    @FXML public Label text;
-    @FXML public Label taskDescription;
-    @FXML public Label timeWasted;
-    @FXML public Label labelProgress;
+    @FXML
+    public VBox base;
+
+    @FXML
+    public Button okButton;
+    @FXML
+    public Button cancelButton;
+    @FXML
+    public Button pauseButton;
+    @FXML
+    public ProgressBar progressBar;
+    @FXML
+    public Label text;
+    @FXML
+    public Label taskDescription;
+    @FXML
+    public Label timeWasted;
+    @FXML
+    public Label labelProgress;
     protected CustomClock clock;
     private FXTask task;
     private SimpleBooleanProperty paused;
     private String fullText = "";
-    
-    public void afterShow(FXTask newTask){
+
+    public void afterShow(FXTask newTask) {
         super.afterShow();
         boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
         this.task = newTask;
         task.paused.bind(paused);
-        
+
         progressBar.progressProperty().bind(task.progressProperty());
         this.labelProgress.textProperty().bind(this.progressBar.progressProperty().multiply(100).asString("%1$.2f").concat("%"));
-        
+
         cancelButton.disableProperty().bind(task.runningProperty().not());
         okButton.disableProperty().bind(cancelButton.disableProperty().not());
         pauseButton.disableProperty().bind(cancelButton.disabledProperty());
         text.textProperty().bind(task.messageProperty());
-        task.messageProperty().addListener(onChange ->{
-            fullText+= text.getText()+"\n";
-            
+        task.messageProperty().addListener(onChange -> {
+            fullText += text.getText() + "\n";
+
         });
-        
+
         taskDescription.setText(task.getDescription());
-        
+
         Thread t = new Thread(task);
         clock = new CustomClock();
-        
+
         t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
-        
-        task.setOnSucceeded((e)->{
+
+        task.setOnSucceeded((e) -> {
             clock.stopTimer();
-            if(task.childTask!=null){
+            if (task.childTask != null) {
                 task.run();
             }
-            if(ViewManager.getInstance().autoCloseProgressDialogs.get()){
+            if (ViewManager.getInstance().autoCloseProgressDialogs.get()) {
                 this.exit();
             }
         });
-        
-        if(paused.get()){
+
+        if (paused.get()) {
             pauseButton.setText("START");
         }
-        Platform.runLater(()->{
+        Platform.runLater(() -> {
             t.start();
-            
+
         });
         //t.start();
-        
-        
+
     }
-    public void showFullText(){
+
+    public void showFullText() {
         ViewManager.getInstance().newListFrame("Progress so far", Arrays.asList(fullText.split("\n")));
     }
+
     @Override
-    public void beforeShow(String title){
+    public void beforeShow(String title) {
         super.beforeShow(title);
     }
-    public void cancelTask(){
+
+    public void cancelTask() {
         this.task.cancel();
         exit();
     }
-    public void pauseTask(){
-        if(task.isPaused()&&task.isRunning()){
+
+    public void pauseTask() {
+        if (task.isPaused() && task.isRunning()) {
             pauseButton.setText("PAUSE");
             paused.set(false);
-        }else if(!task.isPaused()&&task.isRunning()){
+        } else if (!task.isPaused() && task.isRunning()) {
             pauseButton.setText("CONTINUE");
             paused.set(true);
         }
@@ -113,9 +123,10 @@ public class ProgressDialogController extends BaseController {
     @Override
     public void update() {
     }
+
     @Override
-    public void exit(){
+    public void exit() {
         super.exit();
     }
-    
+
 }

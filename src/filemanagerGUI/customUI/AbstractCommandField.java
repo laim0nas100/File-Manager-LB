@@ -5,14 +5,11 @@
  */
 package filemanagerGUI.customUI;
 
+import java.util.HashMap;
+import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import LibraryLB.Containers.LoopingList;
-import LibraryLB.Log;
-import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javafx.application.Platform;
+import lt.lb.commons.containers.LoopingList;
 import utility.ErrorReport;
 
 /**
@@ -20,34 +17,39 @@ import utility.ErrorReport;
  * @author Laimonas Beniušis
  */
 public abstract class AbstractCommandField {
-    public HashMap<String,Command> commands = new HashMap<>();
+
+    public HashMap<String, Command> commands = new HashMap<>();
     public TextField field;
     public LoopingList<String> commandHistory = new LoopingList<>();
-    public AbstractCommandField(TextField tf){
+
+    public AbstractCommandField(TextField tf) {
         field = tf;
-        field.setOnKeyReleased(eh ->{
+        field.setOnKeyReleased(eh -> {
             KeyCode code = eh.getCode();
-            if(code.equals(KeyCode.UP)){
+            if (code.equals(KeyCode.UP)) {
                 field.setText(commandHistory.prev());
             }
-            if(code.equals(KeyCode.DOWN)){
+            if (code.equals(KeyCode.DOWN)) {
                 field.setText(commandHistory.next());
             }
         });
-        field.setOnAction(eh ->{
+        field.setOnAction(eh -> {
             String command = field.getText();
             commandHistory.add(command);
             field.clear();
             submit(command);
         });
     }
-    public void addCommand(String commandInit,Command command){
+
+    public void addCommand(String commandInit, Command command) {
         this.commands.put(commandInit, command);
     }
+
     public abstract void submit(String command);
-    public boolean runCommand(String commandInit,String[] params) throws Exception{
-        if(this.commands.containsKey(commandInit)){
-            Platform.runLater(() ->{
+
+    public boolean runCommand(String commandInit, String[] params) throws Exception {
+        if (this.commands.containsKey(commandInit)) {
+            Platform.runLater(() -> {
                 try {
                     this.commands.get(commandInit).run(params);
                 } catch (Exception ex) {
@@ -58,7 +60,9 @@ public abstract class AbstractCommandField {
         }
         return false;
     }
-    public interface Command{
+
+    public interface Command {
+
         public void run(String[] params) throws Exception;
     }
 }

@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import LibraryLB.Log;
+import lt.lb.commons.Log;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.VirtualFolder;
 import java.util.Collection;

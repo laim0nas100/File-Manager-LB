@@ -10,7 +10,7 @@ import java.net.URL;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import utility.ErrorReport;
-import LibraryLB.Log;
+import lt.lb.commons.Log;
 import filemanagerGUI.BaseController;
 import filemanagerLogic.Enums;
 

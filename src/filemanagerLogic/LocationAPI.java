@@ -8,7 +8,7 @@ package filemanagerLogic;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
-import LibraryLB.Log;
+import lt.lb.commons.Log;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;

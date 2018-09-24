@@ -5,43 +5,34 @@
  */
 package filemanagerGUI;
 
-import LibraryLB.FileManaging.AutoBackupMaker;
-import LibraryLB.FileManaging.FileReader;
-import LibraryLB.Log;
-import LibraryLB.Containers.ParametersMap;
 import filemanagerGUI.dialog.CommandWindowController;
 import filemanagerLogic.Enums;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtPath;
-import filemanagerLogic.fileStructure.ExtFolder;
-import filemanagerLogic.fileStructure.VirtualFolder;
+import filemanagerLogic.fileStructure.*;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.file.*;
+import java.util.*;
 import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
-import utility.ErrorReport;
-import utility.FavouriteLink;
-import utility.PathStringCommands;
+import lt.lb.commons.Log;
+import lt.lb.commons.containers.ParametersMap;
+import lt.lb.commons.filemanaging.AutoBackupMaker;
+import lt.lb.commons.filemanaging.FileReader;
+import utility.*;
 
 /**
  *
  * @author Laimonas Beniušis
  */
 public class FileManagerLB extends Application {
-    public static final String HOME_DIR  = System.getProperty("user.dir")+File.separator;
-    public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR+"VIRTUAL_FOLDERS"+File.separator;
-    public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR+"ARTIFICIAL_ROOT";
+
+    public static final String HOME_DIR = System.getProperty("user.dir") + File.separator;
+    public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR + "VIRTUAL_FOLDERS" + File.separator;
+    public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR + "ARTIFICIAL_ROOT";
     public static String USER_DIR = HOME_DIR;
     public static String ROOT_NAME = "ROOT";
     public static int MAX_THREADS_FOR_TASK = 10;
@@ -55,97 +46,103 @@ public class FileManagerLB extends Application {
     public static ParametersMap parameters;
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR);
     public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
-    
+
     @Override
     public void start(Stage primaryStage) {
-       
+
         System.err.println("STARTING");
         reInit();
-        if(DEBUG.not().get()){
+        if (DEBUG.not().get()) {
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
-        }   
-         
-    } 
+        }
+
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
-    public static void remount(){
+
+    public static void remount() {
         remountUpdateList.clear();
 //        remountUpdateList.add(VirtualFolders);
-        
+
         ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
-        for(ExtPath f:ArtificialRoot.getFilesCollection()){
-            if(!Files.isDirectory(f.toPath()) && !f.isVirtual.get()){
+        for (ExtPath f : ArtificialRoot.getFilesCollection()) {
+            if (!Files.isDirectory(f.toPath()) && !f.isVirtual.get()) {
                 ArtificialRoot.files.remove(f.propertyName.get());
-            }else{
+            } else {
                 remountUpdateList.add(f);
             }
         }
-        
-        
+
         File[] roots = File.listRoots();
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
         remountUpdateList.setAll(ArtificialRoot.getFilesCollection());
     }
-    public static boolean mountDevice(String name){
+
+    public static boolean mountDevice(String name) {
         boolean result = false;
         name = name.toUpperCase();
-        Log.print("Mount: "+name);
+        Log.print("Mount: " + name);
         Path path = Paths.get(name);
-        if(Files.isDirectory(path)){
+        if (Files.isDirectory(path)) {
             ExtFolder device = new ExtFolder(name);
             int nameCount = path.getNameCount();
-            if(nameCount == 0){
+            if (nameCount == 0) {
                 result = true;
                 String newName = path.getRoot().toString();
                 device.propertyName.set(newName);
-                if(!ArtificialRoot.files.containsKey(newName)){
+                if (!ArtificialRoot.files.containsKey(newName)) {
                     ArtificialRoot.files.put(newName, device);
-                    if(!remountUpdateList.contains(device)){
+                    if (!remountUpdateList.contains(device)) {
                         remountUpdateList.add(device);
                     }
-                    
-                }else{
+
+                } else {
                     result = false;
                 }
             }
         }
         return result;
     }
-    public static boolean folderIsVirtual(ExtPath fileToCheck){
+
+    public static boolean folderIsVirtual(ExtPath fileToCheck) {
         ExtFolder baseFolder = FileManagerLB.VirtualFolders;
         HashSet<String> set = new HashSet<>();
-        for(ExtPath file:baseFolder.files.values()){
+        for (ExtPath file : baseFolder.files.values()) {
             set.add(file.getAbsoluteDirectory());
         }
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
-    public static Set<String> getRootSet(){
-        return ArtificialRoot.files.keySet();   
+
+    public static Set<String> getRootSet() {
+        return ArtificialRoot.files.keySet();
     }
-    public static void doOnExit(){
+
+    public static void doOnExit() {
         Log.print("Exit call invoked");
         ViewManager.getInstance().closeAllFramesNoExit();
-        try {         
-            
-//            LibraryLB.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
-            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount,USER_DIR+"BUP","YYYY-MM-dd HH.mm.ss");
+        try {
+
+//            lt.lb.commons.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
+            AutoBackupMaker BM = new AutoBackupMaker(LogBackupCount, USER_DIR + "BUP", "YYYY-MM-dd HH.mm.ss");
             Log.close();
             Collection<Runnable> makeNewCopy = BM.makeNewCopy(logPath);
-            makeNewCopy.forEach(th ->{
+            makeNewCopy.forEach(th -> {
                 th.run();
             });
             BM.cleanUp().run();
             Files.delete(Paths.get(logPath));
-            
+
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
 
     }
-    public static void reInit(){
+
+    public static void reInit() {
         Log.print("INITIALIZE");
         ViewManager.getInstance().closeAllFramesNoExit();
         MediaPlayerController.VLCfound = false;
@@ -161,53 +158,51 @@ public class FileManagerLB extends Application {
         CommandWindowController.executor.stopEverything();
         CommandWindowController.executor.setRunnerSize(0);
         readParameters();
-        logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss")+" Log.txt";
-        try{
+        logPath = USER_DIR + Log.getZonedDateTime("HH-MM-ss") + " Log.txt";
+        try {
             Path userdir = Paths.get(USER_DIR);
-            if(!Files.isDirectory(userdir)){
+            if (!Files.isDirectory(userdir)) {
                 Files.createDirectories(userdir);
             }
-            Log.changeStream('f',logPath);
-        }catch(Exception e){
+            Log.changeStream('f', logPath);
+        } catch (Exception e) {
             ErrorReport.report(e);
         }
         Log.print("Before start executor");
         CommandWindowController.executor.setRunnerSize(CommandWindowController.maxExecutablesAtOnce);
         Log.print("After start executor");
         ArtificialRoot.propertyName.set(ROOT_NAME);
-        MainController.links.add(new FavouriteLink(ROOT_NAME,ArtificialRoot));
+        MainController.links.add(new FavouriteLink(ROOT_NAME, ArtificialRoot));
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Log.print("After new window");
         //Create directories
-        try{
-            Files.createDirectories(Paths.get(FileManagerLB.USER_DIR+MediaPlayerController.PLAYLIST_DIR));
-        }catch(Exception e){
+        try {
+            Files.createDirectories(Paths.get(FileManagerLB.USER_DIR + MediaPlayerController.PLAYLIST_DIR));
+        } catch (Exception e) {
             ErrorReport.report(e);
         }
 
-        
-        
     }
-    public static void readParameters(){
-        ArrayDeque<String> list = new ArrayDeque<>();         
-        try{
-            list.addAll(FileReader.readFromFile(HOME_DIR+"Parameters.txt","//","/*","*/"));
+
+    public static void readParameters() {
+        ArrayDeque<String> list = new ArrayDeque<>();
+        try {
+            list.addAll(FileReader.readFromFile(HOME_DIR + "Parameters.txt", "//", "/*", "*/"));
+        } catch (Exception e) {
+            ErrorReport.report(e);
         }
-        catch(Exception e){
-            ErrorReport.report(e);                
-        }
-        parameters = new ParametersMap(list,"=");
-        Log.print("Parameters",parameters);
-        
-        DEBUG.set((boolean) parameters.defaultGet("debug",false));
-        DEPTH = (int) parameters.defaultGet("lookDepth",2);
+        parameters = new ParametersMap(list, "=");
+        Log.print("Parameters", parameters);
+
+        DEBUG.set((boolean) parameters.defaultGet("debug", false));
+        DEPTH = (int) parameters.defaultGet("lookDepth", 2);
         LogBackupCount = (int) parameters.defaultGet("logBackupCount", 5);
         ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
         MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
-        USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath()+File.separator;
+        USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath() + File.separator;
         FileManagerLB.useBufferedFileStreams.setValue((boolean) parameters.defaultGet("bufferedFileStreams", true));
         VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
-        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands((String) parameters.defaultGet("vlcPath", HOME_DIR+"lib")).getPath()+File.separator;
+        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands((String) parameters.defaultGet("vlcPath", HOME_DIR + "lib")).getPath() + File.separator;
         PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
         PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
         PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
@@ -232,10 +227,9 @@ public class FileManagerLB extends Application {
         CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
         CommandWindowController.commandCopyFolderStructure = (String) parameters.defaultGet("code.copyFolderStructure", "copyStructure");
 
-
-        
     }
-    public static void restart(){
+
+    public static void restart() {
         try {
             Log.print("Restart request");
             FileManagerLB.doOnExit();
@@ -247,5 +241,5 @@ public class FileManagerLB extends Application {
         }
         System.exit(707);
     }
-    
+
 }

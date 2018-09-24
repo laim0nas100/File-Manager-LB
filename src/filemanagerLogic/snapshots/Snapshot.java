@@ -13,7 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import LibraryLB.Log;
+import lt.lb.commons.Log;
 
 /**
  *

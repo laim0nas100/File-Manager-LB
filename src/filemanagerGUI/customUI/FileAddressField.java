@@ -5,68 +5,70 @@
  */
 package filemanagerGUI.customUI;
 
+import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.fileStructure.ExtFolder;
 import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import lt.lb.commons.containers.LoopingList;
 import utility.ExtStringUtils;
-import LibraryLB.Containers.LoopingList;
-import filemanagerLogic.Enums.Identity;
 
 /**
  *
  * @author Laimonas Beniušis
  */
-public class FileAddressField{
+public class FileAddressField {
+
     private LoopingList<String> list;
     public TextField field;
     public ExtFolder folder;
     public String f;
-    public FileAddressField(TextField Tfield){
+
+    public FileAddressField(TextField Tfield) {
         list = new LoopingList<>();
         this.field = Tfield;
         this.field.setOnKeyReleased((KeyEvent t) -> {
             t.consume();
             KeyCode code = t.getCode();
-            if(code.equals(KeyCode.DOWN)||code.equals(KeyCode.UP)){
+            if (code.equals(KeyCode.DOWN) || code.equals(KeyCode.UP)) {
                 //Log.writeln("FileAddressField invoked");
                 String text;
-                if(f == null){
+                if (f == null) {
                     text = field.getText();
-                }else{
+                } else {
                     text = f;
                 }
                 list.clear();
-                folder.getFoldersFromFiles().forEach(fold->{
+                folder.getFoldersFromFiles().forEach(fold -> {
                     list.add(fold.propertyName.get());
                 });
                 String name = ExtStringUtils.replaceOnce(text, folder.getAbsoluteDirectory(), "");
                 int index = 0;
-                while(index<list.size()){
+                while (index < list.size()) {
                     String s;
-                    if(code.equals(KeyCode.DOWN)){
+                    if (code.equals(KeyCode.DOWN)) {
                         s = list.next();
-                    }else{
+                    } else {
                         s = list.prev();
                     }
                     index++;
-                    if(ExtStringUtils.startsWithIgnoreCase(s, name)){
-                        Platform.runLater(()->{
+                    if (ExtStringUtils.startsWithIgnoreCase(s, name)) {
+                        Platform.runLater(() -> {
                             f = name;
-                            if(folder.getIdentity().equals(Identity.VIRTUAL)){
+                            if (folder.getIdentity().equals(Identity.VIRTUAL)) {
                                 field.setText(s);
-                            }else{
-                                field.setText(folder.getAbsoluteDirectory()+s);
+                            } else {
+                                field.setText(folder.getAbsoluteDirectory() + s);
                             }
-                            
+
                             field.positionCaret(field.getLength());
                         });
                         break;
                     }
                 }
-            }else{
-                f=null;
+            } else {
+                f = null;
             }
         });
     }

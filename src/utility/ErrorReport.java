@@ -5,7 +5,7 @@
  */
 package utility;
 
-import LibraryLB.Log;
+import lt.lb.commons.Log;
 import static filemanagerGUI.FileManagerLB.DEBUG;
 import filemanagerGUI.MainController;
 import java.text.SimpleDateFormat;

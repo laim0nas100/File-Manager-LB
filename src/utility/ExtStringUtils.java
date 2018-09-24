@@ -9,26 +9,27 @@ package utility;
  *
  * @author Laimonas Beniušis
  */
-
-public class ExtStringUtils extends LibraryLB.Parsing.StringOperations {
+public class ExtStringUtils extends lt.lb.commons.parsing.StringOperations {
 //    private static final double PRECISION = 0.0001;
-    
-    public static class FilterException extends Exception{
-        public FilterException(String message){
+
+    public static class FilterException extends Exception {
+
+        public FilterException(String message) {
             super(message);
         }
     }
+
     public static String parseRegex(String originalName, String regex, String replacement) {
         String result = originalName;
         try {
             result = originalName.replaceAll(regex, replacement).trim();
         } catch (Exception e) {
-            throw(e);
+            throw (e);
         }
         return result;
     }
 
-    public static String parseFilter(String originalName, String filter, long currentNumber){
+    public static String parseFilter(String originalName, String filter, long currentNumber) {
         int numerationAmmount = 0;
         String newName = "";
         boolean preWasH = false;
@@ -58,79 +59,64 @@ public class ExtStringUtils extends LibraryLB.Parsing.StringOperations {
         }
         return trimEnd(newName);
     }
+
     public static String parseSimple(String originalName, String lookFor, String replacement) {
         return originalName.replace(lookFor, replacement).trim();
     }
-    
-    
-    public static boolean equalAmmount(String string,String matches0,String matches1,String... matches){
+
+    public static boolean equalAmmount(String string, String matches0, String matches1, String... matches) {
         int ammount = ExtStringUtils.countMatches(string, matches0);
         int ammount1 = ExtStringUtils.countMatches(string, matches1);
-        if(ammount != ammount1){
+        if (ammount != ammount1) {
             return false;
-        }else{
-            for(String match:matches){
+        } else {
+            for (String match : matches) {
                 ammount1 = ExtStringUtils.countMatches(string, match);
-                if(ammount != ammount1){
+                if (ammount != ammount1) {
                     return false;
                 }
             }
         }
         return true;
     }
-    public static double mod(double number,double mod){
-        if(Math.abs(mod)<=Double.MIN_NORMAL){
+
+    public static double mod(double number, double mod) {
+        if (Math.abs(mod) <= Double.MIN_NORMAL) {
             return 0;
         }
-        if(number<0){
-            return mod(number + mod,mod);
-        }else if(number>=mod){
-            return mod(number - mod,mod);
-        }else{
+        if (number < 0) {
+            return mod(number + mod, mod);
+        } else if (number >= mod) {
+            return mod(number - mod, mod);
+        } else {
             return number;
         }
     }
-    public static int mod(int number,int mod){
-        if(mod<=0){
+
+    public static int mod(int number, int mod) {
+        if (mod <= 0) {
             return 0;
         }
-        if(number<0){
-            return mod(number + mod,mod);
-        }else if(number>=mod){
-            return mod(number - mod,mod);
-        }else{
+        if (number < 0) {
+            return mod(number + mod, mod);
+        } else if (number >= mod) {
+            return mod(number - mod, mod);
+        } else {
             return number;
         }
     }
-    public static double normalize(double number,int digitsAfterSign){
+
+    public static double normalize(double number, int digitsAfterSign) {
         double pow = Math.pow(10, digitsAfterSign);
-        boolean isNegative = number<0;
+        boolean isNegative = number < 0;
         number = Math.abs(number);
         long intPart = (long) number;
         number = number - intPart;
-        long doublePart = (long)(number * pow);
-        if(isNegative){
-            intPart*=-1;
+        long doublePart = (long) (number * pow);
+        if (isNegative) {
+            intPart *= -1;
         }
-    return (double) intPart + ((double)doublePart/pow);
-//        return Double.parseDouble(intPart+"."+doublePart);
-//        String numb = String.valueOf(number);
-//        int dotIndex = numb.indexOf(".");
-//        
-//        String intValue = numb.substring(0,dotIndex);
-//        numb= numb.substring(dotIndex+1);
-//        String realValue = "";
-//        for(int i=0; i<digitsAfterSign;i++){
-//            if(i>=numb.length()){
-//                break;
-//            }
-//            realValue +=numb.charAt(i);
-//        }
-//        if(realValue.length()==0){
-//            realValue+="0";
-//        }
-//        return Double.p
+        return intPart + (doublePart / pow);
     }
-    
-    
+
 }

@@ -5,57 +5,46 @@
  */
 package filemanagerGUI;
 
-
-import LibraryLB.FX.FXTask;
-import LibraryLB.Log;
-import filemanagerGUI.dialog.AdvancedRenameController;
-import filemanagerGUI.dialog.CommandWindowController;
-import filemanagerGUI.dialog.DuplicateFinderController;
-import filemanagerGUI.dialog.ListController;
-import filemanagerGUI.dialog.ProgressDialogController;
-import filemanagerGUI.dialog.ProgressDialogControllerExt;
-import filemanagerGUI.dialog.RenameDialogController;
 import filemanagerGUI.dialog.RenameDialogController.FileCallback;
-import filemanagerGUI.dialog.WebDialogController;
+import filemanagerGUI.dialog.*;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.FrameTitle;
-import utility.SimpleTask;
 import filemanagerLogic.TaskFactory;
 import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import utility.ContinousCombinedTask;
-import utility.ErrorReport;
+import lt.lb.commons.Log;
+import lt.lb.commons.containers.Value;
+import lt.lb.commons.javafx.FXTask;
+import utility.*;
 
 /**
  *
  * @author Laimonas Beniušis
  */
 public class ViewManager {
+
     public SimpleBooleanProperty autoCloseProgressDialogs;
     public SimpleBooleanProperty autoStartProgressDialogs;
     public SimpleBooleanProperty pinProgressDialogs;
     public SimpleBooleanProperty pinTextInputDialogs;
     private static final ViewManager INSTANCE = new ViewManager();
-    protected ViewManager(){
+
+    protected ViewManager() {
         this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
         this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
         this.pinProgressDialogs = new SimpleBooleanProperty(false);
@@ -63,27 +52,29 @@ public class ViewManager {
         this.frames = new HashMap<>();
         this.windows = new HashSet<>();
 
-    };
-    public final HashMap<String,Frame> frames;
+    }
+    ;
+    public final HashMap<String, Frame> frames;
     public final HashSet<String> windows;
     private boolean initStart = false;
 
-    public static ViewManager getInstance(){
+    public static ViewManager getInstance() {
         return INSTANCE;
     }
-    private int findSmallestAvailable(Map<String,Frame> map,String title){
-        int i =1;
-        while(true){
-            if(map.containsKey(title+i)){
+
+    private int findSmallestAvailable(Map<String, Frame> map, String title) {
+        int i = 1;
+        while (true) {
+            if (map.containsKey(title + i)) {
                 i++;
-            }else{
+            } else {
                 return i;
             }
         }
     }
-    
+
 // WINDOW ACTIONS
-    public void newWindow(ExtFolder currentFolder){
+    public void newWindow(ExtFolder currentFolder) {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -91,24 +82,25 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = (MainController) frame.getController();
                     windows.add(frame.getID());
-                    controller.beforeShow(frame.getTitle(),currentFolder);
+                    controller.beforeShow(frame.getTitle(), currentFolder);
                     frame.getStage().show();
                     controller.afterShow();
                 } catch (IOException ex) {
                     ErrorReport.report(ex);
-                }            
+                }
                 return null;
             }
         };
 //        et.toThread().start();
         et.runOnPlatform();
 //        Platform.runLater(et);
-        
+
     }
-    public void updateAllWindows(){
-        for(String s:windows){
+
+    public void updateAllWindows() {
+        for (String s : windows) {
             MainController controller = (MainController) frames.get(s).getController();
-            Runnable run  = new Runnable() {
+            Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     controller.update();
@@ -117,10 +109,11 @@ public class ViewManager {
             TaskFactory.mainExecutor.submit(run);
         }
     }
-    public void updateAllFrames(){
-        
-        for(Frame frame:frames.values()){
-            Runnable run  = new Runnable() {
+
+    public void updateAllFrames() {
+
+        for (Frame frame : frames.values()) {
+            Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     frame.getController().update();
@@ -129,75 +122,77 @@ public class ViewManager {
             TaskFactory.mainExecutor.submit(run);
         }
     }
-    public Frame getFrame(String windowID){
+
+    public Frame getFrame(String windowID) {
         return frames.get(windowID);
     }
-    public boolean frameIsVisible(String windowID){
+
+    public boolean frameIsVisible(String windowID) {
         boolean res = frames.containsKey(windowID);
 //        Log.write(windowID +" isVisible call:"+res );
         return res;
     }
-    
+
 //DIALOG ACTIONS
-    public void newProgressDialog(FXTask task){
-        
+    public void newProgressDialog(FXTask task) {
+
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
-            try {
+                try {
 
-                Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG);
-                ProgressDialogController controller = (ProgressDialogController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle());
-                frame.getStage().setMaxHeight(300);
-                frame.getStage().setMinHeight(250);
-                frame.getStage().setMinWidth(400);
-                frame.getStage().show();
-                frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
-                controller.afterShow(task);
-                frame.getStage().requestFocus();
-                frame.getStage().toFront();         
-            } catch (Exception ex) {
-               ErrorReport.report(ex);
-            }    
-            return null;
+                    Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG);
+                    ProgressDialogController controller = (ProgressDialogController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle());
+                    frame.getStage().setMaxHeight(300);
+                    frame.getStage().setMinHeight(250);
+                    frame.getStage().setMinWidth(400);
+                    frame.getStage().show();
+                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
+                    controller.afterShow(task);
+                    frame.getStage().requestFocus();
+                    frame.getStage().toFront();
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
             }
         };
         et.runOnPlatform();
     }
-    
-    public void newProgressDialog(ContinousCombinedTask task){
-        
+
+    public void newProgressDialog(ContinousCombinedTask task) {
+
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
-            try {
+                try {
 
-                Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG_EXT);
-                ProgressDialogControllerExt controller = (ProgressDialogControllerExt) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle());
+                    Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG_EXT);
+                    ProgressDialogControllerExt controller = (ProgressDialogControllerExt) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle());
 //                frame.getStage().setMaxHeight(300);
-                frame.getStage().setMinHeight(250);
-                frame.getStage().setMinWidth(400);
-                frame.getStage().show();
-                frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
-                controller.afterShow(task);
-                frame.getStage().requestFocus();
-                frame.getStage().toFront();         
-            } catch (Exception ex) {
-               ErrorReport.report(ex);
-            }    
-            return null;
+                    frame.getStage().setMinHeight(250);
+                    frame.getStage().setMinWidth(400);
+                    frame.getStage().show();
+                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
+                    controller.afterShow(task);
+                    frame.getStage().requestFocus();
+                    frame.getStage().toFront();
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
             }
         };
         et.runOnPlatform();
     }
-    
-    public void newRenameDialog(ExtFolder folder,ExtPath itemToRename){
-        newRenameDialog(folder,itemToRename,null);
+
+    public void newRenameDialog(ExtFolder folder, ExtPath itemToRename) {
+        newRenameDialog(folder, itemToRename, null);
     }
-   
-    public void newRenameDialog(ExtFolder folder,ExtPath itemToRename,FileCallback callback){
+
+    public void newRenameDialog(ExtFolder folder, ExtPath itemToRename, FileCallback callback) {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -210,10 +205,10 @@ public class ViewManager {
                     frame.getStage().setMinWidth(500);
                     frame.getStage().show();
                     frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinTextInputDialogs.get());
-                    controller.afterShow(folder,itemToRename);
+                    controller.afterShow(folder, itemToRename);
                     controller.callback = callback;
                     frame.getStage().requestFocus();
-                    frame.getStage().toFront();            
+                    frame.getStage().toFront();
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
@@ -222,77 +217,77 @@ public class ViewManager {
         };
         et.runOnPlatform();
     }
-    
-    
-    public void newAdvancedRenameDialog(ExtFolder folder){
-       
-       
-        FXTask et = new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
-                AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle(),folder);
-                frame.getStage().show();
-                controller.afterShow();
-                frame.getStage().toFront();      
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            } 
-            return null;
-            }
-        };
-        et.runOnPlatform();
-    }
-    public void newDirSyncDialog(){
-        
-        FXTask et = new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.DIR_SYNC_DIALOG);
-                DirSyncController controller = (DirSyncController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle());
-                frame.getStage().show();
-                controller.afterShow();
-                frame.getStage().toFront();
 
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }    
-            return null;
-            }
-        };
-        et.runOnPlatform();
-        
-  
-    }
-    public void newDuplicateFinderDialog(ExtFolder root){
+    public void newAdvancedRenameDialog(ExtFolder folder) {
 
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
-               try {
-                    Frame frame = newFrame(FrameTitle.DUPLICATE_FINDER_DIALOG);
-                    DuplicateFinderController controller = (DuplicateFinderController) frame.getController();
-                    controller.beforeShow(frame.getStage().getTitle(),root);
+                try {
+                    Frame frame = newFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
+                    AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle(), folder);
+                    frame.getStage().show();
+                    controller.afterShow();
+                    frame.getStage().toFront();
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
+            }
+        };
+        et.runOnPlatform();
+    }
+
+    public void newDirSyncDialog() {
+
+        FXTask et = new FXTask() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    Frame frame = newFrame(FrameTitle.DIR_SYNC_DIALOG);
+                    DirSyncController controller = (DirSyncController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().show();
                     controller.afterShow();
                     frame.getStage().toFront();
 
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
-                }  
+                }
                 return null;
             }
         };
         et.runOnPlatform();
-   }
-    public void newWebDialog(Enums.WebDialog info){     
+
+    }
+
+    public void newDuplicateFinderDialog(ExtFolder root) {
 
         FXTask et = new FXTask() {
-        @Override
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    Frame frame = newFrame(FrameTitle.DUPLICATE_FINDER_DIALOG);
+                    DuplicateFinderController controller = (DuplicateFinderController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle(), root);
+                    frame.getStage().show();
+                    controller.afterShow();
+                    frame.getStage().toFront();
+
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
+            }
+        };
+        et.runOnPlatform();
+    }
+
+    public void newWebDialog(Enums.WebDialog info) {
+
+        FXTask et = new FXTask() {
+            @Override
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.WEB_DIALOG);
@@ -305,79 +300,81 @@ public class ViewManager {
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
-                
-            return null;
-            }
-        };
-        et.runOnPlatform();
-    } 
-    public void newCommandDialog(){
-        FXTask et = new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
-                CommandWindowController controller = (CommandWindowController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle());
-                frame.getStage().show();
-                controller.afterShow();
-                frame.getStage().toFront();
 
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }    
-            return null;
+                return null;
             }
         };
         et.runOnPlatform();
     }
-    public void newListFrame(String description, Collection<String> list){
+
+    public void newCommandDialog() {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
-            try {
-                Frame frame = newFrame(FrameTitle.LIST_FRAME);
-                ListController controller = (ListController) frame.getController();
-                controller.beforeShow(frame.getStage().getTitle(),description);
-                
-                frame.getStage().show();
-                controller.afterShow(list);
-                frame.getStage().toFront();
+                try {
+                    Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
+                    CommandWindowController controller = (CommandWindowController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle());
+                    frame.getStage().show();
+                    controller.afterShow();
+                    frame.getStage().toFront();
 
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }    
-            return null;
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
             }
         };
         et.runOnPlatform();
-        
-    } 
-    public void newMediaPlayer(){
-        SimpleBooleanProperty property = new SimpleBooleanProperty(true);
+    }
+
+    public void newListFrame(String description, Collection<String> list) {
+        FXTask et = new FXTask() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    Frame frame = newFrame(FrameTitle.LIST_FRAME);
+                    ListController controller = (ListController) frame.getController();
+                    controller.beforeShow(frame.getStage().getTitle(), description);
+
+                    frame.getStage().show();
+                    controller.afterShow(list);
+                    frame.getStage().toFront();
+
+                } catch (Exception ex) {
+                    ErrorReport.report(ex);
+                }
+                return null;
+            }
+        };
+        et.runOnPlatform();
+
+    }
+
+    public void newMediaPlayer() {
+        Value<Boolean> property = new Value<>(true);
         Frame[] frame = new Frame[1];
         SimpleTask init = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
                 try {
                     MediaPlayerController.discover();
-                } catch(Exception e){
+                } catch (Exception e) {
                     ErrorReport.report(e);
                     property.set(false);
                 }
                 return null;
             }
         };
-        init.setOnSucceeded(event ->{
+        init.setOnSucceeded(event -> {
             SimpleTask task = new SimpleTask() {
                 @Override
                 protected Void call() throws Exception {
-                    if(property.get()){
+                    if (property.get()) {
                         frame[0].getStage().show();
                         frame[0].getStage().toFront();
                         frame[0].getController().afterShow();
-                    }
-                    else{
+                    } else {
                         closeFrame(frame[0].getController().windowID);
                     }
                     return null;
@@ -387,44 +384,42 @@ public class ViewManager {
 
         });
 
-        
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
                 try {
-                    frame[0] = newFrame(FrameTitle.MEDIA_PLAYER);     
+                    frame[0] = newFrame(FrameTitle.MEDIA_PLAYER);
                     new Thread(init).start();
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
 
-            return null;
+                return null;
             }
         };
         et.runOnPlatform();
     }
 
-    
-    private Frame newFrame(FrameTitle info,Object...params) throws IOException, Exception{
+    private Frame newFrame(FrameTitle info, Object... params) throws IOException, Exception {
         Boolean frameIsSingleton = false;
-        if(params.length>0){
+        if (params.length > 0) {
             frameIsSingleton = (Boolean) params[0];
         }
         String title = info.getTitle();
-        if(!frameIsSingleton){
-            int index = findSmallestAvailable(frames,info.getTitle());
-            title+=index;
+        if (!frameIsSingleton) {
+            int index = findSmallestAvailable(frames, info.getTitle());
+            title += index;
         }
-        if(frames.containsKey(title)){
-            throw new Exception("Frame:"+title+"Allready exists");
+        if (frames.containsKey(title)) {
+            throw new Exception("Frame:" + title + "Allready exists");
         }
-        URL url = getClass().getResource("/resources/"+info.recourse);
-        Log.print("URL=",url.toString());
+        URL url = getClass().getResource("/resources/" + info.recourse);
+        Log.print("URL=", url.toString());
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
         Stage stage = new Stage();
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/resources/images/ico.png")));
-        
+
         stage.setTitle(title);
         stage.setScene(new Scene(root));
         stage.getScene().getStylesheets().add("resources/css/fxml.css");
@@ -433,14 +428,13 @@ public class ViewManager {
             controller.exit();
         });
         controller.windowID = title;
-        Frame frame = new Frame(stage,controller,info.title);       
-        this.frames.put(frame.getTitle(),frame);
-        
-        
+        Frame frame = new Frame(stage, controller, info.title);
+        this.frames.put(frame.getTitle(), frame);
+
         final Frame.Pos[] pos = new Frame.Pos[1];
-        if(!Frame.positionMemoryMap.containsKey(info.title)){
-            pos[0] = new Frame.Pos(stage.getX(), stage.getY());          
-            Frame.positionMemoryMap.put(info.title,pos[0]);
+        if (!Frame.positionMemoryMap.containsKey(info.title)) {
+            pos[0] = new Frame.Pos(stage.getX(), stage.getY());
+            Frame.positionMemoryMap.put(info.title, pos[0]);
         }
         pos[0] = Frame.positionMemoryMap.get(info.title);
         ChangeListener listenerY = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
@@ -449,26 +443,23 @@ public class ViewManager {
         ChangeListener listenerX = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
             pos[0].x.set((double) newValue);
         };
-        
+
         stage.setX(pos[0].x.get());
         stage.setY(pos[0].y.get());
         frame.listenerX = listenerX;
         frame.listenerY = listenerY;
         stage.xProperty().addListener(listenerX);
         stage.yProperty().addListener(listenerY);
-        
-        
+
         return frame;
-       
+
     }
-    public void closeFrame(String windowID){
-        if(this.initStart){
+
+    public void closeFrame(String windowID) {
+        if (this.initStart) {
             return;
         }
-        Platform.runLater(() ->{
-            
-        
-            
+        Platform.runLater(() -> {
 
             Frame frame = frames.get(windowID);
             Stage stage = frame.getStage();
@@ -478,23 +469,24 @@ public class ViewManager {
 
             frames.remove(windowID);
             windows.remove(windowID);
-            if(windows.isEmpty()){
+            if (windows.isEmpty()) {
                 closeAllFramesNoExit();
-                try{
+                try {
                     FileManagerLB.doOnExit();
-                }catch(Exception e){
+                } catch (Exception e) {
                     ErrorReport.report(e);
                 }
                 System.exit(0);
             }
         });
     }
-    public void closeAllFramesNoExit(){
+
+    public void closeAllFramesNoExit() {
         this.initStart = true;
-        frames.keySet().forEach(key->{
+        frames.keySet().forEach(key -> {
             Frame frame = frames.get(key);
-            frame.getController().exit(); 
-            Log.print("Close",frame.getID());
+            frame.getController().exit();
+            Log.print("Close", frame.getID());
             frame.getStage().close();
         });
         frames.clear();
@@ -504,9 +496,7 @@ public class ViewManager {
         } catch (InterruptedException ex) {
             Logger.getLogger(ViewManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        this.initStart = false;        
+        this.initStart = false;
     }
-    
-    
-    
+
 }

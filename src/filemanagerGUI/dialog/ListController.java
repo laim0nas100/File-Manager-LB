@@ -12,9 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 
 /**
  * FXML Controller class
@@ -23,29 +21,35 @@ import javafx.scene.control.TextField;
  */
 public class ListController extends BaseController {
 
-    @FXML public Label descriptionLabel;
-    @FXML public ListView listView;
-    @FXML public TextField pathToSave;
-    @FXML public Label size;
+    @FXML
+    public Label descriptionLabel;
+    @FXML
+    public ListView listView;
+    @FXML
+    public TextField pathToSave;
+    @FXML
+    public Label size;
+
     @Override
     public void update() {
     }
-    
-    public void beforeShow(String title,String desc){
+
+    public void beforeShow(String title, String desc) {
         super.beforeShow(title);
         this.descriptionLabel.setText(desc);
-        
+
     }
-    public void afterShow(Collection<String> list){
-        Platform.runLater(()->{
+
+    public void afterShow(Collection<String> list) {
+        Platform.runLater(() -> {
             listView.getItems().setAll(list);
-            size.setText(list.size()+"");
+            size.setText(list.size() + "");
         });
     }
-    public void save() throws FileNotFoundException, UnsupportedEncodingException{
+
+    public void save() throws FileNotFoundException, UnsupportedEncodingException {
         String text = this.pathToSave.getText();
-        LibraryLB.FileManaging.FileReader.writeToFile(FileManagerLB.USER_DIR+text, this.listView.getItems());
+        lt.lb.commons.filemanaging.FileReader.writeToFile(FileManagerLB.USER_DIR + text, this.listView.getItems());
     }
-            
-    
+
 }

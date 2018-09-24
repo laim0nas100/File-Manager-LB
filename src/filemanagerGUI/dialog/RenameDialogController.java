@@ -5,21 +5,18 @@
  */
 package filemanagerGUI.dialog;
 
-import LibraryLB.Threads.TimeoutTask;
 import filemanagerLogic.LocationAPI;
 import filemanagerLogic.TaskFactory;
-import filemanagerLogic.fileStructure.ExtPath;
 import filemanagerLogic.fileStructure.ExtFolder;
+import filemanagerLogic.fileStructure.ExtPath;
 import java.nio.file.Files;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import utility.ErrorReport;
-import utility.ExtStringUtils;
-import utility.FileNameException;
-import utility.PathStringCommands;
+import lt.lb.commons.threads.TimeoutTask;
+import utility.*;
 
 /**
  * FXML Controller class
@@ -27,82 +24,87 @@ import utility.PathStringCommands;
  * @author Laimonas Beniušis
  */
 public class RenameDialogController extends TextInputDialogController {
-    
-    
-    public static interface FileCallback{
+
+    public static interface FileCallback {
+
         public void callback(ExtPath path);
     }
-    
-    @FXML public Label nameAvailable;
-   
+
+    @FXML
+    public Label nameAvailable;
+
     public FileCallback callback;
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    private TimeoutTask folderUpdateTask = new TimeoutTask(1000,100,()->{
-        update(); 
-        Platform.runLater(() ->{
-            if(!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0){
-                nameAvailable.setText("Available");   
-                nameIsAvailable.set(true);
-            }
-        }); 
-    });
+    private TimeoutTask folderUpdateTask = new TimeoutTask(1000, 100, () -> {
+                                                       update();
+                                                       Platform.runLater(() -> {
+                                                           if (!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0) {
+                                                               nameAvailable.setText("Available");
+                                                               nameIsAvailable.set(true);
+                                                           }
+                                                       });
+                                                   });
 
     @Override
     public void exit() {
-        super.exit(); 
+        super.exit();
     }
-    public void afterShow(ExtFolder folder,ExtPath itemToRename){
-        this.description.setText("Rename "+itemToRename.propertyName.get());
+
+    public void afterShow(ExtFolder folder, ExtPath itemToRename) {
+        this.description.setText("Rename " + itemToRename.propertyName.get());
         this.itemToRename = itemToRename;
         this.textField.setText(itemToRename.propertyName.get());
         nameIsAvailable.set(false);
         this.folder = folder;
-        this.textField.textProperty().addListener(listener->{
+        this.textField.textProperty().addListener(listener -> {
             checkAvailable();
         });
 
     }
+
     @Override
-    public void beforeShow(String title){
+    public void beforeShow(String title) {
         super.beforeShow(title);
     }
+
     @Override
-    public void checkAvailable(){
-        if(!Files.exists(itemToRename.toPath())){
+    public void checkAvailable() {
+        if (!Files.exists(itemToRename.toPath())) {
             exit();
         }
         nameIsAvailable.set(false);
         nameAvailable.setText("Taken");
         folderUpdateTask.update();
-        
+
     }
+
     @Override
-    public void apply(){
-        if(nameIsAvailable.get()){
+    public void apply() {
+        if (nameIsAvailable.get()) {
             try {
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
-                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(),ExtStringUtils.trimEnd(textField.getText()),fallback.getName(true));
-                if(callback!=null){
+                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), ExtStringUtils.trimEnd(textField.getText()), fallback.getName(true));
+                if (callback != null) {
                     ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(renameTo);
                     callback.callback(fileOptimized);
                 }
                 exit();
-            }catch(FileNameException ex){
+            } catch (FileNameException ex) {
                 this.nameAvailable.setText(ex.getMessage());
             } catch (Exception ex) {
                 ErrorReport.report(ex);
-            } 
+            }
         }
-    }   
+    }
 
     @Override
     public void update() {
-        
+
         listToCheck.clear();
         folder.update();
-        for(ExtPath file:folder.getFilesCollection()){
+        for (ExtPath file : folder.getFilesCollection()) {
             listToCheck.add(file.propertyName.get());
         }
     }
