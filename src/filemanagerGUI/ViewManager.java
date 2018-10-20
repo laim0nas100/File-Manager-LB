@@ -17,7 +17,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -29,6 +28,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.Value;
+import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
 import utility.*;
 
@@ -459,7 +459,7 @@ public class ViewManager {
         if (this.initStart) {
             return;
         }
-        Platform.runLater(() -> {
+        FX.submit(() -> {
 
             Frame frame = frames.get(windowID);
             Stage stage = frame.getStage();

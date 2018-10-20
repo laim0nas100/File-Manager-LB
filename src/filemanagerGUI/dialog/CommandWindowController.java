@@ -221,7 +221,7 @@ public class CommandWindowController extends BaseController {
 
         public void apply(String name) throws IOException, InterruptedException {
             ArrayDeque<String> readFromFile = new ArrayDeque(
-                    lt.lb.commons.filemanaging.FileReader.readFromFile(FileManagerLB.USER_DIR + name));
+                    lt.lb.commons.io.FileReader.readFromFile(FileManagerLB.USER_DIR + name));
             this.setTextAfterwards = true;
             for (String command : readFromFile) {
                 submit(command);

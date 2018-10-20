@@ -12,19 +12,24 @@ import java.io.File;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.util.Callback;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.ObjectBuffer;
+import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.threads.Promise;
+import lt.lb.commons.threads.SharedPromise;
 import utility.ErrorReport;
 import utility.ExtStringUtils;
 
 /**
  *
- * @author Laimonas Beiušis
- * Extended Folder for custom actions
+ * @author Laimonas Beiušis Extended Folder for custom actions
  */
 public class ExtFolder extends ExtPath {
 
@@ -48,41 +53,55 @@ public class ExtFolder extends ExtPath {
     }
 
     protected void populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled) {
-
         try {
+            Executor exe = new FastWaitingExecutor(8, 1, TimeUnit.SECONDS);
+            ArrayDeque<Promise> promises = new ArrayDeque<>();
             if (Files.isDirectory(toPath())) {
                 String parent = getAbsoluteDirectory();
+
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
                     for (Path f : dirStream) {
-                        final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
-                        final String filePathStr = f.toString();
-                        ExtPath file = null;
-                        if (Files.exists(f) && !files.containsKey(name)) {
-                            if (Files.isDirectory(f)) {
-                                file = new ExtFolder(filePathStr, f);
-                            } else if (Files.isSymbolicLink(f)) {
-                                file = new ExtLink(filePathStr, f);
-                            } else {
-                                file = new ExtPath(filePathStr, f);
-                            }
-                            files.put(file.propertyName.get(), file);
-                            if (buffer != null) {
-                                buffer.add(file);
-                                if (isCanceled != null) {
-                                    if (isCanceled.get()) {
-                                        Log.print("Canceled form populate");
-                                        return;
-                                    }
-                                }
+                        if (isCanceled != null) {
+                            if (isCanceled.get()) {
+                                Log.print("Canceled form populate");
+                                return;
                             }
                         }
+
+                        new SharedPromise(() -> {
+                            if (isCanceled != null) {
+                                if (isCanceled.get()) {
+                                    return;
+                                }
+                            }
+                            final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
+                            final String filePathStr = f.toString();
+                            ExtPath file = null;
+                            if (Files.exists(f) && !files.containsKey(name)) {
+                                if (Files.isDirectory(f)) {
+                                    file = new ExtFolder(filePathStr, f);
+                                } else if (Files.isSymbolicLink(f)) {
+                                    file = new ExtLink(filePathStr, f);
+                                } else {
+                                    file = new ExtPath(filePathStr, f);
+                                }
+                                files.put(file.propertyName.get(), file);
+                                if (buffer != null) {
+                                    buffer.add(file);
+
+                                }
+                            }
+                        }).collect(promises).execute(exe);
+
                     }
                 }
             }
             if (buffer != null) {
                 buffer.flush();
             }
-
+            try{
+            new SharedPromise().waitFor(promises).get();
+            }catch(InterruptedException e){};
         } catch (Exception e) {
             ErrorReport.report(e);
         }

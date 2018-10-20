@@ -112,7 +112,7 @@ public class ExtStringUtils extends lt.lb.commons.parsing.StringOperations {
         number = Math.abs(number);
         long intPart = (long) number;
         number = number - intPart;
-        long doublePart = (long) (number * pow);
+        long doublePart = Math.round(number * pow);
         if (isNegative) {
             intPart *= -1;
         }

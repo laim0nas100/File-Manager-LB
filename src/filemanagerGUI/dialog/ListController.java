@@ -49,7 +49,7 @@ public class ListController extends BaseController {
 
     public void save() throws FileNotFoundException, UnsupportedEncodingException {
         String text = this.pathToSave.getText();
-        lt.lb.commons.filemanaging.FileReader.writeToFile(FileManagerLB.USER_DIR + text, this.listView.getItems());
+        lt.lb.commons.io.FileReader.writeToFile(FileManagerLB.USER_DIR + text, this.listView.getItems());
     }
 
 }

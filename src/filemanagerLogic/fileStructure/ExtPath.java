@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import javafx.beans.property.*;
 import javafx.util.Callback;
+import lt.lb.commons.ArrayOp;
 import lt.lb.commons.threads.RepeatableTask;
 import utility.ErrorReport;
 import utility.PathStringCommands;
@@ -26,6 +27,10 @@ import utility.PathStringCommands;
  * @author Lemmin
  */
 public class ExtPath {
+
+    public static Predicate<ExtPath> EXISTS = path -> (ArrayOp.any(
+                                                       Predicate.isEqual(path.getIdentity()), Identity.FILE, Identity.FOLDER, Identity.LINK)
+                                                       && Files.exists(path.toPath()));
 
     public static final Comparator<String> COMPARE_SIZE_STRING = (String f1, String f2) -> {
         if (f1.isEmpty() || f2.isEmpty()) {

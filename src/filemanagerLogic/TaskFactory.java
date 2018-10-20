@@ -22,9 +22,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import lt.lb.commons.Log;
-import lt.lb.commons.filemanaging.FileUtils;
-import lt.lb.commons.javafx.FXTask;
-import lt.lb.commons.javafx.FXTaskPooler;
+import lt.lb.commons.io.FileUtils;
+import lt.lb.commons.javafx.*;
 import lt.lb.commons.parsing.StringOperations;
 import lt.lb.commons.threads.ExtTask;
 import lt.lb.commons.threads.TaskPooler;
@@ -610,15 +609,11 @@ public class TaskFactory {
             protected Void call() throws Exception {
 
                 TaskFactory.getInstance().populateRecursiveParallelContained(folder, 50);
-//                    Thread thread = new Thread(populateRecursiveParallel);
-//                    thread.setDaemon(true);
-//                    thread.start();
-//                    thread.join();
 
                 ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
 
-                Platform.runLater(() -> {
+                return FX.submit(() -> {
                     MainController controller = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
                     controller.snapshotView.getItems().clear();
                     try {
@@ -629,9 +624,8 @@ public class TaskFactory {
                         controller.snapshotView.getItems().add("Snapshot:" + file + " failed");
                     }
                     ViewManager.getInstance().updateAllWindows();
-                });
+                }).get();
 
-                return null;
             }
 
         };

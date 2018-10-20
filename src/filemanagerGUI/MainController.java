@@ -245,16 +245,21 @@ public class MainController extends BaseController {
                 localSearch();
             }
             Iterator<ExtPath> iterator = MainController.markedList.iterator();
-            while (iterator.hasNext()) {
-                try {
-                    Path toPath = iterator.next().toPath();
-                    if (!Files.exists(toPath)) {
-                        iterator.remove();
-                    }
-                } catch (Exception e) {
-                    iterator.remove();
-                }
+            try {
+                LocationAPI.getInstance().filterIfExists(MainController.markedList);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+//            while (iterator.hasNext()) {
+//                try {
+//                    Path toPath = iterator.next().toPath();
+//                    if (!Files.exists(toPath)) {
+//                        iterator.remove();
+//                    }
+//                } catch (Exception e) {
+//                    iterator.remove();
+//                }
+//            }
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
             this.buttonParent.setDisable(!MC.hasParent());

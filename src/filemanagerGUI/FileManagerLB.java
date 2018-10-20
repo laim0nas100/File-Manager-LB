@@ -12,6 +12,8 @@ import filemanagerLogic.fileStructure.*;
 import java.io.File;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -20,8 +22,10 @@ import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.ParametersMap;
-import lt.lb.commons.filemanaging.AutoBackupMaker;
-import lt.lb.commons.filemanaging.FileReader;
+import lt.lb.commons.io.AutoBackupMaker;
+import lt.lb.commons.io.FileReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import utility.*;
 
 /**
@@ -164,7 +168,13 @@ public class FileManagerLB extends Application {
             if (!Files.isDirectory(userdir)) {
                 Files.createDirectories(userdir);
             }
-            Log.changeStream('f', logPath);
+            Log.changeStream(Log.LogStream.FILE, logPath);
+            Logger logger = LoggerFactory.getLogger("MainLogger");
+            Consumer<Supplier<String>> sl4jConsumer = (Supplier<String> str)->{
+                logger.debug(str.get());
+            };
+//            Log.override = sl4jCosnsumer;
+//            Log.flushBuffer();
         } catch (Exception e) {
             ErrorReport.report(e);
         }
@@ -194,38 +204,38 @@ public class FileManagerLB extends Application {
         parameters = new ParametersMap(list, "=");
         Log.print("Parameters", parameters);
 
-        DEBUG.set((boolean) parameters.defaultGet("debug", false));
-        DEPTH = (int) parameters.defaultGet("lookDepth", 2);
-        LogBackupCount = (int) parameters.defaultGet("logBackupCount", 5);
-        ROOT_NAME = (String) parameters.defaultGet("ROOT_NAME", ROOT_NAME);
-        MAX_THREADS_FOR_TASK = (int) parameters.defaultGet("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
-        USER_DIR = new PathStringCommands((String) parameters.defaultGet("userDir", HOME_DIR)).getPath() + File.separator;
-        FileManagerLB.useBufferedFileStreams.setValue((boolean) parameters.defaultGet("bufferedFileStreams", true));
-        VirtualFolder.VIRTUAL_FOLDER_PREFIX = (String) parameters.defaultGet("virtualPrefix", "V");
-        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands((String) parameters.defaultGet("vlcPath", HOME_DIR + "lib")).getPath() + File.separator;
-        PathStringCommands.number = (String) parameters.defaultGet("filter.number", "#");
-        PathStringCommands.fileName = (String) parameters.defaultGet("filter.name", "<n>");
-        PathStringCommands.nameNoExt = (String) parameters.defaultGet("filter.nameNoExtension", "<nne>");
-        PathStringCommands.filePath = (String) parameters.defaultGet("filter.path", "<ap>");
-        PathStringCommands.extension = (String) parameters.defaultGet("filter.nameExtension", "<ne>");
-        PathStringCommands.parent1 = (String) parameters.defaultGet("filter.parent1", "<p1>");
-        PathStringCommands.parent2 = (String) parameters.defaultGet("filter.parent2", "<p2>");
-        PathStringCommands.custom = (String) parameters.defaultGet("filter.custom", "<c>");
-        PathStringCommands.relativeCustom = (String) parameters.defaultGet("filter.relativeCustom", "<rc>");
-        CommandWindowController.commandInit = (String) parameters.defaultGet("code.init", "init");
-        CommandWindowController.truncateAfter = (Integer) parameters.defaultGet("code.truncateAfter", 100000);
-        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxExecutables", 2);
-        CommandWindowController.commandGenerate = (String) parameters.defaultGet("code.commandGenerate", "generate");
-        CommandWindowController.commandApply = (String) parameters.defaultGet("code.commandApply", "apply");
-        CommandWindowController.commandClear = (String) parameters.defaultGet("code.clear", "clear");
-        CommandWindowController.commandCancel = (String) parameters.defaultGet("code.cancel", "cancel");
-        CommandWindowController.commandList = (String) parameters.defaultGet("code.list", "list");
-        CommandWindowController.commandListRec = (String) parameters.defaultGet("code.listRec", "listRec");
-        CommandWindowController.commandSetCustom = (String) parameters.defaultGet("code.setCustom", "setCustom");
-        CommandWindowController.commandHelp = (String) parameters.defaultGet("code.help", "help");
-        CommandWindowController.commandListParams = (String) parameters.defaultGet("code.listParameters", "listParams");
-        CommandWindowController.maxExecutablesAtOnce = (Integer) parameters.defaultGet("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
-        CommandWindowController.commandCopyFolderStructure = (String) parameters.defaultGet("code.copyFolderStructure", "copyStructure");
+        DEBUG.set(parameters.defaultGet("debug", false));
+        DEPTH = parameters.defaultGet("lookDepth", 2);
+        LogBackupCount = parameters.defaultGet("logBackupCount", 5);
+        ROOT_NAME = parameters.defaultGet("ROOT_NAME", ROOT_NAME);
+        MAX_THREADS_FOR_TASK = parameters.defaultGet("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
+        USER_DIR = new PathStringCommands(parameters.defaultGet("userDir", HOME_DIR)).getPath() + File.separator;
+        FileManagerLB.useBufferedFileStreams.setValue(parameters.defaultGet("bufferedFileStreams", true));
+        VirtualFolder.VIRTUAL_FOLDER_PREFIX = parameters.defaultGet("virtualPrefix", "V");
+        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(parameters.defaultGet("vlcPath", HOME_DIR + "lib")).getPath() + File.separator;
+        PathStringCommands.number = parameters.defaultGet("filter.number", "#");
+        PathStringCommands.fileName = parameters.defaultGet("filter.name", "<n>");
+        PathStringCommands.nameNoExt = parameters.defaultGet("filter.nameNoExtension", "<nne>");
+        PathStringCommands.filePath = parameters.defaultGet("filter.path", "<ap>");
+        PathStringCommands.extension = parameters.defaultGet("filter.nameExtension", "<ne>");
+        PathStringCommands.parent1 = parameters.defaultGet("filter.parent1", "<p1>");
+        PathStringCommands.parent2 = parameters.defaultGet("filter.parent2", "<p2>");
+        PathStringCommands.custom = parameters.defaultGet("filter.custom", "<c>");
+        PathStringCommands.relativeCustom = parameters.defaultGet("filter.relativeCustom", "<rc>");
+        CommandWindowController.commandInit = parameters.defaultGet("code.init", "init");
+        CommandWindowController.truncateAfter = parameters.defaultGet("code.truncateAfter", 100000);
+        CommandWindowController.maxExecutablesAtOnce = parameters.defaultGet("code.maxExecutables", 2);
+        CommandWindowController.commandGenerate = parameters.defaultGet("code.commandGenerate", "generate");
+        CommandWindowController.commandApply = parameters.defaultGet("code.commandApply", "apply");
+        CommandWindowController.commandClear = parameters.defaultGet("code.clear", "clear");
+        CommandWindowController.commandCancel = parameters.defaultGet("code.cancel", "cancel");
+        CommandWindowController.commandList = parameters.defaultGet("code.list", "list");
+        CommandWindowController.commandListRec = parameters.defaultGet("code.listRec", "listRec");
+        CommandWindowController.commandSetCustom = parameters.defaultGet("code.setCustom", "setCustom");
+        CommandWindowController.commandHelp = parameters.defaultGet("code.help", "help");
+        CommandWindowController.commandListParams = parameters.defaultGet("code.listParameters", "listParams");
+        CommandWindowController.maxExecutablesAtOnce = parameters.defaultGet("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
+        CommandWindowController.commandCopyFolderStructure = parameters.defaultGet("code.copyFolderStructure", "copyStructure");
 
     }
 

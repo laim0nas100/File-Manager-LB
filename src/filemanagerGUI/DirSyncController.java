@@ -11,7 +11,7 @@ import filemanagerLogic.snapshots.*;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
-import javafx.application.Platform;
+import java.util.concurrent.CompletableFuture;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -22,9 +22,9 @@ import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import lt.lb.commons.Log;
+import lt.lb.commons.containers.Value;
 import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
-import lt.lb.commons.javafx.FXTask;
-import lt.lb.commons.javafx.FXTaskPooler;
+import lt.lb.commons.javafx.*;
 import lt.lb.commons.threads.TimeoutTask;
 import utility.ErrorReport;
 
@@ -76,20 +76,19 @@ public class DirSyncController extends BaseController {
     @FXML
     public ComboBox dateMode;
 
-    private boolean cond0;
-    private boolean cond1;
+    private Value<Boolean> cond0 = new Value<>(false);
+    private Value<Boolean> cond1 = new Value<>(false);
     private Snapshot snapshot0;
     private Snapshot snapshot1;
     private Snapshot result;
-    private ExtPath file0;
-    private ExtPath file1;
+    private Value<ExtPath> file0 = new Value<>();
+    private Value<ExtPath> file1 = new Value<>();
     private ObservableList<TableColumn<ExtEntry, String>> tableColumns;
 
-    private TimeoutTask directoryCheckTask = new TimeoutTask(1000, 100, () -> {
-                                                         Platform.runLater(() -> {
-                                                             checkDirs();
-                                                         });
-                                                     });
+    private TimeoutTask directoryCheckTask = new TimeoutTask(
+            1000, 100, () -> {
+                checkDirs();
+            });
 
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
         @Override
@@ -100,7 +99,7 @@ public class DirSyncController extends BaseController {
 
     @Override
     public void beforeShow(String title) {
-        Platform.runLater(() -> {
+        FX.submit(() -> {
 
             this.directoryCheckTask.addOnUpdate(() -> {
                 this.btnLoad.setDisable(true);
@@ -228,40 +227,57 @@ public class DirSyncController extends BaseController {
     }
 
     public void checkDirs() {
-        btnSync.setDisable(true);
-        btnLoad.setDisable(true);
+
+        CompletableFuture<Void> s1 = FX.submit(() -> {
+            btnSync.setDisable(true);
+            btnLoad.setDisable(true);
+
+            cond0.set(false);
+            cond1.set(false);
+            status0.setText("BAD");
+            status1.setText("BAD");
+        });
         String text0 = directory0.getText();
         String text1 = directory1.getText();
-        cond0 = false;
-        cond1 = false;
-        status0.setText("BAD");
-        status1.setText("BAD");
 
-        file0 = LocationAPI.getInstance().getFileAndPopulate(text0);
-        cond0 = file0.getIdentity().equals(Enums.Identity.FOLDER);
+        CompletableFuture<Void> s2 = FX.submitAsync(() -> {
 
-        file1 = LocationAPI.getInstance().getFileAndPopulate(text1);
-        cond1 = file1.getIdentity().equals(Enums.Identity.FOLDER);
+            file0.set(LocationAPI.getInstance().getFileAndPopulate(text0));
+            cond0.set(file0.get().getIdentity().equals(Enums.Identity.FOLDER));
+            Log.print("Check 0");
+        }, TaskFactory.mainExecutor);
+        CompletableFuture<Void> s3 = FX.submitAsync(() -> {
 
-        if (cond0) {
-            status0.setText("OK");
-        }
-        if (cond1) {
-            status1.setText("OK");
-        }
-        if (cond1 && cond0) {
-            btnLoad.setDisable(false);
-        }
+            file1.set(LocationAPI.getInstance().getFileAndPopulate(text1));
+            cond1.set(file1.get().getIdentity().equals(Enums.Identity.FOLDER));
+            Log.print("Check 1");
+        }, TaskFactory.mainExecutor);
+
+        FX.join(s1, s2, s3);
+        Log.print("After join");
+
+        FX.submit(() -> {
+            if (cond0.get()) {
+                status0.setText("OK");
+            }
+            if (cond1.get()) {
+                status1.setText("OK");
+            }
+            if (cond1.get() && cond0.get()) {
+                btnLoad.setDisable(false);
+            }
+        });
+
     }
 
     public void setDirs() throws Exception {
-        if (!file0.isVirtual.get()) {
-            directory0.setText(file0.getAbsoluteDirectory());
+        if (!file0.get().isVirtual.get()) {
+            directory0.setText(file0.get().getAbsoluteDirectory());
         } else {
             throw new Exception("Bad directory setup");
         }
-        if (!file1.isVirtual.get()) {
-            directory1.setText(file1.getAbsoluteDirectory());
+        if (!file1.get().isVirtual.get()) {
+            directory1.setText(file1.get().getAbsoluteDirectory());
         } else {
             throw new Exception("Bad directory setup");
         }
@@ -280,9 +296,9 @@ public class DirSyncController extends BaseController {
         this.status.textProperty().set("Populating directories:\n");
         this.btnSync.setDisable(true);
         this.btnCompare.setDisable(true);
-        if (cond0 && cond1) {
-            Task<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.getAbsolutePath());
-            Task<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.getAbsolutePath());
+        if (cond0.get() && cond1.get()) {
+            Task<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.get().getAbsolutePath());
+            Task<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.get().getAbsolutePath());
             task0.setOnSucceeded(eh -> {
                 snapshot0 = task0.getValue();
                 status.setText(status.getText().concat(snapshot0.folderCreatedFrom + "\n"));
@@ -417,7 +433,7 @@ public class DirSyncController extends BaseController {
                 }
             }
 
-            Platform.runLater(() -> {
+            FX.submit(() -> {
                 table.setItems(list);
                 table.getSortOrder().setAll(sortOrder);
                 table.sort();
