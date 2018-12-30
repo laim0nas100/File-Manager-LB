@@ -16,31 +16,33 @@ import java.util.Objects;
 import lt.lb.commons.parsing.StringOp;
 
 /**
- * Location Mapping Class
- * Use in LocationAPI
+ * Location Mapping Class Use in LocationAPI
+ *
  * @author Laimonas Beniušis
  */
 public class LocationInRoot {
+
     private boolean upperCase;
-    public LinkedList<String> coordinates =  new LinkedList<>();
-    
-    private LocationInRoot(){
-        
+    public LinkedList<String> coordinates = new LinkedList<>();
+
+    private LocationInRoot() {
+
     }
-    private LinkedList<String> resolveFromString(LinkedList<String> co,String filePath,boolean doUpperCase){
+
+    private LinkedList<String> resolveFromString(LinkedList<String> co, String filePath, boolean doUpperCase) {
         String rootLoc = "";
-        if(!filePath.isEmpty()){
-            for(String s:FileManagerLB.getRootSet()){
-                if(StringOp.containsIgnoreCase(filePath, s)){
+        if (!filePath.isEmpty()) {
+            for (String s : FileManagerLB.getRootSet()) {
+                if (StringOp.containsIgnoreCase(filePath, s)) {
                     rootLoc = s;
                     break;
                 }
-                
+
             }
             rootLoc = rootLoc.toUpperCase();
             co.add(rootLoc);
-            if(!filePath.equalsIgnoreCase(rootLoc)){
-                if(doUpperCase){
+            if (!filePath.equalsIgnoreCase(rootLoc)) {
+                if (doUpperCase) {
                     filePath = StringOp.upperCase(filePath);
                 }
                 filePath = StringOp.replaceOnce(filePath, rootLoc, "");
@@ -48,11 +50,11 @@ public class LocationInRoot {
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);
-                
+
                 Iterator<String> iterator = list.iterator();
-                while(iterator.hasNext()){
+                while (iterator.hasNext()) {
                     String next = iterator.next();
-                    if(next.isEmpty()){
+                    if (next.isEmpty()) {
                         iterator.remove();
                     }
                 }
@@ -62,64 +64,76 @@ public class LocationInRoot {
         }
         return co;
     }
-    public LocationInRoot(String path){
+
+    public LocationInRoot(String path) {
         this.upperCase = true;
-        this.coordinates = resolveFromString(this.coordinates,path,true);
+        this.coordinates = resolveFromString(this.coordinates, path, true);
     }
-    public LocationInRoot(String path,boolean doUppercase){
+
+    public LocationInRoot(String path, boolean doUppercase) {
         this.upperCase = doUppercase;
-        this.coordinates = resolveFromString(this.coordinates,path,doUppercase);
+        this.coordinates = resolveFromString(this.coordinates, path, doUppercase);
     }
-    public LocationInRoot(LocationInRoot loc){
+
+    public LocationInRoot(LocationInRoot loc) {
         this.upperCase = loc.upperCase;
         this.coordinates.addAll(loc.coordinates);
     }
-    private LocationInRoot(List<String> coord,boolean upperCase){
+
+    private LocationInRoot(List<String> coord, boolean upperCase) {
         coordinates = new LinkedList<>();
         coordinates.addAll(coord);
         this.upperCase = upperCase;
-        
+
     }
-    public String getName(){
-        if(this.coordinates.size()>0){
-            return this.coordinates.get(this.coordinates.size()-1);
-        }else{
+
+    public String getName() {
+        if (this.coordinates.size() > 0) {
+            return this.coordinates.get(this.coordinates.size() - 1);
+        } else {
             return "";
         }
     }
-    public void setName(String name){
+
+    public void setName(String name) {
         this.coordinates.pollLast();
         this.coordinates.addLast(name);
     }
-    public LocationInRoot getRoot(){
+
+    public LocationInRoot getRoot() {
         LinkedList<String> list = new LinkedList<>();
         list.add(this.coordinates.getFirst());
         list.add(this.coordinates.get(1));
-        return new LocationInRoot(list,this.upperCase);
+        return new LocationInRoot(list, this.upperCase);
     }
-    public int length(){
+
+    public int length() {
         return this.coordinates.size();
     }
-    public String at(int i){
+
+    public String at(int i) {
         return this.coordinates.get(i);
     }
-    public LocationInRoot getParentLocation(){
+
+    public LocationInRoot getParentLocation() {
         LinkedList<String> list = new LinkedList<>();
         list.addAll(this.coordinates);
         list.removeLast();
-        return new LocationInRoot(list,this.upperCase);
+        return new LocationInRoot(list, this.upperCase);
     }
-    public boolean isUppercase(){
+
+    public boolean isUppercase() {
         return this.upperCase;
     }
+
     @Override
-    public String toString(){
-        String str ="";
-        for(int i=0;i<length()-1;i++){
-            str+=this.coordinates.get(i)+",";
+    public String toString() {
+        String str = "";
+        for (int i = 0; i < length() - 1; i++) {
+            str += this.coordinates.get(i) + ",";
         }
-        str+=getName();
-        return "<"+str+">";
+        str += getName();
+        return "<" + str + ">";
     }
 
     /**
@@ -128,25 +142,25 @@ public class LocationInRoot {
      * @return
      */
     @Override
-    public boolean equals(Object o){
-        if(this == o){
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if(o instanceof LocationInRoot){
+        if (o instanceof LocationInRoot) {
             LocationInRoot otherLoc = (LocationInRoot) o;
             boolean same = otherLoc.length() == this.length();
-            if(!same){
+            if (!same) {
                 return false;
             }
-            if(this.upperCase || ((LocationInRoot) o).upperCase){              
-                for(int i = 0; i<this.length(); i++){
-                    if(!this.at(i).equalsIgnoreCase(otherLoc.at(i))){
+            if (this.upperCase || ((LocationInRoot) o).upperCase) {
+                for (int i = 0; i < this.length(); i++) {
+                    if (!this.at(i).equalsIgnoreCase(otherLoc.at(i))) {
                         same = false;
                     }
                 }
-            }else{
-                for(int i = 0; i<this.length(); i++){
-                    if(!this.at(i).equals(otherLoc.at(i))){
+            } else {
+                for (int i = 0; i < this.length(); i++) {
+                    if (!this.at(i).equals(otherLoc.at(i))) {
                         same = false;
                     }
                 }
@@ -163,5 +177,5 @@ public class LocationInRoot {
         hash = 11 * hash + Objects.hashCode(this.coordinates);
         return hash;
     }
-    
+
 }

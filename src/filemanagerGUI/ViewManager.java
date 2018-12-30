@@ -15,8 +15,6 @@ import filemanagerLogic.fileStructure.ExtPath;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -27,6 +25,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lt.lb.commons.Log;
+import lt.lb.commons.containers.BooleanValue;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
@@ -338,7 +337,7 @@ public class ViewManager {
     }
 
     public void newMediaPlayer() {
-        Value<Boolean> property = new Value<>(true);
+        BooleanValue property = BooleanValue.TRUE();
         Value<Frame> frame = new Value<>();
         SimpleTask init = new SimpleTask() {
             @Override
@@ -346,8 +345,9 @@ public class ViewManager {
                 try {
                     MediaPlayerController.discover();
                 } catch (Exception e) {
+                    property.setFalse();
                     ErrorReport.report(e);
-                    property.set(false);
+                    
                 }
                 return null;
             }
@@ -481,7 +481,6 @@ public class ViewManager {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException ex) {
-            Logger.getLogger(ViewManager.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.initStart = false;
     }
