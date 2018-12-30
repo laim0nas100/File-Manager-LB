@@ -53,7 +53,6 @@ public class ViewManager {
         this.windows = new HashSet<>();
 
     }
-    ;
     public final HashMap<String, Frame> frames;
     public final HashSet<String> windows;
     private boolean initStart = false;
@@ -99,27 +98,14 @@ public class ViewManager {
 
     public void updateAllWindows() {
         for (String s : windows) {
-            MainController controller = (MainController) frames.get(s).getController();
-            Runnable run = new Runnable() {
-                @Override
-                public void run() {
-                    controller.update();
-                }
-            };
-            TaskFactory.mainExecutor.submit(run);
+            TaskFactory.mainExecutor.execute(frames.get(s).getController()::update);
         }
     }
 
     public void updateAllFrames() {
 
         for (Frame frame : frames.values()) {
-            Runnable run = new Runnable() {
-                @Override
-                public void run() {
-                    frame.getController().update();
-                }
-            };
-            TaskFactory.mainExecutor.submit(run);
+            TaskFactory.mainExecutor.execute(frame.getController()::update);
         }
     }
 
@@ -353,7 +339,7 @@ public class ViewManager {
 
     public void newMediaPlayer() {
         Value<Boolean> property = new Value<>(true);
-        Frame[] frame = new Frame[1];
+        Value<Frame> frame = new Value<>();
         SimpleTask init = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
@@ -370,12 +356,13 @@ public class ViewManager {
             SimpleTask task = new SimpleTask() {
                 @Override
                 protected Void call() throws Exception {
+                    
                     if (property.get()) {
-                        frame[0].getStage().show();
-                        frame[0].getStage().toFront();
-                        frame[0].getController().afterShow();
+                        frame.get().getStage().show();
+                        frame.get().getStage().toFront();
+                        frame.get().getController().afterShow();
                     } else {
-                        closeFrame(frame[0].getController().windowID);
+                        closeFrame(frame.get().getController().windowID);
                     }
                     return null;
                 }
@@ -388,7 +375,7 @@ public class ViewManager {
             @Override
             protected Void call() throws Exception {
                 try {
-                    frame[0] = newFrame(FrameTitle.MEDIA_PLAYER);
+                    frame.set(newFrame(FrameTitle.MEDIA_PLAYER));
                     new Thread(init).start();
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
@@ -431,21 +418,21 @@ public class ViewManager {
         Frame frame = new Frame(stage, controller, info.title);
         this.frames.put(frame.getTitle(), frame);
 
-        final Frame.Pos[] pos = new Frame.Pos[1];
+        Value<Frame.Pos> pos = new Value<>();
         if (!Frame.positionMemoryMap.containsKey(info.title)) {
-            pos[0] = new Frame.Pos(stage.getX(), stage.getY());
-            Frame.positionMemoryMap.put(info.title, pos[0]);
+            pos.set(new Frame.Pos(stage.getX(), stage.getY()));
+            Frame.positionMemoryMap.put(info.title, pos.get());
         }
-        pos[0] = Frame.positionMemoryMap.get(info.title);
+        pos.set(Frame.positionMemoryMap.get(info.title));
         ChangeListener listenerY = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
-            pos[0].y.set((double) newValue);
+            pos.get().y.set((double) newValue);
         };
         ChangeListener listenerX = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
-            pos[0].x.set((double) newValue);
+            pos.get().x.set((double) newValue);
         };
 
-        stage.setX(pos[0].x.get());
-        stage.setY(pos[0].y.get());
+        stage.setX(pos.get().x.get());
+        stage.setY(pos.get().y.get());
         frame.listenerX = listenerX;
         frame.listenerY = listenerY;
         stage.xProperty().addListener(listenerX);

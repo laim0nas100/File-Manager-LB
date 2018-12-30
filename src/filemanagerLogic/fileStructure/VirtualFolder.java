@@ -10,6 +10,8 @@ import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -47,11 +49,11 @@ public class VirtualFolder extends ExtFolder {
     }
 
     @Override
-    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
+    public Future update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
 
         if (this.equals(FileManagerLB.VirtualFolders)) {
             list.setAll(this.getFilesCollection());
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         if (this.isAbsoluteRoot.get()) {
@@ -75,7 +77,7 @@ public class VirtualFolder extends ExtFolder {
                 }
             }
         }
-
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -104,8 +106,8 @@ public class VirtualFolder extends ExtFolder {
     }
 
     @Override
-    public void populateFolder(ObjectBuffer list, BooleanProperty isCanceled) {
-
+    public Future populateFolder(ObjectBuffer list, BooleanProperty isCanceled) {
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

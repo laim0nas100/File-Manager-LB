@@ -11,7 +11,8 @@ import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import lt.lb.commons.containers.LoopingList;
+import lt.lb.commons.containers.collections.LoopingList;
+import lt.lb.commons.parsing.StringOp;
 import utility.ExtStringUtils;
 
 /**
@@ -43,7 +44,7 @@ public class FileAddressField {
                 folder.getFoldersFromFiles().forEach(fold -> {
                     list.add(fold.propertyName.get());
                 });
-                String name = ExtStringUtils.replaceOnce(text, folder.getAbsoluteDirectory(), "");
+                String name = StringOp.replaceOnce(text, folder.getAbsoluteDirectory(), "");
                 int index = 0;
                 while (index < list.size()) {
                     String s;
@@ -53,7 +54,7 @@ public class FileAddressField {
                         s = list.prev();
                     }
                     index++;
-                    if (ExtStringUtils.startsWithIgnoreCase(s, name)) {
+                    if (StringOp.startsWithIgnoreCase(s, name)) {
                         Platform.runLater(() -> {
                             f = name;
                             if (folder.getIdentity().equals(Identity.VIRTUAL)) {

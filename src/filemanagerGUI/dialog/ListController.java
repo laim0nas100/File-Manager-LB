@@ -10,9 +10,12 @@ import filemanagerGUI.FileManagerLB;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.stream.Stream;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import lt.lb.commons.interfaces.ReadOnlyIterator;
 
 /**
  * FXML Controller class
@@ -49,7 +52,9 @@ public class ListController extends BaseController {
 
     public void save() throws FileNotFoundException, UnsupportedEncodingException {
         String text = this.pathToSave.getText();
-        lt.lb.commons.io.FileReader.writeToFile(FileManagerLB.USER_DIR + text, this.listView.getItems());
+        ObservableList<String> items = this.listView.getItems();
+        ReadOnlyIterator<String> of = ReadOnlyIterator.of(items.stream().map(m -> m.trim()));
+        lt.lb.commons.io.FileReader.writeToFile(FileManagerLB.USER_DIR + text, of);
     }
 
 }

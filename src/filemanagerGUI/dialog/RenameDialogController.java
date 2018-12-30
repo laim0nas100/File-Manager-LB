@@ -15,6 +15,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import lt.lb.commons.javafx.FX;
+import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.TimeoutTask;
 import utility.*;
 
@@ -38,14 +40,14 @@ public class RenameDialogController extends TextInputDialogController {
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
     private TimeoutTask folderUpdateTask = new TimeoutTask(1000, 100, () -> {
-                                                       update();
-                                                       Platform.runLater(() -> {
-                                                           if (!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0) {
-                                                               nameAvailable.setText("Available");
-                                                               nameIsAvailable.set(true);
-                                                           }
-                                                       });
-                                                   });
+        update();
+        FX.submit(() -> {
+            if (!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0) {
+                nameAvailable.setText("Available");
+                nameIsAvailable.set(true);
+            }
+        });
+    });
 
     @Override
     public void exit() {
@@ -85,7 +87,7 @@ public class RenameDialogController extends TextInputDialogController {
         if (nameIsAvailable.get()) {
             try {
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
-                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), ExtStringUtils.trimEnd(textField.getText()), fallback.getName(true));
+                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), StringOp.trimEnd(textField.getText()), fallback.getName(true));
                 if (callback != null) {
                     ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(renameTo);
                     callback.callback(fileOptimized);

@@ -75,8 +75,9 @@ public class LocationInRootNode implements Comparable{
         
         return res;
     }
-    public String specialString(){
+    public ArrayList<String> specialString(){
         boolean isFolder = !leafs.values().isEmpty();
+        ArrayList<String> result = new ArrayList<>();
         String res = "";
         ArrayList<LocationInRootNode> values = new ArrayList<>();
         if(isFolder){
@@ -93,20 +94,26 @@ public class LocationInRootNode implements Comparable{
             values.addAll(files);
         }
         if(index>=0){
-            res+=index +""+ indexEnd + self + "\n";
+            String part = index +""+ indexEnd + self;
+//            res+= part+ "\n";
+            result.add(part);
         }
         if(isFolder){
-            res+=folderStart + self + "\n";
+            String part = folderStart + self;
+            result.add(part);
+//            res+=part + "\n";
         }
         Collections.sort(values);
         for(LocationInRootNode node:values){
-            res+=node.specialString();
+            result.addAll(node.specialString());
+//            res+=node.specialString();
             
         }
         if(isFolder){
-            res+=folderEnd + "\n";
+            result.add(folderEnd);
+//            res+=folderEnd + "\n";
         }
-        return res;
+        return result;
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
-import utility.ExtStringUtils;
+import lt.lb.commons.parsing.StringOp;
 
 /**
  * Location Mapping Class
@@ -31,7 +31,7 @@ public class LocationInRoot {
         String rootLoc = "";
         if(!filePath.isEmpty()){
             for(String s:FileManagerLB.getRootSet()){
-                if(ExtStringUtils.containsIgnoreCase(filePath, s)){
+                if(StringOp.containsIgnoreCase(filePath, s)){
                     rootLoc = s;
                     break;
                 }
@@ -41,10 +41,10 @@ public class LocationInRoot {
             co.add(rootLoc);
             if(!filePath.equalsIgnoreCase(rootLoc)){
                 if(doUpperCase){
-                    filePath = ExtStringUtils.upperCase(filePath);
+                    filePath = StringOp.upperCase(filePath);
                 }
-                filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
-                String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
+                filePath = StringOp.replaceOnce(filePath, rootLoc, "");
+                String[] fileArray = StringOp.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);

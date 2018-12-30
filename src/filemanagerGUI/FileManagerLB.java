@@ -169,6 +169,7 @@ public class FileManagerLB extends Application {
                 Files.createDirectories(userdir);
             }
             Log.changeStream(Log.LogStream.FILE, logPath);
+            Log.main().stackTrace = true;
             Logger logger = LoggerFactory.getLogger("MainLogger");
             Consumer<Supplier<String>> sl4jConsumer = (Supplier<String> str)->{
                 logger.debug(str.get());

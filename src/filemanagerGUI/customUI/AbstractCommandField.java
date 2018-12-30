@@ -9,7 +9,7 @@ import java.util.HashMap;
 import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import lt.lb.commons.containers.LoopingList;
+import lt.lb.commons.containers.collections.LoopingList;
 import utility.ErrorReport;
 
 /**

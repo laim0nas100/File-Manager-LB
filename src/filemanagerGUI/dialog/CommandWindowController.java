@@ -60,7 +60,7 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
                        Log.print("Copy params", Arrays.asList(params));
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
                        ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
                        ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
                        Log.print("Copy structure:", root, dest);
@@ -105,13 +105,13 @@ public class CommandWindowController extends BaseController {
                    });
         command.addCommand(commandGenerate, (String... params) -> {
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandGenerate + " ", "");
                        command.generate(newCom);
                    });
 
         command.addCommand(commandApply, (String... params) -> {
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandApply + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandApply + " ", "");
                        command.apply(newCom);
                    });
         command.addCommand(commandInit, (String... params) -> {
@@ -123,7 +123,7 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandListRec, (String... params) -> {
                        ArrayDeque<String> deque = new ArrayDeque<>();
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandListRec + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandListRec + " ", "");
                        ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
 
                        for (ExtPath f : file.getListRecursive(false)) {
@@ -135,7 +135,7 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandList, (String... params) -> {
                        ArrayDeque<String> deque = new ArrayDeque<>();
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandList + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandList + " ", "");
                        ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
                        if (file.getIdentity().equals(Identity.FOLDER)) {
                            String desc = "Listing:" + file.getAbsoluteDirectory();
@@ -150,7 +150,7 @@ public class CommandWindowController extends BaseController {
                    });
         command.addCommand(commandSetCustom, (String... params) -> {
                        String newCom = (String) params[0];
-                       newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom + " ", "");
+                       newCom = StringOp.replaceOnce(newCom, commandSetCustom + " ", "");
                        FileManagerLB.customPath = new PathStringCommands(newCom.trim());
                    });
         command.addCommand(commandClear, (String... params) -> {
@@ -255,7 +255,7 @@ public class CommandWindowController extends BaseController {
                             numbersToAdd++;
                             continue;
                         } else if (numbersToAdd > 0) {
-                            commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
+                            commandToAdd += StringOp.simpleFormat(index, numbersToAdd);
                             numbersToAdd = 0;
                         }
 
@@ -282,7 +282,7 @@ public class CommandWindowController extends BaseController {
 
                     }
                     if (numbersToAdd > 0) {
-                        commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
+                        commandToAdd += StringOp.simpleFormat(index, numbersToAdd);
                     }
                     allCommands.add(commandToAdd);
                     Log.print(command + " => " + commandToAdd);

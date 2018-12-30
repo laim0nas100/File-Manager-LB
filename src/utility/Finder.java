@@ -20,6 +20,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import lt.lb.commons.javafx.FX;
 
 /**
  *
@@ -57,17 +58,13 @@ public class Finder extends SimpleFileVisitor<Path> {
                 String str = file.getFileName().toString();
                 boolean matches = false;
                 if(noRegex){
-                    if(str.toLowerCase().contains(patternStr)){
-                       matches = true;
-                    }
+                    matches = str.toLowerCase().contains(patternStr);
                 }else{
                     Matcher matcher = pattern.matcher(str);
-                    if(matcher.matches()){
-                        matches = true;
-                    }
+                    matches = matcher.matches();
                 }
                 if(matches){
-                    Platform.runLater(()->{
+                    FX.submit(()->{
                         String toAdd = file.toAbsolutePath().toString();
                         if(!list.contains(toAdd)){
                             list.add(toAdd);

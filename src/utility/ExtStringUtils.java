@@ -5,11 +5,13 @@
  */
 package utility;
 
+import lt.lb.commons.parsing.StringOp;
+
 /**
  *
  * @author Laimonas Beniušis
  */
-public class ExtStringUtils extends lt.lb.commons.parsing.StringOperations {
+public class ExtStringUtils extends lt.lb.commons.parsing.StringOp {
 //    private static final double PRECISION = 0.0001;
 
     public static class FilterException extends Exception {
@@ -65,8 +67,8 @@ public class ExtStringUtils extends lt.lb.commons.parsing.StringOperations {
     }
 
     public static boolean equalAmmount(String string, String matches0, String matches1, String... matches) {
-        int ammount = ExtStringUtils.countMatches(string, matches0);
-        int ammount1 = ExtStringUtils.countMatches(string, matches1);
+        int ammount = StringOp.countMatches(string, matches0);
+        int ammount1 = StringOp.countMatches(string, matches1);
         if (ammount != ammount1) {
             return false;
         } else {

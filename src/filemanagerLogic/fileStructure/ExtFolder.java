@@ -8,24 +8,27 @@ package filemanagerLogic.fileStructure;
 import filemanagerGUI.FileManagerLB;
 import filemanagerLogic.Enums;
 import filemanagerLogic.Enums.Identity;
+import filemanagerLogic.TaskFactory;
 import java.io.File;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.util.Callback;
+import lt.lb.commons.Lambda;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.ObjectBuffer;
-import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.Promise;
-import lt.lb.commons.threads.SharedPromise;
 import utility.ErrorReport;
-import utility.ExtStringUtils;
 
 /**
  *
@@ -52,63 +55,84 @@ public class ExtFolder extends ExtPath {
         return Identity.FOLDER;
     }
 
-    protected void populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled) {
-        try {
-            Executor exe = new FastWaitingExecutor(8, 1, TimeUnit.SECONDS);
-            ArrayDeque<Promise> promises = new ArrayDeque<>();
-            if (Files.isDirectory(toPath())) {
-                String parent = getAbsoluteDirectory();
+    Lambda.L0R<FutureTask> emptyFuture = Lambda.of(() -> {
+        FutureTask t = new FutureTask(() -> null);
+        t.run();
+        return t;
+    });
+    private AtomicBoolean populating = new AtomicBoolean(false);
+    private AtomicReference<FutureTask> populatingFuture = new AtomicReference<>(emptyFuture.apply());
 
-                try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
-                    for (Path f : dirStream) {
-                        if (isCanceled != null) {
-                            if (isCanceled.get()) {
-                                Log.print("Canceled form populate");
-                                return;
-                            }
-                        }
+    protected Future populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled) {
 
-                        new SharedPromise(() -> {
+        Callable call = () -> {
+            try {
+                ArrayList<Promise> promises = new ArrayList<>();
+                if (Files.isDirectory(toPath())) {
+                    String parent = getAbsoluteDirectory();
+
+                    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
+                        for (Path f : dirStream) {
                             if (isCanceled != null) {
                                 if (isCanceled.get()) {
-                                    return;
+                                    Log.print("Canceled form populate");
+                                    break;
                                 }
                             }
-                            final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
-                            final String filePathStr = f.toString();
-                            ExtPath file = null;
-                            if (Files.exists(f) && !files.containsKey(name)) {
-                                if (Files.isDirectory(f)) {
-                                    file = new ExtFolder(filePathStr, f);
-                                } else if (Files.isSymbolicLink(f)) {
-                                    file = new ExtLink(filePathStr, f);
-                                } else {
-                                    file = new ExtPath(filePathStr, f);
-                                }
-                                files.put(file.propertyName.get(), file);
-                                if (buffer != null) {
-                                    buffer.add(file);
 
+                            new Promise(() -> {
+                                if (isCanceled != null) {
+                                    if (isCanceled.get()) {
+                                        return;
+                                    }
                                 }
-                            }
-                        }).collect(promises).execute(exe);
+                                final String name = StringOp.replaceOnce(f.toString(), parent, "");
+                                final String filePathStr = f.toString();
+                                ExtPath file = null;
+                                if (Files.exists(f) && !files.containsKey(name)) {
+                                    if (Files.isDirectory(f)) {
+                                        file = new ExtFolder(filePathStr, f);
+                                    } else if (Files.isSymbolicLink(f)) {
+                                        file = new ExtLink(filePathStr, f);
+                                    } else {
+                                        file = new ExtPath(filePathStr, f);
+                                    }
+                                    files.put(file.propertyName.get(), file);
+                                    if (buffer != null) {
+                                        buffer.add(file);
 
+                                    }
+                                }
+                            }).collect(promises).execute(TaskFactory.mainExecutor);
+
+                        }
                     }
                 }
+
+                try {
+                    new Promise().waitFor(promises).execute(TaskFactory.mainExecutor).get();
+                } catch (InterruptedException e) {
+                }
+
+            } catch (Exception e) {
+                ErrorReport.report(e);
             }
             if (buffer != null) {
                 buffer.flush();
             }
-            try{
-            new SharedPromise().waitFor(promises).get();
-            }catch(InterruptedException e){};
-        } catch (Exception e) {
-            ErrorReport.report(e);
-        }
-        this.populated = true;
+            populating.set(false);
+            return null;
+        };
+        if (populating.compareAndSet(false, true)) {
+            this.populatingFuture.set(new FutureTask<>(call));
+            populatingFuture.get().run();
+            populated = true;
+        } 
+        return populatingFuture.get();
+
     }
 
-    public void populateRecursive() {
+    protected void populateRecursive() {
         populateRecursiveInner(this);
     }
 
@@ -124,7 +148,6 @@ public class ExtFolder extends ExtPath {
 
     }
 
-    ;
     public Collection<ExtFolder> getFoldersFromFiles() {
         ArrayDeque<ExtFolder> folders = new ArrayDeque<>();
         for (ExtPath file : getFilesCollection()) {
@@ -165,8 +188,8 @@ public class ExtFolder extends ExtPath {
         return list;
     }
 
-    public Collection<ExtPath> getListRecursiveFolders(boolean applyDisalbe) {
-        Collection<ExtPath> listRecursive = this.getListRecursive(applyDisalbe);
+    public Collection<ExtPath> getListRecursiveFolders(boolean applyDisable) {
+        Collection<ExtPath> listRecursive = this.getListRecursive(applyDisable);
         Iterator<ExtPath> iterator = listRecursive.iterator();
         while (iterator.hasNext()) {
             ExtPath next = iterator.next();
@@ -214,8 +237,8 @@ public class ExtFolder extends ExtPath {
         populateFolder(null, null);
     }
 
-    public void update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
-        Log.print("Update:" + this.getAbsoluteDirectory());
+    public Future update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
+        Log.print("Update observable:" + this.getAbsoluteDirectory());
         ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list, 5);
         if (isPopulated()) {
             for (ExtPath file : getFilesCollection()) {
@@ -224,12 +247,12 @@ public class ExtFolder extends ExtPath {
                     files.remove(file.propertyName.get());
                 }
                 if (isCanceled.get()) {
-                    return;
+                    return CompletableFuture.completedFuture(null);
                 }
             }
         }
         buffer.addAll(getFilesCollection());
-        populateFolder(buffer, isCanceled);
+        return populateFolder(buffer, isCanceled);
     }
 
     public ExtPath getIgnoreCase(String name) {

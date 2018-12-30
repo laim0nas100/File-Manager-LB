@@ -63,26 +63,11 @@ public class ExtPath {
         return Double.parseDouble(s) * multiplier;
     }
 
-    public static Predicate<ExtPath> IS_FOLDER = new Predicate<ExtPath>() {
-        @Override
-        public boolean test(ExtPath t) {
-            return t.getIdentity().equals(Enums.Identity.FOLDER);
-        }
-    };
+    public static Predicate<ExtPath> IS_FOLDER = (ExtPath t) -> t.getIdentity().equals(Enums.Identity.FOLDER);
 
-    public static Predicate<ExtPath> IS_FILE = new Predicate<ExtPath>() {
-        @Override
-        public boolean test(ExtPath t) {
-            return t.getIdentity().equals(Enums.Identity.FILE);
-        }
-    };
+    public static Predicate<ExtPath> IS_FILE = (ExtPath t) -> t.getIdentity().equals(Enums.Identity.FILE);
 
-    public static Predicate<ExtPath> IS_NOT_DISABLED = new Predicate<ExtPath>() {
-        @Override
-        public boolean test(ExtPath t) {
-            return !t.isDisabled.get();
-        }
-    };
+    public static Predicate<ExtPath> IS_NOT_DISABLED = (ExtPath t) -> !t.isDisabled.get();
 
     private Path path;
     private final String absolutePath;
@@ -154,7 +139,7 @@ public class ExtPath {
             public long get() {
                 if (sizeTaskComplete) {
                     sizeTaskComplete = false;
-                    TaskFactory.mainExecutor.submit(getSizeTask);
+                    TaskFactory.mainExecutor.execute(getSizeTask);
                 }
 
                 return size;
@@ -166,7 +151,7 @@ public class ExtPath {
             public long get() {
                 if (dateTaskComplete) {
                     dateTaskComplete = false;
-                    TaskFactory.mainExecutor.submit(getDateTask);
+                    TaskFactory.mainExecutor.execute(getDateTask);
                 }
 
                 return lastModified;

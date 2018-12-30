@@ -1,10 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package filemanagerGUI;
 
+import lt.lb.commons.threads.sync.EventQueue;
 import filemanagerGUI.dialog.RenameDialogController.FileCallback;
 import filemanagerLogic.Enums.Identity;
 import filemanagerLogic.*;
@@ -16,8 +12,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
@@ -28,7 +22,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.util.Callback;
 import javax.swing.JFrame;
-import lt.lb.commons.ArrayOp;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.io.FileReader;
@@ -56,6 +49,17 @@ import utility.*;
  * @author Lemmin
  */
 public class MediaPlayerController extends BaseController {
+
+    public static class PlayerEventType {
+
+        public static final String STOP = "STOP";
+        public static final String PLAY = "PLAY";
+        public static final String PLAY_OR_PAUSE = "PLAY OR PAUSE";
+        public static final String PLAY_TASK = "PLAY_TASK";
+        public static final String SEEK = "SEEK";
+        public static final String VOL = "VOL";
+
+    }
 
     public final static boolean seamlessDisabled = true;
 
@@ -117,12 +121,13 @@ public class MediaPlayerController extends BaseController {
     private String typeStopAfterFinish = "Don't loop list";
     private ExtTableView extTableView;
     private ExtPath filePlaying;
+    private ArrayList<ExtPath> backingList = new ArrayList<>();
 
     private ArrayDeque<JFrame> frames = new ArrayDeque<>();
     private ArrayDeque<MediaPlayer> players = new ArrayDeque<>();
 
-    private EventQueue events = new EventQueue();
-    ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
+    private ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
+    private EventQueue events = new EventQueue(execService);
     TimeoutTask dragTask = new TimeoutTask(300, 20, () -> {
         float val = seekSlider.valueProperty().divide(100).floatValue();
         Log.print(getCurrentPlayer().getPosition(), val);
@@ -260,6 +265,7 @@ public class MediaPlayerController extends BaseController {
 
     public void setUpTable() {
         this.extTableView = new ExtTableView(table);
+
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
             @Override
@@ -342,6 +348,7 @@ public class MediaPlayerController extends BaseController {
                 MainController.dragList.forEach(item -> {
                     addIfAbsent(item);
                 });
+
                 update();
                 success = true;
 
@@ -349,11 +356,14 @@ public class MediaPlayerController extends BaseController {
             event.setDropCompleted(success);
             event.consume();
         });
+
+        this.extTableView.updateContentsAndSort(backingList);
     }
 
     private void setVolume(MediaPlayer player, int vol) {
-        events.cancelAll("VOL");
-        events.add("VOL", () -> {
+        events.cancelAll(PlayerEventType.VOL);
+
+        events.add(PlayerEventType.VOL, () -> {
             int tries = 100;
             while (player.isPlaying() && player.getVolume() != vol) {
                 player.setVolume(vol);
@@ -432,15 +442,14 @@ public class MediaPlayerController extends BaseController {
         addToMarked.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
         MenuItem remove = new MenuItem("Remove");
         remove.setOnAction(event -> {
-            ArrayList<ExtPath> full = new ArrayList<>(table.getItems());
             ArrayList<ExtPath> selected = new ArrayList<>(table.getSelectionModel().getSelectedItems());
             selected.forEach(item -> {
                 if (item.equals(filePlaying)) {
                     index--;
                 }
-                full.remove(item);
+                backingList.remove(item);
             });
-            extTableView.updateContentsAndSort(full);
+            extTableView.updateContentsAndSort(backingList);
             update();
         });
         remove.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
@@ -449,6 +458,7 @@ public class MediaPlayerController extends BaseController {
             MainController.markedList.forEach(item -> {
                 addIfAbsent(item);
             });
+            update();
         });
         addMarked.visibleProperty().bind(MainController.propertyMarkedSize.greaterThan(0));
         Menu marked = new Menu("Marked");
@@ -531,7 +541,7 @@ public class MediaPlayerController extends BaseController {
     }
 
     public void updateSeek() {
-        events.add("SEEK", () -> {
+        events.add(PlayerEventType.SEEK, () -> {
             if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
                 return;
             }
@@ -560,7 +570,8 @@ public class MediaPlayerController extends BaseController {
     }
 
     public void playOrPause() {
-        events.add("Play or pause", () -> {
+
+        events.add(PlayerEventType.PLAY_OR_PAUSE, () -> {
             if (getCurrentPlayer().isPlayable()) {
                 if (getCurrentPlayer().isPlaying()) {
                     this.playerState = PlayerState.PAUSED;
@@ -569,7 +580,7 @@ public class MediaPlayerController extends BaseController {
                 }
                 getCurrentPlayer().pause();
                 this.setVolume(getCurrentPlayer(), lastVolume.get());
-                
+
             } else {
                 playNext(0, true);
             }
@@ -578,8 +589,8 @@ public class MediaPlayerController extends BaseController {
     }
 
     public void stop() {
-        events.cancelAll("STOP");
-        events.add("STOP", () -> {
+        events.cancelAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
+        events.add(PlayerEventType.STOP, () -> {
             while (getCurrentPlayer().isPlaying()) {
                 getCurrentPlayer().stop();
                 Thread.sleep(1);
@@ -614,7 +625,7 @@ public class MediaPlayerController extends BaseController {
     @Override
     public void exit() {
         stopping = true;
-        this.execService.shutdown();
+
         players.forEach(player -> {
             player.stop();
             player.release();
@@ -624,22 +635,24 @@ public class MediaPlayerController extends BaseController {
 //            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
             frame.dispose();
         });
-        saveState(MediaPlayerController.getPlaylistsDir() + PLAYLIST_FILE_NAME);
+        Future save = saveState(MediaPlayerController.getPlaylistsDir() + PLAYLIST_FILE_NAME);
+        F.unsafeRunWithHandler(ErrorReport::report, save::get);
+        this.execService.shutdown();
+        this.events.shutdown();
         super.exit();
-        events.dispose();
 
     }
 
     public void playNext(int increment, boolean ignoreModifiers, Object... opt) {
 //        events.cancelAll("PLAY");
-        events.add("PLAY", () -> {
-            if (table.getItems().isEmpty()) {
+        events.add(PlayerEventType.PLAY, () -> {
+            if (backingList.isEmpty()) {
                 return;
             }
             updateIndex();
             if (!ignoreModifiers) {
                 if (playType.getSelectionModel().getSelectedItem().equals(typeRandom)) {
-                    index = (int) (Math.random() * table.getItems().size());
+                    index = (int) (Math.random() * backingList.size());
                 } else if (playType.getSelectionModel().getSelectedItem().equals(typeLoopSong)) {
                     if (increment == 1) {
                         index--;
@@ -654,8 +667,8 @@ public class MediaPlayerController extends BaseController {
                 }
             }
             //default loop song
-            index = ExtStringUtils.mod((index + increment), table.getItems().size());
-            ExtPath item = (ExtPath) table.getItems().get(index);
+            index = ExtStringUtils.mod((index + increment), backingList.size());
+            ExtPath item = (ExtPath) backingList.get(index);
             if (item == null) {
                 return;
             }
@@ -673,17 +686,19 @@ public class MediaPlayerController extends BaseController {
     public void update() {
 
         FX.submit(() -> {
-            ArrayDeque deque = new ArrayDeque(table.getItems());
-            LocationAPI.getInstance().filterIfExists(deque);
+            LocationAPI.getInstance().filterIfExists(backingList);
 
-            extTableView.updateContentsAndSort(deque);
+            extTableView.updateContentsAndSort(backingList);
             updateIndex();
+            int in = this.getIndex(filePlaying) + 1;
+            labelCurrent.setText("[" + in + "] " + filePlaying.getAbsolutePath());
+
         });
 
     }
 
     public void playSelected() {
-        play((ExtPath) table.getSelectionModel().getSelectedItem());
+        play(F.cast(table.getSelectionModel().getSelectedItem()));
     }
     private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
 
@@ -693,8 +708,8 @@ public class MediaPlayerController extends BaseController {
     }
 
     private Future play(ExtPath item, final Integer volume) {
-        events.cancelAll("PLAY TASK");
-        return events.add("PLAY TASK", () -> {
+        events.cancelAll(PlayerEventType.PLAY_TASK);
+        return events.add(PlayerEventType.PLAY_TASK, () -> {
             ignoreSeek = true;
             Log.print("Execute play task");
             int i = this.getIndex(item);
@@ -724,12 +739,7 @@ public class MediaPlayerController extends BaseController {
                     setVolume(getCurrentPlayer(), volume);
                 }
             }
-            FX.submit(() -> {
-                int in = this.getIndex(item) + 1;
-                labelCurrent.setText("[" + in + "] " + filePlaying.getAbsolutePath());
-                update();
-
-            }).get();
+            FX.submit(this::update).get();
             while (!onPlayTaskComplete.isEmpty()) {
                 onPlayTaskComplete.pollFirst().run();
             }
@@ -884,27 +894,27 @@ public class MediaPlayerController extends BaseController {
     }
 
     public int getIndex(ExtPath path) {
-        return table.getItems().indexOf(path);
+        return backingList.indexOf(path);
     }
 
     public void addIfAbsent(ExtPath item) {
         if (item != null && item.getIdentity().equals(Identity.FILE)) {
-            if (!table.getItems().contains(item)) {
-                table.getItems().add(item);
+            if (!backingList.contains(item)) {
+                backingList.add(item);
             }
         }
     }
 
     public void addIfAbsent(ExtPath item, int index) {
         if (item != null && item.getIdentity().equals(Identity.FILE)) {
-            if (!table.getItems().contains(item)) {
+            if (!backingList.contains(item)) {
                 int size = table.getItems().size();
                 if (index >= 0 && index < size) {
-                    table.getItems().add(index, item);
+                    backingList.add(index, item);
                 } else {
-                    table.getItems().add(item);
+                    backingList.add(item);
                 }
-
+                this.extTableView.updateContentsAndSort(backingList);
             }
         }
     }
@@ -926,10 +936,11 @@ public class MediaPlayerController extends BaseController {
         state.index = Math.max(0, getIndex(filePlaying));
         state.type = (String) this.playType.getSelectionModel().getSelectedItem();
         int i = 0;
-        for (Object item : table.getItems()) {
+        for (Object item : backingList) {
             ExtPath path = (ExtPath) item;
             state.root.add(new LocationInRoot(path.getAbsoluteDirectory(), false), i++);
         }
+        Log.print("Got items", i);
         return state;
     }
 
@@ -938,45 +949,54 @@ public class MediaPlayerController extends BaseController {
         events.add(() -> {
 
             this.table.getItems().clear();
+            NumberValue<Integer> num = NumberValue.of(0);
             state.root.resolve(false).forEach(item -> {
                 ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
                 addIfAbsent(file);
+                num.incrementAndGet();
             });
-            Platform.runLater(() -> {
+            Log.print("Loaded files:", num.get());
+            FX.submit(() -> {
                 this.playType.getSelectionModel().select(state.type);
             });
             this.index = state.index;
-            if (table.getItems().size() > index) {
-                this.filePlaying = (ExtPath) table.getItems().get(index);
+            if (backingList.size() > index) {
+                this.filePlaying = (ExtPath) backingList.get(index);
             }
+            update();
         });
 
     }
 
-    public void saveState(String path) {
-        labelStatus.setText("Busy");
-        SimpleTask task = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
+    public Future saveState(String path) {
+
+        return events.add(() -> {
+            try {
+                Log.print("Set busy");
+                FX.submit(() -> {
+                    labelStatus.setText("Busy");
+                });
+
+                Log.print("Init state save");
                 try {
                     ArrayList<String> list = new ArrayList<>();
                     PlaylistState state = getPlaylistState();
                     list.add(state.index + "");
                     list.add(state.type);
-                    list.add(state.root.specialString());
+                    list.addAll(state.root.specialString());
                     FileReader.writeToFile(path, list);
+                    Log.print("Write to file size:", list.size());
                 } catch (Exception e) {
-                    report(e);
+                    ErrorReport.report(e);
                 }
-                return null;
+                Log.print("After state save");
+                FX.submit(() -> {
+                    labelStatus.setText("Ready");
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        };
-        task.setOnSucceeded(value -> {
-            Platform.runLater(() -> {
-                labelStatus.setText("Ready");
-            });
         });
-        task.toThread().start();
     }
 
     public void saveState() {
@@ -1005,7 +1025,6 @@ public class MediaPlayerController extends BaseController {
                 }
                 return null;
             }
-        ;
 
         };
         task.setOnDone(value -> {

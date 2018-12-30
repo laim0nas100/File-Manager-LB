@@ -11,15 +11,19 @@ import filemanagerLogic.fileStructure.ExtFolder;
 import filemanagerLogic.fileStructure.ExtPath;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
-import static lt.lb.commons.parsing.StringOperations.simpleFormat;
-import static lt.lb.commons.parsing.StringOperations.trimEnd;
+import lt.lb.commons.F;
+import lt.lb.commons.javafx.FX;
+//import static lt.lb.commons.parsing.StringOperations.simpleFormat;
+//import static lt.lb.commons.parsing.StringOperations.trimEnd;
 import lt.lb.commons.parsing.*;
+import lt.lb.commons.threads.TaskBatcher;
 import utility.*;
 
 /**
@@ -210,7 +214,7 @@ public class AdvancedRenameController extends BaseController {
             } else {
                 if (addingDigits) {
                     addingDigits = false;
-                    newName += simpleFormat(currentNumber, numerationAmmount);
+                    newName += StringOp.simpleFormat(currentNumber, numerationAmmount);
                 }
                 if (token.id.equals(PathStringCommands.fileName)) {
                     newName += pathString.getName(true);
@@ -226,9 +230,9 @@ public class AdvancedRenameController extends BaseController {
             }
         }
         if (addingDigits) {
-            newName += simpleFormat(currentNumber, numerationAmmount);
+            newName += StringOp.simpleFormat(currentNumber, numerationAmmount);
         }
-        return trimEnd(newName);
+        return StringOp.trimEnd(newName);
     }
 
     public void setNumber() {
@@ -244,31 +248,27 @@ public class AdvancedRenameController extends BaseController {
     }
 
     public void apply() {
-        HashSet<String> set = new HashSet<>();
+        TaskBatcher batcher = new TaskBatcher(TaskFactory.mainExecutor);
+
         for (Object object : table.getItems()) {
             TableItemObject ob = (TableItemObject) object;
-
-            try {
+            batcher.execute(() -> {
                 ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(new LocationInRoot(ob.path1.getParent(1)));
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
                 String path = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
-                set.add(path);
-
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
+                ExtPath file = LocationAPI.getInstance().getFileOptimized(path);
+                if (file != null) {
+                    this.virtual.files.put(file.getName(true), file);
+                }
+                return null;
+            });
         }
-        set.forEach(item -> {
-            ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
-            if (file != null) {
-                this.virtual.files.put(file.getName(true), file);
-            }
-
+        TaskBatcher.BatchRunSummary summary = batcher.awaitTolerateFails();
+        F.iterate(summary.failures, (i,e)->{
+           ErrorReport.report(F.cast(e));
         });
-        update();
-        Platform.runLater(() -> {
-            update();
-        });
+        F.checkedRun(FX.submit(this::update)::get);
+        
 
     }
 

@@ -24,15 +24,17 @@ import javafx.concurrent.Task;
 import lt.lb.commons.Log;
 import lt.lb.commons.io.FileUtils;
 import lt.lb.commons.javafx.*;
-import lt.lb.commons.parsing.StringOperations;
+import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.ExtTask;
+import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.threads.PriorityFastWaitingExecutor;
 import lt.lb.commons.threads.TaskPooler;
+import lt.lb.commons.threads.sync.WaitTime;
 import utility.*;
 
 /**
  *
- * @author Laimonas Beniušis
- * Produces Tasks
+ * @author Laimonas Beniušis Produces Tasks
  */
 //
 public class TaskFactory {
@@ -40,7 +42,7 @@ public class TaskFactory {
     public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
-    public static final ExecutorService mainExecutor = Executors.newFixedThreadPool(PROCESSOR_COUNT * 2);
+    public static final PriorityFastWaitingExecutor mainExecutor = new PriorityFastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
 //    public static final JobsExecutor jobsExecutor = new JobsExecutor(Executors.newCachedThreadPool());
     public static String dragInitWindowID = "";
 
@@ -547,7 +549,7 @@ public class TaskFactory {
         return finalTask;
     }
 
-    private void populateRecursiveParallelInner(ExtFolder folder, int depth, ExecutorService exe) {
+    private Future populateRecursiveParallelInner(ExtFolder folder, int depth, Executor exe) {
         if (0 < depth) {
             Callable task = (Callable) () -> {
                 Log.print("Folder Iteration " + depth + "::" + folder.getAbsoluteDirectory());
@@ -557,12 +559,18 @@ public class TaskFactory {
                 }
                 return null;
             };
-            exe.submit(task);
+            FutureTask t = new FutureTask(task);
+            exe.execute(t);
+            return t;
+        }else{
+            FutureTask t = new FutureTask(()->null);
+            t.run();
+            return t;
         }
     }
 
-    public void populateRecursiveParallelContained(ExtFolder folder, int depth) {
-        populateRecursiveParallelInner(folder, depth, mainExecutor);
+    public Future populateRecursiveParallelContained(ExtFolder folder, int depth) {
+        return populateRecursiveParallelInner(folder, depth, mainExecutor);
     }
 
     public Runnable populateRecursiveParallel(ExtFolder folder, int depth) {
@@ -875,7 +883,7 @@ public class TaskFactory {
                         rat = (Double) map.get(key);
 
                     } else {
-                        rat = StringOperations.correlationRatio(name, otherName);
+                        rat = StringOp.correlationRatio(name, otherName);
                         map.put(key, rat);
                     }
                     if (rat >= ratio) {
@@ -905,7 +913,7 @@ public class TaskFactory {
                     }
 
                     PathStringCommands file1 = array.get(j);
-                    double rat = StringOperations.correlationRatio(name, file1.getName(true));
+                    double rat = StringOp.correlationRatio(name, file1.getName(true));
                     DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file, file1, rat);
                     if (rat >= ratio) {
                         list.add(item);

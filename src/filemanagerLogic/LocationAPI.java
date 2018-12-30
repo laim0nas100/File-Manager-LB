@@ -273,6 +273,6 @@ public class LocationAPI {
     }
 
     public void filterIfExists(Collection<ExtPath> collection) {
-        F.filterParallel(collection, ExtPath.EXISTS, new FastWaitingExecutor(4,1,TimeUnit.SECONDS));
+        F.filterParallel(collection, ExtPath.EXISTS, TaskFactory.mainExecutor);
     }
 }
