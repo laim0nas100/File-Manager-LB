@@ -27,8 +27,8 @@ import lt.lb.commons.javafx.*;
 import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.ExtTask;
 import lt.lb.commons.threads.FastWaitingExecutor;
-import lt.lb.commons.threads.PriorityFastWaitingExecutor;
 import lt.lb.commons.threads.TaskPooler;
+import lt.lb.commons.threads.sync.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.sync.WaitTime;
 import utility.*;
 
@@ -42,7 +42,8 @@ public class TaskFactory {
     public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
-    public static final PriorityFastWaitingExecutor mainExecutor = new PriorityFastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
+    private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
+    public static final Executor mainExecutor = new NestedTaskSubmitionExecutorLayer(innerExe);
 //    public static final JobsExecutor jobsExecutor = new JobsExecutor(Executors.newCachedThreadPool());
     public static String dragInitWindowID = "";
 
@@ -100,7 +101,7 @@ public class TaskFactory {
 
 //PREPARE FOR TASKS
     public void addToMarked(ExtPath file) {
-        Platform.runLater(() -> {
+        FX.submit(() -> {
             if (file != null && !MainController.markedList.contains(file)) {
                 MainController.markedList.add(file);
             }

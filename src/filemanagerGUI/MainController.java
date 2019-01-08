@@ -761,13 +761,13 @@ public class MainController extends BaseController {
         submenuMarkFiles.getItems().setAll(
                 CosmeticsFX.simpleMenuItem("Selected",
                         event -> {
-                            selectedList.stream().forEach((file) -> {
+                            selectedList.forEach((file) -> {
                                 TaskFactory.getInstance().addToMarked(file);
                             });
                         }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
                 CosmeticsFX.simpleMenuItem("Recursive only files",
                         event -> {
-                            selectedList.stream().forEach((file) -> {
+                            selectedList.forEach((file) -> {
 
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), addToMarkedCallback);
@@ -778,7 +778,7 @@ public class MainController extends BaseController {
                         }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
                 CosmeticsFX.simpleMenuItem("Recursive only folders",
                         event -> {
-                            selectedList.stream().forEach((file) -> {
+                            selectedList.forEach((file) -> {
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), addToMarkedCallback);
                                 };
