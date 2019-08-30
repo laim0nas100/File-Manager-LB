@@ -16,12 +16,13 @@
         <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>
     </properties>
     <dependencies>
+        
+        <!--Link using JitPack-->
         <dependency>
             <groupId>${commons-lb.dir}</groupId>
             <artifactId>commonslb-log</artifactId>
             <version>${commons-lb.version}</version>
         </dependency>
-        
         
         <dependency>
             <groupId>${commons-lb.dir}</groupId>
@@ -89,14 +90,6 @@
             <artifactId>vlcj</artifactId>
             <version>3.12.1</version>
         </dependency>
-        
-        <dependency>
-            <groupId>lt.insoft.commons</groupId>
-            <artifactId>insoft-commons-jpa-model</artifactId>
-            <version>1.4.15</version>
-        </dependency>
-        
-
     </dependencies>
     
     <build>
