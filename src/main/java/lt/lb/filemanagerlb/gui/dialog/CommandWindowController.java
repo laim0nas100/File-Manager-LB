@@ -246,7 +246,7 @@ public class CommandWindowController extends BaseController {
                 Lexer lexer = new Lexer();
                 lexer.resetLines(Arrays.asList(command));
                 lexer.setSkipWhitespace(false);
-                lexer.addKeyword(PathStringCommands.returnDefinedKeys());
+                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys());
                 int index = 1;
                 for (String absPath : l) {
                     PathStringCommands pathInfo = new PathStringCommands(absPath);
@@ -259,7 +259,7 @@ public class CommandWindowController extends BaseController {
                             break;
                         }
                         Token token = opt.get();
-                        if (token.id.equals(PathStringCommands.number)) {
+                        if (token.value.equals(PathStringCommands.number)) {
                             numbersToAdd++;
                             continue;
                         } else if (numbersToAdd > 0) {
@@ -267,21 +267,21 @@ public class CommandWindowController extends BaseController {
                             numbersToAdd = 0;
                         }
 
-                        if (token.id.equals(PathStringCommands.fileName)) {
+                        if (token.value.equals(PathStringCommands.fileName)) {
                             commandToAdd += pathInfo.getName(true);
-                        } else if (token.id.equals(PathStringCommands.nameNoExt)) {
+                        } else if (token.value.equals(PathStringCommands.nameNoExt)) {
                             commandToAdd += pathInfo.getName(false);
-                        } else if (token.id.equals(PathStringCommands.filePath)) {
+                        } else if (token.value.equals(PathStringCommands.filePath)) {
                             commandToAdd += pathInfo.getPath();
-                        } else if (token.id.equals(PathStringCommands.extension)) {
+                        } else if (token.value.equals(PathStringCommands.extension)) {
                             commandToAdd += pathInfo.getExtension();
-                        } else if (token.id.equals(PathStringCommands.parent1)) {
+                        } else if (token.value.equals(PathStringCommands.parent1)) {
                             commandToAdd += pathInfo.getParent(1);
-                        } else if (token.id.equals(PathStringCommands.parent2)) {
+                        } else if (token.value.equals(PathStringCommands.parent2)) {
                             commandToAdd += pathInfo.getParent(2);
-                        } else if (token.id.equals(PathStringCommands.custom)) {
+                        } else if (token.value.equals(PathStringCommands.custom)) {
                             commandToAdd += FileManagerLB.customPath.getPath();
-                        } else if (token.id.equals(PathStringCommands.relativeCustom)) {
+                        } else if (token.value.equals(PathStringCommands.relativeCustom)) {
                             commandToAdd += FileManagerLB.customPath.relativePathTo(pathInfo.getPath());
                         } else {
                             Literal lit = (Literal) token;

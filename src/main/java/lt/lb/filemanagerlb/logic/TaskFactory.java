@@ -257,6 +257,9 @@ public class TaskFactory {
 
                             copy.paused.bind(this.paused);
                             copy.run();
+                            if(copy.failed.get()){
+                                ErrorReport.report(copy.getException());
+                            }
                             return null;
                         }
                     ;
@@ -269,149 +272,6 @@ public class TaskFactory {
         return fullTask;
     }
 
-    private FXTask copyFiles(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
-        return new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-                String str;
-                updateMessage("Populating list for copy");
-                List<ActionFile> list;
-                if (root == null) {
-                    list = prepareForCopy(fileList, dest);
-                } else {
-                    Log.print("Test copy");
-                    list = prepareForCopy(fileList, dest, root);
-                }
-                Log.print("In a task now");
-                Log.print(list);
-
-                for (int i = 0; i < list.size(); i++) {
-                    while (this.isPaused()) {
-                        Thread.sleep(getRefreshDuration());
-                        if (this.isCancelled()) {
-                            break;
-                        }
-                    }
-                    if (this.isCancelled()) {
-                        return null;
-                    }
-                    ActionFile file = list.get(i);
-                    str = "Source: \t\t" + file.paths[0] + "\n";
-                    str += "Destination: \t" + file.paths[1];
-                    updateMessage(str);
-                    updateProgress(i, list.size());
-                    try {
-                        final int currentIndex = i;
-                        ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
-                        DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
-                        progress.addListener(listener -> {
-                            updateProgress(currentIndex + progress.get(), list.size());
-                        });
-                        copy.paused.bind(this.paused);
-                        copy.run();
-
-//                        if(Files.isDirectory(list.get(i).paths[0])){
-//                            list.get(i).copy();
-//                        }else{
-//                            final int currentIndex = i;
-//                            ExtInputStream stream = new ExtInputStream(list.get(i).paths[0]);
-//                            this.paused.addListener(listener ->{
-//                                if(paused.get()){
-//                                    stream.waitingTool.requestWait();
-//                                }else{
-//                                    stream.waitingTool.wakeUp();
-//                                }
-//                            });
-//                            stream.progress.addListener(listener ->{
-//                                updateProgress(currentIndex+stream.progress.get(),list.size());
-//                            });
-//                            Files.copy(stream, list.get(i).paths[1]);
-//                        }
-                        Log.print("OK:" + list.get(i));
-
-                    } catch (Exception e) {
-                        ErrorReport.report(e);
-                    }
-                    updateProgress(i + 1, list.size());
-                }
-                updateProgress(1, 1);
-                updateMessage("FINISHED");
-                return null;
-            }
-        };
-    }
-
-    private FXTask moveFiles(Collection<ExtPath> fileList, ExtPath dest) {
-        return new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-                ArrayList<ActionFile> leftFolders = new ArrayList<>();
-                String str;
-                updateMessage("Populating list for move");
-                List<ActionFile> list = prepareForMove(fileList, dest);
-                updateMessage("Begin");
-                int index1 = 0;
-                for (; index1 < list.size(); index1++) {
-                    while (this.isPaused()) {
-                        Thread.sleep(getRefreshDuration());
-                        if (this.isCancelled()) {
-                            break;
-                        }
-                    }
-                    if (this.isCancelled()) {
-                        return null;
-                    }
-                    ActionFile file = list.get(index1);
-                    str = "Source: \t\t" + file.paths[0] + "\n";
-                    str += "Destination: \t" + file.paths[1];
-                    updateMessage(str);
-                    updateProgress(index1 + 0.5, list.size() + leftFolders.size());
-                    try {
-                        if (Files.isDirectory(file.paths[0])) {
-                            leftFolders.add(list.get(index1));
-                            Files.createDirectory(file.paths[1]);
-                            Log.print("Added to folders:" + file.paths[1]);
-                        } else {
-                            final int currentIndex = index1;
-                            ExtTask move = FileUtils.move(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
-                            DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
-                            progress.addListener(listener -> {
-                                updateProgress(currentIndex + progress.get(), list.size());
-                            });
-                            move.paused.bind(paused);
-                            move.run();
-//                            Files.move(list.get(index1).paths[0],list.get(index1).paths[1]);
-
-                            Log.print("OK:" + list.get(index1));
-                        }
-                    } catch (Exception e) {
-                        ErrorReport.report(e);
-
-                    }
-                    updateProgress(index1 + 1, list.size() + leftFolders.size());
-                }
-                updateMessage("Deleting leftover folders");
-                int i = 0;
-                Log.print("Folders size: " + leftFolders.size());
-                leftFolders.sort(ActionFile.COMP_DESCENDING);
-                for (ActionFile f : leftFolders) {
-                    try {
-                        Log.print("Deleting " + f.paths[0]);
-//                        Files.delete(f.paths[0]);
-                        f.delete();
-                        i++;
-                    } catch (Exception x) {
-                        ErrorReport.report(x);
-                    }
-                    updateProgress(index1 + i + 2, list.size() + leftFolders.size());
-                }
-                updateProgress(1, 1);
-                updateMessage("FINISHED");
-                return null;
-            }
-
-        };
-    }
 
     public ContinousCombinedTask moveFilesEx(Collection<ExtPath> fileList, ExtPath dest) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {
@@ -449,6 +309,10 @@ public class TaskFactory {
                                     });
                                     move.paused.bind(paused);
                                     move.run();
+                                    if(move.failed.get()){
+                                        ErrorReport.report(move.getException());
+                                    }
+                                    
                                 }
                             } catch (Exception e) {
                                 ErrorReport.report(e);
@@ -486,43 +350,6 @@ public class TaskFactory {
         return finalTask;
     }
 
-    private FXTask deleteFiles(Collection<ExtPath> fileList) {
-        return new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-                String str;
-                updateMessage("Populating list for deletion");
-                ArrayList<ActionFile> list = prepareForDelete(fileList);
-                for (int i = 0; i < list.size(); i++) {
-                    while (this.isPaused()) {
-                        Thread.sleep(getRefreshDuration());
-                        if (this.isCancelled()) {
-                            break;
-                        }
-                    }
-                    if (this.isCancelled()) {
-                        return null;
-                    }
-
-                    str = "Deleting: \t" + list.get(i).paths[0];
-                    updateMessage(str);
-                    updateProgress(i + 0.5, list.size());
-                    try {
-                        final ActionFile f = list.get(i);
-                        f.delete();
-
-                    } catch (Exception e) {
-                        ErrorReport.report(e);
-                    }
-                    updateProgress(i + 1, list.size());
-
-                }
-                updateProgress(1, 1);
-                updateMessage("FINISHED");
-                return null;
-            }
-        };
-    }
 
     public ContinousCombinedTask deleteFilesEx(Collection<ExtPath> fileList) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {

@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import lt.lb.commons.Log;
+import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.utility.*;
 
 /**
@@ -97,11 +98,12 @@ public class ProgressDialogControllerExt extends BaseController {
             TreeItem<String> treeRoot = this.buildTree(null, task, (SimpleTask param) -> {
                                                    TreeItem<String> node = new TreeItem();
                                                    node.setValue(param.getDescription());
+                                                   node.setExpanded(true);
                                                    return node;
                                                });
-            Platform.runLater(() -> {
-                this.treeView.setRoot(treeRoot);
-            });
+           FX.submit(()->{
+               this.treeView.setRoot(treeRoot);
+           });
 
         });
 
@@ -125,9 +127,7 @@ public class ProgressDialogControllerExt extends BaseController {
 
         task.setOnSucceeded((e) -> {
             Log.print("Task succeeded");
-            Platform.runLater(() -> {
-                clock.stopTimer();
-            });
+            FX.submit(clock::stopTimer);
 
             if (task.childTask != null) {
                 task.run();
@@ -138,16 +138,14 @@ public class ProgressDialogControllerExt extends BaseController {
                 this.exit();
             }
         });
+        
 
         if (paused.get()) {
             pauseButton.setText("START");
         }
-        Platform.runLater(() -> {
-            Thread t = new Thread(task);
-            t.start();
-
+        FX.submit(()->{
+            task.toThread().start();
         });
-        //t.start();
 
     }
 

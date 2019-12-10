@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui;
 
 import java.awt.Toolkit;
@@ -879,6 +874,11 @@ public class MainController extends BaseController {
                         event -> {
                             String absolutePath = selectedList.get(0).getAbsolutePath();
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
+                        }, propertyRenameCondition),
+                CosmeticsFX.simpleMenuItem("Copy name",
+                        event -> {
+                            String name = selectedList.get(0).getName(true);
+                            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(name), null);
                         }, propertyRenameCondition),
                 CosmeticsFX.simpleMenuItem("Toggle Enable/Disable",
                         event -> {

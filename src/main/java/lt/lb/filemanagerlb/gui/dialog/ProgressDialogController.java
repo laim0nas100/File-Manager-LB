@@ -5,21 +5,25 @@
  */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.filemanagerlb.gui.BaseController;
-import lt.lb.filemanagerlb.gui.ViewManager;
-import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
 import lt.lb.commons.javafx.FXTask;
+import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.utility.CustomClock;
+
+import java.util.Arrays;
+import lt.lb.commons.javafx.FX;
 
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class ProgressDialogController extends BaseController {
 
@@ -88,11 +92,7 @@ public class ProgressDialogController extends BaseController {
         if (paused.get()) {
             pauseButton.setText("START");
         }
-        Platform.runLater(() -> {
-            t.start();
-
-        });
-        //t.start();
+        FX.submit(t::start);
 
     }
 

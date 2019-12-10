@@ -38,10 +38,11 @@ public class RenameDialogController extends TextInputDialogController {
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    private TimeoutTask folderUpdateTask = new TimeoutTask(1000, 100, () -> {
+    private TimeoutTask folderUpdateTask = new TimeoutTask(500, 100, () -> {
         update();
         FX.submit(() -> {
-            if (!listToCheck.contains(textField.getText().trim()) && textField.getText().length() > 0) {
+            String trim = textField.getText().trim();
+            if (!listToCheck.contains(trim) && trim.length() > 0) {
                 nameAvailable.setText("Available");
                 nameIsAvailable.set(true);
             }

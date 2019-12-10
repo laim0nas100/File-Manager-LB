@@ -166,7 +166,7 @@ public class AdvancedRenameController extends BaseController {
 
                     object.newName(parseFilter(object.path1.getName(true), filter, number));
                     number += increment;
-                } catch (Lexer.NoSuchLexemeException | Lexer.StringNotTerminatedException ex) {
+                } catch (Lexer.StringNotTerminatedException ex) {
                     ErrorReport.report(ex);
                 }
             }
@@ -194,19 +194,18 @@ public class AdvancedRenameController extends BaseController {
 
     }
 
-    public String parseFilter(String origName, String filter, long currentNumber) throws Lexer.NoSuchLexemeException, Lexer.StringNotTerminatedException {
+    public String parseFilter(String origName, String filter, long currentNumber) throws Lexer.StringNotTerminatedException {
         Lexer lexer = new Lexer();
         lexer.resetLines(Arrays.asList(filter));
         lexer.setSkipWhitespace(false);
-        lexer.addKeyword(PathStringCommands.fileName, PathStringCommands.nameNoExt, PathStringCommands.extension, PathStringCommands.number);
+        lexer.addKeywordBreaking(PathStringCommands.fileName, PathStringCommands.nameNoExt, PathStringCommands.extension, PathStringCommands.number);
         int numerationAmmount = 0;
         String newName = "";
         PathStringCommands pathString = new PathStringCommands(origName);
 
         boolean addingDigits = false;
-        Collection<Token> remainingTokens = lexer.getRemainingTokens();
-        for (Token token : remainingTokens) {
-            if (token.id.equals(PathStringCommands.number)) {
+        for (Token token : lexer.getTokenIterator()) {
+            if (token.value.equals(PathStringCommands.number)) {
                 if (addingDigits) {
                     numerationAmmount++;
                 } else {
@@ -218,11 +217,11 @@ public class AdvancedRenameController extends BaseController {
                     addingDigits = false;
                     newName += StringOp.simpleFormat(currentNumber, numerationAmmount);
                 }
-                if (token.id.equals(PathStringCommands.fileName)) {
+                if (token.value.equals(PathStringCommands.fileName)) {
                     newName += pathString.getName(true);
-                } else if (token.id.equals(PathStringCommands.nameNoExt)) {
+                } else if (token.value.equals(PathStringCommands.nameNoExt)) {
                     newName += pathString.getName(false);
-                } else if (token.id.equals(PathStringCommands.extension)) {
+                } else if (token.value.equals(PathStringCommands.extension)) {
                     newName += pathString.getExtension();
                 } else {
                     Literal lit = (Literal) token;
