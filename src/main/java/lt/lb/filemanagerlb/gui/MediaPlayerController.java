@@ -19,7 +19,7 @@ import javafx.util.Callback;
 import javax.swing.JFrame;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.values.Value;
-import lt.lb.commons.io.FileReader;
+import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
@@ -28,6 +28,7 @@ import lt.lb.commons.containers.values.IntegerValue;
 //import lt.lb.commons.containers.values.NumberValue;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.TimeoutTask;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -55,7 +56,7 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
  *
  * @author Lemmin
  */
-public class MediaPlayerController extends BaseController {
+public class MediaPlayerController extends MyBaseController {
 
     public static class PlayerEventType {
 
@@ -146,7 +147,7 @@ public class MediaPlayerController extends BaseController {
     });
 
     public static String getPlaylistsDir() {
-        return FileManagerLB.USER_DIR + PLAYLIST_DIR + File.separator;
+        return D.USER_DIR + PLAYLIST_DIR + File.separator;
     }
 
     private MediaPlayer getCurrentPlayer() {
@@ -317,7 +318,7 @@ public class MediaPlayerController extends BaseController {
                 return;
             }
             MainController.dragList = table.getSelectionModel().getSelectedItems();
-            TaskFactory.dragInitWindowID = this.windowID;
+            TaskFactory.dragInitWindowID = this.getID();
             Log.print(TaskFactory.dragInitWindowID, MainController.dragList);
             if (!MainController.dragList.isEmpty()) {
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
@@ -331,7 +332,7 @@ public class MediaPlayerController extends BaseController {
         });
 
         table.setOnDragOver((DragEvent event) -> {
-            if (this.windowID.equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
                 return;
             }
             // data is dragged over the target
@@ -345,7 +346,7 @@ public class MediaPlayerController extends BaseController {
         });
         table.setOnDragDropped((DragEvent event) -> {
             Log.println("Drag dropped!", MainController.dragList);
-            if (this.windowID.equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
                 Log.print("Same window");
                 return;
             }
@@ -644,7 +645,7 @@ public class MediaPlayerController extends BaseController {
         });
         saveState(MediaPlayerController.getPlaylistsDir() + PLAYLIST_FILE_NAME);
         this.execService.shutdown();
-        this.events.shutdown();
+        this.events.forceShutdown();
         super.exit();
 
     }
@@ -673,7 +674,7 @@ public class MediaPlayerController extends BaseController {
                 }
             }
             //default loop song
-            index = ExtStringUtils.mod((index + increment), backingList.size());
+            index = (index + increment) % backingList.size();
             ExtPath item = (ExtPath) backingList.get(index);
             if (item == null) {
                 return;
@@ -744,7 +745,7 @@ public class MediaPlayerController extends BaseController {
                     setVolume(getCurrentPlayer(), volume);
                 }
             }
-            FX.submit(this::update).get();
+           this.update();
             while (!onPlayTaskComplete.isEmpty()) {
                 onPlayTaskComplete.pollFirst().run();
             }
@@ -987,7 +988,7 @@ public class MediaPlayerController extends BaseController {
             list.add(state.index + "");
             list.add(state.type);
             list.addAll(state.root.specialString());
-            FileReader.writeToFile(path, list);
+            TextFileIO.writeToFile(path, list);
             Log.print("Write to file size:", list.size());
         } catch (Exception e) {
             ErrorReport.report(e);
@@ -1013,7 +1014,7 @@ public class MediaPlayerController extends BaseController {
             protected Void call() throws Exception {
                 PlaylistState state = new PlaylistState();
                 try {
-                    ArrayList<String> readFromFile = FileReader.readFromFile(path);
+                    ArrayList<String> readFromFile = TextFileIO.readFromFile(path);
                     state.index = Integer.parseInt(readFromFile.remove(0));
                     state.type = readFromFile.remove(0);
                     state.root = LocationInRootNode.nodeFromFile(readFromFile);

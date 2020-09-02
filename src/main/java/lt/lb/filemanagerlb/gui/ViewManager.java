@@ -1,27 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import lt.lb.commons.F;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.values.BooleanValue;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
+import lt.lb.commons.javafx.scenemanagement.FXMLFrame;
+import lt.lb.commons.javafx.scenemanagement.Frame;
+import lt.lb.commons.javafx.scenemanagement.FrameException;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.AdvancedRenameController;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.gui.dialog.DuplicateFinderController;
@@ -38,7 +31,11 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
-import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.filemanagerlb.utility.FXJob;
+import lt.lb.jobsystem.Dependencies;
+import lt.lb.jobsystem.Job;
+import lt.lb.jobsystem.VoidJob;
+import lt.lb.jobsystem.events.SystemJobEventName;
 
 /**
  *
@@ -57,27 +54,14 @@ public class ViewManager {
         this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
         this.pinProgressDialogs = new SimpleBooleanProperty(false);
         this.pinTextInputDialogs = new SimpleBooleanProperty(false);
-        this.frames = new HashMap<>();
         this.windows = new HashSet<>();
 
     }
-    public final HashMap<String, Frame> frames;
     public final HashSet<String> windows;
     private boolean initStart = false;
 
     public static ViewManager getInstance() {
         return INSTANCE;
-    }
-
-    private int findSmallestAvailable(Map<String, Frame> map, String title) {
-        int i = 1;
-        while (true) {
-            if (map.containsKey(title + i)) {
-                i++;
-            } else {
-                return i;
-            }
-        }
     }
 
 // WINDOW ACTIONS
@@ -87,46 +71,45 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Log.print("NEW WINDOW");
-                    Frame frame = newFrame(FrameTitle.WINDOW);
-                    MainController controller = (MainController) frame.getController();
+                    FXMLFrame frame = newFrame(FrameTitle.WINDOW);
+                    MainController controller = frame.getController();
                     windows.add(frame.getID());
                     controller.beforeShow(frame.getTitle(), currentFolder);
                     frame.getStage().show();
                     controller.afterShow();
                     Log.print("AFTER SHOW");
-                } catch (IOException ex) {
+                } catch (InterruptedException | ExecutionException | FrameException ex) {
                     ErrorReport.report(ex);
                 }
                 return null;
             }
         };
-//        et.toThread().start();
         et.runOnPlatform();
-//        Platform.runLater(et);
 
     }
 
     public void updateAllWindows() {
-        for (String s : windows) {
-            TaskFactory.mainExecutor.execute(frames.get(s).getController()::update);
+        for (String id : windows) {
+            TaskFactory.mainExecutor.execute(getController(id)::update);
         }
     }
 
     public void updateAllFrames() {
-
-        for (Frame frame : frames.values()) {
-            TaskFactory.mainExecutor.execute(frame.getController()::update);
+        for (String id : D.sm.getFrameIds()) {
+            TaskFactory.mainExecutor.execute(getController(id)::update);
         }
     }
 
-    public Frame getFrame(String windowID) {
-        return frames.get(windowID);
+    public FXMLFrame getFxmlFrame(String id) {
+        return (FXMLFrame) D.sm.getFrame(id).get();
+    }
+
+    public <T extends MyBaseController> T getController(String id) {
+        return getFxmlFrame(id).getController();
     }
 
     public boolean frameIsVisible(String windowID) {
-        boolean res = frames.containsKey(windowID);
-//        Log.write(windowID +" isVisible call:"+res );
-        return res;
+        return D.sm.getFrame(windowID).isPresent();
     }
 
 //DIALOG ACTIONS
@@ -138,7 +121,7 @@ public class ViewManager {
                 try {
 
                     Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG);
-                    ProgressDialogController controller = (ProgressDialogController) frame.getController();
+                    ProgressDialogController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().setMaxHeight(300);
                     frame.getStage().setMinHeight(250);
@@ -165,7 +148,7 @@ public class ViewManager {
                 try {
 
                     Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG_EXT);
-                    ProgressDialogControllerExt controller = (ProgressDialogControllerExt) frame.getController();
+                    ProgressDialogControllerExt controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
 //                frame.getStage().setMaxHeight(300);
                     frame.getStage().setMinHeight(250);
@@ -194,7 +177,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.TEXT_INPUT_DIALOG);
-                    RenameDialogController controller = (RenameDialogController) frame.getController();
+                    RenameDialogController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().setMaxHeight(200);
                     frame.getStage().setMinHeight(200);
@@ -221,7 +204,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
-                    AdvancedRenameController controller = (AdvancedRenameController) frame.getController();
+                    AdvancedRenameController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle(), folder);
                     frame.getStage().show();
                     controller.afterShow();
@@ -242,7 +225,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.DIR_SYNC_DIALOG);
-                    DirSyncController controller = (DirSyncController) frame.getController();
+                    DirSyncController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().show();
                     controller.afterShow();
@@ -265,7 +248,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.DUPLICATE_FINDER_DIALOG);
-                    DuplicateFinderController controller = (DuplicateFinderController) frame.getController();
+                    DuplicateFinderController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle(), root);
                     frame.getStage().show();
                     controller.afterShow();
@@ -287,7 +270,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.WEB_DIALOG);
-                    WebDialogController controller = (WebDialogController) frame.getController();
+                    WebDialogController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().show();
                     controller.afterShow(info);
@@ -309,7 +292,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
-                    CommandWindowController controller = (CommandWindowController) frame.getController();
+                    CommandWindowController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
                     frame.getStage().show();
                     controller.afterShow();
@@ -330,7 +313,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Frame frame = newFrame(FrameTitle.LIST_FRAME);
-                    ListController controller = (ListController) frame.getController();
+                    ListController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle(), description);
 
                     frame.getStage().show();
@@ -348,112 +331,41 @@ public class ViewManager {
     }
 
     public void newMediaPlayer() {
-        BooleanValue property = BooleanValue.TRUE();
-        Value<Frame> frame = new Value<>();
-        SimpleTask init = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                try {
-                    MediaPlayerController.discover();
-                } catch (Exception e) {
-                    property.setFalse();
-                    ErrorReport.report(e);
 
-                }
-                return null;
-            }
-        };
-        init.setOnSucceeded(event -> {
-            SimpleTask task = new SimpleTask() {
-                @Override
-                protected Void call() throws Exception {
+        Job<Boolean> discoverJob = new Job<>(me -> {
 
-                    if (property.get()) {
-                        frame.get().getStage().show();
-                        frame.get().getStage().toFront();
-                        frame.get().getController().afterShow();
-                        frame.get().getStage().toFront();
-                    } else {
-                        closeFrame(frame.get().getController().windowID);
-                    }
-                    return null;
-                }
-            };
-            task.runOnPlatform();
+            Optional<Throwable> checkedRun = F.checkedRun(() -> {
+                MediaPlayerController.discover();
+            });
+            checkedRun.ifPresent(ErrorReport::report);
+
+            return !checkedRun.isPresent();
+        });
+
+        FXJob showJob = new FXJob(me -> {
+            
+            FXMLFrame frame = newFrame(FrameTitle.MEDIA_PLAYER);
+            frame.getStage().show();
+            frame.getStage().toFront();
+            MediaPlayerController controller = getController(frame.getID());
+            controller.afterShow();
+            frame.getStage().toFront();
 
         });
 
-        FXTask et = new FXTask() {
-            @Override
-            protected Void call() throws Exception {
-                try {
-                    frame.set(newFrame(FrameTitle.MEDIA_PLAYER));
-                    new Thread(init).start();
-                } catch (Exception ex) {
-                    ErrorReport.report(ex);
-                }
+        showJob.addDependency(Dependencies.standard(discoverJob, SystemJobEventName.ON_SUCCESSFUL));
+        TaskFactory.jobsExecutor.submitAll(showJob, discoverJob);
 
-                return null;
-            }
-        };
-        et.runOnPlatform();
     }
 
-    private Frame newFrame(FrameTitle info, Object... params) throws IOException, Exception {
-        Boolean frameIsSingleton = false;
-        if (params.length > 0) {
-            frameIsSingleton = (Boolean) params[0];
-        }
-        String title = info.getTitle();
-        if (!frameIsSingleton) {
-            int index = findSmallestAvailable(frames, info.getTitle());
-            title += index;
-        }
-        if (frames.containsKey(title)) {
-            throw new Exception("Frame:" + title + "Allready exists");
-        }
-        Log.print("Load", info.recourse);
-        URL url = getClass().getClassLoader().getResource(info.recourse);
-        Log.print("URL=", url);
-        FXMLLoader loader = new FXMLLoader(url);
-        Parent root = loader.load();
-        Log.print("After load");
-        Stage stage = new Stage();
-        stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("images/ico.png")));
-        Log.print("After images");
-        stage.setTitle(title);
-        stage.setScene(new Scene(root));
-        stage.getScene().getStylesheets().add("resources/css/fxml.css");
-        BaseController controller = loader.getController();
-        stage.setOnCloseRequest((WindowEvent we) -> {
-            controller.exit();
+    private <T> FXMLFrame newFrame(FrameTitle info) throws FrameException, InterruptedException, ExecutionException {
+        return newFrame(info, false, c -> {
         });
-        controller.windowID = title;
-        Frame frame = new Frame(stage, controller, info.title);
-        this.frames.put(frame.getTitle(), frame);
+    }
 
-        Value<Frame.Pos> pos = new Value<>();
-        if (!Frame.positionMemoryMap.containsKey(info.title)) {
-            pos.set(new Frame.Pos(stage.getX(), stage.getY()));
-            Frame.positionMemoryMap.put(info.title, pos.get());
-        }
-        pos.set(Frame.positionMemoryMap.get(info.title));
-        ChangeListener listenerY = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
-            pos.get().y.set((double) newValue);
-        };
-        ChangeListener listenerX = (ChangeListener) (ObservableValue observable, Object oldValue, Object newValue) -> {
-            pos.get().x.set((double) newValue);
-        };
-
-        stage.setX(pos.get().x.get());
-        stage.setY(pos.get().y.get());
-        frame.listenerX = listenerX;
-        frame.listenerY = listenerY;
-        stage.xProperty().addListener(listenerX);
-        stage.yProperty().addListener(listenerY);
-
-        return frame;
-
+    private <T extends MyBaseController> FXMLFrame newFrame(FrameTitle info, boolean singleton, Consumer<T> cons) throws FrameException, InterruptedException, ExecutionException {
+        URL resource = D.cLoader.getResource(info.recourse);
+        return D.sm.newFxmlFrame(resource, info.title, info.title, singleton, cons);
     }
 
     public void closeFrame(String windowID) {
@@ -461,14 +373,8 @@ public class ViewManager {
             return;
         }
         FX.submit(() -> {
+            D.sm.closeFrame(windowID);
 
-            Frame frame = frames.get(windowID);
-            Stage stage = frame.getStage();
-            stage.xProperty().removeListener(frame.listenerX);
-            stage.yProperty().removeListener(frame.listenerY);
-            stage.close();
-
-            frames.remove(windowID);
             windows.remove(windowID);
             if (windows.isEmpty()) {
                 closeAllFramesNoExit();
@@ -484,18 +390,12 @@ public class ViewManager {
 
     public void closeAllFramesNoExit() {
         this.initStart = true;
-        frames.keySet().forEach(key -> {
-            Frame frame = frames.get(key);
-            frame.getController().exit();
-            Log.print("Close", frame.getID());
-            frame.getStage().close();
+        D.sm.getFrameIds().forEach(key -> {
+            getController(key).exit();
+            Log.print("Close", key);
+            D.sm.closeFrame(key);
         });
-        frames.clear();
         windows.clear();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ex) {
-        }
         this.initStart = false;
     }
 

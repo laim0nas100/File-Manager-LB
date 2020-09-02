@@ -7,13 +7,20 @@
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         
         <jackson.version>2.9.8</jackson.version>
         
-        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
-        <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>
+        <timestamp>${maven.build.timestamp}</timestamp>
+
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+        
+        <commons-lb.dir>lt.lb.commons</commons-lb.dir>
+        <commons-lb.version>local-jar</commons-lb.version>
+        
+        <!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
+        <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>-->
     </properties>
     <dependencies>
         
@@ -44,6 +51,12 @@
             <groupId>${commons-lb.dir}</groupId>
             <artifactId>commonslb-io</artifactId>
             <version>${commons-lb.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>lt.lb</groupId>
+            <artifactId>JobSystem</artifactId>
+            <version>local-jar</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.slf4j/log4j-over-slf4j -->
         <dependency>
@@ -77,13 +90,6 @@
             <version>${jackson.version}</version>
         </dependency>
         
-        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>11.0.2</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/uk.co.caprica/vlcj -->
         <dependency>
             <groupId>uk.co.caprica</groupId>
@@ -92,6 +98,58 @@
         </dependency>
     </dependencies>
     
+    
+    <profiles>
+        <profile>
+            <id>shaderelease</id>
+            <activation>
+                <property>
+                    <name>shaderelease</name>
+                </property>
+            </activation>
+            
+            <build>
+                
+                <plugins>
+            
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>lt.lb.filemanagerlb.gui.FileManagerLB</mainClass>
+                                </manifest>
+                                <manifestEntries>
+                                    <Build-Time>${maven.build.timestamp}</Build-Time>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.2.4</version>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            
+        </profile>
+        
+    </profiles>
     <build>
         <plugins>
             <plugin>
@@ -113,36 +171,15 @@
                 </dependencies>
             </plugin>
             
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>lt.lb.filemanagerlb.gui.FileManagerLB</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
+        
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            
+        </resources>
     </build>
     
 </project>

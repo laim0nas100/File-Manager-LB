@@ -13,6 +13,7 @@ import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 import lt.lb.commons.Log;
+import lt.lb.filemanagerlb.D;
 
 /**
  *
@@ -20,10 +21,12 @@ import lt.lb.commons.Log;
  */
 public class ErrorReport {
 
+    
+    static SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
     public static void report(Throwable ex) {
         ErrorReport error = new ErrorReport(ex);
 
-        if (FileManagerLB.DEBUG.get()) {
+        if (D.DEBUG.get()) {
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
@@ -38,7 +41,7 @@ public class ErrorReport {
     public ErrorReport(Throwable errorCause) {
         this.errorCause = errorCause;
         date = Calendar.getInstance().getTime();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        
         String format = dateFormat.format(date);
         this.errorName = new SimpleStringProperty(format + " : " + errorCause.getMessage());
         this.details = new Tooltip();
@@ -61,7 +64,7 @@ public class ErrorReport {
         return details;
     }
 
-    private String getOnlyError(Throwable e) {
+    private static String getOnlyError(Throwable e) {
         String err = e.toString();
         int index = err.indexOf(":");
         if (index > 0) {

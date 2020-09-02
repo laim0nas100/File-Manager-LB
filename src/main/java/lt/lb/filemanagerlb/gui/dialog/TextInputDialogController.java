@@ -5,7 +5,7 @@
  */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -18,7 +18,7 @@ import javafx.scene.control.TextField;
  * @author Laimonas Beniušis
  */
 
-public abstract class TextInputDialogController extends BaseController implements TextInputDialogEssentials {
+public abstract class TextInputDialogController extends MyBaseController implements TextInputDialogEssentials {
     @FXML public TextField textField;
     @FXML public Button buttonEnter;
     @FXML public Button buttonCancel;

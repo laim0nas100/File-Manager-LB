@@ -5,7 +5,7 @@
  */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
@@ -27,7 +27,7 @@ import lt.lb.filemanagerlb.utility.PathStringCommands;
  *
  * @author Laimonas Beniušis
  */
-public class DuplicateFinderController extends BaseController {
+public class DuplicateFinderController extends MyBaseController {
 
     @FXML
     public TableView list;

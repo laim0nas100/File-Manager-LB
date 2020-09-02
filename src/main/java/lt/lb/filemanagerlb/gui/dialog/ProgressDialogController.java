@@ -13,7 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
 import lt.lb.commons.javafx.FXTask;
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.utility.CustomClock;
 
@@ -25,7 +25,7 @@ import lt.lb.commons.javafx.FX;
  *
  * @author laim0nas100
  */
-public class ProgressDialogController extends BaseController {
+public class ProgressDialogController extends MyBaseController {
 
     @FXML
     public VBox base;

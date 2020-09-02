@@ -14,10 +14,11 @@ import javafx.concurrent.Task;
 import lt.lb.commons.Log;
 import lt.lb.commons.javafx.*;
 import lt.lb.commons.parsing.StringOp;
-import lt.lb.commons.threads.FastWaitingExecutor;
-import lt.lb.commons.threads.TaskPooler;
-import lt.lb.commons.threads.sync.NestedTaskSubmitionExecutorLayer;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.executors.TaskPooler;
+import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.sync.WaitTime;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.gui.ViewManager;
@@ -33,6 +34,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.jobsystem.ScheduledJobExecutor;
 
 /**
  *
@@ -46,7 +48,7 @@ public class TaskFactory {
     private static final TaskFactory INSTANCE = new TaskFactory();
     private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
     public static final Executor mainExecutor = new NestedTaskSubmitionExecutorLayer(innerExe);
-//    public static final JobsExecutor jobsExecutor = new JobsExecutor(Executors.newCachedThreadPool());
+    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(mainExecutor);
     public static String dragInitWindowID = "";
 
     public static TaskFactory getInstance() {
@@ -247,7 +249,7 @@ public class TaskFactory {
                         @Override
                         protected Void call() throws Exception {
                             this.updateMessage(strmsg);
-                            ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
+                            ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], D.useBufferedFileStreams.getValue());
                             DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
                             progress.addListener(listener -> {
                                 FX.submit(() -> {
@@ -300,7 +302,7 @@ public class TaskFactory {
                                     Files.createDirectory(file.paths[1]);
                                     Log.print("Added to folders:" + file.paths[1]);
                                 } else {
-                                    ExtTask move = FileUtils.move(file.paths[0], file.paths[1], FileManagerLB.useBufferedFileStreams.getValue());
+                                    ExtTask move = FileUtils.move(file.paths[0], file.paths[1], D.useBufferedFileStreams.getValue());
                                     DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
                                     progress.addListener(listener -> {
                                         FX.submit(() -> {
@@ -452,7 +454,7 @@ public class TaskFactory {
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
 
                 return FX.submit(() -> {
-                    MainController controller = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
+                    MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
                     controller.snapshotView.getItems().clear();
                     try {
                         mapper.writeValue(file, currentSnapshot);
@@ -474,7 +476,7 @@ public class TaskFactory {
             @Override
             protected Void call() throws Exception {
 
-                MainController frame = (MainController) ViewManager.getInstance().getFrame(windowID).getController();
+                MainController frame = (MainController) ViewManager.getInstance().getController(windowID);
 
                 FX.submit(() -> {
                     frame.snapshotView.getItems().clear();
@@ -677,7 +679,7 @@ public class TaskFactory {
     }
 
     public FXTask duplicateFinderTask(ArrayList<PathStringCommands> array, double ratio, List list, Map map) {
-        FXTaskPooler executor = new FXTaskPooler(FileManagerLB.MAX_THREADS_FOR_TASK, 0);
+        FXTaskPooler executor = new FXTaskPooler(D.MAX_THREADS_FOR_TASK, 0);
         for (int i = 0; i < array.size(); i++) {
             ExtTask<Long> task;
             if (map == null) {

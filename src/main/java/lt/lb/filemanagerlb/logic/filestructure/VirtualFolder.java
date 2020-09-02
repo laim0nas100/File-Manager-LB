@@ -15,6 +15,7 @@ import javafx.collections.ObservableList;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.commons.javafx.FXTask;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -34,7 +35,7 @@ public class VirtualFolder extends ExtFolder {
             index += 1;
             name = VIRTUAL_FOLDER_PREFIX + index;
         }
-        VirtualFolder VF = new VirtualFolder(FileManagerLB.VIRTUAL_FOLDERS_DIR + name);
+        VirtualFolder VF = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR + name);
         FileManagerLB.VirtualFolders.files.put(name, VF);
     }
 

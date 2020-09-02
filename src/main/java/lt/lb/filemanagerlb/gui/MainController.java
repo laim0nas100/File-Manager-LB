@@ -23,6 +23,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckMenuItem;
@@ -43,7 +44,9 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
@@ -54,8 +57,9 @@ import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.TimeoutTask;
 import lt.lb.commons.parsing.StringOp;
-import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.custom.FileAddressField;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.DATA_SIZE;
@@ -81,7 +85,7 @@ import lt.lb.filemanagerlb.utility.SimpleTask;
  *
  * @author Laimonas Beniušis
  */
-public class MainController extends BaseController {
+public class MainController extends MyBaseController<MainController> {
 
     @FXML
     public CheckMenuItem autoClose;
@@ -214,7 +218,7 @@ public class MainController extends BaseController {
 
     @Override
     public void afterShow() {
-        menuItemTest.visibleProperty().bind(FileManagerLB.DEBUG);
+        menuItemTest.visibleProperty().bind(D.DEBUG);
 
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
         autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
@@ -258,7 +262,7 @@ public class MainController extends BaseController {
 
     @Override
     public void exit() {
-        ViewManager.getInstance().closeFrame(windowID);
+        ViewManager.getInstance().closeFrame(getID());
     }
 
     @Override
@@ -284,7 +288,7 @@ public class MainController extends BaseController {
             this.writeableFolder.set(!MC.currentDir.isNotWriteable());
 
             if (MC.currentDir.isAbsoluteRoot.get()) {
-                fileAddress.field.setText(FileManagerLB.ROOT_NAME);
+                fileAddress.field.setText(D.ROOT_NAME);
             } else if (MC.currentDir.getIdentity().equals(Identity.VIRTUAL)) {
                 fileAddress.field.setText(MC.currentDir.propertyName.get());
             } else {
@@ -345,6 +349,24 @@ public class MainController extends BaseController {
 
     public void test() throws Exception {
         Log.print("TEST");
+        Stage stage = new Stage();
+        
+        Label secondLabel = new Label("I'm a Label on new Window");
+ 
+                StackPane secondaryLayout = new StackPane();
+                secondaryLayout.getChildren().add(secondLabel);
+ 
+                Scene secondScene = new Scene(secondaryLayout, 230, 100);
+ 
+                // New window (Stage)
+                Stage newWindow = new Stage();
+                newWindow.setTitle("Second Stage");
+                newWindow.setScene(secondScene);
+ 
+                // Set position of second window, related to primary window.
+ 
+                newWindow.show();
+        
 //        LocationInRootNode root = new LocationInRootNode("",-1);
 //        int i = 0;
 //
@@ -373,7 +395,6 @@ public class MainController extends BaseController {
 //        ExtTask copyFiles = TaskFactory.getInstance().copyFiles(MC.currentDir.getListRecursiveFolders(true), LocationAPI.getInstance().getFileOptimized("E:\\Dev\\dest"),
 //                LocationAPI.getInstance().getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));
 //        ViewManager.getInstance().newProgressDialog(copyFiles);
-
 //        CodeSource codeSource = FileManagerLB.class.getProtectionDomain().getCodeSource();
 //        File jarFile = new File(codeSource.getLocation().toURI().getPath());
 //        System.out.println(jarFile.getAbsolutePath());
@@ -394,7 +415,10 @@ public class MainController extends BaseController {
 //        Log.println(1,2,3);
 //            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
 //            t.start();
-        TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
+//        TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
+
+
+        
         Log.print("END TEST");
     }
 
@@ -404,7 +428,7 @@ public class MainController extends BaseController {
 
     private void changeToCustomDir(String possibleDir) {
         try {
-            if (possibleDir.equals(FileManagerLB.ROOT_NAME) || possibleDir.isEmpty()) {
+            if (possibleDir.equals(D.ROOT_NAME) || possibleDir.isEmpty()) {
                 changeToDir(FileManagerLB.ArtificialRoot);
             } else {
                 ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
@@ -590,7 +614,7 @@ public class MainController extends BaseController {
             File file = new File(possibleSnapshot);
 
             if (file.exists()) {
-                new Thread(TaskFactory.getInstance().snapshotLoadTask(this.windowID, MC.currentDir, file)).start();
+                new Thread(TaskFactory.getInstance().snapshotLoadTask(this.getID(), MC.currentDir, file)).start();
             } else {
                 ErrorReport.report(new Exception("No such File:" + file.getAbsolutePath()));
             }
@@ -607,7 +631,7 @@ public class MainController extends BaseController {
         this.snapshotView.getItems().add("Creating snapshot at " + MC.currentDir.getAbsoluteDirectory());
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
         File file = new File(TaskFactory.resolveAvailablePath(MC.currentDir, possibleSnapshot));
-        new Thread(TaskFactory.getInstance().snapshotCreateWriteTask(windowID, MC.currentDir, file)).start();
+        new Thread(TaskFactory.getInstance().snapshotCreateWriteTask(getID(), MC.currentDir, file)).start();
 
     }
 
@@ -989,7 +1013,7 @@ public class MainController extends BaseController {
             if (MC.currentDir.isNotWriteable()) {
                 return;
             }
-            TaskFactory.dragInitWindowID = this.windowID;
+            TaskFactory.dragInitWindowID = this.getID();
             if (this.extTableView.recentlyResized.get()) {
                 return;
             }
@@ -1010,7 +1034,7 @@ public class MainController extends BaseController {
             if (MC.currentDir.isNotWriteable()) {
                 return;
             }
-            if (this.windowID.equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
 
                 return;
             }
@@ -1029,7 +1053,7 @@ public class MainController extends BaseController {
             if (MC.currentDir.isVirtual.get()) {
                 return;
             }
-            if (this.windowID.equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -1133,7 +1157,7 @@ public class MainController extends BaseController {
                         super.updateItem(t, bln);
                         if (t != null) {
                             setText(t.getPropertyName().get());
-                            if (!t.getPropertyName().get().equals(FileManagerLB.ROOT_NAME)) {
+                            if (!t.getPropertyName().get().equals(D.ROOT_NAME)) {
                                 setTooltip(t.getToolTip());
                             }
                         } else {

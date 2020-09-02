@@ -5,6 +5,7 @@
  */
 package lt.lb.filemanagerlb.gui;
 
+import java.net.URL;
 import lt.lb.filemanagerlb.logic.filestructure.*;
 import lt.lb.filemanagerlb.logic.snapshots.*;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,7 @@ import lt.lb.commons.Log;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.commons.javafx.*;
+import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
@@ -34,7 +36,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
  *
  * @author Laimonas Beniušis
  */
-public class DirSyncController extends BaseController {
+public class DirSyncController extends MyBaseController {
 
     @FXML
     public TextField directory0;

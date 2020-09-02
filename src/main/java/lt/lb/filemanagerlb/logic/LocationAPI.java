@@ -9,10 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 import lt.lb.commons.Log;
 import lt.lb.commons.F;
-import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
@@ -140,7 +139,7 @@ public class LocationAPI {
         ExtPath file = FileManagerLB.ArtificialRoot;
         pathl = pathl.trim();
         Log.print("getFileAndPopulate:" + pathl);
-        if (!pathl.isEmpty() && !pathl.equals(FileManagerLB.ROOT_NAME)) {
+        if (!pathl.isEmpty() && !pathl.equals(D.ROOT_NAME)) {
 
             try {
                 try {

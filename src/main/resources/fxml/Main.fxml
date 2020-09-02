@@ -31,7 +31,7 @@
                   <items>
                     <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                     <MenuItem mnemonicParsing="false" onAction="#exit" text="Close this window" />
-                        <MenuItem mnemonicParsing="false" onAction="#restart" text="Restart" />
+                        <MenuItem mnemonicParsing="false" onAction="#restart" text="Restart" disable="true"/>
                         <MenuItem mnemonicParsing="false" onAction="#closeAllWindows" text="Exit" />
                   </items>
                 </Menu>

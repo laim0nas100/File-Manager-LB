@@ -12,7 +12,6 @@ import lt.lb.commons.parsing.StringOp;
  * @author Laimonas Beniušis
  */
 public class ExtStringUtils extends lt.lb.commons.parsing.StringOp {
-//    private static final double PRECISION = 0.0001;
 
     public static class FilterException extends Exception {
 
@@ -82,31 +81,6 @@ public class ExtStringUtils extends lt.lb.commons.parsing.StringOp {
         return true;
     }
 
-    public static double mod(double number, double mod) {
-        if (Math.abs(mod) <= Double.MIN_NORMAL) {
-            return 0;
-        }
-        if (number < 0) {
-            return mod(number + mod, mod);
-        } else if (number >= mod) {
-            return mod(number - mod, mod);
-        } else {
-            return number;
-        }
-    }
-
-    public static int mod(int number, int mod) {
-        if (mod <= 0) {
-            return 0;
-        }
-        if (number < 0) {
-            return mod(number + mod, mod);
-        } else if (number >= mod) {
-            return mod(number - mod, mod);
-        } else {
-            return number;
-        }
-    }
 
     public static double normalize(double number, int digitsAfterSign) {
         double pow = Math.pow(10, digitsAfterSign);

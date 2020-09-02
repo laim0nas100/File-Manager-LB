@@ -10,7 +10,8 @@ import java.net.URL;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import lt.lb.commons.Log;
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 
@@ -19,47 +20,47 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
  *
  * @author Laimonas Beniušis
  */
-public class WebDialogController extends BaseController{
-   @FXML public WebView browser;
-   
+public class WebDialogController extends MyBaseController {
 
+    @FXML
+    public WebView browser;
 
     public void afterShow(Enums.WebDialog info) {
         String path = "";
-        
-        try{
+
+        try {
             path = info.address;
-            Log.print(path);
-            if(!isInternetReachable(path)){
-                path = "file:///"+System.getProperty("user.dir")+"/"+info.local;
+            if (!isInternetReachable(path)) {
+                path = D.cLoader.getResource(info.local).toString();
             }
-            Log.print("Loading from local");
+            Log.print("Loading from", path);
             browser.getEngine().load(path);
-            
-        }catch(Exception e){
+
+        } catch (Exception e) {
             ErrorReport.report(e);
         }
     }
-    public static boolean isInternetReachable(String path){
-            try {
-                //make a URL to a known source
-                URL url = new URL(path);
 
-                //open a connection to that source
-                HttpURLConnection urlConnect = (HttpURLConnection)url.openConnection();
+    public static boolean isInternetReachable(String path) {
+        try {
+            //make a URL to a known source
+            URL url = new URL(path);
 
-                //trying to retrieve data from the source. If there
-                //is no connection, this line will fail
-                Object objData = urlConnect.getContent();
-            }catch (Exception e) {
-                //ErrorReport.report(e);
-                return false;
-            }
-            return true;
+            //open a connection to that source
+            HttpURLConnection urlConnect = (HttpURLConnection) url.openConnection();
+
+            //trying to retrieve data from the source. If there
+            //is no connection, this line will fail
+            Object objData = urlConnect.getContent();
+        } catch (Exception e) {
+            //ErrorReport.report(e);
+            return false;
         }
+        return true;
+    }
 
     @Override
     public void update() {
     }
-    
+
 }

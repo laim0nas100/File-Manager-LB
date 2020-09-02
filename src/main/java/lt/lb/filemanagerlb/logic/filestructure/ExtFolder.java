@@ -24,6 +24,7 @@ import lt.lb.commons.Log;
 import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.Promise;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -282,7 +283,7 @@ public class ExtFolder extends ExtPath {
     @Override
     public String getAbsoluteDirectory() {
         if (isAbsoluteRoot.get()) {
-            return FileManagerLB.ROOT_NAME;
+            return D.ROOT_NAME;
         }
         return this.getAbsolutePath() + File.separator;
     }

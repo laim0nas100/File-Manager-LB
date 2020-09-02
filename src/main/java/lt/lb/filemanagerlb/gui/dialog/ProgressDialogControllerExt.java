@@ -5,7 +5,7 @@
  */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import java.util.Arrays;
 import javafx.application.Platform;
@@ -23,7 +23,7 @@ import lt.lb.filemanagerlb.utility.*;
  *
  * @author Laimonas Beniušis
  */
-public class ProgressDialogControllerExt extends BaseController {
+public class ProgressDialogControllerExt extends MyBaseController {
 
     @FXML
     public CheckBox checkboxTasks;

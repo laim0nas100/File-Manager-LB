@@ -17,7 +17,8 @@ import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.parsing.*;
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.gui.ViewManager;
@@ -37,7 +38,7 @@ import lt.lb.filemanagerlb.utility.SimpleTask;
  *
  * @author Laimonas Beniušis
  */
-public class CommandWindowController extends BaseController {
+public class CommandWindowController extends MyBaseController {
 
     @FXML
     TextField textField;
@@ -68,7 +69,7 @@ public class CommandWindowController extends BaseController {
                        String newCom = (String) params[0];
                        newCom = StringOp.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
                        ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
-                       ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(FileManagerLB.customPath.getPath());
+                       ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(D.customPath.getPath());
                        Log.print("Copy structure:", root, dest);
 
                        ContinousCombinedTask finalTask = new ContinousCombinedTask() {
@@ -157,7 +158,7 @@ public class CommandWindowController extends BaseController {
         command.addCommand(commandSetCustom, (String... params) -> {
                        String newCom = (String) params[0];
                        newCom = StringOp.replaceOnce(newCom, commandSetCustom + " ", "");
-                       FileManagerLB.customPath = new PathStringCommands(newCom.trim());
+                       D.customPath = new PathStringCommands(newCom.trim());
                    });
         command.addCommand(commandClear, (String... params) -> {
                        textArea.clear();
@@ -173,10 +174,10 @@ public class CommandWindowController extends BaseController {
     }
 
     public void listParameters() {
-        ArrayList<String> list = new ArrayList<>(FileManagerLB.parameters.map.keySet());
+        ArrayList<String> list = new ArrayList<>(D.parameters.map.keySet());
         Collections.sort(list);
         list.forEach(key -> {
-            ParametersMap.ParameterObject parameter = FileManagerLB.parameters.getParameter(key);
+            ParametersMap.ParameterObject parameter = D.parameters.getParameter(key);
             addToTextArea(textArea, parameter.toString() + "\n");
         });
     }
@@ -227,7 +228,7 @@ public class CommandWindowController extends BaseController {
 
         public void apply(String name) throws IOException, InterruptedException {
             ArrayDeque<String> readFromFile = new ArrayDeque(
-                    lt.lb.commons.io.FileReader.readFromFile(FileManagerLB.USER_DIR + name));
+                    lt.lb.commons.io.TextFileIO.readFromFile(D.USER_DIR + name));
             this.setTextAfterwards = true;
             for (String command : readFromFile) {
                 submit(command);
@@ -280,9 +281,9 @@ public class CommandWindowController extends BaseController {
                         } else if (token.value.equals(PathStringCommands.parent2)) {
                             commandToAdd += pathInfo.getParent(2);
                         } else if (token.value.equals(PathStringCommands.custom)) {
-                            commandToAdd += FileManagerLB.customPath.getPath();
+                            commandToAdd += D.customPath.getPath();
                         } else if (token.value.equals(PathStringCommands.relativeCustom)) {
-                            commandToAdd += FileManagerLB.customPath.relativePathTo(pathInfo.getPath());
+                            commandToAdd += D.customPath.relativePathTo(pathInfo.getPath());
                         } else {
                             Literal lit = (Literal) token;
                             commandToAdd += lit.value;
@@ -328,7 +329,7 @@ public class CommandWindowController extends BaseController {
                         @Override
                         protected Void call() throws Exception {
                             Log.print("Run native command:", command);
-                            Process process = lt.lb.commons.CLI.createNewProcess(list.toArray(new String[1])).call();
+                            Process process = lt.lb.commons.misc.CLI.createNewProcess(list.toArray(new String[1])).call();
                             handleStream(process, textArea, setTextAfterwards, command);
                             return null;
                         }

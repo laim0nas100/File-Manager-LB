@@ -15,8 +15,8 @@ import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
-import lt.lb.commons.threads.TaskBatcher;
-import lt.lb.filemanagerlb.gui.BaseController;
+import lt.lb.commons.threads.executors.TaskBatcher;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
@@ -32,7 +32,7 @@ import lt.lb.filemanagerlb.utility.PathStringCommands;
  *
  * @author Laimonas Beniušis
  */
-public class AdvancedRenameController extends BaseController {
+public class AdvancedRenameController extends MyBaseController {
 
     @FXML
     public Tab tbSpecificRename;
