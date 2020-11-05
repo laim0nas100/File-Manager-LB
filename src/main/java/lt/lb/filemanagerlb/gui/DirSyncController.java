@@ -21,7 +21,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
-import lt.lb.commons.Log;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.commons.javafx.*;
@@ -30,6 +29,7 @@ import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  * FXML Controller class
@@ -247,17 +247,17 @@ public class DirSyncController extends MyBaseController {
 
             file0.set(LocationAPI.getInstance().getFileAndPopulate(text0));
             cond0.set(file0.get().getIdentity().equals(Enums.Identity.FOLDER));
-            Log.print("Check 0");
+            Logger.info("Check 0");
         }, TaskFactory.mainExecutor);
         CompletableFuture<Void> s3 = FX.submitAsync(() -> {
 
             file1.set(LocationAPI.getInstance().getFileAndPopulate(text1));
             cond1.set(file1.get().getIdentity().equals(Enums.Identity.FOLDER));
-            Log.print("Check 1");
+            Logger.info("Check 1");
         }, TaskFactory.mainExecutor);
 
         FX.join(s1, s2, s3);
-        Log.print("After join");
+        Logger.info("After join");
 
         FX.submit(() -> {
             if (cond0.get()) {
@@ -331,7 +331,7 @@ public class DirSyncController extends MyBaseController {
             Long date = Instant.now().toEpochMilli();
             try {
                 date = datePicker.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                Log.print(date);
+                Logger.info(date);
             } catch (Exception e) {
             }
             result = SnapshotAPI.compareSnapshots(snapshot0, snapshot1);
@@ -450,7 +450,7 @@ public class DirSyncController extends MyBaseController {
 
     public void synchronize() {
         this.btnSync.setDisable(true);
-        Log.print("Syncronize!");
+        Logger.info("Syncronize!");
         ArrayList<ExtEntry> list = new ArrayList<>();
         ArrayList<ExtEntry> listDelete = new ArrayList<>();
         table.sort();
@@ -472,7 +472,7 @@ public class DirSyncController extends MyBaseController {
             list.addAll(listDelete);
         }
         for (ExtEntry en : list) {
-            Log.print(en.toString());
+            Logger.info(en.toString());
         }
 
         task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom, this.snapshot1.folderCreatedFrom, list);

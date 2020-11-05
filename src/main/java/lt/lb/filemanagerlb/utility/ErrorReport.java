@@ -12,8 +12,7 @@ import java.util.Calendar;
 import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
-import lt.lb.commons.Log;
-import lt.lb.filemanagerlb.D;
+import org.tinylog.Logger;
 
 /**
  *
@@ -25,13 +24,8 @@ public class ErrorReport {
     static SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
     public static void report(Throwable ex) {
         ErrorReport error = new ErrorReport(ex);
-
-        if (D.DEBUG.get()) {
-            System.err.println(ex.getMessage());
-            ex.printStackTrace();
-        }
         MainController.errorLog.add(0, error);
-        Log.print("Exception:", ex.getMessage());
+        Logger.error(ex);
     }
     private final SimpleStringProperty errorName;
     private final Throwable errorCause;

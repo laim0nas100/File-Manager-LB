@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import lt.lb.commons.Log;
+import org.tinylog.Logger;
 
 /**
  *
@@ -209,16 +209,16 @@ public class DesktopApi {
     }
 
     private static void logErr(String msg, Throwable t) {
-        Log.println("ERROR",msg);
+        Logger.error(t,msg);
         ErrorReport.report(t);
     }
 
     private static void logErr(String msg) {
-        Log.println("ERROR",msg);
+        Logger.error(msg);
     }
 
     private static void logOut(String msg) {
-        Log.println(msg);
+        Logger.info(msg);
     }
 
     public static enum EnumOS {

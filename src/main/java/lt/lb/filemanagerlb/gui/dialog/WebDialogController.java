@@ -9,11 +9,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
-import lt.lb.commons.Log;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  * FXML Controller class
@@ -33,7 +33,7 @@ public class WebDialogController extends MyBaseController {
             if (!isInternetReachable(path)) {
                 path = D.cLoader.getResource(info.local).toString();
             }
-            Log.print("Loading from", path);
+            Logger.info("Loading from "+ path);
             browser.getEngine().load(path);
 
         } catch (Exception e) {

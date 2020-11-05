@@ -12,7 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
-import lt.lb.commons.Log;
+import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
@@ -32,6 +32,7 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import org.tinylog.Logger;
 
 /**
  * FXML Controller class
@@ -65,112 +66,115 @@ public class CommandWindowController extends MyBaseController {
         super.beforeShow(title);
         command = new Commander(textField);
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
-                       Log.print("Copy params", Arrays.asList(params));
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
-                       ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
-                       ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(D.customPath.getPath());
-                       Log.print("Copy structure:", root, dest);
+            Logger.info("Copy params", Arrays.asList(params));
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
+            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
+            ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(D.customPath.getPath());
+            Logger.info("Copy structure:", root, dest);
 
-                       ContinousCombinedTask finalTask = new ContinousCombinedTask() {
-                           @Override
-                           protected void preparation() throws Exception {
-                               ArrayList<ExtPath> collection = new ArrayList<>();
-                               Callback<ExtPath, Void> call = new Callback<ExtPath, Void>() {
-                                   @Override
-                                   public Void call(ExtPath param) {
-                                       collection.add(param);
-                                       return null;
-                                   }
-                               };
-                               SimpleTask collectFolders = new SimpleTask() {
-                                   @Override
-                                   protected Void call() throws Exception {
-                                       root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), call);
-                                       return null;
-                                   }
-                               };
-                               collectFolders.setDescription("Collect folders");
-                               this.addTask(collectFolders);
+            ContinousCombinedTask finalTask = new ContinousCombinedTask() {
+                @Override
+                protected void preparation() throws Exception {
+                    ArrayList<ExtPath> collection = new ArrayList<>();
+                    Callback<ExtPath, Void> call = new Callback<ExtPath, Void>() {
+                        @Override
+                        public Void call(ExtPath param) {
+                            collection.add(param);
+                            return null;
+                        }
+                    };
+                    SimpleTask collectFolders = new SimpleTask() {
+                        @Override
+                        protected Void call() throws Exception {
+                            root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), call);
+                            return null;
+                        }
+                    };
+                    collectFolders.setDescription("Collect folders");
+                    this.addTask(collectFolders);
 
-                               ExtPath parent = LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1));
-                               ContinousCombinedTask copyFiles = TaskFactory.getInstance().copyFilesEx(collection, dest, parent);
-                               this.addTask(copyFiles);
+                    ExtPath parent = LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1));
+                    ContinousCombinedTask copyFiles = TaskFactory.getInstance().copyFilesEx(collection, dest, parent);
+                    this.addTask(copyFiles);
 
-                           }
-                       };
-                       finalTask.setDescription("Copy folder structure");
+                }
+            };
+            finalTask.setDescription("Copy folder structure");
 
 //            FXTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursive(true),
 //                    dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
 //            ViewManager.getInstance().newProgressDialog(copyFiles);
-                       ViewManager.getInstance().newProgressDialog(finalTask);
+            ViewManager.getInstance().newProgressDialog(finalTask);
 
-                   });
+        });
         command.addCommand(commandCancel, (String... params) -> {
-                       executor.stopEverything();
-                   });
+            executor.stopEverything();
+        });
         command.addCommand(commandGenerate, (String... params) -> {
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandGenerate + " ", "");
-                       command.generate(newCom);
-                   });
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandGenerate + " ", "");
+            command.generate(newCom);
+        });
 
         command.addCommand(commandApply, (String... params) -> {
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandApply + " ", "");
-                       command.apply(newCom);
-                   });
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandApply + " ", "");
+            command.apply(newCom);
+        });
         command.addCommand(commandInit, (String... params) -> {
-                       Platform.runLater(() -> {
-                           FileManagerLB.reInit();
-                       });
+            Platform.runLater(() -> {
+                F.checkedRun(() -> {
+                    FileManagerLB.reInit();
+                }).ifPresent(ErrorReport::report);
 
-                   });
+            });
+
+        });
         command.addCommand(commandListRec, (String... params) -> {
-                       ArrayDeque<String> deque = new ArrayDeque<>();
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandListRec + " ", "");
-                       ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+            ArrayDeque<String> deque = new ArrayDeque<>();
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandListRec + " ", "");
+            ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
 
-                       for (ExtPath f : file.getListRecursive(false)) {
-                           deque.add(f.getAbsoluteDirectory());
-                       }
-                       String desc = "Listing recursive:" + deque.removeFirst();
-                       ViewManager.getInstance().newListFrame(desc, deque);
-                   });
+            for (ExtPath f : file.getListRecursive(false)) {
+                deque.add(f.getAbsoluteDirectory());
+            }
+            String desc = "Listing recursive:" + deque.removeFirst();
+            ViewManager.getInstance().newListFrame(desc, deque);
+        });
         command.addCommand(commandList, (String... params) -> {
-                       ArrayDeque<String> deque = new ArrayDeque<>();
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandList + " ", "");
-                       ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
-                       if (file.getIdentity().equals(Identity.FOLDER)) {
-                           String desc = "Listing:" + file.getAbsoluteDirectory();
+            ArrayDeque<String> deque = new ArrayDeque<>();
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandList + " ", "");
+            ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+            if (file.getIdentity().equals(Identity.FOLDER)) {
+                String desc = "Listing:" + file.getAbsoluteDirectory();
 
-                           ExtFolder folder = (ExtFolder) file;
-                           folder.update();
-                           for (ExtPath f : folder.getFilesCollection()) {
-                               deque.add(f.getAbsoluteDirectory());
-                           }
-                           ViewManager.getInstance().newListFrame(desc, deque);
-                       }
-                   });
+                ExtFolder folder = (ExtFolder) file;
+                folder.update();
+                for (ExtPath f : folder.getFilesCollection()) {
+                    deque.add(f.getAbsoluteDirectory());
+                }
+                ViewManager.getInstance().newListFrame(desc, deque);
+            }
+        });
         command.addCommand(commandSetCustom, (String... params) -> {
-                       String newCom = (String) params[0];
-                       newCom = StringOp.replaceOnce(newCom, commandSetCustom + " ", "");
-                       D.customPath = new PathStringCommands(newCom.trim());
-                   });
+            String newCom = (String) params[0];
+            newCom = StringOp.replaceOnce(newCom, commandSetCustom + " ", "");
+            D.customPath = new PathStringCommands(newCom.trim());
+        });
         command.addCommand(commandClear, (String... params) -> {
-                       textArea.clear();
-                   });
+            textArea.clear();
+        });
         command.addCommand(commandHelp, (String... params) -> {
 
-                       listParameters();
-                       addToTextArea(textArea, "Read Parameters.txt file for info\n");
-                   });
+            listParameters();
+            addToTextArea(textArea, "Read Parameters.txt file for info\n");
+        });
         command.addCommand(commandListParams, (String... params) -> {
-                       listParameters();
-                   });
+            listParameters();
+        });
     }
 
     public void listParameters() {
@@ -294,7 +298,7 @@ public class CommandWindowController extends MyBaseController {
                         commandToAdd += StringOp.simpleFormat(index, numbersToAdd);
                     }
                     allCommands.add(commandToAdd);
-                    Log.print(command + " => " + commandToAdd);
+                    Logger.info(command + " => " + commandToAdd);
                     index++;
                 }
                 ViewManager.getInstance().newListFrame("Script generation", allCommands);
@@ -305,7 +309,7 @@ public class CommandWindowController extends MyBaseController {
 
         @Override
         public void submit(String command) {
-            Log.print(command);
+            Logger.info(command);
             LinkedList<String> list = new LinkedList<>();
             String[] split = command.split(" ");
             for (String spl : split) {
@@ -316,19 +320,19 @@ public class CommandWindowController extends MyBaseController {
             LinkedList<String> coms = new LinkedList<>();
             coms.addAll(list);
             coms.add(1, command);
-            Log.print(coms);
+            Logger.info(coms);
             String c = coms.pollFirst();
             String[] params = coms.toArray(new String[1]);
-            Log.print("Params", Arrays.asList(params));
+            Logger.info("Params", Arrays.asList(params));
             addToTextArea(textArea, "$:" + command + "\n");
             try {
                 if (runCommand(c, params)) {
-                    Log.print("Run in-built command:", command);
+                    Logger.info("Run in-built command:", command);
                 } else {
                     ExtTask task = new ExtTask() {
                         @Override
                         protected Void call() throws Exception {
-                            Log.print("Run native command:", command);
+                            Logger.info("Run native command:", command);
                             Process process = lt.lb.commons.misc.CLI.createNewProcess(list.toArray(new String[1])).call();
                             handleStream(process, textArea, setTextAfterwards, command);
                             return null;

@@ -12,13 +12,13 @@ import java.util.concurrent.Future;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import lt.lb.commons.Log;
 import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
+import org.tinylog.Logger;
 
 /**
  *
@@ -61,10 +61,10 @@ public class VirtualFolder extends ExtFolder {
             FXTask task = new FXTask() {
                 @Override
                 protected Void call() throws Exception {
-                    Log.print("Start update");
+                    Logger.info("Start update");
                     FileManagerLB.remountUpdateList = list;
                     FileManagerLB.remount();
-                    Log.print("End update");
+                    Logger.info("End update");
                     return null;
                 }
             };

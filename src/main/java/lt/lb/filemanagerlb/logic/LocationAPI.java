@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
-import lt.lb.commons.Log;
 import lt.lb.commons.F;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
@@ -17,6 +16,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.DesktopApi;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  *
@@ -138,7 +138,7 @@ public class LocationAPI {
     public ExtPath getFileAndPopulate(String pathl) {
         ExtPath file = FileManagerLB.ArtificialRoot;
         pathl = pathl.trim();
-        Log.print("getFileAndPopulate:" + pathl);
+        Logger.info("getFileAndPopulate:" + pathl);
         if (!pathl.isEmpty() && !pathl.equals(D.ROOT_NAME)) {
 
             try {
@@ -146,7 +146,7 @@ public class LocationAPI {
                     if (DesktopApi.getOs().isWindows()) { //Directory Mounting BS on Windows
                         Path path = Paths.get(pathl).toRealPath();
                         pathl = path.toAbsolutePath().toString();
-                        Log.print("realPath:" + path);
+                        Logger.info("realPath:" + path);
                         Path potentialRoot = path.getRoot();
                         if (potentialRoot == null) {
                             potentialRoot = recursiveRootResolve(path, 100);
@@ -155,7 +155,7 @@ public class LocationAPI {
                         if (!FileManagerLB.getRootSet().contains(rootStr)) {
                             if (FileManagerLB.mountDevice(rootStr)) {
 //                                FileManagerLB.ArtificialRoot.update();
-                                Log.print("Mounted", path);
+                                Logger.info("Mounted", path);
                             }
                         }
                     }
@@ -164,7 +164,7 @@ public class LocationAPI {
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);
-                Log.print("Location:", loc);
+                Logger.info("Location:", loc);
                 populateByLocation(loc.getParentLocation());
 
                 file = getFileByLocation(loc);
@@ -199,7 +199,7 @@ public class LocationAPI {
                 key = location.getName();
             }
             walker.currentFolder.files.remove(key);
-            Log.print("Remove by location success");
+            Logger.info("Remove by location success");
         }
     }
 
@@ -210,7 +210,7 @@ public class LocationAPI {
         }
         if (walker.nextCoordinate().equals(location.getName())) {
             walker.currentFolder.files.put(file.propertyName.get(), file);
-            Log.print("Put by location success");
+            Logger.info("Put by location success");
         }
 
     }
@@ -225,7 +225,7 @@ public class LocationAPI {
     }
 
     private void populateByLocation(LocationInRoot location) {
-        Log.print("Populate by location", location);
+        Logger.info("Populate by location", location);
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -234,7 +234,7 @@ public class LocationAPI {
     }
 
     public ExtPath getFileByLocation(LocationInRoot location) {
-        Log.print("Get file by location", location);
+        Logger.info("Get file by location", location);
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -254,12 +254,12 @@ public class LocationAPI {
     public ExtPath getFileIfExists(LocationInRoot location) {
         ExtPath fileByLocation = getFileByLocation(location);
         LocationInRoot mapping = fileByLocation.getMapping();
-        Log.print(location, mapping);
+        Logger.info(location+" "+ mapping);
         if (location.equals(mapping)) {
-            Log.print("Equals");
+            Logger.info("Equals");
             return fileByLocation;
         } else {
-            Log.print("Different");
+            Logger.info("Different");
             return null;
         }
     }

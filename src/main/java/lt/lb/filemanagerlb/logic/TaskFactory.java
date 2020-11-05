@@ -11,7 +11,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import lt.lb.commons.Log;
 import lt.lb.commons.javafx.*;
 import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
@@ -19,7 +18,6 @@ import lt.lb.commons.threads.executors.TaskPooler;
 import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.gui.dialog.DuplicateFinderController;
@@ -35,6 +33,7 @@ import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.jobsystem.ScheduledJobExecutor;
+import org.tinylog.Logger;
 
 /**
  *
@@ -93,7 +92,7 @@ public class TaskFactory {
         String path2 = parent.getAbsoluteDirectory() + newName;
         String fPath = parent.getAbsoluteDirectory() + fallbackName;
         LocationAPI.getInstance().removeByLocation(location);
-        Log.print("Rename:", path1, "New Name:" + newName, "Fallback:" + fallbackName);
+        Logger.info("Rename: "+ path1+ " New Name:" + newName+ " Fallback:" + fallbackName);
         if (path1.equalsIgnoreCase(path2)) {
             Files.move(Paths.get(path1), Paths.get(fPath));
             Files.move(Paths.get(fPath), Paths.get(path2));
@@ -121,10 +120,10 @@ public class TaskFactory {
     }
 
     private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest) {
-        Log.print("List recieved in task");
+        Logger.info("List recieved in task");
 
         for (ExtPath file : fileList) {
-            Log.print(file.getAbsolutePath());
+            Logger.info(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
@@ -137,19 +136,19 @@ public class TaskFactory {
             }
         }
         list.sort(ActionFile.COMP_DESCENDING);
-        Log.print("List after computing");
+        Logger.info("List after computing");
         for (ActionFile array1 : list) {
-            Log.print(array1.paths[0] + " -> " + array1.paths[1]);
+            Logger.info(array1.paths[0] + " -> " + array1.paths[1]);
         }
         return list;
 
     }
 
     private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
-        Log.print("List recieved in task test");
+        Logger.info("List recieved in task test");
 
         for (ExtPath file : fileList) {
-            Log.print(file.getAbsolutePath());
+            Logger.info(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
@@ -161,19 +160,19 @@ public class TaskFactory {
 //            Log.write("Add",af);
         }
         list.sort(ActionFile.COMP_DESCENDING);
-        Log.print("List after computing");
+        Logger.info("List after computing");
 
         for (ActionFile array1 : list) {
-            Log.print(array1.paths[0] + " -> " + array1.paths[1]);
+            Logger.info(array1.paths[0] + " -> " + array1.paths[1]);
         }
         return list;
 
     }
 
     private ArrayList<ActionFile> prepareForDelete(Collection<ExtPath> fileList) {
-        Log.print("List recieved in task");
+        Logger.info("List recieved in task");
         for (ExtPath file : fileList) {
-            Log.print(file.getAbsolutePath());
+            Logger.info(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
@@ -184,19 +183,19 @@ public class TaskFactory {
             }
         }
         list.sort(ActionFile.COMP_ASCENDING);
-        Log.print("List after computing");
+        Logger.info("List after computing");
         for (ActionFile file : list) {
-            Log.print(file.toString());
+            Logger.info(file.toString());
         }
         return list;
 
     }
 
     private ArrayList<ActionFile> prepareForMove(Collection<ExtPath> fileList, ExtPath dest) {
-        Log.print("List recieved in task");
+        Logger.info("List recieved in task");
 
         for (ExtPath file : fileList) {
-            Log.print(file.getAbsolutePath());
+            Logger.info(file.getAbsolutePath());
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
@@ -216,9 +215,9 @@ public class TaskFactory {
 
         }
         list.sort(ActionFile.COMP_DESCENDING);
-        Log.print("List after computing");
+        Logger.info("List after computing");
         for (ActionFile array1 : list) {
-            Log.print(array1.paths[0] + " -> " + array1.paths[1]);
+            Logger.info(array1.paths[0] + " -> " + array1.paths[1]);
         }
         return list;
     }
@@ -233,11 +232,11 @@ public class TaskFactory {
                 if (root == null) {
                     list = prepareForCopy(fileList, dest);
                 } else {
-                    Log.print("Test copy");
+                    Logger.info("Test copy");
                     list = prepareForCopy(fileList, dest, root);
                 }
-                Log.print("In a task now");
-                Log.print(list);
+                Logger.info("In a task now");
+                Logger.info(list);
 
                 for (int i = 0; i < list.size(); i++) {
                     String str;
@@ -300,7 +299,7 @@ public class TaskFactory {
                                 if (Files.isDirectory(file.paths[0])) {
                                     leftFolders.add(file);
                                     Files.createDirectory(file.paths[1]);
-                                    Log.print("Added to folders:" + file.paths[1]);
+                                    Logger.info("Added to folders:" + file.paths[1]);
                                 } else {
                                     ExtTask move = FileUtils.move(file.paths[0], file.paths[1], D.useBufferedFileStreams.getValue());
                                     DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
@@ -331,11 +330,11 @@ public class TaskFactory {
                     @Override
                     protected Void call() throws Exception {
                         updateMessage("Deleting leftover folders");
-                        Log.print("Folders size: " + leftFolders.size());
+                        Logger.info("Folders size: " + leftFolders.size());
                         leftFolders.sort(ActionFile.COMP_DESCENDING);
                         for (ActionFile f : leftFolders) {
                             try {
-                                Log.print("Deleting " + f.paths[0]);
+                                Logger.info("Deleting " + f.paths[0]);
                                 f.delete();
                             } catch (Exception x) {
                                 ErrorReport.report(x);
@@ -384,7 +383,7 @@ public class TaskFactory {
     private Future populateRecursiveParallelInner(ExtFolder folder, int depth, Executor exe) {
         if (0 < depth) {
             Callable task = (Callable) () -> {
-                Log.print("Folder Iteration " + depth + "::" + folder.getAbsoluteDirectory());
+                Logger.info("Folder Iteration " + depth + "::" + folder.getAbsoluteDirectory());
                 folder.update();
                 for (ExtFolder fold : folder.getFoldersFromFiles()) {
                     populateRecursiveParallelInner(fold, depth - 1, exe);
@@ -523,9 +522,9 @@ public class TaskFactory {
 
                 int i = 0;
                 final int size = listFirst.size();
-                Log.print("List");
+                Logger.info("List");
                 for (ExtEntry e : listFirst) {
-                    Log.print(e.relativePath, "  ", e.action.get());
+                    Logger.info(e.relativePath, "  ", e.action.get());
                 }
                 //Log.writeln("Size "+size);
                 for (ExtEntry entry : listFirst) {
@@ -543,12 +542,12 @@ public class TaskFactory {
                         updateProgress(current + progress.get(), size);
                     });
                     task.setOnDone(handle -> {
-                        Log.print("Lol done");
+                        Logger.info("Lol done");
                     });
                     task.run();
 
                     if (task.failed.get()) {
-                        Log.print("Task failed");
+                        Logger.info("Task failed");
                         ErrorReport.report(task.getException());
                     }
 //                    try{
@@ -566,7 +565,7 @@ public class TaskFactory {
     }
 
     private ExtTask actionTask(ActionFile action, ExtEntry entry) {
-        Log.print(action);
+        Logger.info(action);
         final int type = entry.actionType.get();
         DoubleProperty progress = new SimpleDoubleProperty(0);
         ExtTask task = new ExtTask() {
@@ -634,7 +633,7 @@ public class TaskFactory {
     }
 
     private void action(ActionFile action, ExtEntry entry) throws Exception {
-        Log.print(action);
+        Logger.info(action);
         switch (entry.actionType.get()) {
 
             case (1): {

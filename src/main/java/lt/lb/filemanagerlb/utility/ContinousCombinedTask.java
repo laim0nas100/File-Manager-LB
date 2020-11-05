@@ -7,8 +7,8 @@ package lt.lb.filemanagerlb.utility;
 
 import java.util.ArrayList;
 import javafx.beans.property.SimpleBooleanProperty;
-import lt.lb.commons.Log;
 import lt.lb.commons.javafx.FX;
+import org.tinylog.Logger;
 
 /**
  *
@@ -42,7 +42,7 @@ public abstract class ContinousCombinedTask extends SimpleTask {
             }
             currentTask = tasks.get(currentIndex++);
             this.updateMessage(currentTask.getDescription());
-            Log.print("ContinousTask: Begin: " + currentIndex + " " + currentTask.getDescription());
+            Logger.info("ContinousTask: Begin: " + currentIndex + " " + currentTask.getDescription());
             doTask(currentTask);
             if (this.isCancelled()) {
                 return null;

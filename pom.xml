@@ -25,11 +25,6 @@
     <dependencies>
         
         <!--Link using JitPack-->
-        <dependency>
-            <groupId>${commons-lb.dir}</groupId>
-            <artifactId>commonslb-log</artifactId>
-            <version>${commons-lb.version}</version>
-        </dependency>
         
         <dependency>
             <groupId>${commons-lb.dir}</groupId>
@@ -58,17 +53,34 @@
             <artifactId>JobSystem</artifactId>
             <version>local-jar</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.slf4j/log4j-over-slf4j -->
+        <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.7.25</version>
+            <groupId>org.tinylog</groupId>
+            <artifactId>slf4j-tinylog</artifactId>
+            <version>2.2.0</version>
         </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.tinylog/tinylog-api -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
+            <groupId>org.tinylog</groupId>
+            <artifactId>tinylog-api</artifactId>
+            <version>2.2.0</version>
         </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.tinylog/tinylog-impl -->
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>tinylog-impl</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.13.3</version>
+        </dependency>
+
 
         
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
@@ -95,6 +107,18 @@
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj</artifactId>
             <version>3.12.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>1.7.29</version>
+            <type>jar</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.25</version>
         </dependency>
     </dependencies>
     

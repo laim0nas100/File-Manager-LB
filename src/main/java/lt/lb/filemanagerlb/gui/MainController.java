@@ -49,7 +49,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
-import lt.lb.commons.Log;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.ExtTask;
@@ -78,6 +77,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import org.tinylog.Logger;
 
 
 /**
@@ -348,7 +348,7 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void test() throws Exception {
-        Log.print("TEST");
+        Logger.info("TEST");
         Stage stage = new Stage();
         
         Label secondLabel = new Label("I'm a Label on new Window");
@@ -412,14 +412,14 @@ public class MainController extends MyBaseController<MainController> {
 //        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
 //        Log.write("file",LocationAPI.getInstance().existByLocation(file));
 //        Log.write("Closest",closestFileByLocation);
-//        Log.println(1,2,3);
+//        Logger.infoln(1,2,3);
 //            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
 //            t.start();
 //        TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
 
 
         
-        Log.print("END TEST");
+        Logger.info("END TEST");
     }
 
     public void openCustomDir() {
@@ -555,7 +555,7 @@ public class MainController extends MyBaseController<MainController> {
                 });
 
                 if (canceled.get()) {
-                    Log.print("Canceled from task before start");
+                    Logger.info("Canceled from task before start");
                     return null;
                 }
 
@@ -564,7 +564,7 @@ public class MainController extends MyBaseController<MainController> {
                 Future update = folderInitiated.update(newList, can);
 
                 if (canceled.get()) {
-                    Log.print("Canceled from task");
+                    Logger.info("Canceled from task");
                     return null;
                 }
                 update.get();
@@ -586,7 +586,7 @@ public class MainController extends MyBaseController<MainController> {
         };
         deq.addFirst(r);
         r.setOnCancelled(event -> {
-            Log.print("Actually canceled");
+            Logger.info("Actually canceled");
         });
         r.setOnDone(event -> {
             asynchronousSortTask.setOnDone(handle -> {
@@ -595,7 +595,7 @@ public class MainController extends MyBaseController<MainController> {
                 }
                 final int viewSize = extTableView.table.getItems().size();
                 final int neededSize = newList.size();
-                Log.print("View size", viewSize, "Needed size", neededSize);
+                Logger.info("View size", viewSize, "Needed size", neededSize);
                 if (viewSize != neededSize) {
                     FX.submit(() -> {
                         extTableView.updateContentsAndSort(newList);
@@ -658,7 +658,7 @@ public class MainController extends MyBaseController<MainController> {
 
     private void handleOpen(ExtPath file) {
         if (file instanceof ExtFolder) {
-            Log.print("Change to dir " + file.getAbsoluteDirectory());
+            Logger.info("Change to dir " + file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
         } else {
 
@@ -701,7 +701,7 @@ public class MainController extends MyBaseController<MainController> {
         submenuCreate.getItems().setAll(
                 CosmeticsFX.simpleMenuItem("Create New Folder",
                         event -> {
-                            Log.print("Create new folder");
+                            Logger.info("Create new folder");
                             try {
                                 ExtPath createNewFolder = MC.createNewFolder();
                                 ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
@@ -712,7 +712,7 @@ public class MainController extends MyBaseController<MainController> {
                         }, MC.isVirtual.not()),
                 CosmeticsFX.simpleMenuItem("Create New File",
                         event -> {
-                            Log.print("Create new file");
+                            Logger.info("Create new file");
                             try {
                                 ExtPath createNewFile = MC.createNewFile();
                                 ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
@@ -848,14 +848,14 @@ public class MainController extends MyBaseController<MainController> {
         submenuMarked.getItems().setAll(
                 CosmeticsFX.simpleMenuItem("Copy here marked",
                         event -> {
-                            Log.print("Copy Marked");
+                            Logger.info("Copy Marked");
                             ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(markedList, MC.currentDir, null);
                             task.setDescription("Copy marked files");
                             ViewManager.getInstance().newProgressDialog(task);
                         }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
                 CosmeticsFX.simpleMenuItem("Move here marked",
                         event -> {
-                            Log.print("Move Marked");
+                            Logger.info("Move Marked");
                             ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(markedList, MC.currentDir);
                             task.setDescription("Move marked files");
                             ViewManager.getInstance().newProgressDialog(task);
@@ -1049,7 +1049,7 @@ public class MainController extends MyBaseController<MainController> {
         });
 
         tableView.setOnDragDropped((DragEvent event) -> {
-//            Log.print("Drag dropped");
+//            Logger.info("Drag dropped");
             if (MC.currentDir.isVirtual.get()) {
                 return;
             }
@@ -1066,7 +1066,7 @@ public class MainController extends MyBaseController<MainController> {
                 //ViewManager.getInstance().windows.get(title).getStage().requestFocus();
                 success = true;
             } else {
-                Log.print("Drag list is empty");
+                Logger.info("Drag list is empty");
             }
             event.setDropCompleted(success);
             event.consume();
@@ -1238,7 +1238,7 @@ public class MainController extends MyBaseController<MainController> {
                     this.propertyUnitSizeAuto.set(false);
                     this.unitSize = DATA_SIZE.valueOf(sizeType);
 
-                    Log.print(unitSize);
+                    Logger.info(unitSize);
                     this.propertyUnitSizeName.set("Size " + unitSize.sizename);
                     this.propertyUnitSize.set(unitSize.size);
                     this.update();
@@ -1260,7 +1260,7 @@ public class MainController extends MyBaseController<MainController> {
 
     private void delete() {
         if (this.propertyDeleteCondition.get()) {
-            Log.print("Deleting");
+            Logger.info("Deleting");
             ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(selectedList);
             task.setDescription("Delete selected files");
             ViewManager.getInstance().newProgressDialog(task);
@@ -1270,7 +1270,7 @@ public class MainController extends MyBaseController<MainController> {
 
     private void rename() {
         if (this.propertyRenameCondition.get()) {
-            Log.print("Invoke rename dialog");
+            Logger.info("Invoke rename dialog");
             ExtPath path = (ExtPath) tableView.getSelectionModel().getSelectedItem();
             ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileOptimized(path.getParent(1));
             ViewManager.getInstance().newRenameDialog(parent, path);

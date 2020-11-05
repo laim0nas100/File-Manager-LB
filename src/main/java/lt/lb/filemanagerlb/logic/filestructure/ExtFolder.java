@@ -20,7 +20,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.util.Callback;
 import lt.lb.commons.func.Lambda;
-import lt.lb.commons.Log;
 import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.Promise;
@@ -30,6 +29,7 @@ import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  *
@@ -76,7 +76,7 @@ public class ExtFolder extends ExtPath {
                         for (Path f : dirStream) {
                             if (isCanceled != null) {
                                 if (isCanceled.get()) {
-                                    Log.print("Canceled form populate");
+                                    Logger.info("Canceled form populate");
                                     break;
                                 }
                             }
@@ -139,7 +139,7 @@ public class ExtFolder extends ExtPath {
 
     private void populateRecursiveInner(ExtFolder fold) {
         fold.update();
-        Log.print("Iteration " + fold.getAbsoluteDirectory());
+        Logger.info("Iteration " + fold.getAbsoluteDirectory());
         for (ExtFolder folder : fold.getFoldersFromFiles()) {
             fold.files.replace(folder.propertyName.get(), folder);
             folder.populateRecursiveInner(folder);
@@ -222,7 +222,7 @@ public class ExtFolder extends ExtPath {
     }
 
     public void update() {
-        Log.print("Update:" + this.getAbsoluteDirectory());
+        Logger.info("Update:" + this.getAbsoluteDirectory());
         if (isAbsoluteRoot.get()) {
             FileManagerLB.remount();
             return;
@@ -230,7 +230,7 @@ public class ExtFolder extends ExtPath {
         if (isPopulated()) {
             for (ExtPath file : getFilesCollection()) {
                 if (!Files.exists(file.toPath())) {
-                    Log.print(file.getAbsoluteDirectory() + " doesn't exist");
+                    Logger.info(file.getAbsoluteDirectory() + " doesn't exist");
                     files.remove(file.propertyName.get());
                 }
             }
@@ -239,12 +239,12 @@ public class ExtFolder extends ExtPath {
     }
 
     public Future update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
-        Log.print("Update observable:" + this.getAbsoluteDirectory());
+        Logger.info("Update observable:" + this.getAbsoluteDirectory());
         ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list, 5);
         if (isPopulated()) {
             for (ExtPath file : getFilesCollection()) {
                 if (!Files.exists(file.toPath())) {
-                    Log.print(file.getAbsoluteDirectory() + " doesn't exist");
+                    Logger.info(file.getAbsoluteDirectory() + " doesn't exist");
                     files.remove(file.propertyName.get());
                 }
                 if (isCanceled.get()) {

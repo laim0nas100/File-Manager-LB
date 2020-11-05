@@ -8,15 +8,14 @@ package lt.lb.filemanagerlb.gui.dialog;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import java.util.Arrays;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
-import lt.lb.commons.Log;
 import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.utility.*;
+import org.tinylog.Logger;
 
 /**
  * FXML Controller class
@@ -71,7 +70,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
         super.afterShow();
         boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
-        Log.println("Start paused:" + paused);
+        Logger.info("Start paused:" + paused);
         this.task = newTask;
         task.paused.bind(paused);
         treeView.visibleProperty().bind(checkboxTasks.selectedProperty());
@@ -126,14 +125,14 @@ public class ProgressDialogControllerExt extends MyBaseController {
         clock.paused.bind(paused);
 
         task.setOnSucceeded((e) -> {
-            Log.print("Task succeeded");
+            Logger.info("Task succeeded");
             FX.submit(clock::stopTimer);
 
             if (task.childTask != null) {
                 task.run();
             }
             boolean doAutoClose = ViewManager.getInstance().autoCloseProgressDialogs.get();
-            Log.print("autoClose:" + doAutoClose);
+            Logger.info("autoClose:" + doAutoClose);
             if (doAutoClose) {
                 this.exit();
             }
@@ -183,7 +182,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
     @Override
     public void exit() {
         try {
-            Log.print("Call exit");
+            Logger.info("Call exit");
             super.exit();
         } catch (Exception e) {
             ErrorReport.report(e);

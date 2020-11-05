@@ -6,9 +6,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.F;
-import lt.lb.commons.Log;
-import lt.lb.commons.containers.values.BooleanValue;
-import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.scenemanagement.FXMLFrame;
@@ -34,8 +31,8 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FXJob;
 import lt.lb.jobsystem.Dependencies;
 import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.VoidJob;
 import lt.lb.jobsystem.events.SystemJobEventName;
+import org.tinylog.Logger;
 
 /**
  *
@@ -70,14 +67,14 @@ public class ViewManager {
             @Override
             protected Void call() throws Exception {
                 try {
-                    Log.print("NEW WINDOW");
+                    Logger.info("NEW WINDOW");
                     FXMLFrame frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = frame.getController();
                     windows.add(frame.getID());
                     controller.beforeShow(frame.getTitle(), currentFolder);
                     frame.getStage().show();
                     controller.afterShow();
-                    Log.print("AFTER SHOW");
+                    Logger.info("AFTER SHOW");
                 } catch (InterruptedException | ExecutionException | FrameException ex) {
                     ErrorReport.report(ex);
                 }
@@ -392,7 +389,7 @@ public class ViewManager {
         this.initStart = true;
         D.sm.getFrameIds().forEach(key -> {
             getController(key).exit();
-            Log.print("Close", key);
+            Logger.info("Close", key);
             D.sm.closeFrame(key);
         });
         windows.clear();

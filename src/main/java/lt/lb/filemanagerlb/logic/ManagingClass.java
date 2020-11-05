@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import lt.lb.commons.Log;
 import java.util.Collection;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -20,6 +19,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  *
@@ -60,7 +60,7 @@ public class ManagingClass {
             cacheIndex++;
             setCurrentDir(folderCache.get(cacheIndex));
         } 
-        Log.print(cacheIndex+" : "+folderCache);
+        Logger.info(cacheIndex+" : "+folderCache);
     }
     public void changeToPrevious(){
         
@@ -68,7 +68,7 @@ public class ManagingClass {
             cacheIndex--;
             setCurrentDir(folderCache.get(cacheIndex));
         }
-        Log.print(cacheIndex+" : "+folderCache);
+        Logger.info(cacheIndex+" : "+folderCache);
     }
     public void changeToParent(){
         if(hasParent()){
