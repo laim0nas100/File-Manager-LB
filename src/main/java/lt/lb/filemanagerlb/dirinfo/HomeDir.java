@@ -1,4 +1,4 @@
-package lt.lb.filemanagerlb;
+package lt.lb.filemanagerlb.dirinfo;
 
 import lt.lb.commons.io.directoryaccess.Dir;
 import lt.lb.commons.io.directoryaccess.Fil;

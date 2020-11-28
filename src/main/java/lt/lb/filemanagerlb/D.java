@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb;
 
+import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import java.io.File;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.containers.collections.ParametersMap;

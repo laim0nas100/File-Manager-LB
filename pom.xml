@@ -36,6 +36,16 @@
             <artifactId>commonslb-collections</artifactId>
             <version>${commons-lb.version}</version>
         </dependency>
+         <dependency>
+            <groupId>${commons-lb.dir}</groupId>
+            <artifactId>commonslb-iteration</artifactId>
+            <version>${commons-lb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${commons-lb.dir}</groupId>
+            <artifactId>commonslb-misc</artifactId>
+            <version>${commons-lb.version}</version>
+        </dependency>
         
         <dependency>
             <groupId>${commons-lb.dir}</groupId>

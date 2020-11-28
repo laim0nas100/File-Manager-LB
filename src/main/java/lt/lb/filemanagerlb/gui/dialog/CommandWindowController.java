@@ -16,6 +16,7 @@ import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
+import lt.lb.commons.misc.CLI;
 import lt.lb.commons.parsing.*;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -333,7 +334,7 @@ public class CommandWindowController extends MyBaseController {
                         @Override
                         protected Void call() throws Exception {
                             Logger.info("Run native command:", command);
-                            Process process = lt.lb.commons.misc.CLI.createNewProcess(list.toArray(new String[1])).call();
+                            Process process = CLI.createNewProcess(list.toArray(new String[1])).call();
                             handleStream(process, textArea, setTextAfterwards, command);
                             return null;
                         }

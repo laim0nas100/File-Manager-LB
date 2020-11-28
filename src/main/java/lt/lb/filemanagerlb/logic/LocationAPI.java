@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
 import lt.lb.commons.F;
+import lt.lb.commons.containers.collections.CollectionOp;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
@@ -272,6 +273,6 @@ public class LocationAPI {
     }
 
     public void filterIfExists(Collection<ExtPath> collection) {
-        F.filterParallel(collection, ExtPath.EXISTS, TaskFactory.mainExecutor);
+        CollectionOp.filterParallel(collection, ExtPath.EXISTS, TaskFactory.mainExecutor);
     }
 }

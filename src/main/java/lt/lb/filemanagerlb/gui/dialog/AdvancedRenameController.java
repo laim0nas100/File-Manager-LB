@@ -13,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
 import lt.lb.commons.F;
+import lt.lb.commons.iteration.Iter;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
 import lt.lb.commons.threads.executors.TaskBatcher;
@@ -265,7 +266,7 @@ public class AdvancedRenameController extends MyBaseController {
             });
         }
         TaskBatcher.BatchRunSummary summary = batcher.awaitTolerateFails();
-        F.iterate(summary.failures, (i,e)->{
+        Iter.iterate(summary.failures, (i,e)->{
            ErrorReport.report(F.cast(e));
         });
         F.checkedRun(FX.submit(this::update)::get);
