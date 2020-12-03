@@ -9,4 +9,12 @@
                 <goal>-Dshaderelease</goal>
             </goals>
         </action>
+        <action>
+            <actionName>CUSTOM-clean install update</actionName>
+            <displayName>clean install update</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+            </goals>
+        </action>
     </actions>

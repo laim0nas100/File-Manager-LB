@@ -36,7 +36,7 @@
             <artifactId>commonslb-collections</artifactId>
             <version>${commons-lb.version}</version>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>${commons-lb.dir}</groupId>
             <artifactId>commonslb-iteration</artifactId>
             <version>${commons-lb.version}</version>
@@ -116,8 +116,9 @@
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj</artifactId>
-            <version>3.12.1</version>
+            <version>4.7.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>

@@ -3,7 +3,6 @@ package lt.lb.filemanagerlb.gui;
 import lt.lb.commons.threads.sync.EventQueue;
 import java.awt.Canvas;
 import java.awt.Color;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,15 +40,12 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import org.tinylog.Logger;
-import uk.co.caprica.vlcj.binding.LibVlc;
-import uk.co.caprica.vlcj.discovery.*;
-import uk.co.caprica.vlcj.discovery.linux.DefaultLinuxNativeDiscoveryStrategy;
-import uk.co.caprica.vlcj.discovery.mac.DefaultMacNativeDiscoveryStrategy;
-import uk.co.caprica.vlcj.discovery.windows.DefaultWindowsNativeDiscoveryStrategy;
-import uk.co.caprica.vlcj.player.*;
+import uk.co.caprica.vlcj.binding.RuntimeUtil;
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
-import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
-import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
 
 /**
  * FXML Controller class
@@ -136,13 +132,81 @@ public class MediaPlayerController extends MyBaseController {
     private EventQueue events = new EventQueue(execService);
     TimeoutTask dragTask = new TimeoutTask(300, 20, () -> {
         float val = seekSlider.valueProperty().divide(100).floatValue();
-        Logger.info(getCurrentPlayer().getPosition() + ", " + val);
-        if (Math.abs(getCurrentPlayer().getPosition() - val) > minDelta) {
+        float position = getCurrentPlayer().status().position();
+        Logger.info(getCurrentPlayer().status().position() + ", " + val);
+        if (Math.abs(position - val) > minDelta) {
             val = (float) ExtStringUtils.normalize(val, 3);
-            getCurrentPlayer().setPosition(val);
+            getCurrentPlayer().controls().setPosition(val);
             Logger.info("Set new seek");
         }
     });
+    
+    public static void discover() throws VLCException{
+        if (!VLCfound) {
+            MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
+            mediaPlayerFactory.release();
+            VLCfound = true;
+            /*
+            NativeDiscoveryStrategy[] array = new NativeDiscoveryStrategy[]{
+                new WindowsNativeDiscoveryStrategy(),
+                new LinuxNativeDiscoveryStrategy(),
+                new OsxNativeDiscoveryStrategy()
+            };
+            int supportedOS = -1;
+            for (int i = 0; i < array.length; i++) {
+                if (array[i].supported()) {
+                    supportedOS = i;
+                    break;
+                }
+            }
+            switch (supportedOS) {
+                case 0: {
+                    array[supportedOS] = new WindowsNativeDiscoveryStrategy() {
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 1: {
+                    array[supportedOS] = new LinuxNativeDiscoveryStrategy() {
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                case 2: {
+                    array[supportedOS] = new OsxNativeDiscoveryStrategy() {
+                        @Override
+                        protected void onGetDirectoryNames(List<String> directoryNames) {
+                            super.onGetDirectoryNames(directoryNames);
+                            directoryNames.add(0, VLC_SEARCH_PATH);
+                        }
+                    };
+                    break;
+                }
+                default: {
+                    //unsupported OS?
+                }
+            }
+            if (supportedOS != -1) {
+                VLCfound = new NativeDiscovery(array[supportedOS]).discover();
+            }
+            */
+            if (VLCfound) {
+                Logger.info(RuntimeUtil.getLibVlcLibraryName());
+            } else {
+                throw new VLCException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
+            }
+        }
+        
+        
+    }
 
     private MediaPlayer getCurrentPlayer() {
         if (players.isEmpty()) {
@@ -164,77 +228,20 @@ public class MediaPlayerController extends MyBaseController {
             super(str);
         }
     }
-
-    public static void discover() throws InterruptedException, VLCException {
-        if (!VLCfound) {
-            NativeDiscoveryStrategy[] array = new StandardNativeDiscoveryStrategy[]{
-                new DefaultWindowsNativeDiscoveryStrategy(),
-                new DefaultLinuxNativeDiscoveryStrategy(),
-                new DefaultMacNativeDiscoveryStrategy()
-            };
-            int supportedOS = -1;
-            for (int i = 0; i < array.length; i++) {
-                if (array[i].supported()) {
-                    supportedOS = i;
-                    break;
-                }
-            }
-            switch (supportedOS) {
-                case 0: {
-                    array[supportedOS] = new DefaultWindowsNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                case 1: {
-                    array[supportedOS] = new DefaultLinuxNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                case 2: {
-                    array[supportedOS] = new DefaultMacNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                default: {
-                    //unsupported OS?
-                }
-            }
-            if (supportedOS != -1) {
-                VLCfound = new NativeDiscovery(array[supportedOS]).discover();
-            }
-            if (VLCfound) {
-                Logger.info(RuntimeUtil.getLibVlcLibraryName() + " " + LibVlc.INSTANCE.libvlc_get_version());
-            } else {
-                throw new VLCException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
-            }
-        }
-    }
-
-    public MediaPlayer getPreparedMediaPlayer() {
-        EmbeddedMediaPlayer newPlayer = factory.newEmbeddedMediaPlayer();
+    
+    public  MediaPlayer getPreparedMediaPlayer() {
+         EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
 //        Log.write("Inside: newPlayer");
         Canvas canvas = new Canvas();
-        CanvasVideoSurface newVideoSurface = factory.newVideoSurface(canvas);
-        newPlayer.setVideoSurface(newVideoSurface);
+        ComponentVideoSurface newVideoSurface = factory.videoSurfaces().newVideoSurface(canvas);
+        newPlayer.videoSurface().set(newVideoSurface);
 //        Log.write("Inside: done with surface");
+
+
         JFrame jframe = new JFrame();
 
 //        Log.write("New JFrame done");
+
         jframe.setVisible(true);
         jframe.setExtendedState(JFrame.ICONIFIED);
 //        Log.write("Set visible");
@@ -367,8 +374,8 @@ public class MediaPlayerController extends MyBaseController {
 
         events.add(PlayerEventType.VOL, () -> {
             int tries = 100;
-            while (player.isPlaying() && player.getVolume() != vol) {
-                player.setVolume(vol);
+            while (player.status().isPlaying() && player.audio().volume() != vol) {
+                player.audio().setVolume(vol);
                 Thread.sleep(50);
                 tries--;
                 if (tries <= 0) {
@@ -405,7 +412,7 @@ public class MediaPlayerController extends MyBaseController {
                 int rounded = (int) Math.round(volume);
                 lastVolume.set(rounded);
 
-                if (players.isEmpty() || !getCurrentPlayer().isPlaying() || stopping) {
+                if (players.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
                     return;
                 }
                 setVolume(getCurrentPlayer(), rounded);
@@ -514,7 +521,7 @@ public class MediaPlayerController extends MyBaseController {
                     getCurrentFrame().setExtendedState(JFrame.NORMAL);
                 }
                 if (visible && !startedWithVideo) {
-                    if (getCurrentPlayer().isPlaying()) {
+                    if (getCurrentPlayer().status().isPlaying()) {
                         relaunch();
                     }
                 }
@@ -531,7 +538,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private void updateSeekLabels(Float position, Long millisPassed) {
         FX.submit(() -> {
-            if (!stopping && !players.isEmpty() && getCurrentPlayer().isPlaying()) {
+            if (!stopping && !players.isEmpty() && getCurrentPlayer().status().isPlaying()) {
 
                 this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
                 if (!this.dragTask.isInAction()) {
@@ -548,12 +555,12 @@ public class MediaPlayerController extends MyBaseController {
                 return;
             }
             Float position;
-            if (!getCurrentPlayer().isSeekable()) {
+            if (!getCurrentPlayer().status().isSeekable()) {
                 position = 0f;
             } else {
-                position = getCurrentPlayer().getPosition();
+                position = getCurrentPlayer().status().position();
             }
-            currentLength = getCurrentPlayer().getLength();
+            currentLength = getCurrentPlayer().status().length();
             long millisPassed = (long) (this.currentLength * position);
             double secondsLeft = (double) (this.currentLength - millisPassed) / 1000;
             this.updateSeekLabels(position, millisPassed);
@@ -574,13 +581,15 @@ public class MediaPlayerController extends MyBaseController {
     public void playOrPause() {
 
         events.add(PlayerEventType.PLAY_OR_PAUSE, () -> {
-            if (getCurrentPlayer().isPlayable()) {
-                if (getCurrentPlayer().isPlaying()) {
+            if (getCurrentPlayer().status().isPlayable()) {
+                if (getCurrentPlayer().status().isPlaying()) {
                     this.playerState = PlayerState.PAUSED;
+                    getCurrentPlayer().controls().pause();
                 } else {
                     this.playerState = PlayerState.PLAYING;
+                    getCurrentPlayer().controls().play();
                 }
-                getCurrentPlayer().pause();
+                
                 this.setVolume(getCurrentPlayer(), lastVolume.get());
 
             } else {
@@ -593,8 +602,8 @@ public class MediaPlayerController extends MyBaseController {
     public void stop() {
         events.cancelAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
-            while (getCurrentPlayer().isPlaying()) {
-                getCurrentPlayer().stop();
+            while (getCurrentPlayer().status().isPlaying()) {
+                getCurrentPlayer().controls().stop();
                 Thread.sleep(1);
             }
             this.playerState = PlayerState.STOPPED;
@@ -605,7 +614,7 @@ public class MediaPlayerController extends MyBaseController {
     public void relaunch() {
         events.add("RELAUNCH outer", () -> {
             Logger.info("Relaunch");
-            relaunch(getCurrentPlayer().getPosition());
+            relaunch(getCurrentPlayer().status().position());
         });
 
     }
@@ -615,7 +624,7 @@ public class MediaPlayerController extends MyBaseController {
             onPlayTaskComplete.add(() -> {
                 events.add("Set position after relaunch", () -> {
                     Logger.info("Set position", position);
-                    getCurrentPlayer().setPosition(position);
+                    getCurrentPlayer().controls().setPosition(position);
                 });
 
             });
@@ -629,7 +638,7 @@ public class MediaPlayerController extends MyBaseController {
         stopping = true;
 
         players.forEach(player -> {
-            player.stop();
+            player.controls().stop();
             player.release();
         });
         frames.forEach(frame -> {
@@ -723,15 +732,15 @@ public class MediaPlayerController extends MyBaseController {
             stop();
             getCurrentFrame().setTitle(filePlaying.getName(true));
             startedWithVideo = getCurrentFrame().isVisible();
-            boolean playable = getCurrentPlayer().prepareMedia(filePlaying.getAbsolutePath(), getOptions());
+            boolean playable = getCurrentPlayer().media().prepare(filePlaying.getAbsolutePath(), getOptions());
             if (!playable) {
                 table.getItems().remove(filePlaying);
 
             } else {
-                getCurrentPlayer().start();
+                getCurrentPlayer().controls().start();
 
                 //wait to start playing
-                while (!getCurrentPlayer().isPlaying()) {
+                while (!getCurrentPlayer().status().isPlaying()) {
                     Thread.sleep(1);
                 }
                 Logger.info("Started playing");
@@ -757,9 +766,9 @@ public class MediaPlayerController extends MyBaseController {
 
         inSeamless = true;
         oldplayer = getCurrentPlayer();
-        Value<Double> oldVolume = new Value<>((double) oldplayer.getVolume());
+        Value<Double> oldVolume = new Value<>((double) oldplayer.audio().volume());
 //        oldplayer.removeMediaPlayerEventListener(defaultPlayerEventAdapter);
-        oldplayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
+        oldplayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
             @Override
             public void finished(MediaPlayer mediaPlayer) {
                 Logger.info("Finished old player");
