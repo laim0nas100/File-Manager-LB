@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
 import lt.lb.filemanagerlb.gui.MyBaseController;
-import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
@@ -19,7 +13,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
+import lt.lb.commons.javafx.CosmeticsFX;
+import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
+import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 
 /**
@@ -48,7 +45,6 @@ public class DuplicateFinderController extends MyBaseController {
     private HashMap<String, Double> map = new HashMap<>();
 
     private Double ratio;
-    private MenuTree menuTree;
     private ExtFolder root;
     private FXTask task;
 
@@ -104,31 +100,38 @@ public class DuplicateFinderController extends MyBaseController {
 
     @Override
     public void afterShow() {
-        menuTree = new MenuTree(null);
-        MenuItem markPath1 = new MenuItem("Mark Path 1");
-        markPath1.setOnAction(eh -> {
-            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
-            for (Object ob : selectedItems) {
-                SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f1.getPath()));
-            }
-        });
-        MenuItem markPath2 = new MenuItem("Mark Path 2");
-        markPath2.setOnAction(eh -> {
-            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
-            for (Object ob : selectedItems) {
-                SimpleTableItem item = (SimpleTableItem) ob;
-                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f2.getPath()));
-            }
-        });
-        menuTree.addMenuItem(markPath1, markPath1.getText());
-        menuTree.addMenuItem(markPath2, markPath2.getText());
-        this.list.setContextMenu(menuTree.constructContextMenu());
+        ContextMenu build = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Mark path 1")
+                        .withAction(eh -> {
+                            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
+                            for (Object ob : selectedItems) {
+                                SimpleTableItem item = (SimpleTableItem) ob;
+                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f1.getPath()));
+                            }
+                        })
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Mark path 2")
+                        .withAction(eh -> {
+                            ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
+                            for (Object ob : selectedItems) {
+                                SimpleTableItem item = (SimpleTableItem) ob;
+                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f2.getPath()));
+                            }
+                        })
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
+        MenuItem wrapSelectContextMenu = CosmeticsFX.wrapSelectContextMenu(list.getSelectionModel());
+        build.getItems().add(wrapSelectContextMenu);
+        this.list.setContextMenu(build);
     }
 
     public void search() {
         ratio = slider.valueProperty().divide(100).get();
-        Platform.runLater(() -> {
+        FX.submit(() -> {
             cancel();
             list.getItems().clear();
             List synchronizedList = Collections.synchronizedList(list.getItems());

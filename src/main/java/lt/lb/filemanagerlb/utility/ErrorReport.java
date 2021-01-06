@@ -23,9 +23,10 @@ public class ErrorReport {
     
     static SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
     public static void report(Throwable ex) {
+        Logger.error(ex,"Error");
         ErrorReport error = new ErrorReport(ex);
         MainController.errorLog.add(0, error);
-        Logger.error(ex);
+        
     }
     private final SimpleStringProperty errorName;
     private final Throwable errorCause;

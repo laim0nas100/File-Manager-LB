@@ -22,9 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import lt.lb.commons.containers.values.Value;
-import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.commons.javafx.*;
-import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
@@ -196,20 +194,24 @@ public class DirSyncController extends MyBaseController {
                     return cellData.getValue().actionCompleted.asString();
                 }
             });
-            MenuTree menuTree = new MenuTree(null);
+            MenuBuilders.ContextMenuBuilder builder = new MenuBuilders.ContextMenuBuilder();
             for (int i = 0; i < 5; i++) {
                 final int action = i;
-                MenuItem item = new MenuItem("Set " + ExtEntry.getActionDescription(action));
-                item.setOnAction(eh -> {
-                    ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
-                    for (Object ob : selectedItems) {
-                        ExtEntry entry = (ExtEntry) ob;
-                        entry.setAction(action);
-                    }
-                });
-                menuTree.addMenuItem(item, item.getText());
+                builder = builder.addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Set " + ExtEntry.getActionDescription(action))
+                        .withAction(eh -> {
+                            ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
+                            for (Object ob : selectedItems) {
+                                ExtEntry entry = (ExtEntry) ob;
+                                entry.setAction(action);
+                            }
+                        })
+                );
             }
-            this.table.setContextMenu(menuTree.constructContextMenu());
+            ContextMenu build = builder.addNestedDisableBind().addNestedVisibilityBind().build();
+            MenuItem wrapSelectContextMenu = CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel());
+            build.getItems().add(wrapSelectContextMenu);
+            this.table.setContextMenu(build);
 
         });
     }

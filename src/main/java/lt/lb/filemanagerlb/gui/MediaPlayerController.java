@@ -6,11 +6,9 @@ import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -20,12 +18,12 @@ import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
-import lt.lb.commons.javafx.CosmeticsFX.MenuTree;
 import lt.lb.commons.F;
 import lt.lb.commons.containers.values.IntegerValue;
-//import lt.lb.commons.containers.values.NumberValue;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.TimeoutTask;
+import lt.lb.commons.javafx.ViewProperties;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -105,6 +103,8 @@ public class MediaPlayerController extends MyBaseController {
     @FXML
     public TextField saveState;
 
+    private ViewProperties<ExtPath> tableProperties;
+
     private MediaPlayerFactory factory;
     volatile private MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
@@ -140,8 +140,8 @@ public class MediaPlayerController extends MyBaseController {
             Logger.info("Set new seek");
         }
     });
-    
-    public static void discover() throws VLCException{
+
+    public static void discover() throws VLCException {
         if (!VLCfound) {
             MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
             mediaPlayerFactory.release();
@@ -197,15 +197,14 @@ public class MediaPlayerController extends MyBaseController {
             if (supportedOS != -1) {
                 VLCfound = new NativeDiscovery(array[supportedOS]).discover();
             }
-            */
+             */
             if (VLCfound) {
                 Logger.info(RuntimeUtil.getLibVlcLibraryName());
             } else {
                 throw new VLCException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
             }
         }
-        
-        
+
     }
 
     private MediaPlayer getCurrentPlayer() {
@@ -228,20 +227,18 @@ public class MediaPlayerController extends MyBaseController {
             super(str);
         }
     }
-    
-    public  MediaPlayer getPreparedMediaPlayer() {
-         EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
+
+    public MediaPlayer getPreparedMediaPlayer() {
+        EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
 //        Log.write("Inside: newPlayer");
         Canvas canvas = new Canvas();
         ComponentVideoSurface newVideoSurface = factory.videoSurfaces().newVideoSurface(canvas);
         newPlayer.videoSurface().set(newVideoSurface);
 //        Log.write("Inside: done with surface");
 
-
         JFrame jframe = new JFrame();
 
 //        Log.write("New JFrame done");
-
         jframe.setVisible(true);
         jframe.setExtendedState(JFrame.ICONIFIED);
 //        Log.write("Set visible");
@@ -274,6 +271,7 @@ public class MediaPlayerController extends MyBaseController {
 
     public void setUpTable() {
         this.extTableView = new ExtTableView(table);
+        tableProperties = ViewProperties.ofTableView(table);
 
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
@@ -440,65 +438,73 @@ public class MediaPlayerController extends MyBaseController {
         });
 
         setUpTable();
-        MenuTree tree = new MenuTree(null);
-        MenuItem addToMarked = new MenuItem("Add to marked");
-        addToMarked.setOnAction(event -> {
-            ObservableList<ExtPath> selectedItems = table.getSelectionModel().getSelectedItems();
-            selectedItems.forEach(item -> {
-                TaskFactory.getInstance().addToMarked(item);
-            });
-        });
-        addToMarked.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
-        MenuItem remove = new MenuItem("Remove");
-        remove.setOnAction(event -> {
-            ArrayList<ExtPath> selected = new ArrayList<>(table.getSelectionModel().getSelectedItems());
-            selected.forEach(item -> {
-                if (item.equals(filePlaying)) {
-                    index--;
-                }
-                backingList.remove(item);
-            });
-            extTableView.updateContentsAndSort(backingList);
-            update();
-        });
-        remove.visibleProperty().bind(Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
-        MenuItem addMarked = new MenuItem("Add marked");
-        addMarked.setOnAction(event -> {
-            MainController.markedList.forEach(item -> {
-                addIfAbsent(item);
-            });
-            update();
-        });
-        addMarked.visibleProperty().bind(MainController.propertyMarkedSize.greaterThan(0));
-        Menu marked = new Menu("Marked");
-        tree.addMenuItem(marked, marked.getText());
-        tree.addMenuItem(addToMarked, marked.getText(), addToMarked.getText());
-        tree.addMenuItem(addMarked, marked.getText(), addMarked.getText());
-        marked.visibleProperty().bind(remove.visibleProperty().or(addMarked.visibleProperty()));
-        tree.addMenuItem(remove, remove.getText());
-        MenuItem deleteMenuItem = CosmeticsFX.simpleMenuItem(
-                "Delete",
-                event -> {
-                    ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(table.getSelectionModel().getSelectedItems());
-                    task.setDescription("Delete selected files");
-                    ViewManager.getInstance().newProgressDialog(task);
-                }, Bindings.size(table.getSelectionModel().getSelectedItems()).greaterThan(0));
-        tree.addMenuItem(deleteMenuItem, deleteMenuItem.getText());
-        MenuItem renameMenuItem = CosmeticsFX.simpleMenuItem(
-                "Rename ",
-                event -> {
-                    IntegerValue numberValue = new IntegerValue(0);
-                    FileCallback cb = (filePath) -> {
-                        addIfAbsent(filePath, numberValue.get());
-                    };
-                    numberValue.set(table.getSelectionModel().getSelectedIndex());
-                    ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
-                    String parent = selected.getParent(1);
-                    ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getFileOptimized(parent), selected, cb);
-                }, Bindings.size(table.getSelectionModel().getSelectedItems()).isEqualTo(1));
-        tree.addMenuItem(renameMenuItem, renameMenuItem.getText());
 
-        table.setContextMenu(tree.constructContextMenu());
+        ContextMenu build = new MenuBuilders.ContextMenuBuilder()
+                .addItemMenu(new MenuBuilders.MenuBuilder()
+                        .withText("Marked...")
+                        .addItem(new MenuBuilders.MenuItemBuilder()
+                                .withText("Add to marked")
+                                .withAction(eh -> {
+                                    tableProperties.selectedItems().forEach(item -> {
+                                        TaskFactory.getInstance().addToMarked(item);
+                                    });
+                                })
+                                .visibleWhen(tableProperties.selectedItemNotNull())
+                        )
+                        .addItem(new MenuBuilders.MenuItemBuilder()
+                                .withText("Add marked")
+                                .withAction(eh -> {
+                                    MainController.markedList.forEach(item -> {
+                                        addIfAbsent(item);
+                                    });
+                                    update();
+                                })
+                                .visibleWhen(MainController.propertyMarkedSize.greaterThan(0))
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Remove")
+                        .withAction(eh -> {
+                            ArrayList<ExtPath> selected = new ArrayList<>(tableProperties.selectedItems());
+                            selected.forEach(item -> {
+                                if (item.equals(filePlaying)) {
+                                    index--;
+                                }
+                                backingList.remove(item);
+                            });
+                            extTableView.updateContentsAndSort(backingList);
+                            update();
+                        })
+                        .visibleWhen(tableProperties.selectedItemNotNull())
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Delete")
+                        .withAction(eh -> {
+                            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(table.getSelectionModel().getSelectedItems());
+                            task.setDescription("Delete selected files");
+                            ViewManager.getInstance().newProgressDialog(task);
+                        })
+                        .visibleWhen(tableProperties.selectedItemNotNull())
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Rename")
+                        .withAction(eh -> {
+                            IntegerValue numberValue = new IntegerValue(0);
+                            FileCallback cb = (filePath) -> {
+                                addIfAbsent(filePath, numberValue.get());
+                            };
+                            numberValue.set(table.getSelectionModel().getSelectedIndex());
+                            ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
+                            String parent = selected.getParent(1);
+                            ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getFileOptimized(parent), selected, cb);
+                        })
+                        .visibleWhen(tableProperties.selectedSize(1))
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
+
+        table.setContextMenu(build);
         table.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
 
@@ -589,7 +595,7 @@ public class MediaPlayerController extends MyBaseController {
                     this.playerState = PlayerState.PLAYING;
                     getCurrentPlayer().controls().play();
                 }
-                
+
                 this.setVolume(getCurrentPlayer(), lastVolume.get());
 
             } else {

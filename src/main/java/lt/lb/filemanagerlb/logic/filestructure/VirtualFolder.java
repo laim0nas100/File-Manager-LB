@@ -50,10 +50,11 @@ public class VirtualFolder extends ExtFolder {
     }
 
     @Override
-    public Future update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
+    public Future update(List<ExtPath> list, BooleanProperty isCanceled) {
 
         if (this.equals(FileManagerLB.VirtualFolders)) {
-            list.setAll(this.getFilesCollection());
+            list.clear();
+            list.addAll(getFilesCollection());
             return CompletableFuture.completedFuture(null);
         }
 
@@ -62,7 +63,7 @@ public class VirtualFolder extends ExtFolder {
                 @Override
                 protected Void call() throws Exception {
                     Logger.info("Start update");
-                    FileManagerLB.remountUpdateList = list;
+                    FileManagerLB.remountUpdateList.setAll(list);
                     FileManagerLB.remount();
                     Logger.info("End update");
                     return null;

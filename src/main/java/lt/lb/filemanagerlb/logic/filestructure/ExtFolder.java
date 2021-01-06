@@ -238,7 +238,7 @@ public class ExtFolder extends ExtPath {
         populateFolder(null, null);
     }
 
-    public Future update(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
+    public Future update(List<ExtPath> list, BooleanProperty isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
         ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list, 5);
         if (isPopulated()) {

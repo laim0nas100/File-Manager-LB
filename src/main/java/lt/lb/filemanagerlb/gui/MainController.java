@@ -9,11 +9,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -23,6 +25,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -49,11 +52,14 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
+import lt.lb.commons.SafeOpt;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.FXTask;
+import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.TimeoutTask;
 import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
@@ -77,8 +83,8 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.commons.javafx.ViewProperties;
 import org.tinylog.Logger;
-
 
 /**
  * FXML Controller class
@@ -102,8 +108,6 @@ public class MainController extends MyBaseController<MainController> {
     public TableView tableView;
     @FXML
     public TextField localSearch;
-
-    private ObservableList<ExtPath> selectedList = FXCollections.observableArrayList();
 
     public static ObservableList<FavouriteLink> links;
     public static ObservableList<ErrorReport> errorLog;
@@ -191,16 +195,16 @@ public class MainController extends MyBaseController<MainController> {
     private SimpleBooleanProperty propertyRenameCondition = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty propertyIsVirtualFolders = new SimpleBooleanProperty(false);
 
-    private SimpleIntegerProperty propertySelectedSize = new SimpleIntegerProperty(0);
-    private SimpleIntegerProperty propertyMarkedSelectedSize = new SimpleIntegerProperty(0);
     private SimpleBooleanProperty selectedIsFolder = new SimpleBooleanProperty(false);
     private SimpleBooleanProperty writeableFolder = new SimpleBooleanProperty(false);
+
+    private ViewProperties<ExtPath> markedProperties;
+    private ViewProperties<ExtPath> filesProperties;
     private SimpleTask searchTask;
     public ExtTableView extTableView;
     public ArrayDeque<Future> deq = new ArrayDeque<>();
     private Executor localSearchExecutor = new FastWaitingExecutor(1, WaitTime.ofSeconds(10));
-//private Executor localSearchExecutor = Executors.newSingleThreadExecutor();
-    private TimeoutTask localSearchTask = new TimeoutTask(1000, 10, () -> {
+    private TimeoutTask localSearchTask = new TimeoutTask(500, 10, () -> {
         FX.submit(this::localSearch);
 
     });
@@ -218,6 +222,14 @@ public class MainController extends MyBaseController<MainController> {
 
     @Override
     public void afterShow() {
+
+        filesProperties = ViewProperties.ofTableView(tableView);
+        markedProperties = ViewProperties.ofListView(markedView);
+
+        BooleanBinding createBooleanBinding = Bindings.createBooleanBinding(() -> {
+            return SafeOpt.ofNullable(filesProperties.selectedItem().get()).select(ExtFolder.class).isPresent();
+        }, filesProperties.selectedItem());
+        selectedIsFolder.bind(createBooleanBinding);
         menuItemTest.visibleProperty().bind(D.DEBUG);
 
         autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
@@ -225,8 +237,8 @@ public class MainController extends MyBaseController<MainController> {
         pinDialogs.selectedProperty().bindBidirectional(ViewManager.getInstance().pinProgressDialogs);
         pinTextInput.selectedProperty().bindBidirectional(ViewManager.getInstance().pinTextInputDialogs);
 
-        propertyDeleteCondition.bind(writeableFolder.and(propertySelectedSize.greaterThan(0)));
-        propertyRenameCondition.bind(writeableFolder.and(propertySelectedSize.isEqualTo(1)));
+        propertyDeleteCondition.bind(writeableFolder.and(filesProperties.selectedItemNotNull()));
+        propertyRenameCondition.bind(writeableFolder.and(filesProperties.itemsSize(1)));
 
         finder = new Finder("", useRegex.selectedProperty());
         Bindings.bindContentBidirectional(finder.list, searchView.getItems());
@@ -237,9 +249,6 @@ public class MainController extends MyBaseController<MainController> {
         LOAD();
         fileAddress = new FileAddressField(currentDirText);
         propertyIsVirtualFolders.bind(MC.isAbsoluteRoot.not().and(miAdvancedRenameFolder.disableProperty()));
-        propertySelectedSize.bind(Bindings.size(selectedList));
-        propertyMarkedSelectedSize.bind(Bindings.size(markedView.getSelectionModel().getSelectedItems()));
-        Bindings.bindContentBidirectional(selectedList, this.tableView.getSelectionModel().getSelectedItems());
         extTableView = new ExtTableView(tableView);
         extTableView.sortable = true;
         extTableView.prepareChangeListeners();
@@ -350,23 +359,22 @@ public class MainController extends MyBaseController<MainController> {
     public void test() throws Exception {
         Logger.info("TEST");
         Stage stage = new Stage();
-        
+
         Label secondLabel = new Label("I'm a Label on new Window");
- 
-                StackPane secondaryLayout = new StackPane();
-                secondaryLayout.getChildren().add(secondLabel);
- 
-                Scene secondScene = new Scene(secondaryLayout, 230, 100);
- 
-                // New window (Stage)
-                Stage newWindow = new Stage();
-                newWindow.setTitle("Second Stage");
-                newWindow.setScene(secondScene);
- 
-                // Set position of second window, related to primary window.
- 
-                newWindow.show();
-        
+
+        StackPane secondaryLayout = new StackPane();
+        secondaryLayout.getChildren().add(secondLabel);
+
+        Scene secondScene = new Scene(secondaryLayout, 230, 100);
+
+        // New window (Stage)
+        Stage newWindow = new Stage();
+        newWindow.setTitle("Second Stage");
+        newWindow.setScene(secondScene);
+
+        // Set position of second window, related to primary window.
+        newWindow.show();
+
 //        LocationInRootNode root = new LocationInRootNode("",-1);
 //        int i = 0;
 //
@@ -416,9 +424,6 @@ public class MainController extends MyBaseController<MainController> {
 //            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
 //            t.start();
 //        TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
-
-
-        
         Logger.info("END TEST");
     }
 
@@ -464,20 +469,16 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     private void changeToDir(ExtFolder dir) {
-//        return new Thread(() -> {
         Future future = TaskFactory.getInstance().populateRecursiveParallelContained(dir, 1);
         F.checkedRun(future::get);
-//            t.start();
         if (!localSearch.getText().isEmpty()) {
             localSearch.clear();
         }
-//            F.unsafeRunWithHandler(ErrorReport::report, future::get);
         FX.submit(() -> {
             MC.changeDirTo(dir);
             update();
         });
 
-//        });
     }
 
     public void searchTyped() {
@@ -536,7 +537,7 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void localSearch() {
-        ObservableList<ExtPath> newList = FXCollections.observableArrayList();
+        List<ExtPath> newList = new ArrayList<>();
         deq.forEach(action -> {
             action.cancel(true);
         });
@@ -568,7 +569,8 @@ public class MainController extends MyBaseController<MainController> {
                     return null;
                 }
                 update.get();
-                newList.setAll(folderInitiated.files.values());
+                newList.clear();
+                newList.addAll(folderInitiated.files.values());
                 String lookFor = localSearch.getText().trim();
                 if (!lookFor.isEmpty()) {
                     ArrayList<ExtPath> list = new ArrayList<>();
@@ -579,7 +581,8 @@ public class MainController extends MyBaseController<MainController> {
                             list.add(path);
                         }
                     });
-                    newList.setAll(list);
+                    newList.clear();
+                    newList.addAll(list);
                 }
                 return null;
             }
@@ -697,10 +700,11 @@ public class MainController extends MyBaseController<MainController> {
         linksContextMenu = new ContextMenu();
         errorContextMenu = new ContextMenu();
 
-        Menu submenuCreate = new Menu("Create...");
-        submenuCreate.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Create New Folder",
-                        event -> {
+        Menu submenuCreate = new MenuBuilders.MenuBuilder()
+                .withText("Create...")
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("New folder")
+                        .withAction(eh -> {
                             Logger.info("Create new folder");
                             try {
                                 ExtPath createNewFolder = MC.createNewFolder();
@@ -709,9 +713,11 @@ public class MainController extends MyBaseController<MainController> {
                             } catch (Exception ex) {
                                 ErrorReport.report(ex);
                             }
-                        }, MC.isVirtual.not()),
-                CosmeticsFX.simpleMenuItem("Create New File",
-                        event -> {
+                        }).visibleWhen(MC.isVirtual.not())
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("New file")
+                        .withAction(eh -> {
                             Logger.info("Create new file");
                             try {
                                 ExtPath createNewFile = MC.createNewFile();
@@ -720,11 +726,16 @@ public class MainController extends MyBaseController<MainController> {
                             } catch (IOException ex) {
                                 ErrorReport.report(ex);
                             }
-                        }, MC.isVirtual.not()));
+                        }).visibleWhen(MC.isVirtual.not())
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        searchContextMenu.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Go to",
-                        event -> {
+        searchContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Go to")
+                        .withAction(eh -> {
                             String selectedItem = (String) searchView.getSelectionModel().getSelectedItem();
                             try {
                                 Path path = Paths.get(selectedItem);
@@ -736,95 +747,152 @@ public class MainController extends MyBaseController<MainController> {
                             } catch (Exception ex) {
                                 ErrorReport.report(ex);
                             }
-                        }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).isEqualTo(1)),
-                CosmeticsFX.simpleMenuItem("Mark selected",
-                        event -> {
+                        })
+                        .visibleWhen(Bindings.size(searchView.getSelectionModel().getSelectedItems()).isEqualTo(1))
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Mark selected")
+                        .withAction(eh -> {
                             FX.submit(() -> {
                                 ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
                                 FXTask markFiles = TaskFactory.getInstance().markFiles(list);
                                 TaskFactory.mainExecutor.execute(markFiles);
                             });
-                        }, Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
-        );
+                        })
+                        .visibleWhen(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        errorContextMenu.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Remove this entry",
-                        event -> {
+        errorContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Remove this entry")
+                        .withAction(eh -> {
                             errorLog.remove(errorView.getSelectionModel().getSelectedIndex());
-                        }, Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0)),
-                CosmeticsFX.simpleMenuItem("Clean this list",
-                        event -> {
+                        })
+                        .visibleWhen(Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0))
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Clean this list")
+                        .withAction(eh -> {
                             errorLog.clear();
-                        }, Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0))
-        );
+                        })
+                        .visibleWhen(Bindings.size(errorView.getSelectionModel().getSelectedItems()).greaterThan(0))
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        linksContextMenu.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Add current directory as link",
-                        event -> {
+        linksContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Add current directory as link")
+                        .withAction(eh -> {
                             FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(), MC.currentDir);
                             if (!links.contains(link)) {
                                 links.add(link);
                             }
-                        }, null),
-                CosmeticsFX.simpleMenuItem("Remove this link",
-                        event -> {
+                        })
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Remove this link")
+                        .withAction(eh -> {
                             links.remove(linkView.getSelectionModel().getSelectedIndex());
-                        }, Bindings.size(this.linkView.getSelectionModel().getSelectedItems()).greaterThan(0))
-        );
+                        })
+                        .visibleWhen(linkView.getSelectionModel().selectedItemProperty().isNotNull())
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        markedContextMenu.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Clean this list",
-                        event -> {
+        markedContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Clean this list")
+                        .withAction(eh -> {
                             markedView.getItems().clear();
-                        }, propertyMarkedSize.greaterThan(0)),
-                CosmeticsFX.simpleMenuItem("Remove selected",
-                        event -> {
+                        })
+                        .visibleWhen(propertyMarkedSize.greaterThan(0))
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Remove selected")
+                        .withAction(eh -> {
                             ObservableList selectedItems = markedView.getSelectionModel().getSelectedItems();
                             MainController.markedList.removeAll(selectedItems);
-                        }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
-                                markedView.getSelectionModel().getSelectedItems()).greaterThan(0))),
-                CosmeticsFX.simpleMenuItem("Delete selected",
-                        event -> {
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        propertyMarkedSize.greaterThan(0),
+                                        markedView.getSelectionModel().selectedItemProperty().isNotNull()
+                                )
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Delete selected")
+                        .withAction(eh -> {
                             ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedView.getSelectionModel().getSelectedItems());
                             task.setDescription("Delete selected marked files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, propertyMarkedSize.greaterThan(0).and(Bindings.size(
-                                markedView.getSelectionModel().getSelectedItems()).greaterThan(0)))
-        );
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        propertyMarkedSize.greaterThan(0),
+                                        markedView.getSelectionModel().selectedItemProperty().isNotNull()
+                                )
+                        )
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        tableDragContextMenu.getItems().setAll(CosmeticsFX.simpleMenuItem("Move here selected",
-                        event -> {
+        tableDragContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Move here selected")
+                        .withAction(eh -> {
                             MainController.actionList.clear();
                             MainController.actionList.addAll(MainController.dragList);
                             ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(MainController.actionList, MC.currentDir);
                             task.setDescription("Move Dragged files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, null),
-                CosmeticsFX.simpleMenuItem("Copy here selected",
-                        event -> {
+                        })
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Copy here selected")
+                        .withAction(eh -> {
                             MainController.actionList.clear();
                             MainController.actionList.addAll(MainController.dragList);
                             ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(MainController.actionList, MC.currentDir, null);
                             task.setDescription("Copy Dragged files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, null)
-        );
+                        })
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        Menu submenuMarkFiles = new Menu("Mark...");
         Callback<ExtPath, Void> addToMarkedCallback = (ExtPath p) -> {
             TaskFactory.getInstance().addToMarked(p);
             return null;
         };
-        submenuMarkFiles.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Selected",
-                        event -> {
-                            selectedList.forEach((file) -> {
+
+        Menu submenuMarkFiles = new MenuBuilders.MenuBuilder()
+                .withText("Mark...")
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Selected")
+                        .withAction(eh -> {
+
+                            filesProperties.selectedItems().forEach((file) -> {
                                 TaskFactory.getInstance().addToMarked(file);
                             });
-                        }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
-                CosmeticsFX.simpleMenuItem("Recursive only files",
-                        event -> {
-                            selectedList.forEach((file) -> {
+                        }).visibleWhen(
+                        Bindings.and(
+                                miDuplicateFinderFolder.disableProperty().not(),
+                                filesProperties.selectedItemNotNull()
+                        ))
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Recursive only files")
+                        .withAction(eh -> {
+                            filesProperties.selectedItems().forEach((file) -> {
 
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), addToMarkedCallback);
@@ -832,95 +900,170 @@ public class MainController extends MyBaseController<MainController> {
                                 TaskFactory.mainExecutor.execute(run);
 
                             });
-                        }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0))),
-                CosmeticsFX.simpleMenuItem("Recursive only folders",
-                        event -> {
-                            selectedList.forEach((file) -> {
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        miDuplicateFinderFolder.disableProperty().not(),
+                                        filesProperties.selectedItemNotNull()
+                                )
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Recursive only folders")
+                        .withAction(eh -> {
+                            filesProperties.selectedItems().forEach((file) -> {
+
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), addToMarkedCallback);
                                 };
                                 TaskFactory.mainExecutor.execute(run);
-                            });
-                        }, miDuplicateFinderFolder.disableProperty().not().and(propertySelectedSize.greaterThan(0)))
-        );
 
-        Menu submenuMarked = new Menu("Marked...");
-        submenuMarked.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Copy here marked",
-                        event -> {
+                            });
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        miDuplicateFinderFolder.disableProperty().not(),
+                                        filesProperties.selectedItemNotNull()
+                                )
+                        )
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
+
+        Menu submenuMarked = new MenuBuilders.MenuBuilder()
+                .withText("Marked...")
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Copy here marked")
+                        .withAction(eh -> {
                             Logger.info("Copy Marked");
                             ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(markedList, MC.currentDir, null);
                             task.setDescription("Copy marked files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
-                CosmeticsFX.simpleMenuItem("Move here marked",
-                        event -> {
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        MC.isVirtual.not(),
+                                        propertyMarkedSize.greaterThan(0)
+                                )
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Move here marked")
+                        .withAction(eh -> {
                             Logger.info("Move Marked");
                             ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(markedList, MC.currentDir);
                             task.setDescription("Move marked files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, propertyMarkedSize.greaterThan(0).and(MC.isVirtual.not())),
-                CosmeticsFX.simpleMenuItem("Delete all marked",
-                        event -> {
+                        })
+                        .visibleWhen(
+                                Bindings.and(
+                                        MC.isVirtual.not(),
+                                        propertyMarkedSize.greaterThan(0)
+                                )
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Delete marked")
+                        .withAction(eh -> {
+                            Logger.info("Delete Marked");
                             ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedList);
                             task.setDescription("Delete marked files");
                             ViewManager.getInstance().newProgressDialog(task);
-                        }, propertyMarkedSize.greaterThan(0)),
-                CosmeticsFX.simpleMenuItem("Add Marked to Virtual Folder",
-                        event -> {
+                        })
+                        .visibleWhen(
+                                propertyMarkedSize.greaterThan(0)
+                        )
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Add Marked to Virtual Folder")
+                        .withAction(eh -> {
                             FX.submit(() -> {
                                 MainController.markedList.forEach((f) -> {
                                     MC.currentDir.files.put(f.propertyName.get(), f);
                                 });
                                 update();
                             });
-                        }, propertyMarkedSize.greaterThan(0).and(writeableFolder).and(MC.isVirtual))
-        );
+                        })
+                        .visibleWhen(
+                                propertyMarkedSize.greaterThan(0)
+                                        .and(writeableFolder)
+                                        .and(MC.isVirtual)
+                        )
+                )
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
 
-        tableContextMenu.getItems().setAll(
-                CosmeticsFX.simpleMenuItem("Open",
-                        event -> {
+        tableContextMenu = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Open")
+                        .withAction(eh -> {
                             handleOpen((ExtPath) tableView.getSelectionModel().getSelectedItem());
-                        }, propertySelectedSize.isEqualTo(1)),
-                CosmeticsFX.simpleMenuItem("Open in new window",
-                        event -> {
+                        })
+                        .visibleWhen(filesProperties.selectedSize(1))
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Open in new window")
+                        .withAction(eh -> {
                             ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
-                        }, selectedIsFolder),
-                CosmeticsFX.simpleMenuItem("Rename",
-                        event -> {
+                        })
+                        .visibleWhen(selectedIsFolder)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Rename")
+                        .withAction(eh -> {
                             rename();
-                        }, propertyRenameCondition),
-                CosmeticsFX.simpleMenuItem("Delete",
-                        event -> {
+                        })
+                        .visibleWhen(propertyRenameCondition)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Delete")
+                        .withAction(eh -> {
                             delete();
-                        }, propertyDeleteCondition),
-                CosmeticsFX.simpleMenuItem("Copy path",
-                        event -> {
-                            String absolutePath = selectedList.get(0).getAbsolutePath();
+                        })
+                        .visibleWhen(propertyDeleteCondition)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Copy path")
+                        .withAction(eh -> {
+                            String absolutePath = filesProperties.selectedItem().get().getAbsolutePath();
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
-                        }, propertyRenameCondition),
-                CosmeticsFX.simpleMenuItem("Copy name",
-                        event -> {
-                            String name = selectedList.get(0).getName(true);
+                        })
+                        .visibleWhen(propertyRenameCondition)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Copy name")
+                        .withAction(eh -> {
+                            String name = filesProperties.selectedItem().get().getName(true);
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(name), null);
-                        }, propertyRenameCondition),
-                CosmeticsFX.simpleMenuItem("Toggle Enable/Disable",
-                        event -> {
+                        })
+                        .visibleWhen(propertyRenameCondition)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Toggle Enable/Disable")
+                        .withAction(eh -> {
                             FX.submit(() -> {
-                                selectedList.stream().forEach(c -> {
+                                filesProperties.selectedItems().stream().forEach(c -> {
                                     c.isDisabled.setValue(c.isDisabled.not().get());
                                 });
                             });
-                        }, propertyDeleteCondition),
-                CosmeticsFX.simpleMenuItem("Create Virtual Folder",
-                        event -> {
+                        })
+                        .visibleWhen(propertyDeleteCondition)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Create Virtual Folder")
+                        .withAction(eh -> {
                             FX.submit(() -> {
                                 VirtualFolder.createVirtualFolder();
                                 update();
                             });
-                        }, propertyIsVirtualFolders),
-                CosmeticsFX.simpleMenuItem("Remove selected from Virtual Folder",
-                        event -> {
+                        })
+                        .visibleWhen(propertyIsVirtualFolders)
+                )
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Remove selected from Virtual Folder")
+                        .withAction(eh -> {
                             FX.submit(() -> {
                                 ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
                                 selectedItems.forEach((item) -> {
@@ -932,11 +1075,77 @@ public class MainController extends MyBaseController<MainController> {
                                 });
                                 update();
                             });
-                        }, MC.isVirtual.and(propertySelectedSize.greaterThan(0))),
-                submenuCreate,
-                submenuMarked,
-                submenuMarkFiles
-        );
+                        })
+                        .visibleWhen(MC.isVirtual.and(filesProperties.selectedItemNotNull()))
+                )
+                .addItem(submenuCreate)
+                .addItem(submenuMarked)
+                .addItem(submenuMarkFiles)
+                .addNestedDisableBind()
+                .addNestedVisibilityBind()
+                .build();
+        
+        /*
+        tableContextMenu.getItems().setAll(
+        CosmeticsFX.simpleMenuItem("Open",
+        event -> {
+        handleOpen((ExtPath) tableView.getSelectionModel().getSelectedItem());
+        }, filesProperties.selectedSize(1)),//
+        CosmeticsFX.simpleMenuItem("Open in new window",
+        event -> {
+        ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
+        }, selectedIsFolder),
+        CosmeticsFX.simpleMenuItem("Rename",
+        event -> {
+        rename();
+        }, propertyRenameCondition),
+        CosmeticsFX.simpleMenuItem("Delete",
+        event -> {
+        delete();
+        }, propertyDeleteCondition),
+        CosmeticsFX.simpleMenuItem("Copy path",
+        event -> {
+        String absolutePath = filesProperties.selectedItem().get().getAbsolutePath();
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
+        }, propertyRenameCondition),
+        CosmeticsFX.simpleMenuItem("Copy name",
+        event -> {
+        String name = filesProperties.selectedItem().get().getName(true);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(name), null);
+        }, propertyRenameCondition),
+        CosmeticsFX.simpleMenuItem("Toggle Enable/Disable",
+        event -> {
+        FX.submit(() -> {
+        filesProperties.selectedItems().stream().forEach(c -> {
+        c.isDisabled.setValue(c.isDisabled.not().get());
+        });
+        });
+        }, propertyDeleteCondition),
+        CosmeticsFX.simpleMenuItem("Create Virtual Folder",
+        event -> {
+        FX.submit(() -> {
+        VirtualFolder.createVirtualFolder();
+        update();
+        });
+        }, propertyIsVirtualFolders),
+        CosmeticsFX.simpleMenuItem("Remove selected from Virtual Folder",
+        event -> {
+        FX.submit(() -> {
+        ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
+        selectedItems.forEach((item) -> {
+        ExtPath remove = MC.currentDir.files.remove(item.propertyName.get());
+        if (remove instanceof ExtFolder) {
+        ExtFolder folder = (ExtFolder) remove;
+        folder.files.clear();
+        }
+        });
+        update();
+        });
+        }, MC.isVirtual.and(filesProperties.selectedItemNotNull())),
+        submenuCreate,
+        submenuMarked,
+        submenuMarkFiles
+        );*/
 
     }
 
@@ -985,27 +1194,20 @@ public class MainController extends MyBaseController<MainController> {
         CosmeticsFX.simpleMenuBindingWrap(tableView.getContextMenu());
         //TABLE VIEW ACTIONS
 
-        tableView.setOnMousePressed((MouseEvent event) -> {
-            hideAllContextMenus();
-
-            if (event.isPrimaryButtonDown()) {
-                if (!tableView.getSelectionModel().isEmpty()) {
-                    if (event.getClickCount() > 1) {
-                        ExtPath file = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-                        handleOpen(file);
-                    } else {
-                        selectedList = tableView.getSelectionModel().getSelectedItems();
-                    }
-                }
-            } else {
-                selectedIsFolder.set(tableView.getSelectionModel().getSelectedItem() instanceof ExtFolder);
-            }
+        FXDefs.configureDoubleClick(tableView, n -> {
+            return filesProperties.selectedItemNotNull().get();
+        }, ev -> {
+            handleOpen(filesProperties.selectedItem().get());
         });
+        getStage().getScene().setOnMousePressed(eh -> {
+            hideAllContextMenus();
+        });
+
         tableView.setOnKeyReleased(eh -> {
             KeyCode code = eh.getCode();
-            if (code.equals(KeyCode.DELETE)) {
+            if (code.equals(KeyCode.DELETE) && propertyDeleteCondition.get()) {
                 delete();
-            } else if (code.equals(KeyCode.F2)) {
+            } else if (code.equals(KeyCode.F2) && propertyRenameCondition.get()) {
                 rename();
             }
         });
@@ -1018,7 +1220,7 @@ public class MainController extends MyBaseController<MainController> {
                 return;
             }
             // drag was detected, start drag-and-drop gesture
-            MainController.dragList = selectedList;
+            MainController.dragList = filesProperties.selectedItems();
             if (!MainController.dragList.isEmpty()) {
                 Dragboard db = tableView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
@@ -1261,7 +1463,7 @@ public class MainController extends MyBaseController<MainController> {
     private void delete() {
         if (this.propertyDeleteCondition.get()) {
             Logger.info("Deleting");
-            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(selectedList);
+            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(filesProperties.selectedItems());
             task.setDescription("Delete selected files");
             ViewManager.getInstance().newProgressDialog(task);
         }

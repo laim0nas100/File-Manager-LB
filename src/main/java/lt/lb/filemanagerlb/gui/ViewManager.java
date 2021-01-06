@@ -75,7 +75,7 @@ public class ViewManager {
                     frame.getStage().show();
                     controller.afterShow();
                     Logger.info("AFTER SHOW");
-                } catch (InterruptedException | ExecutionException | FrameException ex) {
+                } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
                 return null;

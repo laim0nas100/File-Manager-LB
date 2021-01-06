@@ -128,11 +128,10 @@ public class LocationAPI {
 
     private Path recursiveRootResolve(Path start, int limmit) {
         Path parent = start.getParent();
-        if (parent == null || limmit == 0) {
+        if (parent == null || limmit <= 0) {
             return start;
         } else {
-            limmit--;
-            return recursiveRootResolve(parent, limmit);
+            return recursiveRootResolve(parent, limmit - 1);
         }
     }
 
@@ -255,7 +254,7 @@ public class LocationAPI {
     public ExtPath getFileIfExists(LocationInRoot location) {
         ExtPath fileByLocation = getFileByLocation(location);
         LocationInRoot mapping = fileByLocation.getMapping();
-        Logger.info(location+" "+ mapping);
+        Logger.info(location + " " + mapping);
         if (location.equals(mapping)) {
             Logger.info("Equals");
             return fileByLocation;
