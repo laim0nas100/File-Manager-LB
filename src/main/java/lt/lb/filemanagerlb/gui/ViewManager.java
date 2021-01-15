@@ -1,9 +1,10 @@
 package lt.lb.filemanagerlb.gui;
 
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.F;
 import lt.lb.commons.javafx.FX;
@@ -11,6 +12,7 @@ import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.scenemanagement.FXMLFrame;
 import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.commons.javafx.scenemanagement.FrameException;
+import lt.lb.commons.javafx.scenemanagement.frames.Util;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.AdvancedRenameController;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
@@ -51,12 +53,8 @@ public class ViewManager {
         this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
         this.pinProgressDialogs = new SimpleBooleanProperty(false);
         this.pinTextInputDialogs = new SimpleBooleanProperty(false);
-        this.windows = new HashSet<>();
 
     }
-    public final HashSet<String> windows;
-    private boolean initStart = false;
-
     public static ViewManager getInstance() {
         return INSTANCE;
     }
@@ -68,9 +66,9 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Logger.info("NEW WINDOW");
-                    FXMLFrame frame = newFrame(FrameTitle.WINDOW);
+                    
+                    FXMLFrame<MainController> frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = frame.getController();
-                    windows.add(frame.getID());
                     controller.beforeShow(frame.getTitle(), currentFolder);
                     frame.getStage().show();
                     controller.afterShow();
@@ -86,15 +84,17 @@ public class ViewManager {
     }
 
     public void updateAllWindows() {
-        for (String id : windows) {
-            TaskFactory.mainExecutor.execute(getController(id)::update);
-        }
+        D.sm.getAllControllers(MainController.class).forEach(conrt ->{
+            
+            TaskFactory.mainExecutor.execute(conrt::update);
+        });
     }
 
     public void updateAllFrames() {
-        for (String id : D.sm.getFrameIds()) {
-            TaskFactory.mainExecutor.execute(getController(id)::update);
-        }
+        Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
+        allControllers.forEach(con ->{
+            TaskFactory.mainExecutor.execute(con::update);
+        });
     }
 
     public FXMLFrame getFxmlFrame(String id) {
@@ -102,7 +102,7 @@ public class ViewManager {
     }
 
     public <T extends MyBaseController> T getController(String id) {
-        return getFxmlFrame(id).getController();
+        return (T) getFxmlFrame(id).getController();
     }
 
     public boolean frameIsVisible(String windowID) {
@@ -340,7 +340,7 @@ public class ViewManager {
         });
 
         FXJob showJob = new FXJob(me -> {
-            
+
             FXMLFrame frame = newFrame(FrameTitle.MEDIA_PLAYER);
             frame.getStage().show();
             frame.getStage().toFront();
@@ -356,44 +356,21 @@ public class ViewManager {
     }
 
     private <T> FXMLFrame newFrame(FrameTitle info) throws FrameException, InterruptedException, ExecutionException {
-        return newFrame(info, false, c -> {
-        });
+        return newFrame(info, false, Util.emptyConsumer);
     }
 
     private <T extends MyBaseController> FXMLFrame newFrame(FrameTitle info, boolean singleton, Consumer<T> cons) throws FrameException, InterruptedException, ExecutionException {
-        URL resource = D.cLoader.getResource(info.recourse);
-        return D.sm.newFxmlFrame(resource, info.title, info.title, singleton, cons);
+        if (singleton) {
+            return D.sm.newFxmlFrameSingleton(info.recourse, info.title, cons).get();
+        }
+        return D.sm.newFxmlFrame(info.recourse, info.title, cons).get();
     }
 
     public void closeFrame(String windowID) {
-        if (this.initStart) {
-            return;
-        }
         FX.submit(() -> {
             D.sm.closeFrame(windowID);
-
-            windows.remove(windowID);
-            if (windows.isEmpty()) {
-                closeAllFramesNoExit();
-                try {
-                    FileManagerLB.doOnExit();
-                } catch (Exception e) {
-                    ErrorReport.report(e);
-                }
-                System.exit(0);
-            }
         });
     }
 
-    public void closeAllFramesNoExit() {
-        this.initStart = true;
-        D.sm.getFrameIds().forEach(key -> {
-            getController(key).exit();
-            Logger.info("Close", key);
-            D.sm.closeFrame(key);
-        });
-        windows.clear();
-        this.initStart = false;
-    }
 
 }

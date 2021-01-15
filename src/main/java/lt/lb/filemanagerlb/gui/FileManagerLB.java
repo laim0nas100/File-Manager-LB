@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -24,7 +25,10 @@ import javafx.scene.image.Image;
 import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.io.TextFileIO;
+import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
+import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
+import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
@@ -61,21 +65,33 @@ public class FileManagerLB {
         SLF4JBridgeHandler.install();
     }
 
+    public static boolean init = false;
     public static void main(String[] args) {
         D.sm = new MultiStageManager(
+                D.cLoader,
                 positionInfo,
                 sizeInfo,
-                new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png")))
+                new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
+                new WithDecoration(FrameState.FrameStateClose.instance, d -> {
+                    if (!init && D.sm.getAllControllers(MainController.class).count() == 0) {
+                        ErrorReport.with(() -> {
+                            D.sm.getFrames().forEach(frame -> frame.close());
+                            FileManagerLB.doOnExit();
+                            System.exit(0);
+                        });
+
+                    }
+                })
         );
 
         Logger.info("Manifest");
 
         F.checkedRun(() -> {
-            URL res = FileManagerLB.class.getResource("/stamped/version.txt");
+            URL res = D.cLoader.getResource("stamped/version.txt");
             ArrayList<String> lines = lt.lb.commons.io.TextFileIO.readFrom(res);
             Logger.info("LINES");
             Logger.info(() -> lines.stream().collect(Collectors.joining("\n")));
-        }).ifPresent(ErrorReport::report);;
+        }).ifPresent(ErrorReport::report);
         F.checkedRun(() -> {
             reInit();
         }).ifPresent(ErrorReport::report);
@@ -107,13 +123,13 @@ public class FileManagerLB {
     }
 
     public static <T> T yamlRead(Path path) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try ( BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return yaml.load(reader);
         }
     }
 
     public static <T> void yamlWrite(Path path, T item) throws IOException {
-        try (BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try ( BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             yaml.dump(item, newBufferedWriter);
         }
 
@@ -160,7 +176,7 @@ public class FileManagerLB {
 
     public static void doOnExit() {
         Logger.info("Exit call invoked");
-        ViewManager.getInstance().closeAllFramesNoExit();
+        D.sm.getFrames().forEach(frame -> frame.close());
         try {
 
             SessionInfo si = D.sessionInfo;
@@ -190,7 +206,8 @@ public class FileManagerLB {
 
     public static void reInit() throws IOException {
         Logger.info("INITIALIZE");
-        ViewManager.getInstance().closeAllFramesNoExit();
+        init = true;
+        D.sm.getFrames().forEach(frame -> frame.close());
 
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -236,6 +253,7 @@ public class FileManagerLB {
         MainController.links.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Logger.info("After new window");
+        init = false;
 
     }
 

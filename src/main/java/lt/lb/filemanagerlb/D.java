@@ -1,11 +1,11 @@
 package lt.lb.filemanagerlb;
 
-import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import java.io.File;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.io.directoryaccess.Dir;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
+import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 
 /**
@@ -30,5 +30,5 @@ public class D {
 
     public static MultiStageManager sm;
 
-    public static ClassLoader cLoader = D.class.getClassLoader();
+    public static final ClassLoader cLoader = D.class.getClassLoader();
 }

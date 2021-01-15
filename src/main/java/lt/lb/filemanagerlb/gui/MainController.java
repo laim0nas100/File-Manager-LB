@@ -83,7 +83,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
-import lt.lb.commons.javafx.ViewProperties;
+import lt.lb.commons.javafx.properties.ViewProperties;
 import org.tinylog.Logger;
 
 /**
@@ -214,7 +214,6 @@ public class MainController extends MyBaseController<MainController> {
     });
 
     public void beforeShow(String title, ExtFolder currentDir) {
-
         super.beforeShow(title);
         MC = new ManagingClass(currentDir);
 
@@ -238,7 +237,7 @@ public class MainController extends MyBaseController<MainController> {
         pinTextInput.selectedProperty().bindBidirectional(ViewManager.getInstance().pinTextInputDialogs);
 
         propertyDeleteCondition.bind(writeableFolder.and(filesProperties.selectedItemNotNull()));
-        propertyRenameCondition.bind(writeableFolder.and(filesProperties.itemsSize(1)));
+        propertyRenameCondition.bind(writeableFolder.and(filesProperties.selectedSize(1)));
 
         finder = new Finder("", useRegex.selectedProperty());
         Bindings.bindContentBidirectional(finder.list, searchView.getItems());

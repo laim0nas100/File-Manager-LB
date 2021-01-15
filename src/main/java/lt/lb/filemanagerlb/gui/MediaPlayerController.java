@@ -1,6 +1,5 @@
 package lt.lb.filemanagerlb.gui;
 
-import lt.lb.commons.threads.sync.EventQueue;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.util.*;
@@ -10,20 +9,27 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javax.swing.JFrame;
-import lt.lb.commons.containers.values.Value;
+import lt.lb.commons.F;
+import lt.lb.commons.SafeOpt;
+import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
-import lt.lb.commons.F;
-import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.TimeoutTask;
-import lt.lb.commons.javafx.ViewProperties;
+import lt.lb.commons.javafx.properties.ViewProperties;
+import lt.lb.commons.javafx.scenemanagement.StageFrame;
+import lt.lb.commons.threads.Futures;
+import lt.lb.commons.threads.executors.FastExecutor;
+import lt.lb.commons.threads.sync.EventQueue;
+import lt.lb.fastid.FastID;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -40,8 +46,8 @@ import lt.lb.filemanagerlb.utility.SimpleTask;
 import org.tinylog.Logger;
 import uk.co.caprica.vlcj.binding.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
 
@@ -64,6 +70,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public final static boolean seamlessDisabled = true;
+    public final static boolean oldMode = false;
 
     public static enum PlayerState {
         PLAYING, PAUSED, STOPPED, NEW
@@ -125,11 +132,20 @@ public class MediaPlayerController extends MyBaseController {
     private ExtPath filePlaying;
     private ArrayList<ExtPath> backingList = new ArrayList<>();
 
-    private ArrayDeque<JFrame> frames = new ArrayDeque<>();
-    private ArrayDeque<MediaPlayer> players = new ArrayDeque<>();
+    private HashMap<FastID, Player> pls = new HashMap<>();
+    private ArrayDeque<FastID> playerIDs = new ArrayDeque<>();
+
+    private static class Player {
+
+        public MediaPlayer media;
+        public StageFrame stageFrame;
+        public JFrame jFrame;
+        public final FastID id = FastID.getAndIncrementGlobal();
+
+    }
 
     private ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
-    private EventQueue events = new EventQueue(execService);
+    private EventQueue events = new EventQueue(new FastExecutor(1));
     TimeoutTask dragTask = new TimeoutTask(300, 20, () -> {
         float val = seekSlider.valueProperty().divide(100).floatValue();
         float position = getCurrentPlayer().status().position();
@@ -207,18 +223,23 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
-    private MediaPlayer getCurrentPlayer() {
-        if (players.isEmpty()) {
+    private Player gcp() {
+        if (pls.isEmpty()) {
             throw new VLCException("No available players");
         }
-        return this.players.getLast();
+        return pls.get(playerIDs.getLast());
     }
 
-    private JFrame getCurrentFrame() {
-        if (frames.isEmpty()) {
-            throw new VLCException("No available frames");
-        }
-        return this.frames.getLast();
+    private MediaPlayer getCurrentPlayer() {
+        return gcp().media;
+    }
+
+    private StageFrame getCurrentFrame() {
+        return gcp().stageFrame;
+    }
+
+    private JFrame getCurrentFrameOld() {
+        return gcp().jFrame;
     }
 
     public static class VLCException extends RuntimeException {
@@ -228,20 +249,65 @@ public class MediaPlayerController extends MyBaseController {
         }
     }
 
-    public MediaPlayer getPreparedMediaPlayer() {
+    private Player getPreparedMediaPlayer() {
+        if (oldMode) {
+            return getPreparedMediaPlayerOld();
+        } else {
+            return getPreparedMediaPlayerNew();
+        }
+    }
+
+    private Player getPreparedMediaPlayerNew() {
+
         EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
-//        Log.write("Inside: newPlayer");
+        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
+        newPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
+        imageView.setPreserveRatio(true);
+        Future<StageFrame> future = D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
+            return new Group(imageView);
+        });
+
+        SafeOpt<StageFrame> error = Futures.mappable(future).map(stageFrame -> {
+            if (showVideo.selectedProperty().get()) {
+                stageFrame.show();
+            } else {
+                stageFrame.hide();
+            }
+            Stage stage = stageFrame.getStage();
+            stage.setOnCloseRequest(eh -> {
+                showVideo.selectedProperty().set(false);
+                eh.consume();
+                stage.hide();
+            });
+            imageView.fitHeightProperty().bind(stage.heightProperty());
+            imageView.fitWidthProperty().bind(stage.widthProperty());
+
+            return stageFrame;
+
+        }).safeGet();
+
+        if (error.hasError()) {
+            error.getError().ifPresent(err -> {
+                Logger.error(err);
+            });
+            return null;
+        } else {
+            Player pl = new Player();
+            pl.media = newPlayer;
+            pl.stageFrame = error.get();
+            return pl;
+        }
+
+    }
+
+    private Player getPreparedMediaPlayerOld() {
+        EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
         Canvas canvas = new Canvas();
         ComponentVideoSurface newVideoSurface = factory.videoSurfaces().newVideoSurface(canvas);
         newPlayer.videoSurface().set(newVideoSurface);
-//        Log.write("Inside: done with surface");
 
         JFrame jframe = new JFrame();
-
-//        Log.write("New JFrame done");
-        jframe.setVisible(true);
         jframe.setExtendedState(JFrame.ICONIFIED);
-//        Log.write("Set visible");
         jframe.add(canvas);
         jframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         jframe.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -250,7 +316,6 @@ public class MediaPlayerController extends MyBaseController {
                 showVideo.setSelected(false);
             }
         });
-//        Log.write("Inside: done with frame");
         if (showVideo.selectedProperty().get()) {
             jframe.setExtendedState(JFrame.NORMAL);
             jframe.setVisible(true);
@@ -258,11 +323,18 @@ public class MediaPlayerController extends MyBaseController {
             jframe.setVisible(false);
         }
         jframe.setBackground(Color.black);
-        jframe.setSize(getCurrentFrame().getSize());
-        jframe.setLocation(getCurrentFrame().getLocation());
-        frames.add(jframe);
-//        newPlayer.addMediaPlayerEventListener(defaultPlayerEventAdapter);
-        return newPlayer;
+
+        if (!pls.isEmpty()) {
+            jframe.setSize(getCurrentFrameOld().getSize());
+            jframe.setLocation(getCurrentFrameOld().getLocation());
+        } else {
+            jframe.setSize(800, 600);
+        }
+
+        Player pl = new Player();
+        pl.jFrame = jframe;
+        pl.media = newPlayer;
+        return pl;
     }
 
     public void beforeShow() {
@@ -270,7 +342,22 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void setUpTable() {
-        this.extTableView = new ExtTableView(table);
+        events.preventSelfTagCancel = true;
+
+        if (D.DEBUG.get()) {
+            events.eventCallbackBefore = event -> {
+                if (!event.tag.equals(PlayerEventType.SEEK)) {
+                    Logger.info("START " + event.tag);
+                }
+            };
+            events.eventCallbackAfter = event -> {
+                if (!event.tag.equals(PlayerEventType.SEEK)) {
+                    Logger.info("END " + event.tag + " Cancel:" + event.isCancelled());
+                }
+            };
+        }
+
+        extTableView = new ExtTableView(table);
         tableProperties = ViewProperties.ofTableView(table);
 
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
@@ -364,7 +451,7 @@ public class MediaPlayerController extends MyBaseController {
             event.consume();
         });
 
-        this.extTableView.updateContentsAndSort(backingList);
+        extTableView.updateContentsAndSort(backingList);
     }
 
     private void setVolume(MediaPlayer player, int vol) {
@@ -384,17 +471,31 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
+    private void addPlayer(Player player) {
+        pls.put(player.id, player);
+        playerIDs.addLast(player.id);
+    }
+
+    private void removePlayer(Player player) {
+        pls.remove(player.id);
+        playerIDs.remove(player.id);
+    }
+
     @Override
     public void afterShow() {
 
-        JFrame tempFrame = new JFrame();
-        tempFrame.setSize(800, 480);
-        frames.add(tempFrame);
-        getCurrentFrame().setVisible(false);
+//        JFrame tempFrame = new JFrame();
+//        tempFrame.setSize(800, 480);
+//        framesOld.add(tempFrame);
+//        if (oldMode) {
+//            getCurrentFrameOld().setVisible(false);
+//        } else {
+//            getCurrentFrame().hide();
+//        }
         factory = new MediaPlayerFactory();
 //        Log.write("Factory");
-        players.add(getPreparedMediaPlayer());
-        frames.pollFirst().setVisible(false);
+        addPlayer(getPreparedMediaPlayer());
+//        framesOld.pollFirst().setVisible(false);
 //        Log.write("Player INIT");
         SimpleDoubleProperty prop = new SimpleDoubleProperty(100);
         SimpleBooleanProperty changeResetComplete = new SimpleBooleanProperty(true);
@@ -410,7 +511,7 @@ public class MediaPlayerController extends MyBaseController {
                 int rounded = (int) Math.round(volume);
                 lastVolume.set(rounded);
 
-                if (players.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
+                if (pls.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
                     return;
                 }
                 setVolume(getCurrentPlayer(), rounded);
@@ -522,10 +623,20 @@ public class MediaPlayerController extends MyBaseController {
             playType.getSelectionModel().select(0);
             showVideo.selectedProperty().addListener(listener -> {
                 boolean visible = showVideo.selectedProperty().get();
-                getCurrentFrame().setVisible(visible);
-                if (visible) {
-                    getCurrentFrame().setExtendedState(JFrame.NORMAL);
+                if (oldMode) {
+                    getCurrentFrameOld().setVisible(visible);
+                    if (visible) {
+                        getCurrentFrameOld().setExtendedState(JFrame.NORMAL);
+                    }
+                } else {
+                    if (visible) {
+                        getCurrentFrame().show();
+                    } else {
+                        getCurrentFrame().hide();
+                    }
+
                 }
+
                 if (visible && !startedWithVideo) {
                     if (getCurrentPlayer().status().isPlaying()) {
                         relaunch();
@@ -544,7 +655,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private void updateSeekLabels(Float position, Long millisPassed) {
         FX.submit(() -> {
-            if (!stopping && !players.isEmpty() && getCurrentPlayer().status().isPlaying()) {
+            if (!stopping && !pls.isEmpty() && getCurrentPlayer().status().isPlaying()) {
 
                 this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
                 if (!this.dragTask.isInAction()) {
@@ -556,6 +667,9 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void updateSeek() {
+        if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
+            return;
+        }
         events.add(PlayerEventType.SEEK, () -> {
             if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
                 return;
@@ -643,14 +757,14 @@ public class MediaPlayerController extends MyBaseController {
     public void exit() {
         stopping = true;
 
-        players.forEach(player -> {
-            player.controls().stop();
-            player.release();
-        });
-        frames.forEach(frame -> {
-//            frame.setVisible(false);
-//            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-            frame.dispose();
+        pls.values().forEach(player -> {
+            player.media.controls().stop();
+            player.media.release();
+            if (oldMode) {
+                player.jFrame.dispose();
+            } else {
+                player.stageFrame.close();
+            }
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
         this.execService.shutdown();
@@ -675,7 +789,7 @@ public class MediaPlayerController extends MyBaseController {
                     }
                 } else if (playType.getSelectionModel().getSelectedItem().equals(typeStopAfterFinish)) {
                     if (index + increment == table.getItems().size()) {
-                        stop();
+//                        stop();
                         filePlaying = null;
                         update();
                         return;
@@ -689,8 +803,9 @@ public class MediaPlayerController extends MyBaseController {
                 return;
             }
 
-            if (!seamlessDisabled && this.players.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
-                playSeemless(item, (long) opt[1]);
+            if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
+//                playSeemless(item, (long) opt[1]);
+                play(item);
             } else {
                 play(item);
             }
@@ -736,8 +851,20 @@ public class MediaPlayerController extends MyBaseController {
             filePlaying = item;
 
             stop();
-            getCurrentFrame().setTitle(filePlaying.getName(true));
-            startedWithVideo = getCurrentFrame().isVisible();
+            if (oldMode) {
+                getCurrentFrameOld().setTitle(filePlaying.getName(true));
+                startedWithVideo = getCurrentFrameOld().isVisible();
+            } else {
+                StageFrame currentFrame = getCurrentFrame();
+                Stage stage = currentFrame.getStage();
+                String title = filePlaying.getName(true);
+                FX.submit(() -> {
+                    stage.setTitle(title);
+                });
+
+                startedWithVideo = stage.isShowing();
+            }
+
             boolean playable = getCurrentPlayer().media().prepare(filePlaying.getAbsolutePath(), getOptions());
             if (!playable) {
                 table.getItems().remove(filePlaying);
@@ -765,6 +892,7 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
+    /*
     private void playSeemless(ExtPath item, final long millisLeft) {
         if (seamlessDisabled) {
             return;
@@ -780,7 +908,7 @@ public class MediaPlayerController extends MyBaseController {
                 Logger.info("Finished old player");
                 int i = 1;
                 while (players.size() > 1) {
-                    frames.pollFirst().dispose();
+                    framesOld.pollFirst().dispose();
                     players.pollFirst().release();
 //                    oldplayer.release();
                     Logger.info("Frame/Player collected " + i++);
@@ -792,7 +920,7 @@ public class MediaPlayerController extends MyBaseController {
                 Logger.info("Finished old player");
                 int i = 1;
                 while (players.size() > 1) {
-                    frames.pollFirst().dispose();
+                    framesOld.pollFirst().dispose();
                     players.pollFirst().release();
 //                    oldplayer.release();
                     Logger.info("Frame/Player collected " + i++);
@@ -814,21 +942,21 @@ public class MediaPlayerController extends MyBaseController {
 
                 double inc = oldVolume.get() / (overTime / timeChangeMillis);
                 double difference = inc;
-                /*
-                 * oldVolume 100
-                 * over 12 seconds
-                 * change volume each 500 millis
-                 * 12000 / 500 = 24 iterations
-                 * 100 / 24 ~ 4.16
-                 *
-                 *
-                 * oldVolume 100
-                 * over 8 seconds
-                 *
-                 * 8000 / 500 = 16 iterations
-                 * 100 / 16 ~ 6.25
-                 *
-                 */
+//                
+//                  oldVolume 100
+//                  over 12 seconds
+//                  change volume each 500 millis
+//                  12000 / 500 = 24 iterations
+//                  100 / 24 ~ 4.16
+//                 
+//                 
+//                  oldVolume 100
+//                  over 8 seconds
+//                 
+//                  8000 / 500 = 16 iterations
+//                  100 / 16 ~ 6.25
+                 
+                 
                 long millis = millisLeft;
 
                 while (oldVolume.get() - difference > 1 && millis > 10) {
@@ -863,7 +991,7 @@ public class MediaPlayerController extends MyBaseController {
         promise.set(play);
         toThread.start();
     }
-
+     */
     private String formatToMinutesAndSeconds(long millis) {
         long minutes = (millis / 1000) / 60;
         long seconds = (millis / 1000) % 60;
@@ -960,7 +1088,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void loadPlaylistState(PlaylistState state) {
-        this.stop();
+        stop();
         events.add(() -> {
 
             this.table.getItems().clear();

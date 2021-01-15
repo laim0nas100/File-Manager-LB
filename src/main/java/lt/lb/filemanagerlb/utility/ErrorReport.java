@@ -1,17 +1,13 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.utility;
 
-import lt.lb.filemanagerlb.gui.FileManagerLB;
-import lt.lb.filemanagerlb.gui.MainController;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
+import lt.lb.commons.F;
+import lt.lb.commons.func.unchecked.UnsafeRunnable;
+import lt.lb.filemanagerlb.gui.MainController;
 import org.tinylog.Logger;
 
 /**
@@ -20,13 +16,15 @@ import org.tinylog.Logger;
  */
 public class ErrorReport {
 
+    public static void with(UnsafeRunnable run){
+        F.checkedRun(run).ifPresent(ErrorReport::report);
+    }
     
     static SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
     public static void report(Throwable ex) {
         Logger.error(ex,"Error");
         ErrorReport error = new ErrorReport(ex);
         MainController.errorLog.add(0, error);
-        
     }
     private final SimpleStringProperty errorName;
     private final Throwable errorCause;

@@ -15,10 +15,18 @@ import lt.lb.commons.javafx.scenemanagement.InjectableController;
 /**
  *
  * @author Laimonas Beniušis
+ * @param <T>
  */
 public abstract class MyBaseController<T extends MyBaseController> implements InjectableController<T> {
 
     protected Frame frame;
+
+    @Override
+    public Frame getFrame() {
+        return frame;
+    }
+    
+    
 
     protected void beforeShow(String title) {
     }

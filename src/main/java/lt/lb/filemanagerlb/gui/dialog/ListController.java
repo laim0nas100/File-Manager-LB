@@ -1,12 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.filemanagerlb.gui.MyBaseController;
-import lt.lb.filemanagerlb.gui.FileManagerLB;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -16,13 +9,14 @@ import javafx.scene.control.*;
 import lt.lb.commons.iteration.ReadOnlyIterator;
 import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 
 /**
  * FXML Controller class
  *
  * @author Laimonas Beniušis
  */
-public class ListController extends MyBaseController {
+public class ListController extends MyBaseController<ListController> {
 
     @FXML
     public Label descriptionLabel;
