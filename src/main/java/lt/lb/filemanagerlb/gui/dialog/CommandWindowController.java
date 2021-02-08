@@ -2,7 +2,6 @@ package lt.lb.filemanagerlb.gui.dialog;
 
 import java.io.*;
 import java.util.*;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -11,12 +10,12 @@ import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
-import lt.lb.commons.misc.CLI;
+import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
+import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.gui.custom.AbstractCommandField;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -119,7 +118,7 @@ public class CommandWindowController extends MyBaseController {
             command.apply(newCom);
         });
         command.addCommand(commandInit, (String... params) -> {
-            Platform.runLater(() -> {
+            FX.submit(() -> {
                 F.checkedRun(() -> {
                     FileManagerLB.reInit();
                 }).ifPresent(ErrorReport::report);
@@ -183,7 +182,7 @@ public class CommandWindowController extends MyBaseController {
     }
 
     public void addToTextArea(TextArea textA, String text) {
-        Platform.runLater(() -> {
+        FX.submit(() -> {
             String newString = textA.getText() + text;
             textA.setText(newString.substring(Math.max(newString.length() - truncateAfter, 0)));
             textA.positionCaret(textA.getLength());
@@ -329,7 +328,7 @@ public class CommandWindowController extends MyBaseController {
                         @Override
                         protected Void call() throws Exception {
                             Logger.info("Run native command:", command);
-                            Process process = CLI.createNewProcess(list.toArray(new String[1])).call();
+                            Process process = new ProcessBuilder(list.toArray(new String[1])).redirectErrorStream(true).start();
                             handleStream(process, textArea, setTextAfterwards, command);
                             return null;
                         }

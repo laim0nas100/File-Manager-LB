@@ -2,11 +2,11 @@ package lt.lb.filemanagerlb.utility;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import lt.lb.commons.func.unchecked.UnsafeConsumer;
 import lt.lb.commons.javafx.FX;
 import lt.lb.jobsystem.Job;
 import lt.lb.jobsystem.VoidJob;
 import lt.lb.jobsystem.events.SystemJobEventName;
+import lt.lb.commons.func.unchecked.UncheckedConsumer;
 
 /**
  *
@@ -14,7 +14,7 @@ import lt.lb.jobsystem.events.SystemJobEventName;
  */
 public class FXJob extends VoidJob {
     
-    public FXJob(UnsafeConsumer<Job<Void>> call) {
+    public FXJob(UncheckedConsumer<Job<Void>> call) {
         super(call);
         this.addListener(SystemJobEventName.ON_EXCEPTIONAL, lis -> {
             Optional<ExecutionException> data = lis.getData();

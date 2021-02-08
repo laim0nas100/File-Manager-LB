@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import javafx.stage.Stage;
 import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.commons.javafx.scenemanagement.InjectableController;
+import lt.lb.filemanagerlb.utility.ErrorReport;
+import org.tinylog.Logger;
 
 /**
  *
@@ -25,8 +27,6 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
     public Frame getFrame() {
         return frame;
     }
-    
-    
 
     protected void beforeShow(String title) {
     }
@@ -43,26 +43,41 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
         return frame.getStage();
     }
 
+    private boolean closing = false;
+
     @Override
-    public void exit() {
-        ViewManager.getInstance().closeFrame(getID());
-        ViewManager.getInstance().updateAllFrames();
+    public void close() {
+        if (closing) {
+            return; // prevent recusrion1
+        }
+        closing = true;
+        try {
+            exit();
+            InjectableController.super.close();
+            ViewManager.getInstance().updateAllFrames();
+        } catch (Exception ex) {
+            ErrorReport.report(ex);
+        } finally{
+            closing = false;
+        }
+
     }
 
-    
+    public void exit() {
+        close();
+    }
+
     public abstract void update();
 
     @Override
     public void inject(Frame frame, URL url, ResourceBundle rb) {
         this.frame = frame;
     }
-    
 
     @Override
-    public void init(Consumer<T> cons){
+    public void init(Consumer<T> cons) {
         T me = (T) this;
         cons.accept(me);
     }
-
 
 }

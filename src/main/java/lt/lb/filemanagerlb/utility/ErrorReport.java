@@ -6,9 +6,9 @@ import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 import lt.lb.commons.F;
-import lt.lb.commons.func.unchecked.UnsafeRunnable;
 import lt.lb.filemanagerlb.gui.MainController;
 import org.tinylog.Logger;
+import lt.lb.commons.func.unchecked.UncheckedRunnable;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.tinylog.Logger;
  */
 public class ErrorReport {
 
-    public static void with(UnsafeRunnable run){
+    public static void with(UncheckedRunnable run){
         F.checkedRun(run).ifPresent(ErrorReport::report);
     }
     

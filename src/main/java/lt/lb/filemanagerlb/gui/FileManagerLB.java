@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,6 +27,7 @@ import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.javafx.scenemanagement.BaseController;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
 import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
@@ -66,6 +68,7 @@ public class FileManagerLB {
     }
 
     public static boolean init = false;
+
     public static void main(String[] args) {
         D.sm = new MultiStageManager(
                 D.cLoader,
@@ -74,10 +77,16 @@ public class FileManagerLB {
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
                 new WithDecoration(FrameState.FrameStateClose.instance, d -> {
                     if (!init && D.sm.getAllControllers(MainController.class).count() == 0) {
-                        ErrorReport.with(() -> {
-                            D.sm.getFrames().forEach(frame -> frame.close());
-                            FileManagerLB.doOnExit();
-                            System.exit(0);
+                        init = true;
+                        FX.submit(() -> {
+                            ErrorReport.with(() -> {
+                                Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
+                                allControllers.filter(f->!f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
+
+                                FileManagerLB.doOnExit();
+                                System.exit(0);
+                            });
+                            init = false;
                         });
 
                     }
@@ -123,13 +132,13 @@ public class FileManagerLB {
     }
 
     public static <T> T yamlRead(Path path) throws IOException {
-        try ( BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return yaml.load(reader);
         }
     }
 
     public static <T> void yamlWrite(Path path, T item) throws IOException {
-        try ( BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             yaml.dump(item, newBufferedWriter);
         }
 

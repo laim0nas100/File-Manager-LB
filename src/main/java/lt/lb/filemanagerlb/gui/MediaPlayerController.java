@@ -342,17 +342,20 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void setUpTable() {
-        events.preventSelfTagCancel = true;
+        events.preventRunningSelfTagCancel = true;
+        events.preventRunningTagCancel = false;
 
         if (D.DEBUG.get()) {
             events.eventCallbackBefore = event -> {
-                if (!event.tag.equals(PlayerEventType.SEEK)) {
-                    Logger.info("START " + event.tag);
+                List<String> tags = Arrays.asList(event.tags);
+                if (!tags.contains(PlayerEventType.SEEK)) {
+                    Logger.info("START " + Arrays.asList(event.tags));
                 }
             };
             events.eventCallbackAfter = event -> {
-                if (!event.tag.equals(PlayerEventType.SEEK)) {
-                    Logger.info("END " + event.tag + " Cancel:" + event.isCancelled());
+                List<String> tags = Arrays.asList(event.tags);
+                if (!tags.contains(PlayerEventType.SEEK)) {
+                    Logger.info("END " + Arrays.asList(event.tags) + " Cancel:" + event.isCancelled());
                 }
             };
         }
@@ -720,7 +723,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void stop() {
-        events.cancelAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
+        events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
             while (getCurrentPlayer().status().isPlaying()) {
                 getCurrentPlayer().controls().stop();
@@ -755,16 +758,20 @@ public class MediaPlayerController extends MyBaseController {
 
     @Override
     public void exit() {
+        Logger.info("CLOSE MEDIA PLAYER");
         stopping = true;
 
         pls.values().forEach(player -> {
-            player.media.controls().stop();
-            player.media.release();
-            if (oldMode) {
-                player.jFrame.dispose();
-            } else {
-                player.stageFrame.close();
-            }
+            F.checkedRun(() -> {
+                player.media.controls().stop();
+                player.media.release();
+                if (oldMode) {
+                    player.jFrame.dispose();
+                } else {
+                    player.stageFrame.close();
+                }
+            }).ifPresent(ErrorReport::report);
+
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
         this.execService.shutdown();
@@ -838,7 +845,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     private Future play(ExtPath item, final Integer volume) {
-        events.cancelAll(PlayerEventType.PLAY_TASK);
+        events.dequeueAll(PlayerEventType.PLAY_TASK);
         return events.add(PlayerEventType.PLAY_TASK, () -> {
             ignoreSeek = true;
             Logger.info("Execute play task");
