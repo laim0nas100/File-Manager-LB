@@ -67,60 +67,53 @@ public class ExtFolder extends ExtPath {
     protected Future populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled) {
 
         Callable call = () -> {
-            try {
-                ArrayList<Promise> promises = new ArrayList<>();
-                if (Files.isDirectory(toPath())) {
-                    String parent = getAbsoluteDirectory();
 
-                    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
-                        for (Path f : dirStream) {
-                            if (isCanceled != null) {
-                                if (isCanceled.get()) {
-                                    Logger.info("Canceled form populate");
-                                    break;
-                                }
+            if (Files.isDirectory(toPath())) {
+                Map<String, ExtPath> localMap = new HashMap<>(files);
+                String parent = getAbsoluteDirectory();
+
+                try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
+                    for (Path f : dirStream) {
+                        if (isCanceled != null) {
+                            if (isCanceled.get()) {
+                                Logger.info("Canceled form populate");
+                                break;
                             }
-
-                            new Promise(() -> {
-                                if (isCanceled != null) {
-                                    if (isCanceled.get()) {
-                                        return;
-                                    }
-                                }
-                                final String name = StringOp.replaceOnce(f.toString(), parent, "");
-                                final String filePathStr = f.toString();
-                                ExtPath file = null;
-                                if (Files.exists(f) && !files.containsKey(name)) {
-                                    if (Files.isDirectory(f)) {
-                                        file = new ExtFolder(filePathStr, f);
-                                    } else if (Files.isSymbolicLink(f)) {
-                                        file = new ExtLink(filePathStr, f);
-                                    } else {
-                                        file = new ExtPath(filePathStr, f);
-                                    }
-                                    files.put(file.propertyName.get(), file);
-                                    if (buffer != null) {
-                                        buffer.add(file);
-
-                                    }
-                                }
-                            }).collect(promises).execute(TaskFactory.mainExecutor);
-
                         }
+
+                        if (isCanceled != null) {
+                            if (isCanceled.get()) {
+                                break;
+                            }
+                        }
+                        final String name = StringOp.replaceOnce(f.toString(), parent, "");
+                        final String filePathStr = f.toString();
+                        ExtPath file = null;
+                        if (Files.exists(f) && !localMap.containsKey(name)) {
+                            if (Files.isDirectory(f)) {
+                                file = new ExtFolder(filePathStr, f);
+                            } else if (Files.isSymbolicLink(f)) {
+                                file = new ExtLink(filePathStr, f);
+                            } else {
+                                file = new ExtPath(filePathStr, f);
+                            }
+                            localMap.put(name, file);
+                            if (buffer != null) {
+                                buffer.add(file);
+
+                            }
+                        }
+
                     }
                 }
-
-                try {
-                    new Promise().waitFor(promises).execute(TaskFactory.mainExecutor).get();
-                } catch (InterruptedException e) {
-                }
-
-            } catch (Exception e) {
-                ErrorReport.report(e);
+                files.putAll(localMap);
+                files.keySet().retainAll(localMap.keySet());
             }
+
             if (buffer != null) {
                 buffer.flush();
             }
+
             populating.set(false);
             return null;
         };
@@ -128,7 +121,7 @@ public class ExtFolder extends ExtPath {
             this.populatingFuture.set(new FutureTask<>(call));
             populatingFuture.get().run();
             populated = true;
-        } 
+        }
         return populatingFuture.get();
 
     }

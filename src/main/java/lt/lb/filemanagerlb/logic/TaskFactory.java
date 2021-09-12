@@ -45,9 +45,9 @@ public class TaskFactory {
     public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
-    private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
-    public static final Executor mainExecutor = new NestedTaskSubmitionExecutorLayer(innerExe);
-    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(mainExecutor);
+//    private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
+//    public static final Executor mainExecutor = new NestedTaskSubmitionExecutorLayer(innerExe);
+    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe);
     public static String dragInitWindowID = "";
 
     public static TaskFactory getInstance() {
@@ -56,6 +56,11 @@ public class TaskFactory {
     }
 
     protected TaskFactory() {
+        D.exe.setMainService("MAIN");
+        D.exe.setService("MAIN", ()->{
+            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
+            return new NestedTaskSubmitionExecutorLayer(exe);
+        });
         Character[] arrayWindows = new Character[]{
             '\\',
             '/',
@@ -401,7 +406,7 @@ public class TaskFactory {
     }
 
     public Future populateRecursiveParallelContained(ExtFolder folder, int depth) {
-        return populateRecursiveParallelInner(folder, depth, mainExecutor);
+        return populateRecursiveParallelInner(folder, depth, D.exe);
     }
 
     public Runnable populateRecursiveParallel(ExtFolder folder, int depth) {

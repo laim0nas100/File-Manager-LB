@@ -6,7 +6,7 @@ import lt.lb.commons.javafx.FX;
 import lt.lb.jobsystem.Job;
 import lt.lb.jobsystem.VoidJob;
 import lt.lb.jobsystem.events.SystemJobEventName;
-import lt.lb.commons.func.unchecked.UncheckedConsumer;
+import lt.lb.uncheckedutils.func.UncheckedConsumer;
 
 /**
  *

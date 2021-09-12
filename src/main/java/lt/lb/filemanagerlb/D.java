@@ -5,15 +5,17 @@ import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.io.directoryaccess.Dir;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
+import lt.lb.commons.threads.service.ServiceExecutorAggregatorLazy;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 
 /**
  *
- * @author Lemmin
+ * @author laim0nas100
  */
 public class D {
 
+    public static ServiceExecutorAggregatorLazy exe = new ServiceExecutorAggregatorLazy();
     public static SessionInfo sessionInfo = new SessionInfo();
     public static final HomeDir HOME_DIR = Dir.establishDirectory(System.getProperty("user.home") + File.separator + ".FileManagerLB", HomeDir.class);
     public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR.getAbsolutePathWithSeparator() + "VIRTUAL_FOLDERS" + File.separator;

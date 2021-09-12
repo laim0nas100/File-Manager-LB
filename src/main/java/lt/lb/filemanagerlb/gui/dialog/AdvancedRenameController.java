@@ -1,7 +1,11 @@
 package lt.lb.filemanagerlb.gui.dialog;
 
+import lt.lb.commons.parsing.token.Literal;
+import lt.lb.commons.parsing.token.Token;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -12,6 +16,7 @@ import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
 import lt.lb.commons.threads.executors.TaskBatcher;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -22,6 +27,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import lt.lb.uncheckedutils.Checked;
 
 /**
  * FXML Controller class
@@ -162,7 +168,7 @@ public class AdvancedRenameController extends MyBaseController {
 
                     object.newName(parseFilter(object.path1.getName(true), filter, number));
                     number += increment;
-                } catch (Lexer.StringNotTerminatedException ex) {
+                } catch (Exception ex) {
                     ErrorReport.report(ex);
                 }
             }
@@ -170,8 +176,14 @@ public class AdvancedRenameController extends MyBaseController {
             String strRegex = this.tfStrReg.getText();
             String replacement = "" + this.tfReplaceWith.getText();
             if (useRegex.isSelected()) {
-                for (TableItemObject object : this.tableList) {
-                    object.newName(ExtStringUtils.parseRegex(object.path1.getName(true), strRegex, replacement));
+                try {
+                    Pattern compiled = Pattern.compile(strRegex);
+                    for (TableItemObject object : this.tableList) {
+                        object.newName(compiled.matcher(object.path1.getName(true)).replaceAll(replacement));
+                    }
+                } catch (PatternSyntaxException ex) {
+                    ErrorReport.report(ex);
+                    return;
                 }
             } else {
                 for (TableItemObject object : this.tableList) {
@@ -186,6 +198,7 @@ public class AdvancedRenameController extends MyBaseController {
 
     @Override
     public void update() {
+
         updateLists();
 
     }
@@ -245,7 +258,7 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void apply() {
-        TaskBatcher batcher = new TaskBatcher(TaskFactory.mainExecutor);
+        TaskBatcher batcher = new TaskBatcher(D.exe);
 
         for (Object object : table.getItems()) {
             TableItemObject ob = (TableItemObject) object;
@@ -261,11 +274,10 @@ public class AdvancedRenameController extends MyBaseController {
             });
         }
         TaskBatcher.BatchRunSummary summary = batcher.awaitTolerateFails();
-        For.elements().iterate(summary.failures, (i,e)->{
-           ErrorReport.report(F.cast(e));
+        For.elements().iterate(summary.failures, (i, e) -> {
+            ErrorReport.report(F.cast(e));
         });
-        F.checkedRun(FX.submit(this::update)::get);
-        
+        Checked.checkedRun(FX.submit(this::update)::get);
 
     }
 

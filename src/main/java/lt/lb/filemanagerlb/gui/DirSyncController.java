@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -23,6 +24,9 @@ import javafx.scene.text.Text;
 import javafx.util.Callback;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.*;
+import lt.lb.commons.threads.service.ServiceTimeoutTask;
+import lt.lb.commons.threads.sync.WaitTime;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
@@ -86,10 +90,16 @@ public class DirSyncController extends MyBaseController {
     private Value<ExtPath> file1 = new Value<>();
     private ObservableList<TableColumn<ExtEntry, String>> tableColumns;
 
-    private TimeoutTask directoryCheckTask = new TimeoutTask(
-            1000, 100, () -> {
-                checkDirs();
-            });
+    private ServiceTimeoutTask directoryCheckTask = new ServiceTimeoutTask(
+            D.exe.scheduledService("dir-sync-sched"),
+            WaitTime.ofSeconds(1),
+            Executors.callable(this::checkDirs),
+            D.exe.service("dir-sync")
+    );
+//    private TimeoutTask directoryCheckTask = new TimeoutTask(
+//            1000, 100, () -> {
+//                checkDirs();
+//            });
 
     public static final Comparator<ExtEntry> cmpAsc = new Comparator<ExtEntry>() {
         @Override
@@ -250,13 +260,13 @@ public class DirSyncController extends MyBaseController {
             file0.set(LocationAPI.getInstance().getFileAndPopulate(text0));
             cond0.set(file0.get().getIdentity().equals(Enums.Identity.FOLDER));
             Logger.info("Check 0");
-        }, TaskFactory.mainExecutor);
+        }, D.exe);
         CompletableFuture<Void> s3 = FX.submitAsync(() -> {
 
             file1.set(LocationAPI.getInstance().getFileAndPopulate(text1));
             cond1.set(file1.get().getIdentity().equals(Enums.Identity.FOLDER));
             Logger.info("Check 1");
-        }, TaskFactory.mainExecutor);
+        }, D.exe);
 
         FX.join(s1, s2, s3);
         Logger.info("After join");

@@ -34,6 +34,7 @@ import lt.lb.filemanagerlb.utility.FXJob;
 import lt.lb.jobsystem.Dependencies;
 import lt.lb.jobsystem.Job;
 import lt.lb.jobsystem.events.SystemJobEventName;
+import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
 
 /**
@@ -86,14 +87,14 @@ public class ViewManager {
     public void updateAllWindows() {
         D.sm.getAllControllers(MainController.class).forEach(conrt ->{
             
-            TaskFactory.mainExecutor.execute(conrt::update);
+            D.exe.execute(conrt::update);
         });
     }
 
     public void updateAllFrames() {
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
         allControllers.forEach(con ->{
-            TaskFactory.mainExecutor.execute(con::update);
+            D.exe.execute(con::update);
         });
     }
 
@@ -331,7 +332,7 @@ public class ViewManager {
 
         Job<Boolean> discoverJob = new Job<>(me -> {
 
-            Optional<Throwable> checkedRun = F.checkedRun(() -> {
+            Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
                 MediaPlayerController.discover();
             });
             checkedRun.ifPresent(ErrorReport::report);

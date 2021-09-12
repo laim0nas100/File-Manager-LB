@@ -16,6 +16,7 @@ import javafx.beans.property.*;
 import javafx.util.Callback;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.threads.RepeatableTask;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -141,7 +142,7 @@ public class ExtPath {
             public long get() {
                 if (sizeTaskComplete) {
                     sizeTaskComplete = false;
-                    TaskFactory.mainExecutor.execute(getSizeTask);
+                    D.exe.execute(getSizeTask);
                 }
 
                 return size;
@@ -153,7 +154,7 @@ public class ExtPath {
             public long get() {
                 if (dateTaskComplete) {
                     dateTaskComplete = false;
-                    TaskFactory.mainExecutor.execute(getDateTask);
+                    D.exe.execute(getDateTask);
                 }
 
                 return lastModified;

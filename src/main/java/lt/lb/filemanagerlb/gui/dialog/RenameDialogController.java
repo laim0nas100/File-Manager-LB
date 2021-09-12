@@ -17,6 +17,9 @@ import javafx.scene.control.Label;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.TimeoutTask;
 import lt.lb.commons.parsing.StringOp;
+import lt.lb.commons.threads.service.ServiceTimeoutTask;
+import lt.lb.commons.threads.sync.WaitTime;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.utility.*;
 
 /**
@@ -38,7 +41,7 @@ public class RenameDialogController extends TextInputDialogController {
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    private TimeoutTask folderUpdateTask = new TimeoutTask(500, 100, () -> {
+    private ServiceTimeoutTask folderUpdateTask = new ServiceTimeoutTask(D.exe, WaitTime.ofMillis(200), () -> {
         update();
         FX.submit(() -> {
             String trim = textField.getText().trim();
@@ -47,8 +50,20 @@ public class RenameDialogController extends TextInputDialogController {
                 nameIsAvailable.set(true);
             }
         });
-    });
+        return null;
 
+    }, D.exe);
+
+//    private TimeoutTask folderUpdateTask = new TimeoutTask(500, 100, () -> {
+//        update();
+//        FX.submit(() -> {
+//            String trim = textField.getText().trim();
+//            if (!listToCheck.contains(trim) && trim.length() > 0) {
+//                nameAvailable.setText("Available");
+//                nameIsAvailable.set(true);
+//            }
+//        });
+//    });
     @Override
     public void exit() {
         super.exit();

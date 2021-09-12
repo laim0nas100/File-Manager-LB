@@ -1,5 +1,7 @@
 package lt.lb.filemanagerlb.gui.dialog;
 
+import lt.lb.commons.parsing.token.Literal;
+import lt.lb.commons.parsing.token.Token;
 import java.io.*;
 import java.util.*;
 import javafx.fxml.FXML;
@@ -27,6 +29,7 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
 
 /**
@@ -119,7 +122,7 @@ public class CommandWindowController extends MyBaseController {
         });
         command.addCommand(commandInit, (String... params) -> {
             FX.submit(() -> {
-                F.checkedRun(() -> {
+                Checked.checkedRun(() -> {
                     FileManagerLB.reInit();
                 }).ifPresent(ErrorReport::report);
 

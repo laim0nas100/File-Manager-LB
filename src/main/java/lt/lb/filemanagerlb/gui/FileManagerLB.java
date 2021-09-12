@@ -2,8 +2,6 @@ package lt.lb.filemanagerlb.gui;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
-import lt.lb.filemanagerlb.logic.Enums;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -16,18 +14,16 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
-import lt.lb.commons.F;
+import lt.lb.commons.containers.collections.CollectionOp;
 import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.FX;
-import lt.lb.commons.javafx.scenemanagement.BaseController;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
 import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
@@ -36,6 +32,8 @@ import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.SessionInfo;
+import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
+import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
@@ -43,6 +41,7 @@ import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import lt.lb.uncheckedutils.Checked;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
 import org.yaml.snakeyaml.DumperOptions;
@@ -81,7 +80,7 @@ public class FileManagerLB {
                         FX.submit(() -> {
                             ErrorReport.with(() -> {
                                 Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
-                                allControllers.filter(f->!f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
+                                allControllers.filter(f -> !f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
 
                                 FileManagerLB.doOnExit();
                                 System.exit(0);
@@ -95,13 +94,13 @@ public class FileManagerLB {
 
         Logger.info("Manifest");
 
-        F.checkedRun(() -> {
+        Checked.checkedRun(() -> {
             URL res = D.cLoader.getResource("stamped/version.txt");
             ArrayList<String> lines = lt.lb.commons.io.TextFileIO.readFrom(res);
             Logger.info("LINES");
             Logger.info(() -> lines.stream().collect(Collectors.joining("\n")));
         }).ifPresent(ErrorReport::report);
-        F.checkedRun(() -> {
+        Checked.checkedRun(() -> {
             reInit();
         }).ifPresent(ErrorReport::report);
 
@@ -132,13 +131,13 @@ public class FileManagerLB {
     }
 
     public static <T> T yamlRead(Path path) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try ( BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return yaml.load(reader);
         }
     }
 
     public static <T> void yamlWrite(Path path, T item) throws IOException {
-        try (BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try ( BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             yaml.dump(item, newBufferedWriter);
         }
 
@@ -187,18 +186,7 @@ public class FileManagerLB {
         Logger.info("Exit call invoked");
         D.sm.getFrames().forEach(frame -> frame.close());
         try {
-
-            SessionInfo si = D.sessionInfo;
-            si.position.putAll(positionInfo.memoryMap);
-            si.size.putAll(sizeInfo.memoryMap);
-            ViewManager vm = ViewManager.getInstance();
-            si.autoCloseProgressDialogs = vm.autoCloseProgressDialogs.get();
-            si.autoStartProgressDialogs = vm.autoStartProgressDialogs.get();
-            si.pinProgressDialogs = vm.pinProgressDialogs.get();
-            si.pinTextInputDialogs = vm.pinTextInputDialogs.get();
-
-            yamlWrite(D.HOME_DIR.session_info.getPath(), si);
-
+            writeYaml();
 //            lt.lb.commons.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
 //            AutoBackupMaker BM = new AutoBackupMaker(D.LogBackupCount, D.USER_DIR + "BUP", "YYYY-MM-dd HH.mm.ss");
 //            Collection<Runnable> makeNewCopy = BM.makeNewCopy(D.logPath);
@@ -213,11 +201,28 @@ public class FileManagerLB {
 
     }
 
-    public static void reInit() throws IOException {
-        Logger.info("INITIALIZE");
-        init = true;
-        D.sm.getFrames().forEach(frame -> frame.close());
+    public static void writeYaml() throws IOException {
+        SessionInfo si = D.sessionInfo;
+        CollectionOp.replace(si.position, positionInfo.memoryMap);
+        CollectionOp.replace(si.size, sizeInfo.memoryMap);
+        CollectionOp.replace(si.favoriteLinks,
+                MainController.favoriteLinks.stream()
+                        .map(m -> m.location)
+                        .filter(f -> !f.isNotWriteable())
+                        .map(m -> m.getAbsolutePath())
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
+        ViewManager vm = ViewManager.getInstance();
+        si.autoCloseProgressDialogs = vm.autoCloseProgressDialogs.get();
+        si.autoStartProgressDialogs = vm.autoStartProgressDialogs.get();
+        si.pinProgressDialogs = vm.pinProgressDialogs.get();
+        si.pinTextInputDialogs = vm.pinTextInputDialogs.get();
 
+        yamlWrite(D.HOME_DIR.session_info.getPath(), si);
+    }
+
+    public static void readYaml() throws IOException {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         yaml = new Yaml(options);
@@ -233,12 +238,22 @@ public class FileManagerLB {
         vm.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
         vm.pinProgressDialogs.set(D.sessionInfo.pinProgressDialogs);
         vm.pinTextInputDialogs.set(D.sessionInfo.pinTextInputDialogs);
+        for (String str : D.sessionInfo.favoriteLinks) {
+            MainController.favoriteLinks.add(new FavouriteLink(str));
+        }
+    }
+
+    public static void reInit() throws IOException {
+        Logger.info("INITIALIZE");
+        init = true;
+        D.sm.getFrames().forEach(frame -> frame.close());
 
         MediaPlayerController.VLCfound = false;
         MainController.actionList = new ArrayList<>();
         MainController.dragList = FXCollections.observableArrayList();
         MainController.errorLog = FXCollections.observableArrayList();
-        MainController.links = FXCollections.observableArrayList();
+        MainController.favoriteLinks = FXCollections.observableArrayList();
+
         MainController.markedList = FXCollections.observableArrayList();
         MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
         ArtificialRoot = new VirtualFolder(D.ARTIFICIAL_ROOT_DIR);
@@ -259,9 +274,11 @@ public class FileManagerLB {
         CommandWindowController.executor.setRunnerSize(CommandWindowController.maxExecutablesAtOnce);
         Logger.info("After start executor");
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
-        MainController.links.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
+        MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
+        readYaml();
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Logger.info("After new window");
+
         init = false;
 
     }
@@ -284,7 +301,8 @@ public class FileManagerLB {
         D.USER_DIR = new PathStringCommands(D.parameters.defaultGet("userDir", D.HOME_DIR.absolutePath)).getPath() + File.separator;
         D.useBufferedFileStreams.setValue(D.parameters.defaultGet("bufferedFileStreams", true));
         VirtualFolder.VIRTUAL_FOLDER_PREFIX = D.parameters.defaultGet("virtualPrefix", "V");
-        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(D.parameters.defaultGet("vlcPath", D.HOME_DIR + "lib")).getPath() + File.separator;
+        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(D.parameters.defaultGet("vlcPath", D.HOME_DIR + File.separator + "lib")).getPath() + File.separator;
+        MediaPlayerController.oldMode = D.parameters.defaultGet("oldPlayerMode", false);
         PathStringCommands.number = D.parameters.defaultGet("filter.number", "#");
         PathStringCommands.fileName = D.parameters.defaultGet("filter.name", "<n>");
         PathStringCommands.nameNoExt = D.parameters.defaultGet("filter.nameNoExtension", "<nne>");

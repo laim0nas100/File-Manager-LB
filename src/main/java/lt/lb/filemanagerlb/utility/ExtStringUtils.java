@@ -21,13 +21,7 @@ public class ExtStringUtils extends lt.lb.commons.parsing.StringOp {
     }
 
     public static String parseRegex(String originalName, String regex, String replacement) {
-        String result = originalName;
-        try {
-            result = originalName.replaceAll(regex, replacement).trim();
-        } catch (Exception e) {
-            throw (e);
-        }
-        return result;
+        return originalName.replaceAll(regex, replacement).trim();
     }
 
     public static String parseFilter(String originalName, String filter, long currentNumber) {
@@ -81,18 +75,5 @@ public class ExtStringUtils extends lt.lb.commons.parsing.StringOp {
         return true;
     }
 
-
-    public static double normalize(double number, int digitsAfterSign) {
-        double pow = Math.pow(10, digitsAfterSign);
-        boolean isNegative = number < 0;
-        number = Math.abs(number);
-        long intPart = (long) number;
-        number = number - intPart;
-        long doublePart = Math.round(number * pow);
-        if (isNegative) {
-            intPart *= -1;
-        }
-        return intPart + (doublePart / pow);
-    }
-
+    
 }

@@ -4,6 +4,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
@@ -16,19 +17,22 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javax.swing.JFrame;
 import lt.lb.commons.F;
-import lt.lb.commons.SafeOpt;
+import lt.lb.commons.Lazy;
+import lt.lb.uncheckedutils.SafeOpt;
 import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.TimeoutTask;
 import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.javafx.scenemanagement.StageFrame;
 import lt.lb.commons.threads.Futures;
-import lt.lb.commons.threads.executors.FastExecutor;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.fastid.FastID;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
@@ -43,6 +47,7 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
 import uk.co.caprica.vlcj.binding.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
@@ -70,7 +75,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public final static boolean seamlessDisabled = true;
-    public final static boolean oldMode = false;
+    public static boolean oldMode = false;
 
     public static enum PlayerState {
         PLAYING, PAUSED, STOPPED, NEW
@@ -119,7 +124,6 @@ public class MediaPlayerController extends MyBaseController {
     private Float minDelta = 0.005f;
     private long seamlessSecondsMax = 12;
     private long currentLength = 0;
-    private SimpleBooleanProperty released = new SimpleBooleanProperty(false);
     private AtomicInteger lastVolume = new AtomicInteger(-1);
     private boolean stopping = false;
     private boolean inSeamless = false;
@@ -145,17 +149,23 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     private ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
-    private EventQueue events = new EventQueue(new FastExecutor(1));
-    TimeoutTask dragTask = new TimeoutTask(300, 20, () -> {
-        float val = seekSlider.valueProperty().divide(100).floatValue();
-        float position = getCurrentPlayer().status().position();
+    private EventQueue events = new Lazy<>(() -> {
+        if (!D.exe.containsService("media-events")) {
+            D.exe.setService("media-events", () -> new FastWaitingExecutor(1, WaitTime.ofSeconds(5)));
+        }
+        return new EventQueue(D.exe.service("media-events"));
+    }).get();
+
+    private void setPosition(float pos) { // 0-100
+        float position = getCurrentPlayer().status().position();// 0-1.00
+        float val = pos / 100f;
+
         Logger.info(getCurrentPlayer().status().position() + ", " + val);
         if (Math.abs(position - val) > minDelta) {
-            val = (float) ExtStringUtils.normalize(val, 3);
             getCurrentPlayer().controls().setPosition(val);
             Logger.info("Set new seek");
         }
-    });
+    }
 
     public static void discover() throws VLCException {
         if (!VLCfound) {
@@ -487,53 +497,28 @@ public class MediaPlayerController extends MyBaseController {
     @Override
     public void afterShow() {
 
-//        JFrame tempFrame = new JFrame();
-//        tempFrame.setSize(800, 480);
-//        framesOld.add(tempFrame);
-//        if (oldMode) {
-//            getCurrentFrameOld().setVisible(false);
-//        } else {
-//            getCurrentFrame().hide();
-//        }
         factory = new MediaPlayerFactory();
-//        Log.write("Factory");
         addPlayer(getPreparedMediaPlayer());
-//        framesOld.pollFirst().setVisible(false);
-//        Log.write("Player INIT");
-        SimpleDoubleProperty prop = new SimpleDoubleProperty(100);
-        SimpleBooleanProperty changeResetComplete = new SimpleBooleanProperty(true);
-//        TimeoutTask t = new TimeoutTask(100, 20, () -> {
-//            changeResetComplete.set(true);
-//            volumeSlider.valueProperty().setValue(prop.get());
-//        });
 
-        volumeSlider.valueProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                double volume = volumeSlider.getValue();
-                int rounded = (int) Math.round(volume);
-                lastVolume.set(rounded);
+        volumeSlider.valueProperty().addListener(FXDefs.SimpleChangeListener.of(val -> {
+            int rounded = (int) Math.round(val.doubleValue());
+            lastVolume.set(rounded);
 
-                if (pls.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
-                    return;
-                }
-                setVolume(getCurrentPlayer(), rounded);
+            if (pls.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
+                return;
             }
-        });
+            setVolume(getCurrentPlayer(), rounded);
+        }));
         volumeSlider.setValue(100);
-        dragTask.conditionalCheck = (released);
-        seekSlider.setOnMousePressed(event -> {
-            dragTask.update();
-            released.set(false);
-        });
-        seekSlider.setOnMouseDragged(value -> {
-            dragTask.update();
-
-        });
-        seekSlider.setOnMouseReleased(event -> {
-            released.set(true);
-        });
-
+        seekSlider.valueProperty().addListener(FXDefs.SimpleChangeListener.of(val -> {
+            if (inSeekChange.get()) {
+                return;
+            }
+            events.cancelAll(PlayerEventType.SEEK);
+            events.add(PlayerEventType.SEEK, () -> {
+                setPosition(val.floatValue());
+            });
+        }));
         buttonPlayPrev.setOnAction(event -> {
             playNext(-1, true);
         });
@@ -615,11 +600,11 @@ public class MediaPlayerController extends MyBaseController {
         extTableView.prepareChangeListeners();
 
         FX.submit(() -> {
-            execService.scheduleAtFixedRate(() -> {
-                FX.submit(() -> {
-
-                    updateSeek();
-                });
+            execService.scheduleWithFixedDelay(() -> {
+                if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
+                    return;
+                }
+                updateSeek();
             }, 1000, 300, TimeUnit.MILLISECONDS);
 
             playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
@@ -656,14 +641,18 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
+    AtomicBoolean inSeekChange = new AtomicBoolean(false);
+
     private void updateSeekLabels(Float position, Long millisPassed) {
         FX.submit(() -> {
             if (!stopping && !pls.isEmpty() && getCurrentPlayer().status().isPlaying()) {
 
                 this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
-                if (!this.dragTask.isInAction()) {
+                if (inSeekChange.compareAndSet(false, true)) {
                     this.seekSlider.valueProperty().set(position * 100);
+                    inSeekChange.set(false);
                 }
+
                 labelDuration.setText("/ " + formatToMinutesAndSeconds(currentLength));
             }
         });
@@ -690,10 +679,8 @@ public class MediaPlayerController extends MyBaseController {
 
             if (!seamlessDisabled && seamless.selectedProperty().get() && (secondsLeft < seamlessSecondsMax) && (secondsLeft > 2)) {
                 playNext(1, false, true, this.currentLength - millisPassed);
-                return;
 
-            }
-            if (secondsLeft < minDelta) {
+            } else if (secondsLeft < minDelta) {
                 Logger.info("Seconds left", secondsLeft);
                 playNext(1, false);
             }
@@ -762,7 +749,7 @@ public class MediaPlayerController extends MyBaseController {
         stopping = true;
 
         pls.values().forEach(player -> {
-            F.checkedRun(() -> {
+            Checked.checkedRun(() -> {
                 player.media.controls().stop();
                 player.media.release();
                 if (oldMode) {
@@ -774,8 +761,8 @@ public class MediaPlayerController extends MyBaseController {
 
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
-        this.execService.shutdown();
         this.events.forceShutdown();
+        execService.shutdownNow();
         super.exit();
 
     }

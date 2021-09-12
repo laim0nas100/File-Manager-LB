@@ -12,7 +12,6 @@
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-        
         <commons-lb.dir>lt.lb.commons</commons-lb.dir>
         <commons-lb.version>local-jar</commons-lb.version>
         
@@ -20,6 +19,12 @@
         <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>-->
     </properties>
     <dependencies>
+        
+        <dependency>
+            <groupId>lt.lb</groupId>
+            <artifactId>JavaFXLibs</artifactId>
+            <version>15</version>
+        </dependency>
         
         <!--Link using JitPack-->
         
@@ -59,6 +64,11 @@
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>JobSystem</artifactId>
             <version>01b3ee6d71190a73f3512afdd55d142cb1368523</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.laim0nas100</groupId>
+            <artifactId>UncheckedUtils</artifactId>
+            <version>1.1</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
         <dependency>
@@ -208,7 +218,15 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>13</source>
+                    <target>13</target>
+                </configuration>
+            </plugin>
+
         </plugins>
         
         <resources>

@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -18,14 +17,11 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -52,7 +48,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
-import lt.lb.commons.SafeOpt;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.ExtTask;
@@ -60,9 +55,9 @@ import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.MenuBuilders;
-import lt.lb.commons.javafx.TimeoutTask;
+import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.parsing.StringOp;
-import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.service.ServiceTimeoutTask;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.custom.FileAddressField;
@@ -83,7 +78,8 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
-import lt.lb.commons.javafx.properties.ViewProperties;
+import lt.lb.uncheckedutils.Checked;
+import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 
 /**
@@ -109,7 +105,7 @@ public class MainController extends MyBaseController<MainController> {
     @FXML
     public TextField localSearch;
 
-    public static ObservableList<FavouriteLink> links;
+    public static ObservableList<FavouriteLink> favoriteLinks;
     public static ObservableList<ErrorReport> errorLog;
     public static ObservableList<ExtPath> dragList;
     public static ObservableList<ExtPath> markedList;
@@ -203,15 +199,9 @@ public class MainController extends MyBaseController<MainController> {
     private SimpleTask searchTask;
     public ExtTableView extTableView;
     public ArrayDeque<Future> deq = new ArrayDeque<>();
-    private Executor localSearchExecutor = new FastWaitingExecutor(1, WaitTime.ofSeconds(10));
-    private TimeoutTask localSearchTask = new TimeoutTask(500, 10, () -> {
-        FX.submit(this::localSearch);
-
-    });
+    private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe.scheduledService("localSearch-sched"), WaitTime.ofMillis(200), Executors.callable(this::localSearch), FX::submit);
+    private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe.scheduledService("search-sched"), WaitTime.ofMillis(200), Executors.callable(this::search), FX::submit);
     private boolean firstTime = true;
-    private TimeoutTask searchTimeoutTask = new TimeoutTask(500, 100, () -> {
-        FX.submit(this::search);
-    });
 
     public void beforeShow(String title, ExtFolder currentDir) {
         super.beforeShow(title);
@@ -270,7 +260,7 @@ public class MainController extends MyBaseController<MainController> {
 
     @Override
     public void exit() {
-        ViewManager.getInstance().closeFrame(getID());
+        super.close();
     }
 
     @Override
@@ -469,7 +459,7 @@ public class MainController extends MyBaseController<MainController> {
 
     private void changeToDir(ExtFolder dir) {
         Future future = TaskFactory.getInstance().populateRecursiveParallelContained(dir, 1);
-        F.checkedRun(future::get);
+        Checked.checkedRun(future::get);
         if (!localSearch.getText().isEmpty()) {
             localSearch.clear();
         }
@@ -482,7 +472,7 @@ public class MainController extends MyBaseController<MainController> {
 
     public void searchTyped() {
         if (!this.useRegex.isSelected()) {
-            this.searchTimeoutTask.update();
+            this.searchTimeoutTask2.update();
         }
     }
 
@@ -532,7 +522,7 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void localSearchTask() {
-        localSearchTask.update();
+        localSearchTask2.update();
     }
 
     public void localSearch() {
@@ -550,7 +540,7 @@ public class MainController extends MyBaseController<MainController> {
 
                 FX.submit(() -> {
                     extTableView.saveSortPrefereces();
-                    TaskFactory.mainExecutor.execute(asyncFuture);
+                    D.exe.execute(asyncFuture);
 
                 });
 
@@ -606,7 +596,7 @@ public class MainController extends MyBaseController<MainController> {
             });
             asynchronousSortTask.cancel();
         });
-        localSearchExecutor.execute(r);
+        D.exe.service("localSearch-sched").execute(r);
     }
 
     public void loadSnapshot() {
@@ -755,7 +745,7 @@ public class MainController extends MyBaseController<MainController> {
                             FX.submit(() -> {
                                 ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
                                 FXTask markFiles = TaskFactory.getInstance().markFiles(list);
-                                TaskFactory.mainExecutor.execute(markFiles);
+                                D.exe.execute(markFiles);
                             });
                         })
                         .visibleWhen(Bindings.size(searchView.getSelectionModel().getSelectedItems()).greaterThan(0))
@@ -788,15 +778,15 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Add current directory as link")
                         .withAction(eh -> {
                             FavouriteLink link = new FavouriteLink(MC.currentDir.propertyName.get(), MC.currentDir);
-                            if (!links.contains(link)) {
-                                links.add(link);
+                            if (!favoriteLinks.contains(link)) {
+                                favoriteLinks.add(link);
                             }
                         })
                 )
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Remove this link")
                         .withAction(eh -> {
-                            links.remove(linkView.getSelectionModel().getSelectedIndex());
+                            favoriteLinks.remove(linkView.getSelectionModel().getSelectedIndex());
                         })
                         .visibleWhen(linkView.getSelectionModel().selectedItemProperty().isNotNull())
                 )
@@ -896,7 +886,7 @@ public class MainController extends MyBaseController<MainController> {
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), addToMarkedCallback);
                                 };
-                                TaskFactory.mainExecutor.execute(run);
+                                D.exe.execute(run);
 
                             });
                         })
@@ -915,7 +905,7 @@ public class MainController extends MyBaseController<MainController> {
                                 Runnable run = () -> {
                                     file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), addToMarkedCallback);
                                 };
-                                TaskFactory.mainExecutor.execute(run);
+                                D.exe.execute(run);
 
                             });
                         })
@@ -1083,7 +1073,7 @@ public class MainController extends MyBaseController<MainController> {
                 .addNestedDisableBind()
                 .addNestedVisibilityBind()
                 .build();
-        
+
         /*
         tableContextMenu.getItems().setAll(
         CosmeticsFX.simpleMenuItem("Open",
@@ -1145,7 +1135,6 @@ public class MainController extends MyBaseController<MainController> {
         submenuMarked,
         submenuMarkFiles
         );*/
-
     }
 
     private void setUpTableView() {
@@ -1348,7 +1337,7 @@ public class MainController extends MyBaseController<MainController> {
         linkView.setContextMenu(linksContextMenu);
         linkView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(linkView.getSelectionModel()));
 
-        linkView.setItems(links);
+        linkView.setItems(favoriteLinks);
         linkView.setCellFactory(new Callback<ListView<FavouriteLink>, ListCell<FavouriteLink>>() {
             @Override
             public ListCell<FavouriteLink> call(ListView<FavouriteLink> p) {

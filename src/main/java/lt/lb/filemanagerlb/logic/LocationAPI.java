@@ -155,7 +155,7 @@ public class LocationAPI {
                         if (!FileManagerLB.getRootSet().contains(rootStr)) {
                             if (FileManagerLB.mountDevice(rootStr)) {
 //                                FileManagerLB.ArtificialRoot.update();
-                                Logger.info("Mounted", path);
+                                Logger.info("Mounted "+ path);
                             }
                         }
                     }
@@ -164,7 +164,7 @@ public class LocationAPI {
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);
-                Logger.info("Location:", loc);
+                Logger.info("Location: "+ loc);
                 populateByLocation(loc.getParentLocation());
 
                 file = getFileByLocation(loc);
@@ -225,7 +225,7 @@ public class LocationAPI {
     }
 
     private void populateByLocation(LocationInRoot location) {
-        Logger.info("Populate by location", location);
+        Logger.info("Populate by location "+ location);
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -234,7 +234,7 @@ public class LocationAPI {
     }
 
     public ExtPath getFileByLocation(LocationInRoot location) {
-        Logger.info("Get file by location", location);
+        Logger.info("Get file by location "+ location);
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -246,7 +246,7 @@ public class LocationAPI {
     public ExtPath getFileOptimized(String path) {
         LocationInRoot loc = new LocationInRoot(path);
         if (!existByLocation(loc)) {
-            getFileAndPopulate(path);
+            return getFileAndPopulate(path);
         }
         return getFileIfExists(loc);
     }
@@ -272,6 +272,6 @@ public class LocationAPI {
     }
 
     public void filterIfExists(Collection<ExtPath> collection) {
-        CollectionOp.filterParallel(collection, ExtPath.EXISTS, TaskFactory.mainExecutor);
+        CollectionOp.filterParallel(collection, ExtPath.EXISTS, D.exe);
     }
 }

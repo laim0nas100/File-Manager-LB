@@ -5,10 +5,10 @@ import java.util.Calendar;
 import java.util.Date;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
-import lt.lb.commons.F;
 import lt.lb.filemanagerlb.gui.MainController;
+import lt.lb.uncheckedutils.Checked;
+import lt.lb.uncheckedutils.func.UncheckedRunnable;
 import org.tinylog.Logger;
-import lt.lb.commons.func.unchecked.UncheckedRunnable;
 
 /**
  *
@@ -17,7 +17,7 @@ import lt.lb.commons.func.unchecked.UncheckedRunnable;
 public class ErrorReport {
 
     public static void with(UncheckedRunnable run){
-        F.checkedRun(run).ifPresent(ErrorReport::report);
+        Checked.checkedRun(run).ifPresent(ErrorReport::report);
     }
     
     static SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");

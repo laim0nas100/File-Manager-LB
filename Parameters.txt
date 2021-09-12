@@ -27,6 +27,9 @@ lang=EN
 //VLC priority path
 vlcPath=
 
+//Use old player (new one requires Java 14+)
+oldPlayerMode=false
+
 //Name of root directory (don't set to an actual path in your system or you won't be able to access it via address field)
 ROOT_NAME=\
 
@@ -40,7 +43,7 @@ maxThreadsForTask=20
 filter.number=#
 
 //File name without extension
-filter.nameNoExtention=<nne>
+filter.nameNoExtension=<nne>
 
 //File name with extension
 filter.name=<n>//replace with file name

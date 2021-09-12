@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui;
 
 import java.net.URL;
@@ -12,11 +7,10 @@ import javafx.stage.Stage;
 import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.commons.javafx.scenemanagement.InjectableController;
 import lt.lb.filemanagerlb.utility.ErrorReport;
-import org.tinylog.Logger;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  * @param <T>
  */
 public abstract class MyBaseController<T extends MyBaseController> implements InjectableController<T> {
