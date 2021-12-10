@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.custom;
 
 import javafx.application.Platform;
@@ -10,9 +5,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import lt.lb.commons.containers.collections.LoopingList;
-import lt.lb.commons.parsing.StringOp;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 
 /**
  *
@@ -43,7 +38,7 @@ public class FileAddressField {
                 folder.getFoldersFromFiles().forEach(fold -> {
                     list.add(fold.propertyName.get());
                 });
-                String name = StringOp.replaceOnce(text, folder.getAbsoluteDirectory(), "");
+                String name = ExtStringUtils.replaceOnce(text, folder.getAbsoluteDirectory(), "");
                 int index = 0;
                 while (index < list.size()) {
                     String s;
@@ -53,7 +48,7 @@ public class FileAddressField {
                         s = list.prev();
                     }
                     index++;
-                    if (StringOp.startsWithIgnoreCase(s, name)) {
+                    if (ExtStringUtils.startsWithIgnoreCase(s, name)) {
                         Platform.runLater(() -> {
                             f = name;
                             if (folder.getIdentity().equals(Identity.VIRTUAL)) {

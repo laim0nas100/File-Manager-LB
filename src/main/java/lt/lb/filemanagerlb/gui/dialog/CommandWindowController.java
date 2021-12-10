@@ -8,8 +8,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
-import lt.lb.commons.F;
-import lt.lb.commons.containers.collections.ParametersMap;
 import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
@@ -27,6 +25,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.uncheckedutils.Checked;
@@ -66,7 +65,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
             Logger.info("Copy params", Arrays.asList(params));
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
             ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
             ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(D.customPath.getPath());
             Logger.info("Copy structure:", root, dest);
@@ -111,13 +110,13 @@ public class CommandWindowController extends MyBaseController {
         });
         command.addCommand(commandGenerate, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandGenerate + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate + " ", "");
             command.generate(newCom);
         });
 
         command.addCommand(commandApply, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandApply + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandApply + " ", "");
             command.apply(newCom);
         });
         command.addCommand(commandInit, (String... params) -> {
@@ -132,7 +131,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandListRec, (String... params) -> {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandListRec + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandListRec + " ", "");
             ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
 
             for (ExtPath f : file.getListRecursive(false)) {
@@ -144,7 +143,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandList, (String... params) -> {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandList + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandList + " ", "");
             ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
             if (file.getIdentity().equals(Identity.FOLDER)) {
                 String desc = "Listing:" + file.getAbsoluteDirectory();
@@ -159,7 +158,7 @@ public class CommandWindowController extends MyBaseController {
         });
         command.addCommand(commandSetCustom, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = StringOp.replaceOnce(newCom, commandSetCustom + " ", "");
+            newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom + " ", "");
             D.customPath = new PathStringCommands(newCom.trim());
         });
         command.addCommand(commandClear, (String... params) -> {
@@ -176,11 +175,8 @@ public class CommandWindowController extends MyBaseController {
     }
 
     public void listParameters() {
-        ArrayList<String> list = new ArrayList<>(D.parameters.map.keySet());
-        Collections.sort(list);
-        list.forEach(key -> {
-            ParametersMap.ParameterObject parameter = D.parameters.getParameter(key);
-            addToTextArea(textArea, parameter.toString() + "\n");
+        D.parameters.getEntries().forEachRemaining(val -> {
+            addToTextArea(textArea, val.getKey() + "=" + val.getValue() + "\n");
         });
     }
 
@@ -266,7 +262,7 @@ public class CommandWindowController extends MyBaseController {
                             numbersToAdd++;
                             continue;
                         } else if (numbersToAdd > 0) {
-                            commandToAdd += StringOp.simpleFormat(index, numbersToAdd);
+                            commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
                             numbersToAdd = 0;
                         }
 
@@ -293,7 +289,7 @@ public class CommandWindowController extends MyBaseController {
 
                     }
                     if (numbersToAdd > 0) {
-                        commandToAdd += StringOp.simpleFormat(index, numbersToAdd);
+                        commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
                     }
                     allCommands.add(commandToAdd);
                     Logger.info(command + " => " + commandToAdd);

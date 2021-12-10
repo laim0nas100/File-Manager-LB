@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.logic.filestructure;
 
 import java.io.File;
@@ -17,18 +12,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
-import javafx.collections.ObservableList;
 import javafx.util.Callback;
 import lt.lb.commons.func.Lambda;
 import lt.lb.commons.containers.collections.ObjectBuffer;
-import lt.lb.commons.parsing.StringOp;
-import lt.lb.commons.threads.Promise;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import org.tinylog.Logger;
 
 /**
@@ -86,7 +79,7 @@ public class ExtFolder extends ExtPath {
                                 break;
                             }
                         }
-                        final String name = StringOp.replaceOnce(f.toString(), parent, "");
+                        final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                         final String filePathStr = f.toString();
                         ExtPath file = null;
                         if (Files.exists(f) && !localMap.containsKey(name)) {

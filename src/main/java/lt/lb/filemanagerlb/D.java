@@ -2,12 +2,13 @@ package lt.lb.filemanagerlb;
 
 import java.io.File;
 import javafx.beans.property.SimpleBooleanProperty;
-import lt.lb.commons.containers.collections.ParametersMap;
+import lt.lb.TolerantConfig;
 import lt.lb.commons.io.directoryaccess.Dir;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.threads.service.ServiceExecutorAggregatorLazy;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import org.apache.commons.configuration2.ImmutableConfiguration;
 
 /**
  *
@@ -27,7 +28,7 @@ public class D {
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
     public static SimpleBooleanProperty useBufferedFileStreams = new SimpleBooleanProperty(true);
-    public static ParametersMap parameters;
+    public static TolerantConfig<ImmutableConfiguration> parameters;
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR.absolutePath);
 
     public static MultiStageManager sm;

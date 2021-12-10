@@ -65,11 +65,13 @@
             <artifactId>JobSystem</artifactId>
             <version>01b3ee6d71190a73f3512afdd55d142cb1368523</version>
         </dependency>
+        
         <dependency>
-            <groupId>com.github.laim0nas100</groupId>
-            <artifactId>UncheckedUtils</artifactId>
-            <version>1.1</version>
-        </dependency>
+	    <groupId>com.github.laim0nas100</groupId>
+	    <artifactId>Error-tolerant-commons-config</artifactId>
+	    <version>1.0</version>
+	</dependency>
+        
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
         <dependency>
             <groupId>org.tinylog</groupId>
@@ -136,14 +138,28 @@
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
             <version>1.7.29</version>
-            <type>jar</type>
         </dependency>
+        
         
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>
         </dependency>
+        
+        
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>2.7</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
     </dependencies>
     
     

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.logic;
 
 import java.io.File;
@@ -12,8 +7,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
-import lt.lb.commons.parsing.StringOp;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 
 /**
  * Location Mapping Class Use in LocationAPI
@@ -33,7 +28,7 @@ public class LocationInRoot {
         String rootLoc = "";
         if (!filePath.isEmpty()) {
             for (String s : FileManagerLB.getRootSet()) {
-                if (StringOp.containsIgnoreCase(filePath, s)) {
+                if (ExtStringUtils.containsIgnoreCase(filePath, s)) {
                     rootLoc = s;
                     break;
                 }
@@ -43,10 +38,10 @@ public class LocationInRoot {
             co.add(rootLoc);
             if (!filePath.equalsIgnoreCase(rootLoc)) {
                 if (doUpperCase) {
-                    filePath = StringOp.upperCase(filePath);
+                    filePath = ExtStringUtils.upperCase(filePath);
                 }
-                filePath = StringOp.replaceOnce(filePath, rootLoc, "");
-                String[] fileArray = StringOp.split(filePath, File.separatorChar);
+                filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
+                String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);

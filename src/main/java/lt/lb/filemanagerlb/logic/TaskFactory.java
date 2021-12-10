@@ -12,7 +12,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import lt.lb.commons.javafx.*;
-import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.TaskPooler;
 import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
@@ -29,6 +28,7 @@ import lt.lb.filemanagerlb.logic.snapshots.Snapshot;
 import lt.lb.filemanagerlb.logic.snapshots.SnapshotAPI;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
@@ -719,7 +719,7 @@ public class TaskFactory {
                         rat = (Double) map.get(key);
 
                     } else {
-                        rat = StringOp.correlationRatio(name, otherName);
+                        rat = ExtStringUtils.correlationRatio(name, otherName);
                         map.put(key, rat);
                     }
                     if (rat >= ratio) {
@@ -749,7 +749,7 @@ public class TaskFactory {
                     }
 
                     PathStringCommands file1 = array.get(j);
-                    double rat = StringOp.correlationRatio(name, file1.getName(true));
+                    double rat = ExtStringUtils.correlationRatio(name, file1.getName(true));
                     DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file, file1, rat);
                     if (rat >= ratio) {
                         list.add(item);

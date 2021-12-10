@@ -56,7 +56,6 @@ import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.properties.ViewProperties;
-import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.service.ServiceTimeoutTask;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -75,11 +74,13 @@ import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.DesktopApi;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.uncheckedutils.Checked;
 import lt.lb.uncheckedutils.SafeOpt;
+import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 
 /**
@@ -566,7 +567,7 @@ public class MainController extends MyBaseController<MainController> {
                     newList.forEach(item -> {
                         ExtPath path = (ExtPath) item;
                         String name = path.propertyName.get();
-                        if (StringOp.containsIgnoreCase(name, lookFor)) {
+                        if (StringUtils.containsIgnoreCase(name, lookFor)) {
                             list.add(path);
                         }
                     });
@@ -1161,7 +1162,7 @@ public class MainController extends MyBaseController<MainController> {
                     SimpleStringProperty string = new SimpleStringProperty();
                     Double get = cellData.getValue().propertySize.divide((double) propertyUnitSize.get()).get();
                     if (get > 0.001) {
-                        string.set(StringOp.extractNumber(get));
+                        string.set(ExtStringUtils.extractNumber(get));
                     } else {
                         string.set("0");
                     }

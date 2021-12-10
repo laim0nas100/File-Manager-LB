@@ -1,7 +1,5 @@
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.commons.parsing.token.Literal;
-import lt.lb.commons.parsing.token.Token;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -15,6 +13,8 @@ import lt.lb.commons.F;
 import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
+import lt.lb.commons.parsing.token.Literal;
+import lt.lb.commons.parsing.token.Token;
 import lt.lb.commons.threads.executors.TaskBatcher;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -28,6 +28,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.uncheckedutils.Checked;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * FXML Controller class
@@ -224,7 +225,7 @@ public class AdvancedRenameController extends MyBaseController {
             } else {
                 if (addingDigits) {
                     addingDigits = false;
-                    newName += StringOp.simpleFormat(currentNumber, numerationAmmount);
+                    newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
                 }
                 if (token.value.equals(PathStringCommands.fileName)) {
                     newName += pathString.getName(true);
@@ -240,9 +241,9 @@ public class AdvancedRenameController extends MyBaseController {
             }
         }
         if (addingDigits) {
-            newName += StringOp.simpleFormat(currentNumber, numerationAmmount);
+            newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
         }
-        return StringOp.trimEnd(newName);
+        return StringUtils.trim(newName);
     }
 
     public void setNumber() {

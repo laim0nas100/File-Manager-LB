@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -15,8 +10,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import lt.lb.commons.javafx.FX;
-import lt.lb.commons.javafx.TimeoutTask;
-import lt.lb.commons.parsing.StringOp;
 import lt.lb.commons.threads.service.ServiceTimeoutTask;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -102,7 +95,7 @@ public class RenameDialogController extends TextInputDialogController {
         if (nameIsAvailable.get()) {
             try {
                 PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
-                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), StringOp.trimEnd(textField.getText()), fallback.getName(true));
+                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), ExtStringUtils.trimEnd(textField.getText()), fallback.getName(true));
                 if (callback != null) {
                     ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(renameTo);
                     callback.callback(fileOptimized);

@@ -3,7 +3,7 @@ package lt.lb.filemanagerlb;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import lt.lb.commons.containers.values.Props;
+import lt.lb.commons.containers.collections.Props;
 
 /**
  *
