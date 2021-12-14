@@ -29,6 +29,7 @@ import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.Enums;
@@ -284,48 +285,7 @@ public class FileManagerLB {
     }
     
     public static void readParameters() {
-        String confPath = D.HOME_DIR.getAbsolutePathWithSeparator() + "Parameters.txt";
-
-        Configurations conf = new Configurations();
-        TolerantConfig<ImmutableConfiguration> param = TolerantConfig.ofSuplierCached(()-> conf.properties(confPath));
-//        ParaMap.SimpleParaMap param = ParaMap.defaultParaMap(list.iterator());
-        D.DEBUG.set(param.getOr("debug", false));
-        D.DEPTH = param.getOr("lookDepth", 2);
-        D.LogBackupCount = param.getOr("logBackupCount", 5);
-        D.ROOT_NAME = param.getOr("ROOT_NAME", D.ROOT_NAME);
-        D.MAX_THREADS_FOR_TASK = param.getOr("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
-        D.USER_DIR = new PathStringCommands(param.getOr("userDir", D.HOME_DIR.absolutePath)).getPath() + File.separator;
-        D.useBufferedFileStreams.setValue(param.getOr("bufferedFileStreams", true));
-        VirtualFolder.VIRTUAL_FOLDER_PREFIX = param.getOr("virtualPrefix", "V");
-        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(param.getOr("vlcPath", D.HOME_DIR + File.separator + "lib")).getPath() + File.separator;
-        MediaPlayerController.oldMode = param.getOr("oldPlayerMode", false);
-        PathStringCommands.number = param.getOr("filter.number", "#");
-        PathStringCommands.fileName = param.getOr("filter.name", "<n>");
-        PathStringCommands.nameNoExt = param.getOr("filter.nameNoExtension", "<nne>");
-        PathStringCommands.filePath = param.getOr("filter.path", "<ap>");
-        PathStringCommands.extension = param.getOr("filter.nameExtension", "<ne>");
-        PathStringCommands.parent1 = param.getOr("filter.parent1", "<p1>");
-        PathStringCommands.parent2 = param.getOr("filter.parent2", "<p2>");
-        PathStringCommands.custom = param.getOr("filter.custom", "<c>");
-        PathStringCommands.relativeCustom = param.getOr("filter.relativeCustom", "<rc>");
-        CommandWindowController.commandInit = param.getOr("code.init", "init");
-        CommandWindowController.truncateAfter = param.getOr("code.truncateAfter", 100000);
-        CommandWindowController.maxExecutablesAtOnce = param.getOr("code.maxExecutables", 2);
-        CommandWindowController.commandGenerate = param.getOr("code.commandGenerate", "generate");
-        CommandWindowController.commandApply = param.getOr("code.commandApply", "apply");
-        CommandWindowController.commandClear = param.getOr("code.clear", "clear");
-        CommandWindowController.commandCancel = param.getOr("code.cancel", "cancel");
-        CommandWindowController.commandList = param.getOr("code.list", "list");
-        CommandWindowController.commandListRec = param.getOr("code.listRec", "listRec");
-        CommandWindowController.commandSetCustom = param.getOr("code.setCustom", "setCustom");
-        CommandWindowController.commandHelp = param.getOr("code.help", "help");
-        CommandWindowController.commandListParams = param.getOr("code.listParameters", "listParams");
-        CommandWindowController.maxExecutablesAtOnce = param.getOr("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
-        CommandWindowController.commandCopyFolderStructure = param.getOr("code.copyFolderStructure", "copyStructure");
-
-        param.getEntries().forEachRemaining(entry -> Logger.info(entry.getKey()+"="+entry.getValue()));
-
-        D.parameters = param;
+        P.reload();
 //        D.parameters = new ParametersMap(list, "=");
 //        Logger.info("Parameters", D.parameters);
 //

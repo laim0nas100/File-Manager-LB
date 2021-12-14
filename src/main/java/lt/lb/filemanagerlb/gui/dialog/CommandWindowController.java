@@ -13,6 +13,7 @@ import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.parsing.*;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -175,7 +176,7 @@ public class CommandWindowController extends MyBaseController {
     }
 
     public void listParameters() {
-        D.parameters.getEntries().forEachRemaining(val -> {
+        P.getActiveParameters().forEach(val -> {
             addToTextArea(textArea, val.getKey() + "=" + val.getValue() + "\n");
         });
     }

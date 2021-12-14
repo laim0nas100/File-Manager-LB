@@ -69,7 +69,7 @@
         <dependency>
 	    <groupId>com.github.laim0nas100</groupId>
 	    <artifactId>Error-tolerant-commons-config</artifactId>
-	    <version>1.0</version>
+	    <version>1.4</version>
 	</dependency>
         
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
