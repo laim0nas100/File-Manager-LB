@@ -712,6 +712,7 @@ public class MediaPlayerController extends MyBaseController {
     public void stop() {
         events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
+            Logger.info("Inside stop");
             while (getCurrentPlayer().status().isPlaying()) {
                 getCurrentPlayer().controls().stop();
                 Thread.sleep(1);
@@ -1083,9 +1084,10 @@ public class MediaPlayerController extends MyBaseController {
 
     public void loadPlaylistState(PlaylistState state) {
         stop();
-        events.add(() -> {
+        events.add("LOAD_PLAYLIST",() -> {
 
-            this.table.getItems().clear();
+            Logger.info("INSIDE LOAD PLAYLIST");
+//            this.table.getItems().clear();
             IntegerValue num = new IntegerValue(0);
             state.root.resolve(false).forEach(item -> {
                 ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
@@ -1140,30 +1142,46 @@ public class MediaPlayerController extends MyBaseController {
 
     private void loadState(String path) {
         labelStatus.setText("Busy");
-        SimpleTask task = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                PlaylistState state = new PlaylistState();
-                try {
-                    ArrayList<String> readFromFile = TextFileIO.readFromFile(path);
-                    state.index = Integer.parseInt(readFromFile.remove(0));
-                    state.type = readFromFile.remove(0);
-                    state.root = LocationInRootNode.nodeFromFile(readFromFile);
-                    loadPlaylistState(state);
-                    update();
-                } catch (Exception e) {
-                    ErrorReport.report(e);
-                }
-                return null;
+        D.exe.execute(() -> {
+            PlaylistState state = new PlaylistState();
+            try {
+                ArrayList<String> readFromFile = TextFileIO.readFromFile(path);
+                state.index = Integer.parseInt(readFromFile.remove(0));
+                state.type = readFromFile.remove(0);
+                state.root = LocationInRootNode.nodeFromFile(readFromFile);
+                loadPlaylistState(state);
+                update();
+            } catch (Exception e) {
+                ErrorReport.report(e);
             }
-
-        };
-        task.setOnDone(value -> {
             FX.submit(() -> {
                 labelStatus.setText("Ready");
             });
         });
-        task.toThread().start();
+//        SimpleTask task = new SimpleTask() {
+//            @Override
+//            protected Void call() throws Exception {
+//                PlaylistState state = new PlaylistState();
+//                try {
+//                    ArrayList<String> readFromFile = TextFileIO.readFromFile(path);
+//                    state.index = Integer.parseInt(readFromFile.remove(0));
+//                    state.type = readFromFile.remove(0);
+//                    state.root = LocationInRootNode.nodeFromFile(readFromFile);
+//                    loadPlaylistState(state);
+//                    update();
+//                } catch (Exception e) {
+//                    ErrorReport.report(e);
+//                }
+//                return null;
+//            }
+//
+//        };
+//        task.setOnDone(value -> {
+//            FX.submit(() -> {
+//                labelStatus.setText("Ready");
+//            });
+//        });
+//        task.toThread().start();
     }
 
     public void shuffle() {

@@ -34,7 +34,7 @@ public class RenameDialogController extends TextInputDialogController {
     private ExtPath itemToRename;
     private ExtFolder folder;
     private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    private ServiceTimeoutTask folderUpdateTask = new ServiceTimeoutTask(D.exe, WaitTime.ofMillis(200), () -> {
+    private ServiceTimeoutTask folderUpdateTask = new ServiceTimeoutTask(D.exe,D.exe, WaitTime.ofMillis(200), () -> {
         update();
         FX.submit(() -> {
             String trim = textField.getText().trim();
@@ -45,7 +45,7 @@ public class RenameDialogController extends TextInputDialogController {
         });
         return null;
 
-    }, D.exe);
+    });
 
 //    private TimeoutTask folderUpdateTask = new TimeoutTask(500, 100, () -> {
 //        update();

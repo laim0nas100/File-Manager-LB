@@ -2,11 +2,9 @@ package lt.lb.filemanagerlb.gui;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javafx.beans.property.SimpleBooleanProperty;
-import lt.lb.commons.F;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.scenemanagement.FXMLFrame;

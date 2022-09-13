@@ -92,9 +92,9 @@ public class DirSyncController extends MyBaseController {
 
     private ServiceTimeoutTask directoryCheckTask = new ServiceTimeoutTask(
             D.exe.scheduledService("dir-sync-sched"),
+            D.exe.service("dir-sync"),
             WaitTime.ofSeconds(1),
-            Executors.callable(this::checkDirs),
-            D.exe.service("dir-sync")
+            Executors.callable(this::checkDirs)
     );
 //    private TimeoutTask directoryCheckTask = new TimeoutTask(
 //            1000, 100, () -> {

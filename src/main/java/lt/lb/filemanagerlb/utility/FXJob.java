@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lt.lb.commons.javafx.FX;
 import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.VoidJob;
 import lt.lb.jobsystem.events.SystemJobEventName;
 import lt.lb.uncheckedutils.func.UncheckedConsumer;
 
@@ -12,7 +11,7 @@ import lt.lb.uncheckedutils.func.UncheckedConsumer;
  *
  * @author Lemmin
  */
-public class FXJob extends VoidJob {
+public class FXJob extends Job<Void> {
     
     public FXJob(UncheckedConsumer<Job<Void>> call) {
         super(call);

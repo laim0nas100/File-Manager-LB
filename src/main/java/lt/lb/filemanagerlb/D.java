@@ -1,9 +1,11 @@
 package lt.lb.filemanagerlb;
 
-import java.io.File;
+import java.util.Optional;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.TolerantConfig;
+import lt.lb.commons.Java;
 import lt.lb.commons.io.directoryaccess.Dir;
+import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.threads.service.ServiceExecutorAggregatorLazy;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
@@ -18,8 +20,13 @@ public class D {
 
     public static ServiceExecutorAggregatorLazy exe = new ServiceExecutorAggregatorLazy();
     public static SessionInfo sessionInfo = new SessionInfo();
-    public static final HomeDir HOME_DIR = Dir.establishDirectory(System.getProperty("user.home") + File.separator + ".FileManagerLB", HomeDir.class);
-    public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR.getAbsolutePathWithSeparator() + "VIRTUAL_FOLDERS" + File.separator;
+    
+    
+    
+    public static final HomeDir HOME_DIR = Dir.establishDirectory(HomeDir.class, Java.getUserHome(), "lb-soft", "FileManagerLB");
+    
+    
+    public static final String VIRTUAL_FOLDERS_DIR = HOME_DIR.getAbsolutePathWithSeparator() + "VIRTUAL_FOLDERS" + Java.getFileSeparator();
     public static final String ARTIFICIAL_ROOT_DIR = HOME_DIR.getAbsolutePathWithSeparator() + "ARTIFICIAL_ROOT";
     public static String USER_DIR = HOME_DIR.getAbsolutePathWithSeparator();
     public static String ROOT_NAME = "ROOT";
@@ -34,4 +41,5 @@ public class D {
     public static MultiStageManager sm;
 
     public static final ClassLoader cLoader = D.class.getClassLoader();
+    
 }

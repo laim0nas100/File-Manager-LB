@@ -7,10 +7,12 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import lt.lb.commons.containers.values.DoubleValue;
 import lt.lb.commons.javafx.*;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.TaskPooler;
@@ -57,7 +59,7 @@ public class TaskFactory {
 
     protected TaskFactory() {
         D.exe.setMainService("MAIN");
-        D.exe.setService("MAIN", ()->{
+        D.exe.setService("MAIN", () -> {
             FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
             return new NestedTaskSubmitionExecutorLayer(exe);
         });
@@ -97,7 +99,7 @@ public class TaskFactory {
         String path2 = parent.getAbsoluteDirectory() + newName;
         String fPath = parent.getAbsoluteDirectory() + fallbackName;
         LocationAPI.getInstance().removeByLocation(location);
-        Logger.info("Rename: "+ path1+ " New Name:" + newName+ " Fallback:" + fallbackName);
+        Logger.info("Rename: " + path1 + " New Name:" + newName + " Fallback:" + fallbackName);
         if (path1.equalsIgnoreCase(path2)) {
             Files.move(Paths.get(path1), Paths.get(fPath));
             Files.move(Paths.get(fPath), Paths.get(path2));
@@ -157,12 +159,9 @@ public class TaskFactory {
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
-//            Log.write("Root",root);
             String relativePath = file.relativeFrom(root.getAbsoluteDirectory());
-//            Log.write("RelativePath:",relativePath);
             ActionFile af = new ActionFile(file.getAbsoluteDirectory(), dest.getAbsoluteDirectory() + relativePath);
             list.add(af);
-//            Log.write("Add",af);
         }
         list.sort(ActionFile.COMP_DESCENDING);
         Logger.info("List after computing");
@@ -209,9 +208,7 @@ public class TaskFactory {
             for (ExtPath f : listRecursive) {
                 try {
                     String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
-                    //Log.write("RelativePath: ",relativePath);
                     ActionFile AF = new ActionFile(f.getAbsoluteDirectory(), dest.getAbsoluteDirectory() + relativePath);
-                    //Log.write("ActionFile: ",AF);
                     list.add(AF);
                 } catch (Exception e) {
                     ErrorReport.report(e);
@@ -254,16 +251,18 @@ public class TaskFactory {
                         protected Void call() throws Exception {
                             this.updateMessage(strmsg);
                             ExtTask copy = FileUtils.copy(file.paths[0], file.paths[1], D.useBufferedFileStreams.getValue());
-                            DoubleProperty progress = (DoubleProperty) copy.valueMap.get(FileUtils.PROGRESS_KEY);
-                            progress.addListener(listener -> {
+                            copy.progress.addListener(FXDefs.numberDiffListener(0.0001d, val -> {
                                 FX.submit(() -> {
-                                    this.progressProperty.set(progress.get());
+                                    progressProperty().setValue(val);
                                 });
-                            });
+                            }));
 
                             copy.paused.bind(this.paused);
+                            this.canceled.addListener(FXDefs.SimpleChangeListener.of(val -> {
+                                copy.cancel(true);
+                            }));
                             copy.run();
-                            if(copy.failed.get()){
+                            if (copy.failed.get()) {
                                 ErrorReport.report(copy.getException());
                             }
                             return null;
@@ -277,7 +276,6 @@ public class TaskFactory {
         };
         return fullTask;
     }
-
 
     public ContinousCombinedTask moveFilesEx(Collection<ExtPath> fileList, ExtPath dest) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {
@@ -307,18 +305,20 @@ public class TaskFactory {
                                     Logger.info("Added to folders:" + file.paths[1]);
                                 } else {
                                     ExtTask move = FileUtils.move(file.paths[0], file.paths[1], D.useBufferedFileStreams.getValue());
-                                    DoubleProperty progress = (DoubleProperty) move.valueMap.get(FileUtils.PROGRESS_KEY);
-                                    progress.addListener(listener -> {
+                                    move.progress.addListener(FXDefs.numberDiffListener(0.0001d, val -> {
                                         FX.submit(() -> {
-                                            this.progressProperty.set(progress.get());
+                                            progressProperty().setValue(val);
                                         });
-                                    });
+                                    }));
                                     move.paused.bind(paused);
+                                    this.canceled.addListener(FXDefs.SimpleChangeListener.of(val -> {
+                                        move.cancel(true);
+                                    }));
                                     move.run();
-                                    if(move.failed.get()){
+                                    if (move.failed.get()) {
                                         ErrorReport.report(move.getException());
                                     }
-                                    
+
                                 }
                             } catch (Exception e) {
                                 ErrorReport.report(e);
@@ -355,7 +355,6 @@ public class TaskFactory {
         };
         return finalTask;
     }
-
 
     public ContinousCombinedTask deleteFilesEx(Collection<ExtPath> fileList) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {
@@ -398,8 +397,8 @@ public class TaskFactory {
             FutureTask t = new FutureTask(task);
             exe.execute(t);
             return t;
-        }else{
-            FutureTask t = new FutureTask(()->null);
+        } else {
+            FutureTask t = new FutureTask(() -> null);
             t.run();
             return t;
         }
@@ -542,12 +541,14 @@ public class TaskFactory {
                     final int current = i;
                     ActionFile actionFile = new ActionFile(folder1 + entry.relativePath, folder2 + entry.relativePath);
                     ExtTask task = actionTask(actionFile, entry);
-                    DoubleProperty progress = (DoubleProperty) task.valueMap.get(FileUtils.PROGRESS_KEY);
-                    progress.addListener(listener -> {
-                        updateProgress(current + progress.get(), size);
-                    });
+
+                    task.progress.addListener(FXDefs.SimpleChangeListener.of(val -> {
+                        FX.submit(() -> {
+                            updateProgress(current + task.progress.get(), size);
+                        });
+                    }));
                     task.setOnDone(handle -> {
-                        Logger.info("Lol done");
+                        Logger.info("Task done");
                     });
                     task.run();
 
@@ -582,10 +583,11 @@ public class TaskFactory {
                         try {
 
                             ExtTask t = FileUtils.copy(action.paths[1], action.paths[0], true, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-                            DoubleProperty other = (DoubleProperty) t.valueMap.get(FileUtils.PROGRESS_KEY);
-                            other.addListener(listener -> {
-                                progress.set(other.get());
-                            });
+                            t.progress.addListener(FXDefs.SimpleChangeListener.of(val -> {
+                                FX.submit(() -> {
+                                    progress.setValue(val);
+                                });
+                            }));
 
                             t.run();
                             if (t.failed.get()) {
@@ -600,10 +602,11 @@ public class TaskFactory {
                     case (2): {
                         try {
                             ExtTask t = FileUtils.copy(action.paths[0], action.paths[1], true, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-                            DoubleProperty other = (DoubleProperty) t.valueMap.get(FileUtils.PROGRESS_KEY);
-                            other.addListener(listener -> {
-                                progress.set(other.get());
-                            });
+                            t.progress.addListener(FXDefs.SimpleChangeListener.of(val -> {
+                                FX.submit(() -> {
+                                    progress.setValue(val);
+                                });
+                            }));
                             t.run();
                             if (t.failed.get()) {
                                 ErrorReport.report(t.getException());
@@ -631,8 +634,6 @@ public class TaskFactory {
                 return null;
             }
         };
-
-        task.addObject(FileUtils.PROGRESS_KEY, progress);
 
         return task;
     }

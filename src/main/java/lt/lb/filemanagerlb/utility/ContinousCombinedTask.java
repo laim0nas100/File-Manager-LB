@@ -56,7 +56,7 @@ public abstract class ContinousCombinedTask extends SimpleTask {
     protected void doTask(SimpleTask task) throws Exception {
         task.call();
         FX.submit(() -> {
-            task.progressProperty.set(1d);
+            task.progressProperty().set(1d);
         });
     }
 
@@ -73,9 +73,9 @@ public abstract class ContinousCombinedTask extends SimpleTask {
         this.tasks.add(task);
         SimpleTask parent = this;
         task.paused.bind(parent.paused);
-        task.progressProperty.addListener(listener -> {
-            double get = currentIndex - 1 + task.progressProperty.get();
-            parent.progressProperty.set(get / tasks.size());
+        task.progressProperty().addListener(listener -> {
+            double get = currentIndex - 1 + task.progressProperty().get();
+            parent.progressProperty().set(get / tasks.size());
         });
         task.messageProperty.addListener(listener -> {
             parent.updateMessage(task.messageProperty.get());

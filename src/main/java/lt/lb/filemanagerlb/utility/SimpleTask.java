@@ -1,14 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.utility;
 
 import java.util.ArrayList;
-import javafx.application.Platform;
 import javafx.beans.property.*;
 import lt.lb.commons.javafx.ExtTask;
+import lt.lb.commons.javafx.FX;
 
 /**
  *
@@ -17,20 +12,19 @@ import lt.lb.commons.javafx.ExtTask;
 public abstract class SimpleTask extends ExtTask {
 
     protected SimpleStringProperty messageProperty = new SimpleStringProperty("");
-    protected SimpleDoubleProperty progressProperty = new SimpleDoubleProperty(0);
     protected ArrayList<String> messages = new ArrayList<>();
 
     public ReadOnlyStringProperty messageProperty() {
         return this.messageProperty;
     }
 
-    public ReadOnlyDoubleProperty progressProperty() {
-        return this.progressProperty;
+    public DoubleProperty progressProperty() {
+        return this.progress;
     }
 
     protected void updateMessage(String msg) {
         messages.add(msg);
-        Platform.runLater(() -> {
+        FX.submit(() -> {
             messageProperty.set(msg);
         });
 
@@ -66,9 +60,7 @@ public abstract class SimpleTask extends ExtTask {
     }
 
     public void runOnPlatform() {
-        new Thread(() -> {
-            Platform.runLater(this);
-        }).start();
+        FX.submit(this);
 
     }
 }

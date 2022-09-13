@@ -4,6 +4,7 @@ import lt.lb.commons.parsing.token.Literal;
 import lt.lb.commons.parsing.token.Token;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -29,7 +30,12 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.recombinator.CodepointFlattener;
+import lt.lb.recombinator.FlatMatched;
+import lt.lb.recombinator.Utils;
+import lt.lb.recombinator.impl.codepoint.CodepointMatchers;
 import lt.lb.uncheckedutils.Checked;
+import org.apache.commons.exec.CommandLine;
 import org.tinylog.Logger;
 
 /**
@@ -216,6 +222,7 @@ public class CommandWindowController extends MyBaseController {
             addToTextArea(textArea, "Error Code:" + errorCode + "\n\n");
         }
     }
+    public static final CodepointMatchers C = new CodepointMatchers();
 
     public class Commander extends AbstractCommandField {
 
@@ -237,6 +244,70 @@ public class CommandWindowController extends MyBaseController {
         public void generate(String command) {
             try {
 
+                LinkedList<String> l = new LinkedList<>();
+                MainController.markedList.forEach(item -> {
+                    l.add(item.getAbsolutePath());
+                });
+                LinkedList<String> allCommands = new LinkedList<>();
+                CodepointFlattener iterator = new CodepointFlattener(Utils.peekableCodepoints(command));
+
+                for (String key : PathStringCommands.returnDefinedKeys()) {
+                    if (key.equals(PathStringCommands.number)) {
+                        iterator.with(C.makeNew(key).repeating(true).string(key));
+                    } else {
+                        iterator.with(C.makeNew(key).string(key));
+                    }
+
+                }
+
+                iterator.with(C.whitespace())
+                        .with(C.makeNew("Any").any(1));
+
+                List<FlatMatched<String, String>> collect = iterator.toStream().collect(Collectors.toList());
+
+                Logger.info(collect);
+                int index = 1;
+                for (String absPath : l) {
+                    PathStringCommands pathInfo = new PathStringCommands(absPath);
+                    StringBuilder sb = new StringBuilder();
+
+                    for (FlatMatched<String, String> flat : collect) {
+                        if (flat.containsMatcher(PathStringCommands.number)) {
+                            int numbersToAdd = flat.getItem().length() / PathStringCommands.number.length();
+                            sb.append(ExtStringUtils.simpleFormat(index, numbersToAdd));
+                        } else if (flat.containsMatcher(PathStringCommands.fileName)) {
+                            sb.append(pathInfo.getName(true));
+                        } else if (flat.containsMatcher(PathStringCommands.nameNoExt)) {
+                           sb.append(pathInfo.getName(false));
+                        } else if (flat.containsMatcher(PathStringCommands.filePath)) {
+                            sb.append(pathInfo.getPath());
+                        } else if (flat.containsMatcher(PathStringCommands.extension)) {
+                            sb.append(pathInfo.getExtension());
+                        } else if (flat.containsMatcher(PathStringCommands.parent1)) {
+                            sb.append(pathInfo.getParent(1));
+                        } else if (flat.containsMatcher(PathStringCommands.parent2)) {
+                           sb.append(pathInfo.getParent(2));
+                        } else if (flat.containsMatcher(PathStringCommands.custom)) {
+                            sb.append(D.customPath.getPath());
+                        } else if (flat.containsMatcher(PathStringCommands.relativeCustom)) {
+                            sb.append(D.customPath.relativePathTo(pathInfo.getPath()));
+                        } else {
+                            sb.append(flat.getItem());
+                        }
+                    }
+                    allCommands.add(sb.toString());
+                    Logger.info(command + " => " + sb);
+                    index++;
+                }
+                ViewManager.getInstance().newListFrame("Script generation", allCommands);
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
+        }
+
+        public void generateOld(String command) {
+            try {
+
 //                System.out.println(MainController.markedList);
                 LinkedList<String> l = new LinkedList<>();
                 MainController.markedList.forEach(item -> {
@@ -246,7 +317,7 @@ public class CommandWindowController extends MyBaseController {
                 Lexer lexer = new Lexer();
                 lexer.resetLines(Arrays.asList(command));
                 lexer.setSkipWhitespace(false);
-                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys());
+                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys().stream().toArray(s -> new String[s]));
                 int index = 1;
                 for (String absPath : l) {
                     PathStringCommands pathInfo = new PathStringCommands(absPath);
@@ -328,11 +399,22 @@ public class CommandWindowController extends MyBaseController {
                         @Override
                         protected Void call() throws Exception {
                             Logger.info("Run native command:", command);
-                            Process process = new ProcessBuilder(list.toArray(new String[1])).redirectErrorStream(true).start();
+                            CommandLine parse = CommandLine.parse(command);
+                            List<String> args = new ArrayList<>();
+                            args.add(parse.getExecutable());
+                            for (String s : parse.getArguments()) {
+                                args.add(s);
+                            }
+                            ProcessBuilder processBuilder = new ProcessBuilder(args.stream().toArray(s -> new String[s])).redirectErrorStream(true);
+
+                            Process process = processBuilder.start();
                             handleStream(process, textArea, setTextAfterwards, command);
                             return null;
                         }
                     };
+                    task.setOnFailed(h -> {
+                        ErrorReport.report(task.getException());
+                    });
                     executor.submit(task);
                 }
             } catch (Exception ex) {

@@ -63,13 +63,19 @@
         <dependency>
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>JobSystem</artifactId>
-            <version>01b3ee6d71190a73f3512afdd55d142cb1368523</version>
+            <version>d13247fe215f5fb15c2bbf69c3cc7322c57a7d08</version>
         </dependency>
+        
+<!--        <dependency>
+	    <groupId>com.github.laim0nas100</groupId>
+	    <artifactId>Error-tolerant-commons-config</artifactId>
+	    <version>1.4</version>
+	</dependency>-->
         
         <dependency>
 	    <groupId>com.github.laim0nas100</groupId>
 	    <artifactId>Error-tolerant-commons-config</artifactId>
-	    <version>1.4</version>
+	    <version>1.7</version>
 	</dependency>
         
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
@@ -159,7 +165,18 @@
             <artifactId>commons-beanutils</artifactId>
             <version>1.9.4</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>lt.lb</groupId>
+            <artifactId>Recombinator</artifactId>
+            <version>local-jar</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
     
     

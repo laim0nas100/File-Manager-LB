@@ -59,6 +59,7 @@ import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.threads.service.ServiceTimeoutTask;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.gui.custom.FileAddressField;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.DATA_SIZE;
@@ -200,8 +201,8 @@ public class MainController extends MyBaseController<MainController> {
     private SimpleTask searchTask;
     public ExtTableView extTableView;
     public ArrayDeque<Future> deq = new ArrayDeque<>();
-    private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe.scheduledService("localSearch-sched"), WaitTime.ofMillis(200), Executors.callable(this::localSearch), FX::submit);
-    private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe.scheduledService("search-sched"), WaitTime.ofMillis(200), Executors.callable(this::search), FX::submit);
+    private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe.scheduledService("localSearch-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::localSearch));
+    private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe.scheduledService("search-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::search));
     private boolean firstTime = true;
 
     public void beforeShow(String title, ExtFolder currentDir) {
@@ -347,6 +348,8 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void test() throws Exception {
+        
+        P.commandApply.resolve(D.parameters);
         Logger.info("TEST");
         Stage stage = new Stage();
 

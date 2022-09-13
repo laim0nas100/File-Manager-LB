@@ -70,6 +70,9 @@ public class FileManagerLB {
     public static boolean init = false;
 
     public static void main(String[] args) {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        yaml = new Yaml(options);
         D.sm = new MultiStageManager(
                 D.cLoader,
                 positionInfo,
@@ -105,7 +108,7 @@ public class FileManagerLB {
             reInit();
         }).ifPresent(ErrorReport::report);
 
-        if (D.DEBUG.not().get()) {
+        if (!D.DEBUG.get()) {
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         }
 
@@ -224,9 +227,6 @@ public class FileManagerLB {
     }
 
     public static void readYaml() throws IOException {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        yaml = new Yaml(options);
 
         if (D.HOME_DIR.session_info.isReadable()) {
             D.sessionInfo = yamlRead(D.HOME_DIR.session_info.getPath());
