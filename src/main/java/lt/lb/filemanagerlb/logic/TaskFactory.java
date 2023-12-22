@@ -7,12 +7,11 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import lt.lb.commons.containers.values.DoubleValue;
+import lt.lb.commons.Java;
 import lt.lb.commons.javafx.*;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.TaskPooler;
@@ -44,7 +43,6 @@ import org.tinylog.Logger;
 //
 public class TaskFactory {
 
-    public static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
 //    private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
@@ -60,7 +58,7 @@ public class TaskFactory {
     protected TaskFactory() {
         D.exe.setMainService("MAIN");
         D.exe.setService("MAIN", () -> {
-            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
+            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(Java.getAvailableProcessors() * 2, 10), WaitTime.ofSeconds(120));
             return new NestedTaskSubmitionExecutorLayer(exe);
         });
         Character[] arrayWindows = new Character[]{
@@ -409,7 +407,7 @@ public class TaskFactory {
     }
 
     public Runnable populateRecursiveParallel(ExtFolder folder, int depth) {
-        TaskPooler pooler = new TaskPooler(PROCESSOR_COUNT);
+        TaskPooler pooler = new TaskPooler(Java.getAvailableProcessors());
         populateRecursiveParallelInner(folder, depth, pooler);
         return pooler;
     }

@@ -19,6 +19,8 @@ import org.tinylog.Logger;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
+    
+    
 
     private static class LocationWalker {
 
@@ -112,7 +114,6 @@ public class LocationAPI {
     protected LocationAPI() {
     }
 
-    ;
     public static LocationAPI getInstance() {
         return INSTANCE;
     }

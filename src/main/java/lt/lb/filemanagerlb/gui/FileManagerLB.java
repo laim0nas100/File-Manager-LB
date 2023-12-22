@@ -13,13 +13,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
-import lt.lb.TolerantConfig;
 import lt.lb.commons.containers.collections.CollectionOp;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
@@ -28,6 +29,8 @@ import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
+import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
@@ -39,10 +42,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
-import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.uncheckedutils.Checked;
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
 import org.yaml.snakeyaml.DumperOptions;
@@ -68,8 +68,12 @@ public class FileManagerLB {
     }
 
     public static boolean init = false;
+    
+    public static DelayedTaskExecutor delayedTaskExecutor = new DelayedTaskExecutor(ForkJoinPool.commonPool());
 
     public static void main(String[] args) {
+        delayedTaskExecutor.scheduleWithFixedDelay(WaitTime.ofMinutes(20), System::gc);
+        
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         yaml = new Yaml(options);
@@ -85,8 +89,8 @@ public class FileManagerLB {
                             ErrorReport.with(() -> {
                                 Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
                                 allControllers.filter(f -> !f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
-
                                 FileManagerLB.doOnExit();
+                                delayedTaskExecutor.shutdown();
                                 System.exit(0);
                             });
                             init = false;
@@ -100,7 +104,7 @@ public class FileManagerLB {
 
         Checked.checkedRun(() -> {
             URL res = D.cLoader.getResource("stamped/version.txt");
-            ArrayList<String> lines = lt.lb.commons.io.TextFileIO.readFrom(res);
+            ArrayList<String> lines = lt.lb.commons.io.text.TextFileIO.readFrom(res);
             Logger.info("LINES");
             Logger.info(() -> lines.stream().collect(Collectors.joining("\n")));
         }).ifPresent(ErrorReport::report);
@@ -189,6 +193,8 @@ public class FileManagerLB {
     public static void doOnExit() {
         Logger.info("Exit call invoked");
         D.sm.getFrames().forEach(frame -> frame.close());
+        VLCInit.release();
+        
         try {
             writeYaml();
 //            lt.lb.commons.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
@@ -248,8 +254,8 @@ public class FileManagerLB {
         Logger.info("INITIALIZE");
         init = true;
         D.sm.getFrames().forEach(frame -> frame.close());
+        VLCInit.release();
 
-        MediaPlayerController.VLCfound = false;
         MainController.actionList = new ArrayList<>();
         MainController.dragList = FXCollections.observableArrayList();
         MainController.errorLog = FXCollections.observableArrayList();
@@ -283,7 +289,7 @@ public class FileManagerLB {
         init = false;
 
     }
-    
+
     public static void readParameters() {
         P.reload();
 //        D.parameters = new ParametersMap(list, "=");

@@ -37,18 +37,18 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
         return frame.getStage();
     }
 
-    private boolean closing = false;
+    protected boolean closing = false;
 
     @Override
     public void close() {
         if (closing) {
-            return; // prevent recusrion1
+            return; // prevent recusrion
         }
         closing = true;
         try {
             exit();
             InjectableController.super.close();
-            ViewManager.getInstance().updateAllFrames();
+            ViewManager.getInstance().updateAllFrames(getFrameID());
         } catch (Exception ex) {
             ErrorReport.report(ex);
         } finally{

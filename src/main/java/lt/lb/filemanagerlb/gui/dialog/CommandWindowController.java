@@ -1,7 +1,7 @@
 package lt.lb.filemanagerlb.gui.dialog;
 
-import lt.lb.commons.parsing.token.Literal;
-import lt.lb.commons.parsing.token.Token;
+//import lt.lb.commons.parsing.token.Literal;
+//import lt.lb.commons.parsing.token.Token;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -234,7 +234,7 @@ public class CommandWindowController extends MyBaseController {
 
         public void apply(String name) throws IOException, InterruptedException {
             ArrayDeque<String> readFromFile = new ArrayDeque(
-                    lt.lb.commons.io.TextFileIO.readFromFile(D.USER_DIR + name));
+                    lt.lb.commons.io.text.TextFileIO.readFromFile(D.USER_DIR + name));
             this.setTextAfterwards = true;
             for (String command : readFromFile) {
                 submit(command);
@@ -305,73 +305,73 @@ public class CommandWindowController extends MyBaseController {
             }
         }
 
-        public void generateOld(String command) {
-            try {
-
-//                System.out.println(MainController.markedList);
-                LinkedList<String> l = new LinkedList<>();
-                MainController.markedList.forEach(item -> {
-                    l.add(item.getAbsolutePath());
-                });
-                LinkedList<String> allCommands = new LinkedList<>();
-                Lexer lexer = new Lexer();
-                lexer.resetLines(Arrays.asList(command));
-                lexer.setSkipWhitespace(false);
-                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys().stream().toArray(s -> new String[s]));
-                int index = 1;
-                for (String absPath : l) {
-                    PathStringCommands pathInfo = new PathStringCommands(absPath);
-                    lexer.reset();
-                    String commandToAdd = "";
-                    int numbersToAdd = 0;
-                    while (true) {
-                        Optional<Token> opt = lexer.getNextToken();
-                        if (!opt.isPresent()) {
-                            break;
-                        }
-                        Token token = opt.get();
-                        if (token.value.equals(PathStringCommands.number)) {
-                            numbersToAdd++;
-                            continue;
-                        } else if (numbersToAdd > 0) {
-                            commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
-                            numbersToAdd = 0;
-                        }
-
-                        if (token.value.equals(PathStringCommands.fileName)) {
-                            commandToAdd += pathInfo.getName(true);
-                        } else if (token.value.equals(PathStringCommands.nameNoExt)) {
-                            commandToAdd += pathInfo.getName(false);
-                        } else if (token.value.equals(PathStringCommands.filePath)) {
-                            commandToAdd += pathInfo.getPath();
-                        } else if (token.value.equals(PathStringCommands.extension)) {
-                            commandToAdd += pathInfo.getExtension();
-                        } else if (token.value.equals(PathStringCommands.parent1)) {
-                            commandToAdd += pathInfo.getParent(1);
-                        } else if (token.value.equals(PathStringCommands.parent2)) {
-                            commandToAdd += pathInfo.getParent(2);
-                        } else if (token.value.equals(PathStringCommands.custom)) {
-                            commandToAdd += D.customPath.getPath();
-                        } else if (token.value.equals(PathStringCommands.relativeCustom)) {
-                            commandToAdd += D.customPath.relativePathTo(pathInfo.getPath());
-                        } else {
-                            Literal lit = (Literal) token;
-                            commandToAdd += lit.value;
-                        }
-
-                    }
-                    if (numbersToAdd > 0) {
-                        commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
-                    }
-                    allCommands.add(commandToAdd);
-                    Logger.info(command + " => " + commandToAdd);
-                    index++;
-                }
-                ViewManager.getInstance().newListFrame("Script generation", allCommands);
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
-        }
+//        public void generateOld(String command) {
+//            try {
+//
+////                System.out.println(MainController.markedList);
+//                LinkedList<String> l = new LinkedList<>();
+//                MainController.markedList.forEach(item -> {
+//                    l.add(item.getAbsolutePath());
+//                });
+//                LinkedList<String> allCommands = new LinkedList<>();
+//                Lexer lexer = new Lexer();
+//                lexer.resetLines(Arrays.asList(command));
+//                lexer.setSkipWhitespace(false);
+//                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys().stream().toArray(s -> new String[s]));
+//                int index = 1;
+//                for (String absPath : l) {
+//                    PathStringCommands pathInfo = new PathStringCommands(absPath);
+//                    lexer.reset();
+//                    String commandToAdd = "";
+//                    int numbersToAdd = 0;
+//                    while (true) {
+//                        Optional<Token> opt = lexer.getNextToken();
+//                        if (!opt.isPresent()) {
+//                            break;
+//                        }
+//                        Token token = opt.get();
+//                        if (token.value.equals(PathStringCommands.number)) {
+//                            numbersToAdd++;
+//                            continue;
+//                        } else if (numbersToAdd > 0) {
+//                            commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
+//                            numbersToAdd = 0;
+//                        }
+//
+//                        if (token.value.equals(PathStringCommands.fileName)) {
+//                            commandToAdd += pathInfo.getName(true);
+//                        } else if (token.value.equals(PathStringCommands.nameNoExt)) {
+//                            commandToAdd += pathInfo.getName(false);
+//                        } else if (token.value.equals(PathStringCommands.filePath)) {
+//                            commandToAdd += pathInfo.getPath();
+//                        } else if (token.value.equals(PathStringCommands.extension)) {
+//                            commandToAdd += pathInfo.getExtension();
+//                        } else if (token.value.equals(PathStringCommands.parent1)) {
+//                            commandToAdd += pathInfo.getParent(1);
+//                        } else if (token.value.equals(PathStringCommands.parent2)) {
+//                            commandToAdd += pathInfo.getParent(2);
+//                        } else if (token.value.equals(PathStringCommands.custom)) {
+//                            commandToAdd += D.customPath.getPath();
+//                        } else if (token.value.equals(PathStringCommands.relativeCustom)) {
+//                            commandToAdd += D.customPath.relativePathTo(pathInfo.getPath());
+//                        } else {
+//                            Literal lit = (Literal) token;
+//                            commandToAdd += lit.value;
+//                        }
+//
+//                    }
+//                    if (numbersToAdd > 0) {
+//                        commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
+//                    }
+//                    allCommands.add(commandToAdd);
+//                    Logger.info(command + " => " + commandToAdd);
+//                    index++;
+//                }
+//                ViewManager.getInstance().newListFrame("Script generation", allCommands);
+//            } catch (Exception ex) {
+//                ErrorReport.report(ex);
+//            }
+//        }
 
         @Override
         public void submit(String command) {

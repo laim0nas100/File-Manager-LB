@@ -48,7 +48,7 @@ public class ListController extends MyBaseController<ListController> {
         String text = this.pathToSave.getText();
         ObservableList<String> items = this.listView.getItems();
         ReadOnlyIterator<String> of = ReadOnlyIterator.of(items.stream().map(m -> m.trim()));
-        lt.lb.commons.io.TextFileIO.writeToFile(D.USER_DIR + text, of);
+        lt.lb.commons.io.text.TextFileIO.writeToFile(D.USER_DIR + text, of);
     }
 
 }

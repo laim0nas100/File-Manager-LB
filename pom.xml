@@ -30,11 +30,6 @@
         
         <dependency>
             <groupId>${commons-lb.dir}</groupId>
-            <artifactId>commonslb-lexing</artifactId>
-            <version>${commons-lb.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${commons-lb.dir}</groupId>
             <artifactId>commonslb-collections</artifactId>
             <version>${commons-lb.version}</version>
         </dependency>
@@ -131,7 +126,7 @@
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj</artifactId>
-            <version>4.7.0</version>
+            <version>4.8.2</version>
         </dependency>
         
         <dependency>
@@ -206,6 +201,7 @@
                                     <Build-Time>${maven.build.timestamp}</Build-Time>
                                 </manifestEntries>
                             </archive>
+                            <finalName>FileManagerLB</finalName>
                         </configuration>
                     </plugin>
 

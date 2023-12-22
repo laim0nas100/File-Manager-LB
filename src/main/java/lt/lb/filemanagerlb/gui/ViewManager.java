@@ -54,6 +54,7 @@ public class ViewManager {
         this.pinTextInputDialogs = new SimpleBooleanProperty(false);
 
     }
+
     public static ViewManager getInstance() {
         return INSTANCE;
     }
@@ -65,7 +66,7 @@ public class ViewManager {
             protected Void call() throws Exception {
                 try {
                     Logger.info("NEW WINDOW");
-                    
+
                     FXMLFrame<MainController> frame = newFrame(FrameTitle.WINDOW);
                     MainController controller = frame.getController();
                     controller.beforeShow(frame.getTitle(), currentFolder);
@@ -83,15 +84,15 @@ public class ViewManager {
     }
 
     public void updateAllWindows() {
-        D.sm.getAllControllers(MainController.class).forEach(conrt ->{
-            
+        D.sm.getAllControllers(MainController.class).forEach(conrt -> {
+
             D.exe.execute(conrt::update);
         });
     }
 
-    public void updateAllFrames() {
+    public void updateAllFrames(String exception) {
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
-        allControllers.forEach(con ->{
+        allControllers.filter(f -> !f.getFrameID().equals(exception)).forEach(con -> {
             D.exe.execute(con::update);
         });
     }
@@ -331,7 +332,7 @@ public class ViewManager {
         Job<Boolean> discoverJob = new Job<>(me -> {
 
             Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
-                MediaPlayerController.discover();
+                VLCInit.discover();
             });
             checkedRun.ifPresent(ErrorReport::report);
 
@@ -370,6 +371,5 @@ public class ViewManager {
             D.sm.closeFrame(windowID);
         });
     }
-
 
 }

@@ -7,7 +7,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
@@ -17,24 +16,22 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javax.swing.JFrame;
 import lt.lb.commons.F;
-import lt.lb.commons.Lazy;
+import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.uncheckedutils.SafeOpt;
 import lt.lb.commons.containers.values.IntegerValue;
-import lt.lb.commons.io.TextFileIO;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.MenuBuilders;
-import lt.lb.commons.javafx.TimeoutTask;
 import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.javafx.scenemanagement.StageFrame;
 import lt.lb.commons.threads.Futures;
-import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
-import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.fastid.FastID;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.gui.VLCInit.VLCException;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -45,12 +42,8 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
-import lt.lb.filemanagerlb.utility.ExtStringUtils;
-import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
-import uk.co.caprica.vlcj.binding.RuntimeUtil;
-import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
@@ -75,7 +68,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public final static boolean seamlessDisabled = true;
-    public static boolean oldMode = false;
+    public static boolean oldMode = true;
 
     public static enum PlayerState {
         PLAYING, PAUSED, STOPPED, NEW
@@ -83,9 +76,6 @@ public class MediaPlayerController extends MyBaseController {
 
     public PlayerState playerState = PlayerState.NEW;
     public final static String PLAY_SYMBOL = "✓";
-    public static String VLC_SEARCH_PATH;
-    public static boolean VLCfound = false;
-
     @FXML
     public Label labelCurrent;
     @FXML
@@ -117,7 +107,6 @@ public class MediaPlayerController extends MyBaseController {
 
     private ViewProperties<ExtPath> tableProperties;
 
-    private MediaPlayerFactory factory;
     volatile private MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
     private int index = 0;
@@ -147,14 +136,12 @@ public class MediaPlayerController extends MyBaseController {
         public final FastID id = FastID.getAndIncrementGlobal();
 
     }
+    private ExecutorService exe = Executors.newFixedThreadPool(1);
+    private ExecutorService exe2 = Executors.newFixedThreadPool(1);
 
-    private ScheduledExecutorService execService = Executors.newScheduledThreadPool(3);
-    private EventQueue events = new Lazy<>(() -> {
-        if (!D.exe.containsService("media-events")) {
-            D.exe.setService("media-events", () -> new FastWaitingExecutor(1, WaitTime.ofSeconds(5)));
-        }
-        return new EventQueue(D.exe.service("media-events"));
-    }).get();
+    private EventQueue events = new EventQueue(exe);
+
+    private DelayedTaskExecutor execService = new DelayedTaskExecutor(exe2);
 
     private void setPosition(float pos) { // 0-100
         float position = getCurrentPlayer().status().position();// 0-1.00
@@ -165,72 +152,6 @@ public class MediaPlayerController extends MyBaseController {
             getCurrentPlayer().controls().setPosition(val);
             Logger.info("Set new seek");
         }
-    }
-
-    public static void discover() throws VLCException {
-        if (!VLCfound) {
-            MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
-            mediaPlayerFactory.release();
-            VLCfound = true;
-            /*
-            NativeDiscoveryStrategy[] array = new NativeDiscoveryStrategy[]{
-                new WindowsNativeDiscoveryStrategy(),
-                new LinuxNativeDiscoveryStrategy(),
-                new OsxNativeDiscoveryStrategy()
-            };
-            int supportedOS = -1;
-            for (int i = 0; i < array.length; i++) {
-                if (array[i].supported()) {
-                    supportedOS = i;
-                    break;
-                }
-            }
-            switch (supportedOS) {
-                case 0: {
-                    array[supportedOS] = new WindowsNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                case 1: {
-                    array[supportedOS] = new LinuxNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                case 2: {
-                    array[supportedOS] = new OsxNativeDiscoveryStrategy() {
-                        @Override
-                        protected void onGetDirectoryNames(List<String> directoryNames) {
-                            super.onGetDirectoryNames(directoryNames);
-                            directoryNames.add(0, VLC_SEARCH_PATH);
-                        }
-                    };
-                    break;
-                }
-                default: {
-                    //unsupported OS?
-                }
-            }
-            if (supportedOS != -1) {
-                VLCfound = new NativeDiscovery(array[supportedOS]).discover();
-            }
-             */
-            if (VLCfound) {
-                Logger.info(RuntimeUtil.getLibVlcLibraryName());
-            } else {
-                throw new VLCException("Could not locate VLC, \n configure vlcPath in Parameters.txt");
-            }
-        }
-
     }
 
     private Player gcp() {
@@ -252,13 +173,6 @@ public class MediaPlayerController extends MyBaseController {
         return gcp().jFrame;
     }
 
-    public static class VLCException extends RuntimeException {
-
-        VLCException(String str) {
-            super(str);
-        }
-    }
-
     private Player getPreparedMediaPlayer() {
         if (oldMode) {
             return getPreparedMediaPlayerOld();
@@ -269,7 +183,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private Player getPreparedMediaPlayerNew() {
 
-        EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
+        EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
         javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
         newPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
         imageView.setPreserveRatio(true);
@@ -311,9 +225,9 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     private Player getPreparedMediaPlayerOld() {
-        EmbeddedMediaPlayer newPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer();
+        EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
         Canvas canvas = new Canvas();
-        ComponentVideoSurface newVideoSurface = factory.videoSurfaces().newVideoSurface(canvas);
+        ComponentVideoSurface newVideoSurface = VLCInit.getFactory().videoSurfaces().newVideoSurface(canvas);
         newPlayer.videoSurface().set(newVideoSurface);
 
         JFrame jframe = new JFrame();
@@ -497,9 +411,7 @@ public class MediaPlayerController extends MyBaseController {
     @Override
     public void afterShow() {
 
-        factory = new MediaPlayerFactory();
         addPlayer(getPreparedMediaPlayer());
-
         volumeSlider.valueProperty().addListener(FXDefs.SimpleChangeListener.of(val -> {
             int rounded = (int) Math.round(val.doubleValue());
             lastVolume.set(rounded);
@@ -517,6 +429,7 @@ public class MediaPlayerController extends MyBaseController {
             events.cancelAll(PlayerEventType.SEEK);
             events.add(PlayerEventType.SEEK, () -> {
                 setPosition(val.floatValue());
+                updateSeek();
             });
         }));
         buttonPlayPrev.setOnAction(event -> {
@@ -598,14 +511,13 @@ public class MediaPlayerController extends MyBaseController {
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
 
         extTableView.prepareChangeListeners();
-
+        execService.scheduleWithFixedDelay(() -> {
+            if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
+                return;
+            }
+            updateSeek();
+        }, 1000, 300, TimeUnit.MILLISECONDS);
         FX.submit(() -> {
-            execService.scheduleWithFixedDelay(() -> {
-                if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
-                    return;
-                }
-                updateSeek();
-            }, 1000, 300, TimeUnit.MILLISECONDS);
 
             playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
             playType.getSelectionModel().select(0);
@@ -645,7 +557,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private void updateSeekLabels(Float position, Long millisPassed) {
         FX.submit(() -> {
-            if (!stopping && !pls.isEmpty() && getCurrentPlayer().status().isPlaying()) {
+            if (!stopping && !pls.isEmpty()) {
 
                 this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
                 if (inSeekChange.compareAndSet(false, true)) {
@@ -659,11 +571,8 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void updateSeek() {
-        if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
-            return;
-        }
         events.add(PlayerEventType.SEEK, () -> {
-            if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
+            if (ignoreSeek || stopping) {
                 return;
             }
             Float position;
@@ -681,7 +590,7 @@ public class MediaPlayerController extends MyBaseController {
                 playNext(1, false, true, this.currentLength - millisPassed);
 
             } else if (secondsLeft < minDelta) {
-                Logger.info("Seconds left", secondsLeft);
+                Logger.info("Seconds left" + secondsLeft);
                 playNext(1, false);
             }
         });
@@ -710,12 +619,12 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void stop() {
+        Set<PlayerState> stoppableStates = ImmutableCollections.setOf(PlayerState.PAUSED, PlayerState.PLAYING);
         events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
-            Logger.info("Inside stop");
-            while (getCurrentPlayer().status().isPlaying()) {
+            while (getCurrentPlayer().status().isPlaying() && stoppableStates.contains(playerState)) {
                 getCurrentPlayer().controls().stop();
-                Thread.sleep(1);
+                Thread.sleep(50);
             }
             this.playerState = PlayerState.STOPPED;
         });
@@ -749,6 +658,7 @@ public class MediaPlayerController extends MyBaseController {
         Logger.info("CLOSE MEDIA PLAYER");
         stopping = true;
 
+        stop();
         pls.values().forEach(player -> {
             Checked.checkedRun(() -> {
                 player.media.controls().stop();
@@ -758,58 +668,70 @@ public class MediaPlayerController extends MyBaseController {
                 } else {
                     player.stageFrame.close();
                 }
+                Logger.info("Released vlc player");
             }).ifPresent(ErrorReport::report);
 
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
-        this.events.forceShutdown();
-        execService.shutdownNow();
+        execService.shutdown();
+        exe.shutdown();
+        exe2.shutdown();
+        events.shutdown();
+        events = null;
+
         super.exit();
+        Logger.info("FINAL EXIT " + extTableView.resizeTask.isInAction());
 
     }
 
     public void playNext(int increment, boolean ignoreModifiers, Object... opt) {
 //        events.cancelAll("PLAY");
         events.add(PlayerEventType.PLAY, () -> {
-            if (backingList.isEmpty()) {
-                return;
-            }
-            updateIndex();
-            if (!ignoreModifiers) {
-                if (playType.getSelectionModel().getSelectedItem().equals(typeRandom)) {
-                    index = (int) (Math.random() * backingList.size());
-                } else if (playType.getSelectionModel().getSelectedItem().equals(typeLoopSong)) {
-                    if (increment == 1) {
-                        index--;
-                    }
-                } else if (playType.getSelectionModel().getSelectedItem().equals(typeStopAfterFinish)) {
-                    if (index + increment == table.getItems().size()) {
-//                        stop();
-                        filePlaying = null;
-                        update();
+
+            FX.submit(() -> {
+                ExtPath item = null;
+                while (item == null) {
+                    update();
+                    if (backingList.isEmpty()) {
                         return;
                     }
-                }
-            }
-            //default loop song
-            index = (index + increment) % backingList.size();
-            ExtPath item = (ExtPath) backingList.get(index);
-            if (item == null) {
-                return;
-            }
+                    if (!ignoreModifiers) {
+                        Object selectedItem = playType.getSelectionModel().getSelectedItem();
+                        if (Objects.equals(selectedItem, typeRandom)) {
+                            index = (int) (Math.random() * backingList.size());
+                        } else if (Objects.equals(selectedItem, typeLoopSong)) {
+                            index = index - increment; // replay the same song
+                        } else if (Objects.equals(selectedItem, typeStopAfterFinish)) {
+                            if (index + increment >= table.getItems().size()) {
 
-            if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
+                                filePlaying = null;
+                                update();
+                                stop();
+                                return;
+                            }
+                        }
+                    }
+                    //default loop song
+                    index = (index + increment) % backingList.size();
+                    item = (ExtPath) backingList.get(index);
+                }
+
+                if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
 //                playSeemless(item, (long) opt[1]);
-                play(item);
-            } else {
-                play(item);
-            }
+                    play(item);
+                } else {
+                    play(item);
+                }
+            });
+
         });
 
     }
 
     @Override
     public void update() {
+        Logger.info(events);
+
         LocationAPI.getInstance().filterIfExists(backingList);
         FX.submit(() -> {
 
@@ -823,13 +745,24 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void playSelected() {
-        play(F.cast(table.getSelectionModel().getSelectedItem()));
+        update();
+        FX.submit(() -> {
+            if (table.getSelectionModel().getSelectedItem() == null) {
+                return;
+            }
+            play(F.cast(table.getSelectionModel().getSelectedItem()), lastVolume.get());
+        });
+
     }
     private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
 
     private void play(ExtPath item) {
 
-        play(item, lastVolume.get());
+        update();
+        FX.submit(() -> {
+            play(item, lastVolume.get());
+        });
+
     }
 
     private Future play(ExtPath item, final Integer volume) {
@@ -840,7 +773,7 @@ public class MediaPlayerController extends MyBaseController {
             int i = this.getIndex(item);
             if (i < 0) {
                 Logger.info("Play next");
-                playNext(0, true);
+                playNext(0, true);//increment by zero 
                 return null;
             }
             filePlaying = item;
@@ -869,10 +802,12 @@ public class MediaPlayerController extends MyBaseController {
 
                 //wait to start playing
                 while (!getCurrentPlayer().status().isPlaying()) {
-                    Thread.sleep(1);
+
+                    Thread.sleep(100);
+                    Logger.info("Keep sleeping");
                 }
                 Logger.info("Started playing");
-                if (volume != null && (volume >= 0 && volume <= 250)) {
+                if (volume != null && (volume >= 0 && volume <= 100)) {
                     setVolume(getCurrentPlayer(), volume);
                 }
             }
@@ -1062,6 +997,7 @@ public class MediaPlayerController extends MyBaseController {
         public LocationInRootNode root;
         public Integer index;
         public String type;
+        public Integer volume = 100;
 
         public PlaylistState() {
         }
@@ -1073,6 +1009,7 @@ public class MediaPlayerController extends MyBaseController {
         state.root = new LocationInRootNode("", -1);
         state.index = Math.max(0, getIndex(filePlaying));
         state.type = (String) this.playType.getSelectionModel().getSelectedItem();
+        state.volume = (int) Math.round(volumeSlider.getValue());
         int i = 0;
         for (Object item : backingList) {
             ExtPath path = (ExtPath) item;
@@ -1084,7 +1021,7 @@ public class MediaPlayerController extends MyBaseController {
 
     public void loadPlaylistState(PlaylistState state) {
         stop();
-        events.add("LOAD_PLAYLIST",() -> {
+        events.add("LOAD_PLAYLIST", () -> {
 
             Logger.info("INSIDE LOAD PLAYLIST");
 //            this.table.getItems().clear();
@@ -1097,6 +1034,7 @@ public class MediaPlayerController extends MyBaseController {
             Logger.info("Loaded files:", num.get());
             FX.submit(() -> {
                 this.playType.getSelectionModel().select(state.type);
+                volumeSlider.setValue(state.volume);
             });
             this.index = state.index;
             if (backingList.size() > index) {
@@ -1118,11 +1056,12 @@ public class MediaPlayerController extends MyBaseController {
         try {
             ArrayList<String> list = new ArrayList<>();
             PlaylistState state = getPlaylistState();
-            list.add(state.index + "");
+            list.add(String.valueOf(state.index));
             list.add(state.type);
+            list.add(String.valueOf(state.volume));
             list.addAll(state.root.specialString());
-            TextFileIO.writeToFile(path, list);
-            Logger.info("Write to file size:", list.size());
+            lt.lb.commons.io.text.TextFileIO.writeToFile(path, list);
+            Logger.info("Write to file size:" + list.size());
         } catch (Exception e) {
             ErrorReport.report(e);
         }
@@ -1145,9 +1084,10 @@ public class MediaPlayerController extends MyBaseController {
         D.exe.execute(() -> {
             PlaylistState state = new PlaylistState();
             try {
-                ArrayList<String> readFromFile = TextFileIO.readFromFile(path);
+                ArrayList<String> readFromFile = lt.lb.commons.io.text.TextFileIO.readFromFile(path);
                 state.index = Integer.parseInt(readFromFile.remove(0));
                 state.type = readFromFile.remove(0);
+                state.volume = Integer.parseInt(readFromFile.remove(0));
                 state.root = LocationInRootNode.nodeFromFile(readFromFile);
                 loadPlaylistState(state);
                 update();

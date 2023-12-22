@@ -15,12 +15,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.util.Callback;
 import lt.lb.commons.func.Lambda;
 import lt.lb.commons.containers.collections.ObjectBuffer;
+import lt.lb.commons.threads.Futures;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
-import lt.lb.filemanagerlb.logic.TaskFactory;
-import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import org.tinylog.Logger;
 
@@ -35,7 +34,7 @@ public class ExtFolder extends ExtPath {
 
     public ExtFolder(String src, Object... optional) {
         super(src, optional);
-        files = new ConcurrentHashMap<>(1, 0.75f, 2);
+        files = new ConcurrentHashMap<>(16, 0.75f, 2);
         populated = false;
 
     }
@@ -49,13 +48,8 @@ public class ExtFolder extends ExtPath {
         return Identity.FOLDER;
     }
 
-    Lambda.L0R<FutureTask> emptyFuture = Lambda.of(() -> {
-        FutureTask t = new FutureTask(() -> null);
-        t.run();
-        return t;
-    });
     private AtomicBoolean populating = new AtomicBoolean(false);
-    private AtomicReference<FutureTask> populatingFuture = new AtomicReference<>(emptyFuture.apply());
+    private AtomicReference<Future> populatingFuture = new AtomicReference<>(Futures.emptyDone);
 
     protected Future populateFolder(ObjectBuffer buffer, BooleanProperty isCanceled) {
 
@@ -111,8 +105,9 @@ public class ExtFolder extends ExtPath {
             return null;
         };
         if (populating.compareAndSet(false, true)) {
-            this.populatingFuture.set(new FutureTask<>(call));
-            populatingFuture.get().run();
+            FutureTask futureTask = new FutureTask<>(call);
+            this.populatingFuture.set(futureTask);
+            futureTask.run();
             populated = true;
         }
         return populatingFuture.get();
@@ -234,7 +229,7 @@ public class ExtFolder extends ExtPath {
                     files.remove(file.propertyName.get());
                 }
                 if (isCanceled.get()) {
-                    return CompletableFuture.completedFuture(null);
+                    return Futures.emptyDone;
                 }
             }
         }

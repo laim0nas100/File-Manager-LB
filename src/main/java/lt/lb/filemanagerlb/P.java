@@ -10,6 +10,7 @@ import lt.lb.KeyProp.KeyDefaultProperty;
 import lt.lb.commons.Java;
 import lt.lb.commons.reflect.unified.ReflFields;
 import lt.lb.filemanagerlb.gui.MediaPlayerController;
+import lt.lb.filemanagerlb.gui.VLCInit;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
@@ -28,7 +29,7 @@ public class P {
     public static final KeyDefaultProperty<Boolean> debug = KeyProp.of("debug",false).toKeyDefaultProperty();
     public static final KeyDefaultProperty<Integer> lookDepth = KeyProp.of("lookDepth", 2).toKeyDefaultProperty();
     public static final KeyDefaultProperty<String> ROOT_NAME = KeyProp.of("ROOT_NAME", "ROOT").toKeyDefaultProperty();
-    public static final KeyDefaultProperty<Integer> maxThreadsForTask = KeyProp.of("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT).toKeyDefaultProperty();
+    public static final KeyDefaultProperty<Integer> maxThreadsForTask = KeyProp.of("maxThreadsForTask", Java.getAvailableProcessors()).toKeyDefaultProperty();
     public static final KeyDefaultProperty<String> userDir = KeyProp.of("userDir", D.HOME_DIR.absolutePath).toKeyDefaultProperty();
     public static final KeyDefaultProperty<Boolean> bufferedFileStreams = KeyProp.of("bufferedFileStreams", Boolean.TRUE).toKeyDefaultProperty();
     public static final KeyDefaultProperty<String> virtualPrefix = KeyProp.of("virtualPrefix", "Virtual_").toKeyDefaultProperty();
@@ -79,7 +80,7 @@ public class P {
         D.USER_DIR = new PathStringCommands(userDir.resolve(param)).getPath() + File.separator;
         D.useBufferedFileStreams.setValue(bufferedFileStreams.resolve(param));
         VirtualFolder.VIRTUAL_FOLDER_PREFIX = virtualPrefix.resolve(param);
-        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(vlcPath.resolve(param)).getPath() + File.separator;
+        VLCInit.VLC_SEARCH_PATH = new PathStringCommands(vlcPath.resolve(param)).getPath() + File.separator;
         MediaPlayerController.oldMode = oldPlayerMode.resolve(param);
         PathStringCommands.number = number.resolve(param);
         PathStringCommands.fileName = fileName.resolve(param);

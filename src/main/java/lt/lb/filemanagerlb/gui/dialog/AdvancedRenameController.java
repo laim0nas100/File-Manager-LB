@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -12,13 +13,15 @@ import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
-import lt.lb.commons.parsing.*;
-import lt.lb.commons.parsing.token.Literal;
-import lt.lb.commons.parsing.token.Token;
+//import lt.lb.commons.parsing.*;
+//import lt.lb.commons.parsing.token.Literal;
+//import lt.lb.commons.parsing.token.Token;
 import lt.lb.commons.threads.executors.TaskBatcher;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
+import static lt.lb.filemanagerlb.gui.dialog.CommandWindowController.C;
 import lt.lb.filemanagerlb.logic.Enums;
+import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
 import lt.lb.filemanagerlb.logic.TaskFactory;
@@ -27,6 +30,9 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import lt.lb.recombinator.CodepointFlattener;
+import lt.lb.recombinator.FlatMatched;
+import lt.lb.recombinator.Utils;
 import lt.lb.uncheckedutils.Checked;
 import org.apache.commons.lang3.StringUtils;
 
@@ -167,7 +173,7 @@ public class AdvancedRenameController extends MyBaseController {
             for (TableItemObject object : this.tableList) {
                 try {
 
-                    object.newName(parseFilter(object.path1.getName(true), filter, number));
+                    object.newName(parseFilter(object.path1, filter, number));
                     number += increment;
                 } catch (Exception ex) {
                     ErrorReport.report(ex);
@@ -204,47 +210,93 @@ public class AdvancedRenameController extends MyBaseController {
 
     }
 
-    public String parseFilter(String origName, String filter, long currentNumber) throws Lexer.StringNotTerminatedException {
-        Lexer lexer = new Lexer();
-        lexer.resetLines(Arrays.asList(filter));
-        lexer.setSkipWhitespace(false);
-        lexer.addKeywordBreaking(PathStringCommands.fileName, PathStringCommands.nameNoExt, PathStringCommands.extension, PathStringCommands.number);
-        int numerationAmmount = 0;
-        String newName = "";
-        PathStringCommands pathString = new PathStringCommands(origName);
+    public String parseFilter(PathStringCommands pathInfo, String filter, long index) {
+        CodepointFlattener iterator = new CodepointFlattener(Utils.peekableCodepoints(filter));
 
-        boolean addingDigits = false;
-        for (Token token : lexer.getTokenIterator()) {
-            if (token.value.equals(PathStringCommands.number)) {
-                if (addingDigits) {
-                    numerationAmmount++;
-                } else {
-                    numerationAmmount = 1;
-                    addingDigits = true;
-                }
+        for (String key : PathStringCommands.returnDefinedKeys()) {
+            if (key.equals(PathStringCommands.number)) {
+                iterator.with(C.makeNew(key).repeating(true).string(key));
             } else {
-                if (addingDigits) {
-                    addingDigits = false;
-                    newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
-                }
-                if (token.value.equals(PathStringCommands.fileName)) {
-                    newName += pathString.getName(true);
-                } else if (token.value.equals(PathStringCommands.nameNoExt)) {
-                    newName += pathString.getName(false);
-                } else if (token.value.equals(PathStringCommands.extension)) {
-                    newName += pathString.getExtension();
-                } else {
-                    Literal lit = (Literal) token;
-                    newName += lit.value;
-                }
+                iterator.with(C.makeNew(key).string(key));
+            }
 
+        }
+
+        iterator.with(C.whitespace())
+                .with(C.makeNew("Any").any(1));
+
+        List<FlatMatched<String, String>> collect = iterator.toStream().collect(Collectors.toList());
+
+        StringBuilder sb = new StringBuilder();
+
+        for (FlatMatched<String, String> flat : collect) {
+            if (flat.containsMatcher(PathStringCommands.number)) {
+                int numbersToAdd = flat.getItem().length() / PathStringCommands.number.length();
+                sb.append(ExtStringUtils.simpleFormat(index, numbersToAdd));
+            } else if (flat.containsMatcher(PathStringCommands.fileName)) {
+                sb.append(pathInfo.getName(true));
+            } else if (flat.containsMatcher(PathStringCommands.nameNoExt)) {
+                sb.append(pathInfo.getName(false));
+            } else if (flat.containsMatcher(PathStringCommands.filePath)) {
+                sb.append(pathInfo.getPath());
+            } else if (flat.containsMatcher(PathStringCommands.extension)) {
+                sb.append(pathInfo.getExtension());
+            } else if (flat.containsMatcher(PathStringCommands.parent1)) {
+                sb.append(pathInfo.getParent(1));
+            } else if (flat.containsMatcher(PathStringCommands.parent2)) {
+                sb.append(pathInfo.getParent(2));
+            } else if (flat.containsMatcher(PathStringCommands.custom)) {
+                sb.append(D.customPath.getPath());
+            } else if (flat.containsMatcher(PathStringCommands.relativeCustom)) {
+                sb.append(D.customPath.relativePathTo(pathInfo.getPath()));
+            } else {
+                sb.append(flat.getItem());
             }
         }
-        if (addingDigits) {
-            newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
-        }
-        return StringUtils.trim(newName);
+        return sb.toString();
     }
+
+//    public String parseFilterOld(String origName, String filter, long currentNumber) throws Lexer.StringNotTerminatedException {
+//        Lexer lexer = new Lexer();
+//        lexer.resetLines(Arrays.asList(filter));
+//        lexer.setSkipWhitespace(false);
+//        lexer.addKeywordBreaking(PathStringCommands.fileName, PathStringCommands.nameNoExt, PathStringCommands.extension, PathStringCommands.number);
+//        int numerationAmmount = 0;
+//        String newName = "";
+//        PathStringCommands pathString = new PathStringCommands(origName);
+//
+//        boolean addingDigits = false;
+//        for (Token token : lexer.getTokenIterator()) {
+//            if (token.value.equals(PathStringCommands.number)) {
+//                if (addingDigits) {
+//                    numerationAmmount++;
+//                } else {
+//                    numerationAmmount = 1;
+//                    addingDigits = true;
+//                }
+//            } else {
+//                if (addingDigits) {
+//                    addingDigits = false;
+//                    newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
+//                }
+//                if (token.value.equals(PathStringCommands.fileName)) {
+//                    newName += pathString.getName(true);
+//                } else if (token.value.equals(PathStringCommands.nameNoExt)) {
+//                    newName += pathString.getName(false);
+//                } else if (token.value.equals(PathStringCommands.extension)) {
+//                    newName += pathString.getExtension();
+//                } else {
+//                    Literal lit = (Literal) token;
+//                    newName += lit.value;
+//                }
+//
+//            }
+//        }
+//        if (addingDigits) {
+//            newName += ExtStringUtils.simpleFormat(currentNumber, numerationAmmount);
+//        }
+//        return StringUtils.trim(newName);
+//    }
 
     public void setNumber() {
         try {
@@ -269,7 +321,9 @@ public class AdvancedRenameController extends MyBaseController {
                 String path = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
                 ExtPath file = LocationAPI.getInstance().getFileOptimized(path);
                 if (file != null) {
-                    this.virtual.files.put(file.getName(true), file);
+                    if(this.virtual.getIdentity() == Identity.VIRTUAL){
+                        this.virtual.files.put(file.getName(true), file);
+                    }
                 }
                 return null;
             });
