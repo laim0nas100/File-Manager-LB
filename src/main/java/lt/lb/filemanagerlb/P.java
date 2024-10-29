@@ -12,7 +12,6 @@ import lt.lb.commons.reflect.unified.ReflFields;
 import lt.lb.filemanagerlb.gui.MediaPlayerController;
 import lt.lb.filemanagerlb.gui.VLCInit;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
-import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
