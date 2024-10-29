@@ -13,9 +13,6 @@ import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
-//import lt.lb.commons.parsing.*;
-//import lt.lb.commons.parsing.token.Literal;
-//import lt.lb.commons.parsing.token.Token;
 import lt.lb.commons.threads.executors.TaskBatcher;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -27,6 +24,7 @@ import lt.lb.filemanagerlb.logic.LocationInRoot;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
@@ -78,13 +76,13 @@ public class AdvancedRenameController extends MyBaseController {
     private int startingNumber;
     private int increment;
     private LinkedList<TableItemObject> tableList;
-    private ExtFolder virtual;
+    private ExtFolder folder;
 
-    public void beforeShow(String title, ExtFolder virtual) {
+    public void beforeShow(String title, ExtFolder folder) {
         super.beforeShow(title);
         this.setNumber();
         this.tableList = new LinkedList<>();
-        this.virtual = virtual;
+        this.folder = folder;
         Tooltip tp = new Tooltip();
         tp.setText("Name =" + PathStringCommands.fileName + ", Name without extension =" + PathStringCommands.nameNoExt
                 + ", Name extension only =" + PathStringCommands.extension + ", Number (multi-digit if consecutive) =" + PathStringCommands.number);
@@ -143,14 +141,14 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void updateLists() {
-        virtual.update();
+        folder.update();
         ArrayList<ExtPath> array = new ArrayList<>();
         if (recursive.selectedProperty().get()) {
-            this.virtual.getListRecursive(true).stream().forEach(file -> {
+            this.folder.getListRecursive(true).stream().forEach(file -> {
                 array.add(file);
             });
         } else {
-            this.virtual.getFilesCollection().stream().forEach(file -> {
+            this.folder.getFilesCollection().stream().forEach(file -> {
                 array.add(file);
             });
         }
@@ -321,8 +319,9 @@ public class AdvancedRenameController extends MyBaseController {
                 String path = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
                 ExtPath file = LocationAPI.getInstance().getFileOptimized(path);
                 if (file != null) {
-                    if(this.virtual.getIdentity() == Identity.VIRTUAL){
-                        this.virtual.files.put(file.getName(true), file);
+                    if(this.folder.getIdentity() == Identity.VIRTUAL){
+                        VirtualFolder vf = F.cast(folder);
+                        vf.files.put(file.getName(true), file);
                     }
                 }
                 return null;

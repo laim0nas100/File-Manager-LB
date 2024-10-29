@@ -1,13 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.logic.filestructure;
 
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
@@ -28,6 +24,8 @@ public class VirtualFolder extends ExtFolder {
 
     public static String VIRTUAL_FOLDER_PREFIX = "V";
 
+    public ConcurrentHashMap<String, ExtPath> files;
+
     public static void createVirtualFolder() {
         int index = 0;
         String name = VIRTUAL_FOLDER_PREFIX + index;
@@ -41,7 +39,7 @@ public class VirtualFolder extends ExtFolder {
 
     public VirtualFolder(String src) {
         super(src);
-        this.populated = true;
+        files = new ConcurrentHashMap<>(16, 0.75f, 2);
     }
 
     @Override
@@ -108,13 +106,18 @@ public class VirtualFolder extends ExtFolder {
     }
 
     @Override
-    public Future populateFolder(ObjectBuffer list, BooleanProperty isCanceled) {
+    public String getAbsoluteDirectory() {
+        return this.propertyName.get();
+    }
+
+    @Override
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, BooleanProperty isCanceled) {
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
-    public String getAbsoluteDirectory() {
-        return this.propertyName.get();
+    public Map<String, ExtPath> getFilesMap() {
+        return files;
     }
 
 }

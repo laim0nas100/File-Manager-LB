@@ -9,7 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -47,6 +51,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import lt.lb.commons.F;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.ExtTask;
@@ -112,6 +117,7 @@ public class MainController extends MyBaseController<MainController> {
     public static ObservableList<ExtPath> markedList;
     public static IntegerBinding propertyMarkedSize;
     public static ArrayList<ExtPath> actionList;
+    public static Set<String> globalDisabledMap = new HashSet<>();
 
     @FXML
     public CheckBox useRegex;
@@ -562,7 +568,7 @@ public class MainController extends MyBaseController<MainController> {
                 }
                 update.get();
                 newList.clear();
-                newList.addAll(folderInitiated.files.values());
+                newList.addAll(folderInitiated.getFilesCollection());
                 String lookFor = localSearch.getText().trim();
                 if (!lookFor.isEmpty()) {
                     ArrayList<ExtPath> list = new ArrayList<>();
@@ -971,8 +977,10 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Add Marked to Virtual Folder")
                         .withAction(eh -> {
                             FX.submit(() -> {
+                                VirtualFolder vf = F.cast(MC.currentDir);
                                 MainController.markedList.forEach((f) -> {
-                                    MC.currentDir.files.put(f.propertyName.get(), f);
+                                    
+                                    vf.files.put(f.propertyName.get(), f);
                                 });
                                 update();
                             });
@@ -1037,6 +1045,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withAction(eh -> {
                             FX.submit(() -> {
                                 filesProperties.selectedItems().stream().forEach(c -> {
+                                    
                                     c.isDisabled.setValue(c.isDisabled.not().get());
                                 });
                             });
@@ -1058,12 +1067,9 @@ public class MainController extends MyBaseController<MainController> {
                         .withAction(eh -> {
                             FX.submit(() -> {
                                 ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
+                                VirtualFolder vf = F.cast(MC.currentDir);
                                 selectedItems.forEach((item) -> {
-                                    ExtPath remove = MC.currentDir.files.remove(item.propertyName.get());
-                                    if (remove instanceof ExtFolder) {
-                                        ExtFolder folder = (ExtFolder) remove;
-                                        folder.files.clear();
-                                    }
+                                    ExtPath remove = vf.files.remove(item.propertyName.get());
                                 });
                                 update();
                             });

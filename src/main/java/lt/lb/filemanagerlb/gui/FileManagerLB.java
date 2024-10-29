@@ -37,6 +37,7 @@ import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
@@ -155,7 +156,7 @@ public class FileManagerLB {
         Logger.info("Mount: " + name);
         Path path = Paths.get(name);
         if (Files.isDirectory(path)) {
-            ExtFolder device = new ExtFolder(name);
+            ExtFolder device = new ExtRealFolder(name);
             int nameCount = path.getNameCount();
             if (nameCount == 0) {
                 result = true;
@@ -176,9 +177,9 @@ public class FileManagerLB {
     }
 
     public static boolean folderIsVirtual(ExtPath fileToCheck) {
-        ExtFolder baseFolder = FileManagerLB.VirtualFolders;
+        VirtualFolder baseFolder = FileManagerLB.VirtualFolders;
         HashSet<String> set = new HashSet<>();
-        for (ExtPath file : baseFolder.files.values()) {
+        for (ExtPath file : baseFolder.getFilesCollection()) {
             set.add(file.getAbsoluteDirectory());
         }
         return set.contains(fileToCheck.getAbsoluteDirectory());

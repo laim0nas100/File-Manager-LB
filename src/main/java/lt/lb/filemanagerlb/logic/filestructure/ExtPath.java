@@ -18,6 +18,7 @@ import lt.lb.commons.ArrayOp;
 import lt.lb.commons.threads.RepeatableTask;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
+import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
@@ -32,8 +33,8 @@ import lt.lb.filemanagerlb.utility.PathStringCommands;
 public class ExtPath {
 
     public static Predicate<ExtPath> EXISTS = path -> (ArrayOp.any(
-                                                       Predicate.isEqual(path.getIdentity()), Identity.FILE, Identity.FOLDER, Identity.LINK)
-                                                       && Files.exists(path.toPath()));
+            Predicate.isEqual(path.getIdentity()), Identity.FILE, Identity.FOLDER, Identity.LINK)
+            && Files.exists(path.toPath()));
 
     public static final Comparator<String> COMPARE_SIZE_STRING = (String f1, String f2) -> {
         if (f1.isEmpty() || f2.isEmpty()) {
@@ -135,7 +136,26 @@ public class ExtPath {
     private void init() {
         this.propertyName = new SimpleStringProperty(this.getName(true));
         this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
-        this.isDisabled = new SimpleBooleanProperty(false);
+        this.isDisabled = new SimpleBooleanProperty() {
+            @Override
+            public void set(boolean bln) {
+                boolean changed = false;
+                if (bln) {
+                    changed = MainController.globalDisabledMap.add(getAbsolutePath());
+                } else {
+                    changed = MainController.globalDisabledMap.remove(getAbsolutePath());
+                }
+                if (changed) {
+                    fireValueChangedEvent();
+                }
+            }
+
+            @Override
+            public boolean get() {
+                return MainController.globalDisabledMap.contains(getAbsolutePath());
+            }
+
+        };
 
         this.propertySize = new SimpleLongProperty() {
             @Override

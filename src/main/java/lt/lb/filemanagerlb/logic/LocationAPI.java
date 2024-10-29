@@ -10,6 +10,7 @@ import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.utility.DesktopApi;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import org.tinylog.Logger;
@@ -55,15 +56,15 @@ public class LocationAPI {
                     return false;
                 }
             } else {
-                if (currentFolder.files.containsKey(location.at(index))) {
-                    currentFile = currentFolder.files.get(location.at(index));
+                if (currentFolder.getFilesMap().containsKey(location.at(index))) {
+                    currentFile = currentFolder.getFilesMap().get(location.at(index));
                 } else {
                     return false;
                 }
             }
-            if (currentFile instanceof ExtFolder) {
+            if (currentFile instanceof ExtRealFolder) {
                 folderBefore = currentFolder;
-                currentFolder = (ExtFolder) currentFile;
+                currentFolder = (ExtRealFolder) currentFile;
             }
             index++;
             return true;
@@ -81,8 +82,8 @@ public class LocationAPI {
                     return false;
                 }
             } else {
-                if (currentFolder.files.containsKey(location.at(index))) {
-                    path = currentFolder.files.get(location.at(index));
+                if (currentFolder.getFilesMap().containsKey(location.at(index))) {
+                    path = currentFolder.getFilesMap().get(location.at(index));
                 } else {
                     return false;
                 }
@@ -91,7 +92,7 @@ public class LocationAPI {
                 return false;
             }
             if (!existTest) {
-                return path instanceof ExtFolder;
+                return path instanceof ExtRealFolder;
             }
             return true;
 
@@ -194,7 +195,7 @@ public class LocationAPI {
             } else {
                 key = location.getName();
             }
-            walker.currentFolder.files.remove(key);
+            walker.currentFolder.getFilesMap().remove(key);
             Logger.info("Remove by location success");
         }
     }
@@ -205,7 +206,7 @@ public class LocationAPI {
             walker.iteration();
         }
         if (walker.nextCoordinate().equals(location.getName())) {
-            walker.currentFolder.files.put(file.propertyName.get(), file);
+            walker.currentFolder.getFilesMap().put(file.propertyName.get(), file);
             Logger.info("Put by location success");
         }
 
@@ -217,7 +218,7 @@ public class LocationAPI {
             walker.iteration();
             walker.currentFolder.update();
         }
-        walker.currentFolder.files.put(file.propertyName.get(), file);
+        walker.currentFolder.getFilesMap().put(file.propertyName.get(), file);
     }
 
     private void populateByLocation(LocationInRoot location) {

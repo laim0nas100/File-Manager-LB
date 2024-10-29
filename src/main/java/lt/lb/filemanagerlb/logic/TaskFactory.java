@@ -45,8 +45,6 @@ public class TaskFactory {
 
     private static final HashSet<Character> illegalCharacters = new HashSet<>();
     private static final TaskFactory INSTANCE = new TaskFactory();
-//    private static final FastWaitingExecutor innerExe = new FastWaitingExecutor(Math.max(PROCESSOR_COUNT * 5, 10), WaitTime.ofSeconds(120));
-//    public static final Executor mainExecutor = new NestedTaskSubmitionExecutorLayer(innerExe);
     public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe);
     public static String dragInitWindowID = "";
 
