@@ -13,6 +13,7 @@ import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.TaskBatcher;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -32,6 +33,7 @@ import lt.lb.recombinator.CodepointFlattener;
 import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
 import lt.lb.uncheckedutils.Checked;
+import lt.lb.uncheckedutils.SafeOpt;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -295,7 +297,6 @@ public class AdvancedRenameController extends MyBaseController {
 //        }
 //        return StringUtils.trim(newName);
 //    }
-
     public void setNumber() {
         try {
             startingNumber = Integer.parseInt(this.tfStartingNumber.getText());
@@ -309,28 +310,29 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void apply() {
-        TaskBatcher batcher = new TaskBatcher(D.exe);
 
         for (Object object : table.getItems()) {
             TableItemObject ob = (TableItemObject) object;
-            batcher.execute(() -> {
-                ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(new LocationInRoot(ob.path1.getParent(1)));
-                PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
-                String path = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
-                ExtPath file = LocationAPI.getInstance().getFileOptimized(path);
-                if (file != null) {
-                    if(this.folder.getIdentity() == Identity.VIRTUAL){
-                        VirtualFolder vf = F.cast(folder);
-                        vf.files.put(file.getName(true), file);
-                    }
-                }
-                return null;
+//            batcher.execute(() -> {
+            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(new LocationInRoot(ob.path1.getParent(1)));
+            PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
+            SafeOpt<String> path = Checked.checkedCall(() -> {
+                return TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
             });
+            
+            path.getError().ifPresent(ErrorReport::report);
+
+            if (folder.getIdentity() == Identity.VIRTUAL && path.isPresent()) {
+                ExtPath file = LocationAPI.getInstance().getFileOptimized(path.get());
+                if (file != null) {
+                    VirtualFolder vf = F.cast(folder);
+                    vf.files.put(file.getName(true), file);
+                }
+
+            }
+            
         }
-        TaskBatcher.BatchRunSummary summary = batcher.awaitTolerateFails();
-        For.elements().iterate(summary.failures, (i, e) -> {
-            ErrorReport.report(F.cast(e));
-        });
+
         Checked.checkedRun(FX.submit(this::update)::get);
 
     }

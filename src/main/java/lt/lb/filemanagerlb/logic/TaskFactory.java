@@ -56,7 +56,7 @@ public class TaskFactory {
     protected TaskFactory() {
         D.exe.setMainService("MAIN");
         D.exe.setService("MAIN", () -> {
-            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(Java.getAvailableProcessors() * 2, 10), WaitTime.ofSeconds(120));
+            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(120));
             return new NestedTaskSubmitionExecutorLayer(exe);
         });
         Character[] arrayWindows = new Character[]{
