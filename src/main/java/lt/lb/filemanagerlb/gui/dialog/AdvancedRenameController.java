@@ -11,10 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
 import lt.lb.commons.F;
-import lt.lb.commons.iteration.For;
 import lt.lb.commons.javafx.FX;
-import lt.lb.commons.threads.executors.FastWaitingExecutor;
-import lt.lb.commons.threads.executors.TaskBatcher;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import static lt.lb.filemanagerlb.gui.dialog.CommandWindowController.C;
@@ -34,7 +31,6 @@ import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
 import lt.lb.uncheckedutils.Checked;
 import lt.lb.uncheckedutils.SafeOpt;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * FXML Controller class

@@ -28,6 +28,7 @@ import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
+import lt.lb.commons.threads.executors.FastExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -67,12 +68,12 @@ public class FileManagerLB {
     }
 
     public static boolean init = false;
-    
-    public static DelayedTaskExecutor delayedTaskExecutor = new DelayedTaskExecutor(ForkJoinPool.commonPool());
+
+    public static DelayedTaskExecutor delayedTaskExecutor = new DelayedTaskExecutor(new FastExecutor(1));
 
     public static void main(String[] args) {
         delayedTaskExecutor.scheduleWithFixedDelay(WaitTime.ofMinutes(20), System::gc);
-        
+
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         yaml = new Yaml(options);
@@ -89,6 +90,7 @@ public class FileManagerLB {
                                 Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
                                 allControllers.filter(f -> !f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
                                 FileManagerLB.doOnExit();
+                                D.exe.shutdownNow();
                                 delayedTaskExecutor.shutdown();
                                 System.exit(0);
                             });
@@ -98,6 +100,7 @@ public class FileManagerLB {
                     }
                 })
         );
+        D.exe.service("date-size");
 
         Logger.info("Manifest");
 
@@ -189,11 +192,17 @@ public class FileManagerLB {
         return ArtificialRoot.files.keySet();
     }
 
+    private static boolean madeExit = false;
+
     public static void doOnExit() {
+        if(madeExit){
+            return;
+        }
+        madeExit = true;
         Logger.info("Exit call invoked");
         D.sm.getFrames().forEach(frame -> frame.close());
         VLCInit.release();
-        
+
         try {
             writeYaml();
 //            lt.lb.commons.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);

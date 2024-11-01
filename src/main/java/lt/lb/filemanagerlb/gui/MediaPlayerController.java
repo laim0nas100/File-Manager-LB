@@ -677,7 +677,7 @@ public class MediaPlayerController extends MyBaseController {
         exe.shutdown();
         exe2.shutdown();
         events.shutdown();
-        events = null;
+//        events = null;
 
         super.exit();
         Logger.info("FINAL EXIT " + extTableView.resizeTask.isInAction());

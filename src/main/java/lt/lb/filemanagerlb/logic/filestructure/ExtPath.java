@@ -10,19 +10,18 @@ import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import javafx.beans.property.*;
 import javafx.util.Callback;
 import lt.lb.commons.ArrayOp;
-import lt.lb.commons.threads.RepeatableTask;
+import lt.lb.commons.Lazy;
+import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
-import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 
@@ -75,8 +74,14 @@ public class ExtPath {
 
     private Path path;
     private final String absolutePath;
-    private long size = -1;
-    private long lastModified = -1;
+    private Lazy<Long> size = Lazy.ofSupplyAsync(() -> {
+        return Files.size(toPath());
+    }, D.exe.service("date-size"));
+
+    private Lazy<Long> lastModified = Lazy.ofSupplyAsync(() -> {
+        return Files.getLastModifiedTime(toPath()).toMillis();
+    }, D.exe.service("date-size"));
+    
     public BooleanProperty isVirtual;
     public BooleanProperty isAbsoluteRoot;
     public BooleanProperty isDisabled;
@@ -88,30 +93,6 @@ public class ExtPath {
     public StringProperty propertySizeAuto;
     public LongProperty readyToUpdate;
 
-    boolean sizeTaskComplete = true;
-    boolean dateTaskComplete = true;
-    private Runnable getSizeTask = new RepeatableTask(new Callable() {
-        @Override
-        public Object call() throws Exception {
-//                Log.write("getSizeTask" ,absolutePath);
-            size = Files.size(toPath());
-            propertySize.set(size);
-            sizeTaskComplete = true;
-            return null;
-        }
-    });
-
-    private Runnable getDateTask = new RepeatableTask(new Callable() {
-        @Override
-        public Void call() throws Exception {
-//                Log.write("getDateTask ",absolutePath);
-            lastModified = Files.getLastModifiedTime(toPath()).toMillis();
-            propertyLastModified.set(lastModified);
-            dateTaskComplete = true;
-            return null;
-        }
-    });
-
     public ExtPath(String str, Object... optional) {
         str = str.trim();
         if (str.endsWith(File.separator)) {
@@ -122,7 +103,6 @@ public class ExtPath {
         if (optional.length > 0) {
             this.path = (Path) optional[0];
         }
-
     }
 
     public Path toPath() {
@@ -160,24 +140,13 @@ public class ExtPath {
         this.propertySize = new SimpleLongProperty() {
             @Override
             public long get() {
-                if (sizeTaskComplete) {
-                    sizeTaskComplete = false;
-                    D.exe.execute(getSizeTask);
-                }
-
-                return size;
-
+                return size.getSafe().orElse(-1L);
             }
         };
         this.propertyLastModified = new SimpleLongProperty() {
             @Override
             public long get() {
-                if (dateTaskComplete) {
-                    dateTaskComplete = false;
-                    D.exe.execute(getDateTask);
-                }
-
-                return lastModified;
+                return lastModified.getSafe().orElse(-1L);
 
             }
         };
@@ -185,7 +154,7 @@ public class ExtPath {
             @Override
             public String get() {
                 if (propertyLastModified.get() == -1) {
-                    return "LOADING";
+                    return " ";
                 }
                 return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(propertyLastModified.get())));
             }
@@ -193,8 +162,8 @@ public class ExtPath {
         this.propertySizeAuto = new SimpleStringProperty() {
             @Override
             public String get() {
-                if (propertySize.get() == -1) {
-                    return "LOADING";
+                if (size() == -1) {
+                    return " ";
                 }
                 String stringSize = propertySize.asString().get();
 
@@ -224,11 +193,10 @@ public class ExtPath {
     }
 
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
-        ArrayList<ExtPath> list = new ArrayList<>();
-        if (!applyDisable || !this.isDisabled.get()) {
-            list.add(this);
+        if (applyDisable && this.isDisabled.get()) {
+            return ImmutableCollections.listOf( );
         }
-        return list;
+        return ImmutableCollections.listOf(this);
     }
 
     public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate) {
@@ -274,27 +242,11 @@ public class ExtPath {
     }
 
     public long size() {
-        long get = this.propertySize.get();
-        if (get == -1) {
-            try {
-                get = Files.size(toPath());
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
-        }
-        return get;
+        return size.getSafe().orElse(-1L);
     }
 
     public long lastModified() {
-        long get = this.propertyLastModified.get();
-        if (get == -1) {
-            try {
-                get = Files.getLastModifiedTime(toPath()).toMillis();
-            } catch (Exception ex) {
-                ErrorReport.report(ex);
-            }
-        }
-        return get;
+        return lastModified.getSafe().orElse(-1L);
     }
 
     @Override

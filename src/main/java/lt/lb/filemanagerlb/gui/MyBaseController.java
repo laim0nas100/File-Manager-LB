@@ -38,6 +38,7 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
     }
 
     protected boolean closing = false;
+    protected boolean exitInvoked = false;
 
     @Override
     public void close() {
@@ -46,18 +47,24 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
         }
         closing = true;
         try {
-            exit();
+            if (!exitInvoked) {
+                exit();
+            }
             InjectableController.super.close();
             ViewManager.getInstance().updateAllFrames(getFrameID());
         } catch (Exception ex) {
             ErrorReport.report(ex);
-        } finally{
+        } finally {
             closing = false;
         }
 
     }
 
     public void exit() {
+        if (exitInvoked) {
+            return;
+        }
+        exitInvoked = true;
         close();
     }
 
