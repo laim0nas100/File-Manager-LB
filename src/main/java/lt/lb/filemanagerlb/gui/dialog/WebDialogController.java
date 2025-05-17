@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
@@ -33,7 +29,7 @@ public class WebDialogController extends MyBaseController {
             if (!isInternetReachable(path)) {
                 path = D.cLoader.getResource(info.local).toString();
             }
-            Logger.info("Loading from "+ path);
+            Logger.info("Loading from " + path);
             browser.getEngine().load(path);
 
         } catch (Exception e) {
@@ -44,7 +40,7 @@ public class WebDialogController extends MyBaseController {
     public static boolean isInternetReachable(String path) {
         try {
             //make a URL to a known source
-            URL url = new URL(path);
+            URL url = new URI(path).toURL();
 
             //open a connection to that source
             HttpURLConnection urlConnect = (HttpURLConnection) url.openConnection();
@@ -61,6 +57,10 @@ public class WebDialogController extends MyBaseController {
 
     @Override
     public void update() {
+    }
+
+    @Override
+    public void exitLogic() {
     }
 
 }

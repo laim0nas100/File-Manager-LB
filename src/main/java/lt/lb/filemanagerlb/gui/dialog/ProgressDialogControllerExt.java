@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
 import lt.lb.filemanagerlb.gui.MyBaseController;
@@ -14,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import lt.lb.commons.javafx.FX;
+import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.utility.*;
 import org.tinylog.Logger;
 
@@ -59,7 +55,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
         }
         if (task instanceof ContinousCombinedTask) {
             ContinousCombinedTask nested = (ContinousCombinedTask) task;
-            for (SimpleTask child : nested.tasks) {
+            for (SimpleTask child : nested.getTasks()) {
                 buildTree(leaf, child, form);
             }
         }
@@ -75,34 +71,18 @@ public class ProgressDialogControllerExt extends MyBaseController {
         task.paused.bind(paused);
         treeView.visibleProperty().bind(checkboxTasks.selectedProperty());
         progressBar.progressProperty().bind(task.progressProperty());
-        progressBar.progressProperty().addListener(listener -> {
-
-        });
 
         newTask.prepared.addListener(listener -> {
-//            TreeItem<String> root = new TreeItem();
-//            root.setValue(newTask.getDescription());
-//            root.setExpanded(true);
-//            ArrayList<TreeItem<String>> children = new ArrayList<>();
-//            for(SimpleTask t:task.tasks){
-//                TreeItem<String> node = new TreeItem();
-//                node.setValue(t.getDescription());
-//                children.add(node);
-//            }
-//            Platform.runLater(() ->{
-//                root.getChildren().setAll(children);
-//                this.treeView.setRoot(root);
-//            });
 
             TreeItem<String> treeRoot = this.buildTree(null, task, (SimpleTask param) -> {
-                                                   TreeItem<String> node = new TreeItem();
-                                                   node.setValue(param.getDescription());
-                                                   node.setExpanded(true);
-                                                   return node;
-                                               });
-           FX.submit(()->{
-               this.treeView.setRoot(treeRoot);
-           });
+                TreeItem<String> node = new TreeItem();
+                node.setValue(param.getDescription());
+                node.setExpanded(true);
+                return node;
+            });
+            FX.submit(() -> {
+                this.treeView.setRoot(treeRoot);
+            });
 
         });
 
@@ -119,14 +99,13 @@ public class ProgressDialogControllerExt extends MyBaseController {
 
         taskDescription.setText(task.getDescription());
 
-        clock = new CustomClock();
+        clock = new CustomClock(D.exe);
 
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
 
         task.setOnSucceeded((e) -> {
             Logger.info("Task succeeded");
-            FX.submit(clock::stopTimer);
 
             if (task.childTask != null) {
                 task.run();
@@ -137,14 +116,14 @@ public class ProgressDialogControllerExt extends MyBaseController {
                 this.exit();
             }
         });
-        
+        task.setOnDone(e -> {
+            clock.stopTimer();
+        });
 
         if (paused.get()) {
             pauseButton.setText("START");
         }
-        FX.submit(()->{
-            task.toThread().start();
-        });
+        task.toThread().start();
 
     }
 
@@ -180,13 +159,11 @@ public class ProgressDialogControllerExt extends MyBaseController {
     }
 
     @Override
-    public void exit() {
-        try {
-            Logger.info("Call exit");
-            super.exit();
-        } catch (Exception e) {
-            ErrorReport.report(e);
+    public void exitLogic() {
+        if (!task.isDone()) {
+            task.cancel(true);
         }
+        clock.stopTimer();
     }
 
 }

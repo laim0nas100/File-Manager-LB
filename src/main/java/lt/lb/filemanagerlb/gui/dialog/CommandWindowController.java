@@ -1,18 +1,19 @@
 package lt.lb.filemanagerlb.gui.dialog;
 
-//import lt.lb.commons.parsing.token.Literal;
-//import lt.lb.commons.parsing.token.Token;
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
-import lt.lb.commons.javafx.DynamicTaskExecutor;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
-import lt.lb.commons.parsing.*;
+import lt.lb.commons.threads.executors.FastExecutor;
+import lt.lb.commons.DLog;
+import lt.lb.commons.DLog.LogStream;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
@@ -36,6 +37,7 @@ import lt.lb.recombinator.Utils;
 import lt.lb.recombinator.impl.codepoint.CodepointMatchers;
 import lt.lb.uncheckedutils.Checked;
 import org.apache.commons.exec.CommandLine;
+import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 
 /**
@@ -50,7 +52,7 @@ public class CommandWindowController extends MyBaseController {
     @FXML
     TextArea textArea;
     private Commander command;
-    public static DynamicTaskExecutor executor = new DynamicTaskExecutor();
+    public FastExecutor executor;
     public static int maxExecutablesAtOnce;
     public static int truncateAfter;
     public static String commandGenerate,
@@ -65,10 +67,34 @@ public class CommandWindowController extends MyBaseController {
             commandCopyFolderStructure,
             commandHelp;
 
+    private DLog dlog = assignDLog();
+
+    private DLog assignDLog() {
+        DLog log = new DLog();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss").format(LocalDateTime.now());
+        int i = 1;
+        while (i < 10) {
+            try {
+                DLog.changeStream(log, LogStream.FILE, D.HOME_DIR.COMMAND_WINDOW_LOGS + "session_" + date + ".txt");
+                DLog.setMinimal(log);
+                log.display = false;//only write to file
+                return log;
+            } catch (IOException e) {
+                ErrorReport.report(e);
+                i++;
+            }
+
+        }
+        DLog.close(log);
+        return null;
+    }
+
     @Override
     public void beforeShow(String title) {
         super.beforeShow(title);
-        command = new Commander(textField);
+
+        executor = new FastExecutor(maxExecutablesAtOnce);
+        command = new Commander(this, textField);
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
             Logger.info("Copy params", Arrays.asList(params));
             String newCom = (String) params[0];
@@ -113,7 +139,7 @@ public class CommandWindowController extends MyBaseController {
 
         });
         command.addCommand(commandCancel, (String... params) -> {
-            executor.stopEverything();
+            executor.cancelAll(false);
         });
         command.addCommand(commandGenerate, (String... params) -> {
             String newCom = (String) params[0];
@@ -174,7 +200,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandHelp, (String... params) -> {
 
             listParameters();
-            addToTextArea(textArea, "Read Parameters.txt file for info\n");
+            addToTextArea("Read:" + D.HOME_DIR.Parameters.absolutePath + " file for info\n");
         });
         command.addCommand(commandListParams, (String... params) -> {
             listParameters();
@@ -183,62 +209,82 @@ public class CommandWindowController extends MyBaseController {
 
     public void listParameters() {
         P.getActiveParameters().forEach(val -> {
-            addToTextArea(textArea, val.getKey() + "=" + val.getValue() + "\n");
+            addToTextArea(val.getKey() + "=" + val.getValue() + "\n");
         });
     }
 
-    public void addToTextArea(TextArea textA, String text) {
+    public void addToTextArea(String text) {
+        addToTextArea(true, text);
+    }
+
+    public void addToTextArea(boolean logMe, String text) {
         FX.submit(() -> {
-            String newString = textA.getText() + text;
-            textA.setText(newString.substring(Math.max(newString.length() - truncateAfter, 0)));
-            textA.positionCaret(textA.getLength());
+            if (logMe) {
+                DLog.println(dlog, StringUtils.removeEnd(text, "\n"));
+            }
+            String newString = textArea.getText() + text;
+            textArea.setText(newString.substring(Math.max(newString.length() - truncateAfter, 0)));
+            textArea.positionCaret(textArea.getLength());
         });
     }
 
-    public void handleStream(Process process, TextArea textArea, boolean setTextAfterwards, String command) throws IOException {
+    public void handleStream(Process process, boolean setTextAfterwards, String command) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = reader.readLine();
         ArrayDeque<String> lines = new ArrayDeque<>();
-        if (!setTextAfterwards) {
-            addToTextArea(textArea, "Begin: " + command);
+        if (setTextAfterwards) {
+            lines.add("$" + command);
+//            addToTextArea(textArea, "Begin: " + command);
+        } else {
+
         }
         while (line != null) {
-            if (setTextAfterwards) {
-                lines.add(line);
-            } else {
-                addToTextArea(textArea, line + "\n");
+            lines.add(line);
+            if (!setTextAfterwards) {
+                addToTextArea(line + "\n");
             }
             line = reader.readLine();
         }
         final int errorCode = process.exitValue();
+        lines.add("Error Code:" + errorCode + "\n");
         if (setTextAfterwards) {
-            lines.add("Error Code:" + errorCode + "\n");
             StringBuilder main = new StringBuilder();
             for (String ln : lines) {
                 main.append(ln).append("\n");
             }
-            addToTextArea(textArea, main.toString());
+            addToTextArea(main.toString());
         } else {
-            addToTextArea(textArea, "Error Code:" + errorCode + "\n\n");
+            addToTextArea("Error Code:" + errorCode + "\n\n");
         }
     }
     public static final CodepointMatchers C = new CodepointMatchers();
 
-    public class Commander extends AbstractCommandField {
+    public static class Commander extends AbstractCommandField {
 
         private boolean setTextAfterwards = false;
+        private CommandWindowController ctrl;
 
-        public Commander(TextField tf) {
+        public Commander(CommandWindowController controller, TextField tf) {
             super(tf);
+            this.ctrl = controller;
         }
 
         public void apply(String name) throws IOException, InterruptedException {
-            ArrayDeque<String> readFromFile = new ArrayDeque(
-                    lt.lb.commons.io.text.TextFileIO.readFromFile(D.USER_DIR + name));
-            this.setTextAfterwards = true;
-            for (String command : readFromFile) {
-                submit(command);
+            String script = D.HOME_DIR.SCRIPTS + name;
+            try {
+
+                ArrayDeque<String> readFromFile = new ArrayDeque(
+                        lt.lb.commons.io.text.TextFileIO.readFromFile(script));
+                this.setTextAfterwards = true;
+                ctrl.addToTextArea("Running script:" + script + "\n");
+                for (String command : readFromFile) {
+                    submit(command);
+                }
+            } catch (IOException io) {
+                ctrl.addToTextArea("Failed to run script:" + script + "\n");
+                ctrl.addToTextArea(io.getLocalizedMessage());
             }
+
         }
 
         public void generate(String command) {
@@ -278,7 +324,7 @@ public class CommandWindowController extends MyBaseController {
                         } else if (flat.containsMatcher(PathStringCommands.fileName)) {
                             sb.append(pathInfo.getName(true));
                         } else if (flat.containsMatcher(PathStringCommands.nameNoExt)) {
-                           sb.append(pathInfo.getName(false));
+                            sb.append(pathInfo.getName(false));
                         } else if (flat.containsMatcher(PathStringCommands.filePath)) {
                             sb.append(pathInfo.getPath());
                         } else if (flat.containsMatcher(PathStringCommands.extension)) {
@@ -286,7 +332,7 @@ public class CommandWindowController extends MyBaseController {
                         } else if (flat.containsMatcher(PathStringCommands.parent1)) {
                             sb.append(pathInfo.getParent(1));
                         } else if (flat.containsMatcher(PathStringCommands.parent2)) {
-                           sb.append(pathInfo.getParent(2));
+                            sb.append(pathInfo.getParent(2));
                         } else if (flat.containsMatcher(PathStringCommands.custom)) {
                             sb.append(D.customPath.getPath());
                         } else if (flat.containsMatcher(PathStringCommands.relativeCustom)) {
@@ -308,7 +354,7 @@ public class CommandWindowController extends MyBaseController {
 //        public void generateOld(String command) {
 //            try {
 //
-////                System.out.println(MainController.markedList);
+        ////                System.out.println(MainController.markedList);
 //                LinkedList<String> l = new LinkedList<>();
 //                MainController.markedList.forEach(item -> {
 //                    l.add(item.getAbsolutePath());
@@ -389,16 +435,17 @@ public class CommandWindowController extends MyBaseController {
             Logger.info(coms);
             String c = coms.pollFirst();
             String[] params = coms.toArray(new String[1]);
-            Logger.info("Params", Arrays.asList(params));
-            addToTextArea(textArea, "$:" + command + "\n");
+            Logger.info("Params:{}", Arrays.asList(params));
+
             try {
                 if (runCommand(c, params)) {
-                    Logger.info("Run in-built command:", command);
+                    ctrl.addToTextArea("$:" + command + "\n");
+                    Logger.info("Run in-built command:{}", command);
                 } else {
                     ExtTask task = new ExtTask() {
                         @Override
                         protected Void call() throws Exception {
-                            Logger.info("Run native command:", command);
+                            Logger.info("Run native command:{}", command);
                             CommandLine parse = CommandLine.parse(command);
                             List<String> args = new ArrayList<>();
                             args.add(parse.getExecutable());
@@ -408,14 +455,14 @@ public class CommandWindowController extends MyBaseController {
                             ProcessBuilder processBuilder = new ProcessBuilder(args.stream().toArray(s -> new String[s])).redirectErrorStream(true);
 
                             Process process = processBuilder.start();
-                            handleStream(process, textArea, setTextAfterwards, command);
+                            ctrl.handleStream(process, setTextAfterwards, command);
                             return null;
                         }
                     };
                     task.setOnFailed(h -> {
                         ErrorReport.report(task.getException());
                     });
-                    executor.submit(task);
+                    ctrl.executor.submit(task);
                 }
             } catch (Exception ex) {
                 ErrorReport.report(ex);
@@ -433,9 +480,12 @@ public class CommandWindowController extends MyBaseController {
     }
 
     @Override
-    public void exit() {
-        super.exit();
-
+    public void exitLogic() {
+        executor.shutdown();
+        if (dlog != null) {
+            DLog.close(dlog);
+            dlog = null;
+        }
     }
 
 }

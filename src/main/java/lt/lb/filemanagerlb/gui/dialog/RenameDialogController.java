@@ -5,8 +5,8 @@ import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import java.nio.file.Files;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import java.util.HashSet;
+import java.util.Set;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import lt.lb.commons.javafx.FX;
@@ -33,8 +33,8 @@ public class RenameDialogController extends TextInputDialogController {
     public FileCallback callback;
     private ExtPath itemToRename;
     private ExtFolder folder;
-    private ObservableList<String> listToCheck = FXCollections.observableArrayList();
-    private ServiceTimeoutTask folderUpdateTask = new ServiceTimeoutTask(D.exe,D.exe, WaitTime.ofMillis(200), () -> {
+    private Set<String> listToCheck = new HashSet<>();
+    private ServiceTimeoutTask folderUpdateTask = new ServiceTimeoutTask(D.exe, D.exe, WaitTime.ofMillis(200), () -> {
         update();
         FX.submit(() -> {
             String trim = textField.getText().trim();
@@ -94,8 +94,9 @@ public class RenameDialogController extends TextInputDialogController {
     public void apply() {
         if (nameIsAvailable.get()) {
             try {
-                PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(folder, itemToRename.propertyName.get()).trim());
-                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), ExtStringUtils.trimEnd(textField.getText()), fallback.getName(true));
+
+                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), textField.getText().trim());
+                folder.update();//force update if only capitalization changes
                 if (callback != null) {
                     ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(renameTo);
                     callback.callback(fileOptimized);
@@ -117,5 +118,9 @@ public class RenameDialogController extends TextInputDialogController {
         for (ExtPath file : folder.getFilesCollection()) {
             listToCheck.add(file.propertyName.get());
         }
+    }
+
+    @Override
+    public void exitLogic() {
     }
 }

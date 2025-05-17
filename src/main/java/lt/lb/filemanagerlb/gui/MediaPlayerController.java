@@ -27,8 +27,10 @@ import lt.lb.commons.javafx.MenuBuilders;
 import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.javafx.scenemanagement.StageFrame;
 import lt.lb.commons.threads.Futures;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.fastid.FastID;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.VLCInit.VLCException;
@@ -107,7 +109,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private ViewProperties<ExtPath> tableProperties;
 
-    volatile private MediaPlayer oldplayer;
+    private volatile MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
     private int index = 0;
     private Float minDelta = 0.005f;
@@ -117,10 +119,10 @@ public class MediaPlayerController extends MyBaseController {
     private boolean stopping = false;
     private boolean inSeamless = false;
     private boolean ignoreSeek = false;
-    private String typeLoopSong = "Loop file";
-    private String typeLoopList = "Loop list";
-    private String typeRandom = "Random";
-    private String typeStopAfterFinish = "Don't loop list";
+    private static final String typeLoopSong = "Loop file";
+    private static final String typeLoopList = "Loop list";
+    private static final String typeRandom = "Random";
+    private static final String typeStopAfterFinish = "Don't loop list";
     private ExtTableView extTableView;
     private ExtPath filePlaying;
     private ArrayList<ExtPath> backingList = new ArrayList<>();
@@ -136,8 +138,8 @@ public class MediaPlayerController extends MyBaseController {
         public final FastID id = FastID.getAndIncrementGlobal();
 
     }
-    private ExecutorService exe = Executors.newFixedThreadPool(1);
-    private ExecutorService exe2 = Executors.newFixedThreadPool(1);
+    private ExecutorService exe = new FastWaitingExecutor(1);
+    private ExecutorService exe2 = new FastWaitingExecutor(1);
 
     private EventQueue events = new EventQueue(exe);
 
@@ -187,11 +189,10 @@ public class MediaPlayerController extends MyBaseController {
         javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
         newPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
         imageView.setPreserveRatio(true);
-        Future<StageFrame> future = D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
-            return new Group(imageView);
-        });
 
-        SafeOpt<StageFrame> error = Futures.mappable(future).map(stageFrame -> {
+        return SafeOpt.ofFuture(D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
+            return new Group(imageView);
+        })).map(stageFrame -> {
             if (showVideo.selectedProperty().get()) {
                 stageFrame.show();
             } else {
@@ -208,19 +209,14 @@ public class MediaPlayerController extends MyBaseController {
 
             return stageFrame;
 
-        }).safeGet();
-
-        if (error.hasError()) {
-            error.getError().ifPresent(err -> {
-                Logger.error(err);
-            });
-            return null;
-        } else {
+        }).peekError(err -> {
+            Logger.error(err);
+        }).map(videoFrame -> {
             Player pl = new Player();
             pl.media = newPlayer;
-            pl.stageFrame = error.get();
+            pl.stageFrame = videoFrame;
             return pl;
-        }
+        }).orNull();
 
     }
 
@@ -492,11 +488,13 @@ public class MediaPlayerController extends MyBaseController {
                         .withText("Rename")
                         .withAction(eh -> {
                             IntegerValue numberValue = new IntegerValue(0);
+                            ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
                             FileCallback cb = (filePath) -> {
+                                backingList.remove(selected);
                                 addIfAbsent(filePath, numberValue.get());
                             };
                             numberValue.set(table.getSelectionModel().getSelectedIndex());
-                            ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
+
                             String parent = selected.getParent(1);
                             ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getFileOptimized(parent), selected, cb);
                         })
@@ -511,12 +509,12 @@ public class MediaPlayerController extends MyBaseController {
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
 
         extTableView.prepareChangeListeners();
-        execService.scheduleWithFixedDelay(() -> {
+        execService.scheduleWithFixedDelay(WaitTime.ofMillis(250),() -> {
             if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
                 return;
             }
             updateSeek();
-        }, 1000, 300, TimeUnit.MILLISECONDS);
+        });
         FX.submit(() -> {
 
             playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
@@ -559,13 +557,13 @@ public class MediaPlayerController extends MyBaseController {
         FX.submit(() -> {
             if (!stopping && !pls.isEmpty()) {
 
-                this.labelTimePassed.setText(this.formatToMinutesAndSeconds(millisPassed));
+                this.labelTimePassed.setText(formatTimeFull(millisPassed));
                 if (inSeekChange.compareAndSet(false, true)) {
                     this.seekSlider.valueProperty().set(position * 100);
                     inSeekChange.set(false);
                 }
 
-                labelDuration.setText("/ " + formatToMinutesAndSeconds(currentLength));
+                labelDuration.setText("/ " + formatTimeFull(currentLength));
             }
         });
     }
@@ -654,7 +652,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     @Override
-    public void exit() {
+    public void exitLogic() {
         Logger.info("CLOSE MEDIA PLAYER");
         stopping = true;
 
@@ -679,9 +677,7 @@ public class MediaPlayerController extends MyBaseController {
         events.shutdown();
 //        events = null;
 
-        super.exit();
         Logger.info("FINAL EXIT " + extTableView.resizeTask.isInAction());
-
     }
 
     public void playNext(int increment, boolean ignoreModifiers, Object... opt) {
@@ -922,13 +918,21 @@ public class MediaPlayerController extends MyBaseController {
         toThread.start();
     }
      */
-    private String formatToMinutesAndSeconds(long millis) {
+    private static String formatTime(long time) {
+        return time >= 10 ? ":" + time : ":0" + time;
+    }
+
+    private static String formatTimeFull(long millis) {
         long minutes = (millis / 1000) / 60;
         long seconds = (millis / 1000) % 60;
-        if (seconds < 10) {
-            return minutes + ":0" + seconds;
+        String str = formatTime(seconds);
+        long hours = 0;
+        if (minutes >= 60) {
+            hours = minutes / 60;
+            minutes = minutes % 60;
+            return hours + formatTime(minutes) + str;
         } else {
-            return minutes + ":" + seconds;
+            return minutes + str;
         }
     }
 
@@ -987,7 +991,6 @@ public class MediaPlayerController extends MyBaseController {
                 } else {
                     backingList.add(item);
                 }
-                this.extTableView.updateContentsAndSort(backingList);
             }
         }
     }

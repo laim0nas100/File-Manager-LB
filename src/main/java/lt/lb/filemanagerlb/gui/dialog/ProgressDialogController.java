@@ -5,7 +5,6 @@
  */
 package lt.lb.filemanagerlb.gui.dialog;
 
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -19,6 +18,7 @@ import lt.lb.filemanagerlb.utility.CustomClock;
 
 import java.util.Arrays;
 import lt.lb.commons.javafx.FX;
+import lt.lb.filemanagerlb.D;
 
 /**
  * FXML Controller class
@@ -73,7 +73,7 @@ public class ProgressDialogController extends MyBaseController {
         taskDescription.setText(task.getDescription());
 
         Thread t = new Thread(task);
-        clock = new CustomClock();
+        clock = new CustomClock(D.exe);
 
         t.setDaemon(true);
         timeWasted.textProperty().bind(clock.timeProperty);
@@ -124,9 +124,9 @@ public class ProgressDialogController extends MyBaseController {
     public void update() {
     }
 
-    @Override
-    public void exit() {
-        super.exit();
+     @Override
+    public void exitLogic() {
+        clock.stopTimer();
     }
 
 }

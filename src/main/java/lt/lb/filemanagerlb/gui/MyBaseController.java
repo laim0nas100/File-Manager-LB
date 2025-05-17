@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 import javafx.stage.Stage;
 import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.commons.javafx.scenemanagement.InjectableController;
-import lt.lb.filemanagerlb.utility.ErrorReport;
 
 /**
  *
@@ -47,15 +46,14 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
         }
         closing = true;
         try {
-            if (!exitInvoked) {
-                exit();
-            }
+            exit();
             InjectableController.super.close();
-            ViewManager.getInstance().updateAllFrames(getFrameID());
+            if (!FileManagerLB.shutdown) {
+                ViewManager.getInstance().updateAllFrames(getFrameID());
+            }
         } catch (Exception ex) {
-            ErrorReport.report(ex);
-        } finally {
-            closing = false;
+            ex.printStackTrace();
+//            ErrorReport.report(ex);
         }
 
     }
@@ -65,8 +63,11 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
             return;
         }
         exitInvoked = true;
+        exitLogic();
         close();
     }
+
+    public abstract void exitLogic();
 
     public abstract void update();
 

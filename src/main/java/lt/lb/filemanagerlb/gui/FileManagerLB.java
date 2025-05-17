@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
@@ -21,21 +21,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import lt.lb.commons.containers.collections.CollectionOp;
-import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
 import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
-import lt.lb.commons.threads.executors.FastExecutor;
-import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
-import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
-import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.Enums;
+import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
@@ -67,12 +63,12 @@ public class FileManagerLB {
         SLF4JBridgeHandler.install();
     }
 
-    public static boolean init = false;
+    private static boolean init = false;
 
-    public static DelayedTaskExecutor delayedTaskExecutor = new DelayedTaskExecutor(new FastExecutor(1));
+    public static boolean shutdown = false;
 
     public static void main(String[] args) {
-        delayedTaskExecutor.scheduleWithFixedDelay(WaitTime.ofMinutes(20), System::gc);
+        D.exe.scheduleWithFixedDelay(System::gc, 30, 30, TimeUnit.MINUTES);
 
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -83,20 +79,11 @@ public class FileManagerLB {
                 sizeInfo,
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
                 new WithDecoration(FrameState.FrameStateClose.instance, d -> {
+                    if (shutdown) {
+                        return;
+                    }
                     if (!init && D.sm.getAllControllers(MainController.class).count() == 0) {
-                        init = true;
-                        FX.submit(() -> {
-                            ErrorReport.with(() -> {
-                                Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
-                                allControllers.filter(f -> !f.getFrameID().equals(d.getID())).forEach(c -> c.exit());
-                                FileManagerLB.doOnExit();
-                                D.exe.shutdownNow();
-                                delayedTaskExecutor.shutdown();
-                                System.exit(0);
-                            });
-                            init = false;
-                        });
-
+                        doOnExit();
                     }
                 })
         );
@@ -114,7 +101,7 @@ public class FileManagerLB {
             reInit();
         }).ifPresent(ErrorReport::report);
 
-        if (!D.DEBUG.get()) {
+        if (P.showAbout.resolve(P.parameters)) {
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         }
 
@@ -192,29 +179,26 @@ public class FileManagerLB {
         return ArtificialRoot.files.keySet();
     }
 
-    private static boolean madeExit = false;
-
     public static void doOnExit() {
-        if(madeExit){
+        if (shutdown) {
             return;
         }
-        madeExit = true;
+        shutdown = true;
         Logger.info("Exit call invoked");
-        D.sm.getFrames().forEach(frame -> frame.close());
+        Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
+        allControllers.forEach(c -> c.exit());
         VLCInit.release();
-
+        TaskFactory.getInstance().jobsExecutor.shutdown();
+        D.exe.shutdown();
+        Logger.info("Write yaml");
         try {
             writeYaml();
-//            lt.lb.commons.FileManaging.FileReader.writeToFile(USER_DIR+"Log.txt", Log.getInstance().list);
-//            AutoBackupMaker BM = new AutoBackupMaker(D.LogBackupCount, D.USER_DIR + "BUP", "YYYY-MM-dd HH.mm.ss");
-//            Collection<Runnable> makeNewCopy = BM.makeNewCopy(D.logPath);
-//            makeNewCopy.forEach(th -> {
-//                th.run();
-//            });
-//            BM.cleanUp().run();
-//            Files.delete(Paths.get(D.logPath));
         } catch (Exception ex) {
             ErrorReport.report(ex);
+        }
+        try {
+            D.exe.awaitTermination(1, TimeUnit.DAYS);
+        } catch (Exception ex) {
         }
 
     }
@@ -226,7 +210,7 @@ public class FileManagerLB {
         CollectionOp.replace(si.favoriteLinks,
                 MainController.favoriteLinks.stream()
                         .map(m -> m.location)
-                        .filter(f -> !f.isNotWriteable())
+                        .filter(f -> !f.isArtificial())
                         .map(m -> m.getAbsolutePath())
                         .distinct()
                         .collect(Collectors.toList())
@@ -236,6 +220,7 @@ public class FileManagerLB {
         si.autoStartProgressDialogs = vm.autoStartProgressDialogs.get();
         si.pinProgressDialogs = vm.pinProgressDialogs.get();
         si.pinTextInputDialogs = vm.pinTextInputDialogs.get();
+        si.copyReplaceExisting = TaskFactory.getInstance().copyReplaceExisting.get();
 
         yamlWrite(D.HOME_DIR.session_info.getPath(), si);
     }
@@ -253,12 +238,13 @@ public class FileManagerLB {
         vm.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
         vm.pinProgressDialogs.set(D.sessionInfo.pinProgressDialogs);
         vm.pinTextInputDialogs.set(D.sessionInfo.pinTextInputDialogs);
+        TaskFactory.getInstance().copyReplaceExisting.set(D.sessionInfo.copyReplaceExisting);
         for (String str : D.sessionInfo.favoriteLinks) {
             MainController.favoriteLinks.add(new FavouriteLink(str));
         }
     }
 
-    public static void reInit() throws IOException {
+    public static void reInit() {
         Logger.info("INITIALIZE");
         init = true;
         D.sm.getFrames().forEach(frame -> frame.close());
@@ -271,71 +257,32 @@ public class FileManagerLB {
 
         MainController.markedList = FXCollections.observableArrayList();
         MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
+        MainController.globalDisabledMap = new HashSet<>();
         ArtificialRoot = new VirtualFolder(D.ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
-        CommandWindowController.executor.stopEverything();
-        CommandWindowController.executor.setRunnerSize(0);
-        readParameters();
+
         try {
             Path userdir = Paths.get(D.USER_DIR);
             if (!Files.isDirectory(userdir)) {
                 Files.createDirectories(userdir);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             ErrorReport.report(e);
         }
-        Logger.info("Before start executor");
-        CommandWindowController.executor.setRunnerSize(CommandWindowController.maxExecutablesAtOnce);
-        Logger.info("After start executor");
+        P.reload();
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
         MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
-        readYaml();
+        try {
+            readYaml();
+        } catch (IOException ex) {
+            ErrorReport.report(ex);
+        }
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Logger.info("After new window");
 
         init = false;
 
-    }
-
-    public static void readParameters() {
-        P.reload();
-//        D.parameters = new ParametersMap(list, "=");
-//        Logger.info("Parameters", D.parameters);
-//
-//        D.DEBUG.set(D.parameters.defaultGet("debug", true));
-//        D.DEPTH = D.parameters.defaultGet("lookDepth", 2);
-//        D.LogBackupCount = D.parameters.defaultGet("logBackupCount", 5);
-//        D.ROOT_NAME = D.parameters.defaultGet("ROOT_NAME", D.ROOT_NAME);
-//        D.MAX_THREADS_FOR_TASK = D.parameters.defaultGet("maxThreadsForTask", TaskFactory.PROCESSOR_COUNT);
-//        D.USER_DIR = new PathStringCommands(D.parameters.defaultGet("userDir", D.HOME_DIR.absolutePath)).getPath() + File.separator;
-//        D.useBufferedFileStreams.setValue(D.parameters.defaultGet("bufferedFileStreams", true));
-//        VirtualFolder.VIRTUAL_FOLDER_PREFIX = D.parameters.defaultGet("virtualPrefix", "V");
-//        MediaPlayerController.VLC_SEARCH_PATH = new PathStringCommands(D.parameters.defaultGet("vlcPath", D.HOME_DIR + File.separator + "lib")).getPath() + File.separator;
-//        MediaPlayerController.oldMode = D.parameters.defaultGet("oldPlayerMode", false);
-//        PathStringCommands.number = D.parameters.defaultGet("filter.number", "#");
-//        PathStringCommands.fileName = D.parameters.defaultGet("filter.name", "<n>");
-//        PathStringCommands.nameNoExt = D.parameters.defaultGet("filter.nameNoExtension", "<nne>");
-//        PathStringCommands.filePath = D.parameters.defaultGet("filter.path", "<ap>");
-//        PathStringCommands.extension = D.parameters.defaultGet("filter.nameExtension", "<ne>");
-//        PathStringCommands.parent1 = D.parameters.defaultGet("filter.parent1", "<p1>");
-//        PathStringCommands.parent2 = D.parameters.defaultGet("filter.parent2", "<p2>");
-//        PathStringCommands.custom = D.parameters.defaultGet("filter.custom", "<c>");
-//        PathStringCommands.relativeCustom = D.parameters.defaultGet("filter.relativeCustom", "<rc>");
-//        CommandWindowController.commandInit = D.parameters.defaultGet("code.init", "init");
-//        CommandWindowController.truncateAfter = D.parameters.defaultGet("code.truncateAfter", 100000);
-//        CommandWindowController.maxExecutablesAtOnce = D.parameters.defaultGet("code.maxExecutables", 2);
-//        CommandWindowController.commandGenerate = D.parameters.defaultGet("code.commandGenerate", "generate");
-//        CommandWindowController.commandApply = D.parameters.defaultGet("code.commandApply", "apply");
-//        CommandWindowController.commandClear = D.parameters.defaultGet("code.clear", "clear");
-//        CommandWindowController.commandCancel = D.parameters.defaultGet("code.cancel", "cancel");
-//        CommandWindowController.commandList = D.parameters.defaultGet("code.list", "list");
-//        CommandWindowController.commandListRec = D.parameters.defaultGet("code.listRec", "listRec");
-//        CommandWindowController.commandSetCustom = D.parameters.defaultGet("code.setCustom", "setCustom");
-//        CommandWindowController.commandHelp = D.parameters.defaultGet("code.help", "help");
-//        CommandWindowController.commandListParams = D.parameters.defaultGet("code.listParameters", "listParams");
-//        CommandWindowController.maxExecutablesAtOnce = D.parameters.defaultGet("code.maxThreadsForCommand", TaskFactory.PROCESSOR_COUNT);
-//        CommandWindowController.commandCopyFolderStructure = D.parameters.defaultGet("code.copyFolderStructure", "copyStructure");
     }
 
     public static void restart() {

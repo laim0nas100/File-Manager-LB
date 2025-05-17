@@ -41,18 +41,13 @@ import org.tinylog.Logger;
  */
 public class ViewManager {
 
-    public SimpleBooleanProperty autoCloseProgressDialogs;
-    public SimpleBooleanProperty autoStartProgressDialogs;
-    public SimpleBooleanProperty pinProgressDialogs;
-    public SimpleBooleanProperty pinTextInputDialogs;
+    public final SimpleBooleanProperty autoCloseProgressDialogs = new SimpleBooleanProperty(false);
+    public final SimpleBooleanProperty autoStartProgressDialogs = new SimpleBooleanProperty(false);
+    public final SimpleBooleanProperty pinProgressDialogs = new SimpleBooleanProperty(false);
+    public final SimpleBooleanProperty pinTextInputDialogs = new SimpleBooleanProperty(false);
     private static final ViewManager INSTANCE = new ViewManager();
 
     protected ViewManager() {
-        this.autoCloseProgressDialogs = new SimpleBooleanProperty(false);
-        this.autoStartProgressDialogs = new SimpleBooleanProperty(false);
-        this.pinProgressDialogs = new SimpleBooleanProperty(false);
-        this.pinTextInputDialogs = new SimpleBooleanProperty(false);
-
     }
 
     public static ViewManager getInstance() {
@@ -85,15 +80,17 @@ public class ViewManager {
 
     public void updateAllWindows() {
         D.sm.getAllControllers(MainController.class).forEach(conrt -> {
-
-            D.exe.execute(conrt::update);
+            conrt.update();
         });
     }
 
     public void updateAllFrames(String exception) {
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
-        allControllers.filter(f -> !f.getFrameID().equals(exception)).forEach(con -> {
-            D.exe.execute(con::update);
+        if (exception != null) {
+            allControllers = allControllers.filter(f -> !f.getFrameID().equals(exception));
+        }
+        allControllers.forEach(con -> {
+            con.update();
         });
     }
 
@@ -124,7 +121,7 @@ public class ViewManager {
                     frame.getStage().setMinHeight(250);
                     frame.getStage().setMinWidth(400);
                     frame.getStage().show();
-                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
+                    frame.getStage().setAlwaysOnTop(pinProgressDialogs.get());
                     controller.afterShow(task);
                     frame.getStage().requestFocus();
                     frame.getStage().toFront();
@@ -151,7 +148,7 @@ public class ViewManager {
                     frame.getStage().setMinHeight(250);
                     frame.getStage().setMinWidth(400);
                     frame.getStage().show();
-                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinProgressDialogs.get());
+                    frame.getStage().setAlwaysOnTop(pinProgressDialogs.get());
                     controller.afterShow(task);
                     frame.getStage().requestFocus();
                     frame.getStage().toFront();
@@ -180,7 +177,7 @@ public class ViewManager {
                     frame.getStage().setMinHeight(200);
                     frame.getStage().setMinWidth(500);
                     frame.getStage().show();
-                    frame.getStage().setAlwaysOnTop(ViewManager.getInstance().pinTextInputDialogs.get());
+                    frame.getStage().setAlwaysOnTop(pinTextInputDialogs.get());
                     controller.afterShow(folder, itemToRename);
                     controller.callback = callback;
                     frame.getStage().requestFocus();
@@ -351,7 +348,7 @@ public class ViewManager {
         });
 
         showJob.addDependency(Dependencies.standard(discoverJob, SystemJobEventName.ON_SUCCESSFUL));
-        TaskFactory.jobsExecutor.submitAll(showJob, discoverJob);
+        TaskFactory.getInstance().jobsExecutor.submitAll(showJob, discoverJob);
 
     }
 

@@ -29,7 +29,7 @@ public class ExtRealFolder extends ExtFolder {
         super(src, optional);
     }
 
-    protected ExclusiveFutureTaskExecutor<Map<String, ExtPath>> pupolator = new ExclusiveFutureTaskExecutor<>(D.exe);
+    protected ExclusiveFutureTaskExecutor<Map<String, ExtPath>> pupolator = new ExclusiveFutureTaskExecutor<>(D.exe.getMain());
 
     @Override
     public Enums.Identity getIdentity() {
@@ -50,7 +50,7 @@ public class ExtRealFolder extends ExtFolder {
                     for (Path f : dirStream) {
                         if (isCanceled != null) {
                             if (isCanceled.get()) {
-                                Logger.info("Canceled form populate");
+                                Logger.info("Canceled from populate");
                                 break;
                             }
                         }

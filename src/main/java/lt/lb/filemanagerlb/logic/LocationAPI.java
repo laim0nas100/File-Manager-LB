@@ -1,11 +1,9 @@
 package lt.lb.filemanagerlb.logic;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
-import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.CollectionOp;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;

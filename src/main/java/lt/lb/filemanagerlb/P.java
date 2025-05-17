@@ -24,8 +24,11 @@ import org.tinylog.Logger;
  * @author laim0nas100
  */
 public class P {
+    
+    public static TolerantConfig<ImmutableConfiguration> parameters;
 
     public static final KeyDefaultProperty<Boolean> debug = KeyProp.of("debug",false).toKeyDefaultProperty();
+    public static final KeyDefaultProperty<Boolean> showAbout = KeyProp.of("showAbout",true).toKeyDefaultProperty();
     public static final KeyDefaultProperty<Integer> lookDepth = KeyProp.of("lookDepth", 2).toKeyDefaultProperty();
     public static final KeyDefaultProperty<String> ROOT_NAME = KeyProp.of("ROOT_NAME", "ROOT").toKeyDefaultProperty();
     public static final KeyDefaultProperty<Integer> maxThreadsForTask = KeyProp.of("maxThreadsForTask", Java.getAvailableProcessors()).toKeyDefaultProperty();
@@ -62,16 +65,15 @@ public class P {
     public static List<KP> getActiveParameters() {
         return ReflFields.getConstantFields(P.class, KDP.class)
                 .mapSafeOpt(ErrorReport::report, m -> m.safeGet())
-                .map(f -> new KP(f.getKey(), f.resolve(D.parameters)))
+                .map(f -> new KP(f.getKey(), f.resolve(P.parameters)))
                 .toUnmodifiableList();
     }
 
     public static void reload() {
-        String confPath = D.HOME_DIR.getAbsolutePathWithSeparator() + "Parameters.txt";
 
         Configurations conf = new Configurations();
-        TolerantConfig<ImmutableConfiguration> param = TolerantConfig.ofSuplierCached(() -> conf.properties(confPath));
-//        ParaMap.SimpleParaMap param = ParaMap.defaultParaMap(list.iterator());
+        TolerantConfig<ImmutableConfiguration> param = TolerantConfig.ofSuplierCached(() -> conf.properties(D.HOME_DIR.Parameters.absolutePath));
+        P.parameters = param;
         D.DEBUG.set(P.debug.resolve(param));
         D.DEPTH = P.lookDepth.resolve(param);
         D.ROOT_NAME = P.ROOT_NAME.resolve(param);
@@ -106,7 +108,7 @@ public class P {
 
         param.getEntries().forEachRemaining(entry -> Logger.info(entry.getKey() + "=" + entry.getValue()));
 
-        D.parameters = param;
+        
     }
 
 }

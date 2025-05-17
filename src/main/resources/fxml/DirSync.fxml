@@ -118,6 +118,11 @@
                                     <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                                  </VBox.margin>
                               </CheckBox>
+                              <CheckBox fx:id="checkHideNoAction" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Hide empty actions">
+                                 <VBox.margin>
+                                    <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                 </VBox.margin>
+                              </CheckBox>
                            </children>
                         </VBox>
                      </children>

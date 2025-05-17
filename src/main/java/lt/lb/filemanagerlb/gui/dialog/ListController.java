@@ -10,6 +10,7 @@ import lt.lb.commons.iteration.ReadOnlyIterator;
 import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
+import lt.lb.filemanagerlb.logic.TaskFactory;
 
 /**
  * FXML Controller class
@@ -45,10 +46,22 @@ public class ListController extends MyBaseController<ListController> {
     }
 
     public void save() throws FileNotFoundException, UnsupportedEncodingException {
-        String text = this.pathToSave.getText();
-        ObservableList<String> items = this.listView.getItems();
-        ReadOnlyIterator<String> of = ReadOnlyIterator.of(items.stream().map(m -> m.trim()));
-        lt.lb.commons.io.text.TextFileIO.writeToFile(D.USER_DIR + text, of);
+
+        FX.withAlert(() -> {
+            String text = this.pathToSave.getText();
+            TaskFactory.assertLegalName(text);
+            ObservableList<String> items = this.listView.getItems();
+            ReadOnlyIterator<String> of = ReadOnlyIterator.of(items.stream().map(m -> m.trim()));
+            lt.lb.commons.io.text.TextFileIO.writeToFile(D.HOME_DIR.SCRIPTS + text, of);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setContentText("Saved");
+            alert.showAndWait();
+        });
+
+    }
+
+    @Override
+    public void exitLogic() {
     }
 
 }

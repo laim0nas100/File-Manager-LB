@@ -1,14 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.logic.filestructure;
 
 import java.io.File;
 import java.nio.file.*;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
 import javafx.beans.property.*;
@@ -24,6 +17,7 @@ import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import org.apache.commons.lang3.time.FastDateFormat;
 
 /**
  *
@@ -66,9 +60,9 @@ public class ExtPath {
         return Double.parseDouble(s) * multiplier;
     }
 
-    public static Predicate<ExtPath> IS_FOLDER = (ExtPath t) -> t.getIdentity().equals(Enums.Identity.FOLDER);
+    public static Predicate<ExtPath> IS_FOLDER = (ExtPath t) -> Enums.Identity.FOLDER == t.getIdentity();
 
-    public static Predicate<ExtPath> IS_FILE = (ExtPath t) -> t.getIdentity().equals(Enums.Identity.FILE);
+    public static Predicate<ExtPath> IS_FILE = (ExtPath t) -> Enums.Identity.FILE == t.getIdentity();
 
     public static Predicate<ExtPath> IS_NOT_DISABLED = (ExtPath t) -> !t.isDisabled.get();
 
@@ -81,7 +75,7 @@ public class ExtPath {
     private Lazy<Long> lastModified = Lazy.ofSupplyAsync(() -> {
         return Files.getLastModifiedTime(toPath()).toMillis();
     }, D.exe.service("date-size"));
-    
+
     public BooleanProperty isVirtual;
     public BooleanProperty isAbsoluteRoot;
     public BooleanProperty isDisabled;
@@ -156,7 +150,7 @@ public class ExtPath {
                 if (propertyLastModified.get() == -1) {
                     return " ";
                 }
-                return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(Date.from(Instant.ofEpochMilli(propertyLastModified.get())));
+                return FastDateFormat.getInstance("YYYY-MM-dd HH:mm:ss").format(propertyLastModified.get());
             }
         };
         this.propertySizeAuto = new SimpleStringProperty() {
@@ -194,7 +188,7 @@ public class ExtPath {
 
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
         if (applyDisable && this.isDisabled.get()) {
-            return ImmutableCollections.listOf( );
+            return ImmutableCollections.listOf();
         }
         return ImmutableCollections.listOf(this);
     }
@@ -237,7 +231,7 @@ public class ExtPath {
         this.isAbsoluteRoot.set(b);
     }
 
-    public boolean isNotWriteable() {
+    public boolean isArtificial() {
         return (this.isAbsoluteRoot.get() || (this.equals(FileManagerLB.VirtualFolders)));
     }
 

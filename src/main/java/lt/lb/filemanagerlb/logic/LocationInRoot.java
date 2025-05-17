@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
-import lt.lb.filemanagerlb.utility.ExtStringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Location Mapping Class Use in LocationAPI
@@ -28,7 +28,7 @@ public class LocationInRoot {
         String rootLoc = "";
         if (!filePath.isEmpty()) {
             for (String s : FileManagerLB.getRootSet()) {
-                if (ExtStringUtils.containsIgnoreCase(filePath, s)) {
+                if (StringUtils.containsIgnoreCase(filePath, s)) {
                     rootLoc = s;
                     break;
                 }
@@ -38,10 +38,10 @@ public class LocationInRoot {
             co.add(rootLoc);
             if (!filePath.equalsIgnoreCase(rootLoc)) {
                 if (doUpperCase) {
-                    filePath = ExtStringUtils.upperCase(filePath);
+                    filePath = StringUtils.upperCase(filePath);
                 }
-                filePath = ExtStringUtils.replaceOnce(filePath, rootLoc, "");
-                String[] fileArray = ExtStringUtils.split(filePath, File.separatorChar);
+                filePath = StringUtils.replaceOnce(filePath, rootLoc, "");
+                String[] fileArray = StringUtils.split(filePath, File.separatorChar);
                 List<String> asList = Arrays.asList(fileArray);
                 ArrayList<String> list = new ArrayList<>();
                 list.addAll(asList);

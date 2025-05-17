@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.utility;
 
 import java.awt.Desktop;
@@ -64,7 +59,13 @@ public class DesktopApi {
     private static boolean openSystemSpecific(String what) {
 
         EnumOS os = getOs();
-
+        
+        if (os.isWindows()) {
+            if (runCommand("explorer", "%s", what)) {
+                return true;
+            }
+        }
+        
         if (os.isLinux()) {
             if (runCommand("kde-open", "%s", what)) {
                 return true;
@@ -79,12 +80,6 @@ public class DesktopApi {
 
         if (os.isMac()) {
             if (runCommand("open", "%s", what)) {
-                return true;
-            }
-        }
-
-        if (os.isWindows()) {
-            if (runCommand("explorer", "%s", what)) {
                 return true;
             }
         }
@@ -209,7 +204,7 @@ public class DesktopApi {
     }
 
     private static void logErr(String msg, Throwable t) {
-        Logger.error(t,msg);
+        Logger.error(t, msg);
         ErrorReport.report(t);
     }
 

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import lt.lb.commons.reflect.unified.ReflFields;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -42,11 +43,9 @@ public class PathStringCommands {
     public String getName(boolean extension) {
         String name = PathStringCommands.getName(absolutePath);
 
-        if (!extension) {
-            if (name.contains(".")) {
-                int index = ExtStringUtils.lastIndexOf(name, ".");
-                name = name.substring(0, index);
-            }
+        if (!extension && name.contains(".")) {//remove extension
+            int index = StringUtils.lastIndexOf(name, ".");
+            name = name.substring(0, index);
         }
         return name;
     }
@@ -125,7 +124,7 @@ public class PathStringCommands {
     }
 
     public static List<String> returnDefinedKeys() {
-        return ReflFields.getStaticFields(PathStringCommands.class, String.class).mapSafeOpt(m->m.safeGet()).toList();
+        return ReflFields.getStaticFields(PathStringCommands.class, String.class).mapSafeOpt(m -> m.safeGet()).toList();
     }
 
 }

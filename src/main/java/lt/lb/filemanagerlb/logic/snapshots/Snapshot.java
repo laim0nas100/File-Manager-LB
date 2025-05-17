@@ -6,13 +6,14 @@
 package lt.lb.filemanagerlb.logic.snapshots;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.tinylog.Logger;
 
 /**
@@ -50,10 +51,7 @@ public class Snapshot implements Serializable {
     }
 
     private void init() {
-        Date date = Calendar.getInstance().getTime();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-        String format = dateFormat.format(date);
-        dateCreated = format;
+        dateCreated = FastDateFormat.getInstance("YYYY-MM-dd HH:mm:ss").format(Instant.now().getEpochSecond());
         map = new LinkedHashMap<>();
     }
 

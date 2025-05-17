@@ -15,6 +15,7 @@ public class SessionInfo {
     public boolean autoStartProgressDialogs;
     public boolean pinProgressDialogs;
     public boolean pinTextInputDialogs;
+    public boolean copyReplaceExisting;
 
     public HashMap<String, Props> position = new HashMap<>();
     public HashMap<String, Props> size = new HashMap<>();

@@ -7,25 +7,29 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
 import lt.lb.commons.F;
 import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
+import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MyBaseController;
+import lt.lb.filemanagerlb.gui.ViewManager;
 import static lt.lb.filemanagerlb.gui.dialog.CommandWindowController.C;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;
-import lt.lb.filemanagerlb.logic.LocationInRoot;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
+import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.recombinator.CodepointFlattener;
 import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
@@ -196,14 +200,12 @@ public class AdvancedRenameController extends MyBaseController {
         }
         setTableItems(applyFilters(tableList));
 
-        buttonApply.setDisable(false);
+        buttonApply.setDisable(table.getItems().isEmpty());
     }
 
     @Override
     public void update() {
-
         updateLists();
-
     }
 
     public String parseFilter(PathStringCommands pathInfo, String filter, long index) {
@@ -307,15 +309,41 @@ public class AdvancedRenameController extends MyBaseController {
 
     public void apply() {
 
+        List<TableItemObject> list = new ArrayList(table.getItems());
+        ContinousCombinedTask combinedTask = new ContinousCombinedTask() {
+            @Override
+            protected void preparation() throws Exception {
+                for (TableItemObject ob : list) {
+
+                    addTask(SimpleTask.of(ob.path1.getName(true) + ":" + ob.path2.getName(true), () -> {
+                        String renameTo = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true));
+                        if (folder.getIdentity() == Identity.VIRTUAL) {
+                            ExtPath file = LocationAPI.getInstance().getFileOptimized(renameTo);
+                            if (file != null) {
+                                VirtualFolder vf = F.cast(folder);
+                                vf.files.put(file.getName(true), file);
+                            }
+
+                        }
+                    }));
+                }
+//                addTask(SimpleTask.of("Update view", () -> FX.runAndWait(() -> updateLists())));
+            }
+        };
+
+        combinedTask.setDescription("Bulk rename files");
+        ViewManager.getInstance().newProgressDialog(combinedTask);
+
+    }
+
+    public void applyOld() {
+
         for (Object object : table.getItems()) {
             TableItemObject ob = (TableItemObject) object;
-//            batcher.execute(() -> {
-            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getFileIfExists(new LocationInRoot(ob.path1.getParent(1)));
-            PathStringCommands fallback = new PathStringCommands(TaskFactory.resolveAvailablePath(parent, ob.path1.getName(true)));
             SafeOpt<String> path = Checked.checkedCall(() -> {
-                return TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true), fallback.getName(true));
+                return TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true));
             });
-            
+
             path.getError().ifPresent(ErrorReport::report);
 
             if (folder.getIdentity() == Identity.VIRTUAL && path.isPresent()) {
@@ -326,10 +354,11 @@ public class AdvancedRenameController extends MyBaseController {
                 }
 
             }
-            
+
         }
 
-        Checked.checkedRun(FX.submit(this::update)::get);
+        this.update();
+        ViewManager.getInstance().updateAllFrames(getFrameID());
 
     }
 
@@ -341,8 +370,10 @@ public class AdvancedRenameController extends MyBaseController {
         public LongProperty size;
         public boolean excludeMe;
         public boolean isFolder;
+        public ExtPath file;
 
         public TableItemObject(ExtPath file) {
+            this.file = file;
             this.date = file.propertyDate;
             this.size = file.propertySize;
             this.path1 = new PathStringCommands(file.getAbsolutePath());
@@ -387,4 +418,9 @@ public class AdvancedRenameController extends MyBaseController {
         get.setVisible(false);
         get.setVisible(true);
     }
+
+    @Override
+    public void exitLogic() {
+    }
+
 }

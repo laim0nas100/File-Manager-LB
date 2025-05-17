@@ -56,18 +56,11 @@ public class VirtualFolder extends ExtFolder {
             return CompletableFuture.completedFuture(null);
         }
 
-        if (this.isAbsoluteRoot.get()) {
-            FXTask task = new FXTask() {
-                @Override
-                protected Void call() throws Exception {
-                    Logger.info("Start update");
-                    FileManagerLB.remountUpdateList.setAll(list);
-                    FileManagerLB.remount();
-                    Logger.info("End update");
-                    return null;
-                }
-            };
-            task.run();
+        if (isAbsoluteRoot.get()) {
+            Logger.info("Start update");
+            FileManagerLB.remountUpdateList.setAll(list);
+            FileManagerLB.remount();
+            Logger.info("End update");
 
         } else {
             Iterator<ExtPath> iter = this.getFilesCollection().iterator();

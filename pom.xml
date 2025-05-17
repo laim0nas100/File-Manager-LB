@@ -15,7 +15,7 @@
         <commons-lb.dir>lt.lb.commons</commons-lb.dir>
         <commons-lb.version>local-jar</commons-lb.version>
         
-        <!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
+<!--                <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
         <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>-->
     </properties>
     <dependencies>
@@ -23,7 +23,8 @@
         <dependency>
             <groupId>lt.lb</groupId>
             <artifactId>JavaFXLibs</artifactId>
-            <version>15</version>
+            <version>24</version>
+            <type>pom</type>
         </dependency>
         
         <!--Link using JitPack-->
@@ -56,22 +57,28 @@
         </dependency>
         
         <dependency>
+            <groupId>${commons-lb.dir}</groupId>
+            <artifactId>commonslb-log</artifactId>
+            <version>${commons-lb.version}</version>
+        </dependency>
+        
+        <dependency>
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>JobSystem</artifactId>
             <version>d13247fe215f5fb15c2bbf69c3cc7322c57a7d08</version>
         </dependency>
         
-<!--        <dependency>
-	    <groupId>com.github.laim0nas100</groupId>
-	    <artifactId>Error-tolerant-commons-config</artifactId>
-	    <version>1.4</version>
-	</dependency>-->
+        <!--        <dependency>
+            <groupId>com.github.laim0nas100</groupId>
+            <artifactId>Error-tolerant-commons-config</artifactId>
+            <version>1.4</version>
+        </dependency>-->
         
         <dependency>
-	    <groupId>com.github.laim0nas100</groupId>
-	    <artifactId>Error-tolerant-commons-config</artifactId>
-	    <version>1.7</version>
-	</dependency>
+            <groupId>com.github.laim0nas100</groupId>
+            <artifactId>Error-tolerant-commons-config</artifactId>
+            <version>1.7</version>
+        </dependency>
         
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
         <dependency>
@@ -153,6 +160,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-configuration2</artifactId>
             <version>2.7</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.17.0</version>
         </dependency>
         
         <dependency>

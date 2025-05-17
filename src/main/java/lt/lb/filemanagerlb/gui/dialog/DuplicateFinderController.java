@@ -177,9 +177,8 @@ public class DuplicateFinderController extends MyBaseController {
     }
 
     @Override
-    public void exit() {
+    public void exitLogic() {
         cancel();
-        super.exit(); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
