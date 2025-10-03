@@ -117,7 +117,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
             }
         });
         task.setOnDone(e -> {
-            clock.stopTimer();
+            clock.stopTimer(true);
         });
 
         if (paused.get()) {
@@ -163,7 +163,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
         if (!task.isDone()) {
             task.cancel(true);
         }
-        clock.stopTimer();
+        clock.stopTimer(false);
     }
 
 }

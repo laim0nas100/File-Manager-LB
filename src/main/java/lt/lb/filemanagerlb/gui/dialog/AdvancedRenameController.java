@@ -7,14 +7,11 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
 import lt.lb.commons.F;
-import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import static lt.lb.filemanagerlb.gui.dialog.CommandWindowController.C;
@@ -77,7 +74,7 @@ public class AdvancedRenameController extends MyBaseController {
 
     private int startingNumber;
     private int increment;
-    private LinkedList<TableItemObject> tableList;
+    private List<TableItemObject> tableList;
     private ExtFolder folder;
 
     public void beforeShow(String title, ExtFolder folder) {
@@ -151,15 +148,20 @@ public class AdvancedRenameController extends MyBaseController {
             });
         } else {
             this.folder.getFilesCollection().stream().forEach(file -> {
-                array.add(file);
+                if (!file.isDisabled.get()) {
+                    array.add(file);
+                }
             });
         }
         tableList.clear();
         for (ExtPath s : array) {
             tableList.add(new TableItemObject(s));
         }
-        setTableItems(tableList);
-        buttonApply.setDisable(true);
+        this.fxDelegator.update("updateLists", () -> {
+            setTableItems(tableList);
+            buttonApply.setDisable(true);
+        });
+
     }
 
     public void previewSetting() {
@@ -198,7 +200,8 @@ public class AdvancedRenameController extends MyBaseController {
                 }
             }
         }
-        setTableItems(applyFilters(tableList));
+        applyFilters(tableList);
+        setTableItems(tableList);
 
         buttonApply.setDisable(table.getItems().isEmpty());
     }
@@ -318,7 +321,7 @@ public class AdvancedRenameController extends MyBaseController {
                     addTask(SimpleTask.of(ob.path1.getName(true) + ":" + ob.path2.getName(true), () -> {
                         String renameTo = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true));
                         if (folder.getIdentity() == Identity.VIRTUAL) {
-                            ExtPath file = LocationAPI.getInstance().getFileOptimized(renameTo);
+                            ExtPath file = LocationAPI.getInstance().getPathNearest(renameTo);
                             if (file != null) {
                                 VirtualFolder vf = F.cast(folder);
                                 vf.files.put(file.getName(true), file);
@@ -347,7 +350,7 @@ public class AdvancedRenameController extends MyBaseController {
             path.getError().ifPresent(ErrorReport::report);
 
             if (folder.getIdentity() == Identity.VIRTUAL && path.isPresent()) {
-                ExtPath file = LocationAPI.getInstance().getFileOptimized(path.get());
+                ExtPath file = LocationAPI.getInstance().getPathNearest(path.get());
                 if (file != null) {
                     VirtualFolder vf = F.cast(folder);
                     vf.files.put(file.getName(true), file);
@@ -382,41 +385,38 @@ public class AdvancedRenameController extends MyBaseController {
         }
 
         public void newName(String s) {
-
             String parent = this.path2.getParent(1);
             this.path2.setPath(parent + File.separator + s);
         }
     }
 
-    private LinkedList<TableItemObject> applyFilters(LinkedList<TableItemObject> items) {
-        LinkedList<TableItemObject> list = new LinkedList<>();
+    private void applyFilters(List<TableItemObject> items) {
+        boolean excludeFolders = !includeFolders.isSelected();
+        boolean onlyDiff = showOnlyDifferences.isSelected();
         for (TableItemObject object : items) {
-            if (!this.includeFolders.selectedProperty().get()) {
-                if (object.isFolder) {
-                    object.excludeMe = true;
-                }
+            object.excludeMe = false;
+            if (excludeFolders && object.isFolder) {
+                object.excludeMe = true;
             }
-            if (this.showOnlyDifferences.selectedProperty().get()) {
-                if (object.path1.getName(true).equals(object.path2.getName(true))) {
-                    object.excludeMe = true;
-                }
+            if (onlyDiff && Objects.equals(object.path1.getName(true), object.path2.getName(true))) {
+                object.excludeMe = true;
             }
-            list.add(object);
         }
-        return list;
     }
 
-    private void setTableItems(LinkedList<TableItemObject> items) {
-
-        table.getItems().clear();
-        for (TableItemObject object : items) {
-            if (!object.excludeMe) {
-                table.getItems().add(object);
+    private void setTableItems(List<TableItemObject> items) {
+        fxDelegator.update("setTable", () -> {
+            table.getItems().clear();
+            for (TableItemObject object : items) {
+                if (!object.excludeMe) {
+                    table.getItems().add(object);
+                }
             }
-        }
-        TableColumn get = (TableColumn) table.getColumns().get(0);
-        get.setVisible(false);
-        get.setVisible(true);
+            TableColumn get = (TableColumn) table.getColumns().get(0);
+            get.setVisible(false);
+            get.setVisible(true);
+        });
+
     }
 
     @Override

@@ -17,7 +17,6 @@ public class SessionInfo {
     public boolean pinTextInputDialogs;
     public boolean copyReplaceExisting;
 
-    public HashMap<String, Props> position = new HashMap<>();
-    public HashMap<String, Props> size = new HashMap<>();
+    public HashMap<String, Props<String>> frameInfo = new HashMap<>();
     public List<String> favoriteLinks = new ArrayList<>();
 }

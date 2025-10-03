@@ -2,7 +2,6 @@ package lt.lb.filemanagerlb.utility;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -111,7 +110,8 @@ public abstract class ContinousCombinedTask extends SimpleTask {
             if (prev != ceil) {// changed
                 double totalSteps = tasks.size() * 1000;
                 double madeSteps = (ceil - prevProg)/totalSteps;
-                parent.progressProperty().add(madeSteps);
+                double get = parent.progress.get();
+                parent.progress.setValue(get+madeSteps);
             }
 
         });

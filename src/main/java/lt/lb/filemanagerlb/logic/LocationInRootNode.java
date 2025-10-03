@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.logic;
 
 import java.io.File;
@@ -11,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lt.lb.commons.Predicates;
@@ -28,7 +24,7 @@ public class LocationInRootNode implements Comparable {
     public final static String folderEnd = "/";
     public final static Character indexEnd = ':';
 
-    public HashMap<String, LocationInRootNode> leafs;
+    public Map<String, LocationInRootNode> leafs;
     public String self;
     public int index;
 
@@ -40,16 +36,16 @@ public class LocationInRootNode implements Comparable {
 
     public void add(LocationInRoot loc, int index) {
         LocationInRootNode currentNode = this;
-        while (!loc.coordinates.isEmpty()) {
-//            Log.write(loc.coordinates);
-            String key = loc.coordinates.pollFirst();
+        int size = loc.length();
+        int last = size - 1;
+        for (int i = 0; i < size; i++) {
+            String key = loc.at(i);
             if (currentNode.leafs.containsKey(key)) {
-//                Log.write("Contains");
                 currentNode = currentNode.leafs.get(key);
             } else {
 
                 LocationInRootNode newNode = new LocationInRootNode(key, -1);
-                if (loc.coordinates.isEmpty()) {
+                if (i == last) {
                     newNode.index = index;
                 }
                 currentNode.leafs.put(key, newNode);
@@ -81,7 +77,7 @@ public class LocationInRootNode implements Comparable {
     }
 
     public ArrayList<String> specialString() {
-        boolean isFolder = !leafs.values().isEmpty();
+        boolean isFolder = !leafs.isEmpty();
         ArrayList<String> result = new ArrayList<>();
         ArrayList<LocationInRootNode> values = new ArrayList<>();
         if (isFolder) {
@@ -97,7 +93,7 @@ public class LocationInRootNode implements Comparable {
             values.addAll(folders);
             values.addAll(files);
         }
-        if (index >= 0) {
+        if (index >= 0) { // included
             String part = index + "" + indexEnd + self;
 //            res+= part+ "\n";
             result.add(part);
@@ -130,10 +126,10 @@ public class LocationInRootNode implements Comparable {
         return this.index - other.index;
     }
 
-    private class StringWithIndex {
+    private static class StringWithIndex {
 
-        public String str;
-        public Integer index;
+        public final String str;
+        public final Integer index;
 
         public StringWithIndex(String str, int index) {
             this.str = str;
@@ -160,11 +156,9 @@ public class LocationInRootNode implements Comparable {
     private ArrayList<StringWithIndex> resolvePrivate(String parentPath, boolean includeFolders) {
         ArrayList<StringWithIndex> list = new ArrayList<>();
         String path = parentPath + this.self;
-        if (this.leafs.isEmpty()) {
+        if (this.leafs.isEmpty() || includeFolders) {
             list.add(new StringWithIndex(path, this.index));
-        } else if (includeFolders) {
-            list.add(new StringWithIndex(path, this.index));
-        }
+        } 
         if (!path.endsWith(File.separator) && path.length() > 0) {
             path += File.separator;
         }

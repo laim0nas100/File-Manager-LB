@@ -2,17 +2,16 @@ package lt.lb.filemanagerlb.logic;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.util.Collection;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import lt.lb.commons.io.autopath.AutoPath;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
-import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import org.tinylog.Logger;
@@ -82,7 +81,7 @@ public class ManagingClass {
                     changeDirTo(FileManagerLB.VirtualFolders);
                 } else {
                     LocationInRoot location = new LocationInRoot(currentDir.getAbsoluteDirectory());
-                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getFileIfExists(location.getParentLocation());
+                    ExtFolder folder = (ExtFolder) LocationAPI.getInstance().getPathIfExists(location.getParentLocation());
                     changeDirTo(folder);
                 }
             } catch (Exception ex) {
@@ -125,22 +124,16 @@ public class ManagingClass {
 
     public ExtPath createNewFolder() throws IOException {
         String newName = "New Folder";
-        newName = TaskFactory.resolveAvailablePath(currentDir, newName);
-        Files.createDirectory(Paths.get(newName));
-        ExtFolder folder = new ExtRealFolder(newName);
-        LocationInRoot location = new LocationInRoot(newName);
-        LocationAPI.getInstance().putByLocation(location, folder);
-        return folder;
+        AutoPath path = TaskFactory.resolveAvailablePath(currentDir, newName);
+        Files.createDirectory(path.toPath());
+        return currentDir.updateAwait().get(path.getName());
     }
 
     public ExtPath createNewFile() throws IOException {
         String newName = "New File";
-        newName = TaskFactory.resolveAvailablePath(currentDir, newName);
-        Files.createFile(Paths.get(newName));
-        ExtPath file = new ExtPath(newName);
-        LocationInRoot location = new LocationInRoot(newName);
-        LocationAPI.getInstance().putByLocation(location, file);
-        return file;
+        AutoPath path = TaskFactory.resolveAvailablePath(currentDir, newName);
+        Files.createFile(path.toPath());
+        return currentDir.updateAwait().get(path.getName());
     }
 
     public boolean hasPrev() {

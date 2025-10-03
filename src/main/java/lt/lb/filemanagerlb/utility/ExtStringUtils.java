@@ -2,14 +2,15 @@ package lt.lb.filemanagerlb.utility;
 
 import java.util.HashMap;
 import java.util.Locale;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author Laimonas Beniušis
  */
-public class ExtStringUtils extends StringUtils{
-    
+public class ExtStringUtils extends StringUtils {
+
     public static class StringInfo {
 
         public String string;
@@ -54,6 +55,10 @@ public class ExtStringUtils extends StringUtils{
             }
             return s;
         }
+    }
+
+    public static double fuzzyScore(String s1, String s2) {
+        return FuzzySearch.ratio(s1, s2) / 100d;
     }
 
     public static double correlationRatio(String s1, String s2) {
@@ -126,7 +131,6 @@ public class ExtStringUtils extends StringUtils{
 
         return result;
     }
-    
 
     public static class FilterException extends Exception {
 
@@ -190,5 +194,4 @@ public class ExtStringUtils extends StringUtils{
         return true;
     }
 
-    
 }

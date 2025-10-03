@@ -8,6 +8,7 @@ import lt.lb.commons.containers.collections.LoopingList;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
+import org.apache.commons.lang3.Strings;
 
 /**
  *
@@ -48,7 +49,7 @@ public class FileAddressField {
                         s = list.prev();
                     }
                     index++;
-                    if (ExtStringUtils.startsWithIgnoreCase(s, name)) {
+                    if (Strings.CI.startsWith(s, name)) {
                         Platform.runLater(() -> {
                             f = name;
                             if (folder.getIdentity().equals(Identity.VIRTUAL)) {

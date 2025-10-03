@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import lt.lb.commons.reflect.unified.ReflFields;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class PathStringCommands {
 
@@ -44,7 +44,7 @@ public class PathStringCommands {
         String name = PathStringCommands.getName(absolutePath);
 
         if (!extension && name.contains(".")) {//remove extension
-            int index = StringUtils.lastIndexOf(name, ".");
+            int index = Strings.CS.lastIndexOf(name, ".");
             name = name.substring(0, index);
         }
         return name;
@@ -54,7 +54,7 @@ public class PathStringCommands {
         if (path.endsWith(File.separator)) {
             path = path.substring(0, path.length() - 1);
         }
-        int index = ExtStringUtils.lastIndexOf(path, File.separator) + 1;
+        int index = Strings.CS.lastIndexOf(path, File.separator) + 1;
         path = path.substring(index);
         return path;
     }
@@ -62,7 +62,7 @@ public class PathStringCommands {
     public String getExtension() {
         String name = this.getName(true);
         if (name.contains(".")) {
-            int index = ExtStringUtils.lastIndexOf(name, ".") + 1;
+            int index = Strings.CS.lastIndexOf(name, ".") + 1;
             if (index < name.length()) {
                 name = name.substring(index);
             } else {
@@ -84,9 +84,9 @@ public class PathStringCommands {
     }
 
     public static String goUp(String current) {
-        int index = Math.max(ExtStringUtils.lastIndexOf(current, PathStringCommands.getName(current)) - 1, 0);
+        int index = Math.max(Strings.CS.lastIndexOf(current, PathStringCommands.getName(current)) - 1, 0);
         current = current.substring(0, index);
-        if (!ExtStringUtils.contains(current, File.separator)) {
+        if (!Strings.CS.contains(current, File.separator)) {
             current += File.separator;
         }
         return current;
@@ -101,7 +101,7 @@ public class PathStringCommands {
         if (!path.contains(possibleParent) || path.equalsIgnoreCase(possibleParent)) {
             return absolutePath;
         } else {
-            return ExtStringUtils.replaceOnce(path, possibleParent, "");
+            return Strings.CS.replaceOnce(path, possibleParent, "");
         }
     }
 

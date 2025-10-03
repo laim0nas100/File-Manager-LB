@@ -21,7 +21,7 @@ public class CustomClock {
         timeProperty = new SimpleStringProperty();
         paused = new SimpleBooleanProperty(false);
         scheduled = exe.scheduleAtFixedRate(() -> {
-            FX.submit(() -> {
+            FX.runAndWait(() -> {
 
                 updateTimeProperty();
                 if (paused.get()) {
@@ -72,12 +72,17 @@ public class CustomClock {
         return (long) Math.floor(getSecondsPassed(inst));
     }
 
-    public void stopTimer() {
+    public void stopTimer(boolean update) {
         if (done) {
             return;
         }
         done = true;
-        this.timeProperty.set("Done in: " + (this.getSecondsPassed()));
-        this.scheduled.cancel(true);
+        scheduled.cancel(true);
+        if (update) {
+            FX.runAndWait(()->{
+                timeProperty.set("Done in: " + (getSecondsPassed()));
+            });
+            
+        }
     }
 }

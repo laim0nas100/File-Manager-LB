@@ -32,7 +32,6 @@ import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.jobsystem.ScheduledJobExecutor;
-import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
 
 /**
@@ -133,7 +132,7 @@ public class TaskFactory {
         for (ExtPath file : fileList) {
             Collection<ExtPath> listRecursive = new ArrayList<>();
             listRecursive.addAll(file.getListRecursive(true));
-            ExtPath parentFile = LocationAPI.getInstance().getFileIfExists(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getInstance().getPathIfExists(file.getMapping().getParentLocation());
             for (ExtPath f : listRecursive) {
                 String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
                 list.add(new ActionFile(f.getAbsoluteDirectory(), dest.getAbsoluteDirectory() + relativePath));
@@ -151,13 +150,25 @@ public class TaskFactory {
     private CopyOptions getCopyOptions() {
         CopyOptions options = new CopyOptions();
         if (copyReplaceExisting.get()) {
-
             options = options.with(StandardCopyOption.REPLACE_EXISTING);
         }
-        if (!D.useBufferedFileStreams.get()) {
-            options = options.with(StandardCopyOption.ATOMIC_MOVE);
+        if (D.useBufferedFileStreams.get()) {
+            options = options.withStreams();
         }
         options = options.with(StandardCopyOption.COPY_ATTRIBUTES);
+        return options;
+    }
+
+    private CopyOptions getMoveOptions() {
+        CopyOptions options = new CopyOptions();
+        if (copyReplaceExisting.get()) {
+            options = options.with(StandardCopyOption.REPLACE_EXISTING);
+        }
+        if (D.useBufferedFileStreams.get()) {
+            options = options.withStreams();
+        } else {
+            options = options.with(StandardCopyOption.ATOMIC_MOVE);
+        }
         return options;
     }
 
@@ -214,7 +225,7 @@ public class TaskFactory {
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
             Collection<ExtPath> listRecursive = file.getListRecursive(true);
-            ExtPath parentFile = LocationAPI.getInstance().getFileIfExists(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getInstance().getPathIfExists(file.getMapping().getParentLocation());
             for (ExtPath f : listRecursive) {
                 try {
                     String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
@@ -315,7 +326,7 @@ public class TaskFactory {
                                     Files.createDirectory(file.paths[1]);
                                     Logger.info("Added to folders:" + file.paths[1]);
                                 } else {
-                                    ExtTask move = FileUtils.move(file.paths[0], file.paths[1], getCopyOptions().without(StandardCopyOption.COPY_ATTRIBUTES));
+                                    ExtTask move = FileUtils.move(file.paths[0], file.paths[1], getMoveOptions());
                                     move.progress.addListener(FXDefs.numberDiffListener(0.0001d, val -> {
                                         FX.submit(() -> {
                                             progressProperty().setValue(val);
@@ -395,36 +406,16 @@ public class TaskFactory {
         return finalTask;
     }
 
-    private Future populateRecursiveParallelInner(ExtFolder folder, int depth, Executor exe) {
-        if (0 < depth) {
-            Callable task = (Callable) () -> {
-                Logger.info("Folder Iteration " + depth + "::" + folder.getAbsoluteDirectory());
-                folder.update();
-                for (ExtFolder fold : folder.getFoldersFromFiles()) {
-                    populateRecursiveParallelInner(fold, depth - 1, exe);
-                }
-                return null;
-            };
-            FutureTask t = new FutureTask(task);
-            exe.execute(t);
-            return t;
-        } else {
-            return Futures.emptyDone;
-        }
-    }
-
-    public Future populateRecursiveParallelContained(ExtFolder folder, int depth) {
-        return populateRecursiveParallelInner(folder, depth, D.exe.service("Recursive-populate"));
-    }
-
     //MISC
-    public static String resolveAvailablePath(ExtFolder folder, String name) {
+    public static AutoPath resolveAvailablePath(ExtFolder folder, String name) {
         String path = folder.getAbsoluteDirectory();
         String newName = name;
+        int index = 1;
         while (folder.hasFileIgnoreCase(newName)) {
-            newName = "New " + newName;
+            newName = name+"("+index+")";
+            index++;
         }
-        return path + newName;
+        return AutoPath.fs(path,newName);
     }
 
     public FXTask markFiles(Collection<String> list) {
@@ -432,7 +423,7 @@ public class TaskFactory {
             @Override
             protected Void call() {
                 list.forEach(file -> {
-                    addToMarked(LocationAPI.getInstance().getFileOptimized(file));
+                    addToMarked(LocationAPI.getInstance().getPathNearest(file));
                 });
                 return null;
             }
@@ -453,8 +444,6 @@ public class TaskFactory {
         return new ExtTask() {
             @Override
             protected Void call() throws Exception {
-
-                TaskFactory.getInstance().populateRecursiveParallelContained(folder, 50);
 
                 ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
@@ -489,7 +478,6 @@ public class TaskFactory {
                     frame.snapshotView.getItems().add("Snapshot Loading");
                 });
 //                    TaskFactory.getInstance().populateRecursiveParallelNew(folder, 50);
-                TaskFactory.getInstance().populateRecursiveParallelContained(folder, 50).get();
                 ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
                 Snapshot sn = SnapshotAPI.getEmptySnapshot();
@@ -562,7 +550,10 @@ public class TaskFactory {
 //                        Logger.info("Task failed");
 //                        ErrorReport.report(task.getException());
 //                    }
-////                    try{
+        
+    
+
+    ////                    try{
 ////                        action(actionFile,entry);
 ////                    }catch(Exception e){
 ////                        ErrorReport.report(e);
@@ -682,7 +673,7 @@ public class TaskFactory {
                         rat = (Double) map.get(key);
 
                     } else {
-                        rat = ExtStringUtils.correlationRatio(name, otherName);
+                        rat = ExtStringUtils.fuzzyScore(name, otherName);
                         map.put(key, rat);
                     }
                     if (rat >= ratio) {
@@ -709,7 +700,7 @@ public class TaskFactory {
                     }
 
                     PathStringCommands file1 = array.get(j);
-                    double rat = ExtStringUtils.correlationRatio(name, file1.getName(true));
+                    double rat = ExtStringUtils.fuzzyScore(name, file1.getName(true));
                     DuplicateFinderController.SimpleTableItem item = new DuplicateFinderController.SimpleTableItem(file, file1, rat);
                     if (rat >= ratio) {
                         list.add(item);

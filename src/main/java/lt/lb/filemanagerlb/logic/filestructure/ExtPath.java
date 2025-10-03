@@ -25,6 +25,27 @@ import org.apache.commons.lang3.time.FastDateFormat;
  */
 public class ExtPath {
 
+    public static boolean exists(ExtPath path) {
+        if (path == null) {
+            return false;
+        }
+        boolean virtual = false;
+        switch (path.getIdentity()) {
+            case FILE:
+            case FOLDER:
+            case LINK: {
+                virtual = false;
+                break;
+            }
+
+            default:{
+                virtual = true;
+                break;
+            }
+        }
+        return virtual || Files.exists(path.toPath());
+    }
+
     public static Predicate<ExtPath> EXISTS = path -> (ArrayOp.any(
             Predicate.isEqual(path.getIdentity()), Identity.FILE, Identity.FOLDER, Identity.LINK)
             && Files.exists(path.toPath()));
@@ -104,7 +125,6 @@ public class ExtPath {
             this.path = Paths.get(this.getAbsoluteDirectory());
         }
         return this.path;
-//        return Paths.get(this.getAbsoluteDirectory());
     }
 
     private void init() {

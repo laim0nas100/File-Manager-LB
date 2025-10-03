@@ -12,11 +12,11 @@
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-        <commons-lb.dir>lt.lb.commons</commons-lb.dir>
+                <commons-lb.dir>lt.lb.commons</commons-lb.dir>
         <commons-lb.version>local-jar</commons-lb.version>
         
-<!--                <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
-        <commons-lb.version>23376058bd94ef20a41b60756d05c5efceccc305</commons-lb.version>-->
+<!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
+        <commons-lb.version>2025.08v2</commons-lb.version>-->
     </properties>
     <dependencies>
         
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>Error-tolerant-commons-config</artifactId>
-            <version>1.7</version>
+            <version>1.10</version>
         </dependency>
         
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
@@ -149,13 +149,17 @@
         </dependency>
         
         
-        <dependency>
+<!--        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>
         </dependency>
-        
-        
+        -->
+        <dependency>
+            <groupId>me.xdrop</groupId>
+            <artifactId>fuzzywuzzy</artifactId>
+            <version>1.4.0</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-configuration2</artifactId>
@@ -165,7 +169,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
+            <version>3.18.0</version>
         </dependency>
         
         <dependency>

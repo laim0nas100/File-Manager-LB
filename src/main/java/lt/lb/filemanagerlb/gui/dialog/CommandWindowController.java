@@ -38,6 +38,7 @@ import lt.lb.recombinator.impl.codepoint.CodepointMatchers;
 import lt.lb.uncheckedutils.Checked;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.tinylog.Logger;
 
 /**
@@ -98,9 +99,9 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
             Logger.info("Copy params", Arrays.asList(params));
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
-            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getFileOptimized(newCom);
-            ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getFileOptimized(D.customPath.getPath());
+            newCom = Strings.CS.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
+            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getPathNearest(newCom);
+            ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getPathNearest(D.customPath.getPath());
             Logger.info("Copy structure:", root, dest);
 
             ContinousCombinedTask finalTask = new ContinousCombinedTask() {
@@ -124,7 +125,7 @@ public class CommandWindowController extends MyBaseController {
                     collectFolders.setDescription("Collect folders");
                     this.addTask(collectFolders);
 
-                    ExtPath parent = LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1));
+                    ExtPath parent = LocationAPI.getInstance().getPathNearest(root.getPathCommands().getParent(1));
                     ContinousCombinedTask copyFiles = TaskFactory.getInstance().copyFilesEx(collection, dest, parent);
                     this.addTask(copyFiles);
 
@@ -143,13 +144,13 @@ public class CommandWindowController extends MyBaseController {
         });
         command.addCommand(commandGenerate, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandGenerate + " ", "");
+            newCom = Strings.CS.replaceOnce(newCom, commandGenerate + " ", "");
             command.generate(newCom);
         });
 
         command.addCommand(commandApply, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandApply + " ", "");
+            newCom = Strings.CS.replaceOnce(newCom, commandApply + " ", "");
             command.apply(newCom);
         });
         command.addCommand(commandInit, (String... params) -> {
@@ -164,7 +165,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandListRec, (String... params) -> {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandListRec + " ", "");
+            newCom = Strings.CS.replaceOnce(newCom, commandListRec + " ", "");
             ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
 
             for (ExtPath f : file.getListRecursive(false)) {
@@ -176,7 +177,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandList, (String... params) -> {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandList + " ", "");
+            newCom = Strings.CS.replaceOnce(newCom, commandList + " ", "");
             ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
             if (file.getIdentity().equals(Identity.FOLDER)) {
                 String desc = "Listing:" + file.getAbsoluteDirectory();
@@ -191,7 +192,7 @@ public class CommandWindowController extends MyBaseController {
         });
         command.addCommand(commandSetCustom, (String... params) -> {
             String newCom = (String) params[0];
-            newCom = ExtStringUtils.replaceOnce(newCom, commandSetCustom + " ", "");
+            newCom = Strings.CS.replaceOnce(newCom, commandSetCustom + " ", "");
             D.customPath = new PathStringCommands(newCom.trim());
         });
         command.addCommand(commandClear, (String... params) -> {

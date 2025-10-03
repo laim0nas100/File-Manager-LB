@@ -51,7 +51,7 @@ public class D {
     public static int DEPTH = 1;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
-    public static SimpleBooleanProperty useBufferedFileStreams = new SimpleBooleanProperty(true);
+    public static SimpleBooleanProperty useBufferedFileStreams = new SimpleBooleanProperty(false);
     public static PathStringCommands customPath = new PathStringCommands(HOME_DIR.absolutePath);
 
     public static MultiStageManager sm;

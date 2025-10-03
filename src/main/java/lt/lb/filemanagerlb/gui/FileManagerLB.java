@@ -1,11 +1,12 @@
 package lt.lb.filemanagerlb.gui;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,11 +22,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import lt.lb.commons.containers.collections.CollectionOp;
+import lt.lb.commons.io.serialization.VSManager;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
 import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
-import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPosition;
-import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemorySize;
+import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPositionAndSize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
@@ -39,10 +40,9 @@ import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.uncheckedutils.Checked;
+import lt.lb.uncheckedutils.SafeOpt;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  *
@@ -53,10 +53,10 @@ public class FileManagerLB {
     public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
-    public static WithFrameTypeMemoryPosition positionInfo = new WithFrameTypeMemoryPosition();
-    public static WithFrameTypeMemorySize sizeInfo = new WithFrameTypeMemorySize();
+    public static WithFrameTypeMemoryPositionAndSize frameInfo = new WithFrameTypeMemoryPositionAndSize();
+//    public static WithFrameTypeMemorySize sizeInfo = new WithFrameTypeMemorySize();
 
-    public static Yaml yaml;
+    public static VSManager vsManager = prepareVSManager();
 
     static {
         java.util.logging.LogManager.getLogManager().reset();
@@ -68,15 +68,10 @@ public class FileManagerLB {
     public static boolean shutdown = false;
 
     public static void main(String[] args) {
-        D.exe.scheduleWithFixedDelay(System::gc, 30, 30, TimeUnit.MINUTES);
 
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        yaml = new Yaml(options);
         D.sm = new MultiStageManager(
                 D.cLoader,
-                positionInfo,
-                sizeInfo,
+                frameInfo,
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
                 new WithDecoration(FrameState.FrameStateClose.instance, d -> {
                     if (shutdown) {
@@ -88,6 +83,7 @@ public class FileManagerLB {
                 })
         );
         D.exe.service("date-size");
+        D.exe.scheduleWithFixedDelay(System::gc, 30, 30, TimeUnit.MINUTES);
 
         Logger.info("Manifest");
 
@@ -105,6 +101,15 @@ public class FileManagerLB {
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         }
 
+    }
+
+    private static VSManager prepareVSManager() {
+        VSManager manager = new VSManager();
+        manager.includeCustom(SessionInfo.class, 0L);
+        //nothing to ignore
+        //add version changes if needed
+
+        return manager;
     }
 
     public static void remount() {
@@ -125,19 +130,6 @@ public class FileManagerLB {
             mountDevice(root.getAbsolutePath());
         }
         remountUpdateList.setAll(ArtificialRoot.getFilesCollection());
-    }
-
-    public static <T> T yamlRead(Path path) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            return yaml.load(reader);
-        }
-    }
-
-    public static <T> void yamlWrite(Path path, T item) throws IOException {
-        try (BufferedWriter newBufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
-            yaml.dump(item, newBufferedWriter);
-        }
-
     }
 
     public static boolean mountDevice(String name) {
@@ -190,23 +182,23 @@ public class FileManagerLB {
         VLCInit.release();
         TaskFactory.getInstance().jobsExecutor.shutdown();
         D.exe.shutdown();
-        Logger.info("Write yaml");
+        Logger.info("Write seesion info");
         try {
-            writeYaml();
+            writeSessionInfo();
         } catch (Exception ex) {
             ErrorReport.report(ex);
         }
         try {
+            Logger.info("Await termination");
             D.exe.awaitTermination(1, TimeUnit.DAYS);
         } catch (Exception ex) {
         }
 
     }
 
-    public static void writeYaml() throws IOException {
+    public static void writeSessionInfo() throws IOException {
         SessionInfo si = D.sessionInfo;
-        CollectionOp.replace(si.position, positionInfo.memoryMap);
-        CollectionOp.replace(si.size, sizeInfo.memoryMap);
+        CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
         CollectionOp.replace(si.favoriteLinks,
                 MainController.favoriteLinks.stream()
                         .map(m -> m.location)
@@ -221,18 +213,21 @@ public class FileManagerLB {
         si.pinProgressDialogs = vm.pinProgressDialogs.get();
         si.pinTextInputDialogs = vm.pinTextInputDialogs.get();
         si.copyReplaceExisting = TaskFactory.getInstance().copyReplaceExisting.get();
+        
+        vsManager.serializingXMLStream().objectToPathOverwrite(si, D.HOME_DIR.session_info.getPath());
 
-        yamlWrite(D.HOME_DIR.session_info.getPath(), si);
+//        serialize(path, vm);
     }
 
-    public static void readYaml() throws IOException {
+    public static void readSessionInfo() throws IOException {
 
         if (D.HOME_DIR.session_info.isReadable()) {
-            D.sessionInfo = yamlRead(D.HOME_DIR.session_info.getPath());
+            
+            SafeOpt<SessionInfo> deserialize = vsManager.<SessionInfo>serializingXMLStream().pathToObject(D.HOME_DIR.session_info.getPath());
+            D.sessionInfo = deserialize.peekError(ErrorReport::report).orElseGet(SessionInfo::new);
         }
 
-        sizeInfo.memoryMap.putAll(D.sessionInfo.size);
-        positionInfo.memoryMap.putAll(D.sessionInfo.position);
+        frameInfo.typeMap.putAll(D.sessionInfo.frameInfo);
         ViewManager vm = ViewManager.getInstance();
         vm.autoCloseProgressDialogs.set(D.sessionInfo.autoCloseProgressDialogs);
         vm.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
@@ -261,6 +256,7 @@ public class FileManagerLB {
         ArtificialRoot = new VirtualFolder(D.ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
+        remount();
 
         try {
             Path userdir = Paths.get(D.USER_DIR);
@@ -274,7 +270,7 @@ public class FileManagerLB {
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
         MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
         try {
-            readYaml();
+            readSessionInfo();
         } catch (IOException ex) {
             ErrorReport.report(ex);
         }

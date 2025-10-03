@@ -13,7 +13,9 @@ import java.util.concurrent.Future;
 import javafx.beans.property.BooleanProperty;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.commons.containers.collections.ObjectBuffer;
-import lt.lb.commons.threads.ExclusiveFutureTaskExecutor;
+import lt.lb.commons.threads.TimestampingExecution;
+import lt.lb.commons.threads.TimestampingExecutionExclusive;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.utility.ErrorReport;
@@ -29,7 +31,7 @@ public class ExtRealFolder extends ExtFolder {
         super(src, optional);
     }
 
-    protected ExclusiveFutureTaskExecutor<Map<String, ExtPath>> pupolator = new ExclusiveFutureTaskExecutor<>(D.exe.getMain());
+    protected TimestampingExecutionExclusive<Map<String, ExtPath>> pupolator = new TimestampingExecutionExclusive<>(D.exe.getMain(), WaitTime.ofSeconds(10), 8);
 
     @Override
     public Enums.Identity getIdentity() {
@@ -48,18 +50,11 @@ public class ExtRealFolder extends ExtFolder {
 
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
                     for (Path f : dirStream) {
-                        if (isCanceled != null) {
-                            if (isCanceled.get()) {
-                                Logger.info("Canceled from populate");
-                                break;
-                            }
+                        if (isCanceled != null && isCanceled.get()) {
+                            Logger.info("Canceled from populate");
+                            break;
                         }
 
-                        if (isCanceled != null) {
-                            if (isCanceled.get()) {
-                                break;
-                            }
-                        }
                         final String name = f.getFileName().toString();
 //                        final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                         final String filePathStr = f.toString();
@@ -93,19 +88,21 @@ public class ExtRealFolder extends ExtFolder {
 
     }
 
+    @Override
     public void update() {
         Logger.info("Update:" + this.getAbsoluteDirectory());
         populateFolder(true, null, null);
     }
 
     @Override
-    public Future update(List<ExtPath> list, BooleanProperty isCanceled) {
+    public Future update(List<ExtPath> receiver, BooleanProperty isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
-        ObjectBuffer<ExtPath> buffer = new ObjectBuffer(list, 5);
+        ObjectBuffer<ExtPath> buffer = new ObjectBuffer(receiver, 500);
         return populateFolder(true, buffer, isCanceled);
     }
 
-    public Map<String,ExtPath> getFilesMap(){
+    @Override
+    public Map<String, ExtPath> getFilesMap() {
         try {
             return populateFolder(false, null, null).get();
         } catch (Exception ex) {
@@ -113,7 +110,7 @@ public class ExtRealFolder extends ExtFolder {
             return ImmutableCollections.mapOf();
         }
     }
-    
+
     @Override
     public Collection<ExtPath> getFilesCollection() {
         return getFilesMap().values();

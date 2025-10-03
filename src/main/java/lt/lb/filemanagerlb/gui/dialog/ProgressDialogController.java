@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.dialog;
 
 import javafx.beans.property.SimpleBooleanProperty;
@@ -17,7 +12,6 @@ import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.utility.CustomClock;
 
 import java.util.Arrays;
-import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
 
 /**
@@ -80,7 +74,7 @@ public class ProgressDialogController extends MyBaseController {
         clock.paused.bind(paused);
 
         task.setOnSucceeded((e) -> {
-            clock.stopTimer();
+            clock.stopTimer(true);
             if (task.childTask != null) {
                 task.run();
             }
@@ -92,7 +86,7 @@ public class ProgressDialogController extends MyBaseController {
         if (paused.get()) {
             pauseButton.setText("START");
         }
-        FX.submit(t::start);
+        t.start();
 
     }
 
@@ -126,7 +120,7 @@ public class ProgressDialogController extends MyBaseController {
 
      @Override
     public void exitLogic() {
-        clock.stopTimer();
+        clock.stopTimer(false);
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -19,14 +20,12 @@ import lt.lb.commons.F;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.uncheckedutils.SafeOpt;
 import lt.lb.commons.containers.values.IntegerValue;
+import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
-import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.MenuBuilders;
-import lt.lb.commons.javafx.properties.ViewProperties;
 import lt.lb.commons.javafx.scenemanagement.StageFrame;
-import lt.lb.commons.threads.Futures;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
@@ -50,6 +49,7 @@ import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
+import lt.lb.commons.javafx.properties.SelectableViewProperties;
 
 /**
  * FXML Controller class
@@ -95,7 +95,7 @@ public class MediaPlayerController extends MyBaseController {
     @FXML
     public CheckBox showVideo;
     @FXML
-    public ChoiceBox playType;
+    public ChoiceBox<String> playType;
     @FXML
     public CheckBox seamless;
     @FXML
@@ -107,12 +107,12 @@ public class MediaPlayerController extends MyBaseController {
     @FXML
     public TextField saveState;
 
-    private ViewProperties<ExtPath> tableProperties;
+    private SelectableViewProperties<ExtPath> tableProperties;
 
     private volatile MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
     private int index = 0;
-    private Float minDelta = 0.005f;
+    private Float minDelta = 0.0001f;
     private long seamlessSecondsMax = 12;
     private long currentLength = 0;
     private AtomicInteger lastVolume = new AtomicInteger(-1);
@@ -123,6 +123,7 @@ public class MediaPlayerController extends MyBaseController {
     private static final String typeLoopList = "Loop list";
     private static final String typeRandom = "Random";
     private static final String typeStopAfterFinish = "Don't loop list";
+
     private ExtTableView extTableView;
     private ExtPath filePlaying;
     private ArrayList<ExtPath> backingList = new ArrayList<>();
@@ -281,7 +282,7 @@ public class MediaPlayerController extends MyBaseController {
         }
 
         extTableView = new ExtTableView(table);
-        tableProperties = ViewProperties.ofTableView(table);
+        tableProperties = SelectableViewProperties.ofTableView(table);
 
         TableColumn<ExtPath, String> nameCol = new TableColumn<>("File Name");
         nameCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtPath, String>, ObservableValue<String>>() {
@@ -447,7 +448,7 @@ public class MediaPlayerController extends MyBaseController {
                                         TaskFactory.getInstance().addToMarked(item);
                                     });
                                 })
-                                .visibleWhen(tableProperties.selectedItemNotNull())
+                                .visibleWhen(tableProperties.selectedSomething())
                         )
                         .addItem(new MenuBuilders.MenuItemBuilder()
                                 .withText("Add marked")
@@ -473,7 +474,7 @@ public class MediaPlayerController extends MyBaseController {
                             extTableView.updateContentsAndSort(backingList);
                             update();
                         })
-                        .visibleWhen(tableProperties.selectedItemNotNull())
+                        .visibleWhen(tableProperties.selectedSomething())
                 )
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Delete")
@@ -482,21 +483,23 @@ public class MediaPlayerController extends MyBaseController {
                             task.setDescription("Delete selected files");
                             ViewManager.getInstance().newProgressDialog(task);
                         })
-                        .visibleWhen(tableProperties.selectedItemNotNull())
+                        .visibleWhen(tableProperties.selectedSomething())
                 )
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Rename")
                         .withAction(eh -> {
-                            IntegerValue numberValue = new IntegerValue(0);
                             ExtPath selected = (ExtPath) table.getSelectionModel().getSelectedItem();
                             FileCallback cb = (filePath) -> {
-                                backingList.remove(selected);
-                                addIfAbsent(filePath, numberValue.get());
+                                int indexOf = backingList.indexOf(selected);
+                                if (indexOf >= 0) {
+                                    backingList.remove(selected);
+                                    addIfAbsent(filePath, indexOf);
+                                }
+
                             };
-                            numberValue.set(table.getSelectionModel().getSelectedIndex());
 
                             String parent = selected.getParent(1);
-                            ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getFileOptimized(parent), selected, cb);
+                            ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getPathNearest(parent), selected, cb);
                         })
                         .visibleWhen(tableProperties.selectedSize(1))
                 )
@@ -509,66 +512,78 @@ public class MediaPlayerController extends MyBaseController {
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
 
         extTableView.prepareChangeListeners();
-        execService.scheduleWithFixedDelay(WaitTime.ofMillis(250),() -> {
+        execService.scheduleWithFixedDelay(WaitTime.ofMillis(500), () -> {
             if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
                 return;
             }
             updateSeek();
         });
-        FX.submit(() -> {
 
-            playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
-            playType.getSelectionModel().select(0);
-            showVideo.selectedProperty().addListener(listener -> {
-                boolean visible = showVideo.selectedProperty().get();
-                if (oldMode) {
-                    getCurrentFrameOld().setVisible(visible);
-                    if (visible) {
-                        getCurrentFrameOld().setExtendedState(JFrame.NORMAL);
-                    }
+        playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
+
+        playType.getSelectionModel().select(0);
+        
+        showVideo.selectedProperty().addListener(listener -> {
+            boolean visible = showVideo.selectedProperty().get();
+            if (oldMode) {
+                getCurrentFrameOld().setVisible(visible);
+                if (visible) {
+                    getCurrentFrameOld().setExtendedState(JFrame.NORMAL);
+                }
+            } else {
+                if (visible) {
+                    getCurrentFrame().show();
                 } else {
-                    if (visible) {
-                        getCurrentFrame().show();
-                    } else {
-                        getCurrentFrame().hide();
-                    }
-
+                    getCurrentFrame().hide();
                 }
 
-                if (visible && !startedWithVideo) {
-                    if (getCurrentPlayer().status().isPlaying()) {
-                        relaunch();
-                    }
-                }
-            });
-            try {
-                loadState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
-            } catch (Exception e) {
-                ErrorReport.report(e);
             }
 
+            if (visible && !startedWithVideo) {
+                if (getCurrentPlayer().status().isPlaying()) {
+                    relaunch();
+                }
+            }
         });
+        try {
+            loadState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
+        } catch (Exception e) {
+            ErrorReport.report(e);
+        }
 
     }
 
     AtomicBoolean inSeekChange = new AtomicBoolean(false);
 
     private void updateSeekLabels(Float position, Long millisPassed) {
-        FX.submit(() -> {
+        fxDelegator.update("updateSeekLabels", () -> {
             if (!stopping && !pls.isEmpty()) {
 
                 this.labelTimePassed.setText(formatTimeFull(millisPassed));
                 if (inSeekChange.compareAndSet(false, true)) {
-                    this.seekSlider.valueProperty().set(position * 100);
+                    this.seekSlider.valueProperty().set(position * 100d);
                     inSeekChange.set(false);
                 }
 
                 labelDuration.setText("/ " + formatTimeFull(currentLength));
             }
         });
+//        FX.submit(() -> {
+//            if (!stopping && !pls.isEmpty()) {
+//
+//                this.labelTimePassed.setText(formatTimeFull(millisPassed));
+//                if (inSeekChange.compareAndSet(false, true)) {
+//                    this.seekSlider.valueProperty().set(position * 100);
+//                    inSeekChange.set(false);
+//                }
+//
+//                labelDuration.setText("/ " + formatTimeFull(currentLength));
+//            }
+//        });
     }
 
     public void updateSeek() {
+        final boolean seamlessVal = !seamlessDisabled && seamless.selectedProperty().get();
         events.add(PlayerEventType.SEEK, () -> {
             if (ignoreSeek || stopping) {
                 return;
@@ -584,7 +599,7 @@ public class MediaPlayerController extends MyBaseController {
             double secondsLeft = (double) (this.currentLength - millisPassed) / 1000;
             this.updateSeekLabels(position, millisPassed);
 
-            if (!seamlessDisabled && seamless.selectedProperty().get() && (secondsLeft < seamlessSecondsMax) && (secondsLeft > 2)) {
+            if (seamlessVal && (secondsLeft < seamlessSecondsMax) && (secondsLeft > 2)) {
                 playNext(1, false, true, this.currentLength - millisPassed);
 
             } else if (secondsLeft < minDelta) {
@@ -622,7 +637,7 @@ public class MediaPlayerController extends MyBaseController {
         events.add(PlayerEventType.STOP, () -> {
             while (getCurrentPlayer().status().isPlaying() && stoppableStates.contains(playerState)) {
                 getCurrentPlayer().controls().stop();
-                Thread.sleep(50);
+                LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
             }
             this.playerState = PlayerState.STOPPED;
         });
@@ -684,41 +699,39 @@ public class MediaPlayerController extends MyBaseController {
 //        events.cancelAll("PLAY");
         events.add(PlayerEventType.PLAY, () -> {
 
-            FX.submit(() -> {
-                ExtPath item = null;
-                while (item == null) {
-                    update();
-                    if (backingList.isEmpty()) {
-                        return;
-                    }
-                    if (!ignoreModifiers) {
-                        Object selectedItem = playType.getSelectionModel().getSelectedItem();
-                        if (Objects.equals(selectedItem, typeRandom)) {
-                            index = (int) (Math.random() * backingList.size());
-                        } else if (Objects.equals(selectedItem, typeLoopSong)) {
-                            index = index - increment; // replay the same song
-                        } else if (Objects.equals(selectedItem, typeStopAfterFinish)) {
-                            if (index + increment >= table.getItems().size()) {
+            ExtPath item = null;
+            while (item == null) {
+                update();
+                if (backingList.isEmpty()) {
+                    return;
+                }
+                if (!ignoreModifiers) {
+                    String selectedPlayType = playType.getValue();
+                    if (Objects.equals(selectedPlayType, typeRandom)) {
+                        index = (int) (Math.random() * backingList.size());
+                    } else if (Objects.equals(selectedPlayType, typeLoopSong)) {
+                        index = index - increment; // replay the same song
+                    } else if (Objects.equals(selectedPlayType, typeStopAfterFinish)) {
+                        if (index + increment >= table.getItems().size()) {
 
-                                filePlaying = null;
-                                update();
-                                stop();
-                                return;
-                            }
+                            filePlaying = null;
+                            update();
+                            stop();
+                            return;
                         }
                     }
-                    //default loop song
-                    index = (index + increment) % backingList.size();
-                    item = (ExtPath) backingList.get(index);
                 }
+                //default loop song
+                index = (index + increment) % backingList.size();
+                item = (ExtPath) backingList.get(index);
+            }
 
-                if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
+            if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
 //                playSeemless(item, (long) opt[1]);
-                    play(item);
-                } else {
-                    play(item);
-                }
-            });
+                play(item);
+            } else {
+                play(item);
+            }
 
         });
 
@@ -726,28 +739,28 @@ public class MediaPlayerController extends MyBaseController {
 
     @Override
     public void update() {
-        Logger.info(events);
 
         LocationAPI.getInstance().filterIfExists(backingList);
-        FX.submit(() -> {
-
+        fxDelegator.update("update", () -> {
             extTableView.updateContentsAndSort(backingList);
-            updateIndex();
-            int in = this.getIndex(filePlaying) + 1;
-            labelCurrent.setText("[" + in + "] " + filePlaying.getAbsolutePath());
+            if (filePlaying != null) {
+                updateIndex();
+                int in = this.getIndex(filePlaying) + 1;
+                labelCurrent.setText("[" + in + "] " + filePlaying.getAbsolutePath());
+            }
 
         });
 
     }
 
     public void playSelected() {
+        Object selectedItem = table.getSelectionModel().getSelectedItem();
+        if (table.getSelectionModel().getSelectedItem() == null) {
+            return;
+        }
         update();
-        FX.submit(() -> {
-            if (table.getSelectionModel().getSelectedItem() == null) {
-                return;
-            }
-            play(F.cast(table.getSelectionModel().getSelectedItem()), lastVolume.get());
-        });
+
+        play(F.cast(selectedItem), lastVolume.get());
 
     }
     private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
@@ -755,9 +768,10 @@ public class MediaPlayerController extends MyBaseController {
     private void play(ExtPath item) {
 
         update();
-        FX.submit(() -> {
-            play(item, lastVolume.get());
-        });
+        play(item, lastVolume.get());
+//        FX.submit(() -> {
+//            play(item, lastVolume.get());
+//        });
 
     }
 
@@ -782,9 +796,7 @@ public class MediaPlayerController extends MyBaseController {
                 StageFrame currentFrame = getCurrentFrame();
                 Stage stage = currentFrame.getStage();
                 String title = filePlaying.getName(true);
-                FX.submit(() -> {
-                    stage.setTitle(title);
-                });
+                fxDelegator.set(stage.titleProperty(), title);
 
                 startedWithVideo = stage.isShowing();
             }
@@ -798,9 +810,9 @@ public class MediaPlayerController extends MyBaseController {
 
                 //wait to start playing
                 while (!getCurrentPlayer().status().isPlaying()) {
-
-                    Thread.sleep(100);
                     Logger.info("Keep sleeping");
+                    LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
+
                 }
                 Logger.info("Started playing");
                 if (volume != null && (volume >= 0 && volume <= 100)) {
@@ -918,19 +930,18 @@ public class MediaPlayerController extends MyBaseController {
         toThread.start();
     }
      */
-    private static String formatTime(long time) {
+    private static String format2Digit(long time) {
         return time >= 10 ? ":" + time : ":0" + time;
     }
 
     private static String formatTimeFull(long millis) {
         long minutes = (millis / 1000) / 60;
         long seconds = (millis / 1000) % 60;
-        String str = formatTime(seconds);
-        long hours = 0;
+        String str = format2Digit(seconds);
         if (minutes >= 60) {
-            hours = minutes / 60;
+            long hours = minutes / 60;
             minutes = minutes % 60;
-            return hours + formatTime(minutes) + str;
+            return hours + format2Digit(minutes) + str;
         } else {
             return minutes + str;
         }
@@ -1030,13 +1041,12 @@ public class MediaPlayerController extends MyBaseController {
 //            this.table.getItems().clear();
             IntegerValue num = new IntegerValue(0);
             state.root.resolve(false).forEach(item -> {
-                ExtPath file = LocationAPI.getInstance().getFileOptimized(item);
-                addIfAbsent(file);
+                LocationAPI.getInstance().getFileIfExists(item).ifPresent(this::addIfAbsent);
                 num.incrementAndGet();
             });
             Logger.info("Loaded files:", num.get());
-            FX.submit(() -> {
-                this.playType.getSelectionModel().select(state.type);
+            fxDelegator.update("loadState", () -> {
+                playType.getSelectionModel().select(state.type);
                 volumeSlider.setValue(state.volume);
             });
             this.index = state.index;
@@ -1050,12 +1060,8 @@ public class MediaPlayerController extends MyBaseController {
 
     public void saveState(String path) {
 
-        Logger.info("Set busy");
-        FX.submit(() -> {
-            labelStatus.setText("Busy");
-        });
+        fxDelegator.set(labelStatus.textProperty(), "Busy");
 
-        Logger.info("Init state save");
         try {
             ArrayList<String> list = new ArrayList<>();
             PlaylistState state = getPlaylistState();
@@ -1064,14 +1070,10 @@ public class MediaPlayerController extends MyBaseController {
             list.add(String.valueOf(state.volume));
             list.addAll(state.root.specialString());
             lt.lb.commons.io.text.TextFileIO.writeToFile(path, list);
-            Logger.info("Write to file size:" + list.size());
         } catch (Exception e) {
             ErrorReport.report(e);
         }
-        Logger.info("After state save");
-        FX.submit(() -> {
-            labelStatus.setText("Ready");
-        });
+        fxDelegator.set(labelStatus.textProperty(), "Ready");
     }
 
     public void saveState() {
@@ -1097,9 +1099,7 @@ public class MediaPlayerController extends MyBaseController {
             } catch (Exception e) {
                 ErrorReport.report(e);
             }
-            FX.submit(() -> {
-                labelStatus.setText("Ready");
-            });
+            fxDelegator.set(labelStatus.textProperty(), "Ready");
         });
 //        SimpleTask task = new SimpleTask() {
 //            @Override

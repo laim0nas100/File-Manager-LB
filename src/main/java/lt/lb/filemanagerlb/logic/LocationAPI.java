@@ -12,6 +12,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.utility.DesktopApi;
 import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 
 /**
@@ -30,11 +31,19 @@ public class LocationAPI {
         public ExtFolder folderBefore;
         public ExtFolder currentFolder;
         public ExtPath currentFile;
+        private final boolean update;
 
-        public LocationWalker(LocationInRoot location) {
+        public LocationWalker(LocationInRoot location, boolean update) {
             this.location = location;
+            this.update = update;
             reset();
         }
+
+        public LocationWalker(LocationInRoot location) {
+            this(location,false);
+        }
+        
+        
 
         public boolean reachedEnd() {
             return index == this.location.length();
@@ -48,15 +57,16 @@ public class LocationAPI {
         }
 
         public boolean iteration() {
+            String loc = location.at(index);
             if (location.isUppercase()) {
-                if (currentFolder.hasFileIgnoreCase(location.at(index))) {
-                    currentFile = currentFolder.getIgnoreCase(location.at(index));
+                if (currentFolder.hasFileIgnoreCase(loc)) {
+                    currentFile = currentFolder.getIgnoreCase(loc);
                 } else {
                     return false;
                 }
             } else {
-                if (currentFolder.getFilesMap().containsKey(location.at(index))) {
-                    currentFile = currentFolder.getFilesMap().get(location.at(index));
+                if (currentFolder.getFilesMap().containsKey(loc)) {
+                    currentFile = currentFolder.getFilesMap().get(loc);
                 } else {
                     return false;
                 }
@@ -73,6 +83,9 @@ public class LocationAPI {
             ExtPath path = null;
             if (index >= location.length()) {
                 return false;
+            }
+            if(update && currentFolder != null){
+                currentFolder.updateAwait();
             }
             if (location.isUppercase()) {
                 if (currentFolder.hasFileIgnoreCase(location.at(index))) {
@@ -163,7 +176,7 @@ public class LocationAPI {
                 Logger.info("Location: "+ loc);
                 populateByLocation(loc.getParentLocation());
 
-                file = getFileByLocation(loc);
+                file = getPathByLocation(loc);
 
             } catch (Exception e) {
                 ErrorReport.report(e);
@@ -222,52 +235,63 @@ public class LocationAPI {
 
     private void populateByLocation(LocationInRoot location) {
         Logger.info("Populate by location "+ location);
-        LocationWalker walker = new LocationWalker(location);
+        LocationWalker walker = new LocationWalker(location,true);
         while (walker.canDoStep(true)) {
             walker.iteration();
-            walker.currentFolder.update();
         }
     }
 
-    public ExtPath getFileByLocation(LocationInRoot location) {
+    public ExtPath getPathByLocation(LocationInRoot location) {
+        return getPathByLocation(location, false);
+    }
+    
+    public ExtPath getPathByLocation(LocationInRoot location, boolean update) {
         Logger.info("Get file by location "+ location);
-        LocationWalker walker = new LocationWalker(location);
+        LocationWalker walker = new LocationWalker(location,update);
         while (walker.canDoStep(true)) {
             walker.iteration();
         }
         return walker.currentFile;
-
     }
 
-    public ExtPath getFileOptimized(String path) {
-        LocationInRoot loc = new LocationInRoot(path);
-        if (!existByLocation(loc)) {
-            return getFileAndPopulate(path);
+    public ExtPath getPathNearest(String path) {
+        return getPathByLocation(new LocationInRoot(path));
+    }
+    
+    public ExtPath getPathNearestUpdate(String path) {
+        return getPathByLocation(new LocationInRoot(path),true);
+    }
+    
+    public SafeOpt<ExtPath> getFileIfExists(String path){
+        return SafeOpt.ofNullable(path).map(m-> getPathExplicit(m, Enums.Identity.FILE));
+    }
+    
+    public ExtPath getPathExplicit(String path, Enums.Identity ident){
+        ExtPath file = getPathNearest(path);
+        if(file.getIdentity() != ident){
+            return null;
         }
-        return getFileIfExists(loc);
+        return file;
     }
 
-    public ExtPath getFileIfExists(LocationInRoot location) {
-        ExtPath fileByLocation = getFileByLocation(location);
-        LocationInRoot mapping = fileByLocation.getMapping();
-        Logger.info(location + " " + mapping);
+    public ExtPath getPathIfExists(LocationInRoot location) {
+        ExtPath pathByLocation = getPathByLocation(location);
+        LocationInRoot mapping = pathByLocation.getMapping();
         if (location.equals(mapping)) {
-            Logger.info("Equals");
-            return fileByLocation;
+            return pathByLocation;
         } else {
-            Logger.info("Different");
             return null;
         }
     }
 
     public void addToCollectionSafe(Collection<ExtPath> collection, LocationInRoot location) {
-        ExtPath file = getFileIfExists(location);
+        ExtPath file = getPathIfExists(location);
         if (file != null) {
             collection.add(file);
         }
     }
 
     public void filterIfExists(Collection<ExtPath> collection) {
-        CollectionOp.filterParallel(collection, ExtPath.EXISTS, D.exe);
+        CollectionOp.filterInPlace(collection, ExtPath.EXISTS);
     }
 }

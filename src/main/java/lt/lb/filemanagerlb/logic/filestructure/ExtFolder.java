@@ -6,11 +6,13 @@ import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.util.Callback;
+import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.commons.containers.collections.ObjectBuffer;
-import lt.lb.commons.threads.ExclusiveFutureTaskExecutor;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
+import lt.lb.filemanagerlb.utility.ErrorReport;
+import lt.lb.uncheckedutils.SafeOpt;
 
 /**
  *
@@ -18,23 +20,23 @@ import lt.lb.filemanagerlb.logic.Enums.Identity;
  */
 public abstract class ExtFolder extends ExtPath {
     
-
     public ExtFolder(String src, Object... optional) {
         super(src, optional);
     }
-
-    public abstract Map<String,ExtPath> getFilesMap();
     
-    public Collection<ExtPath> getFilesCollection(){
+    public abstract Map<String, ExtPath> getFilesMap();
+    
+    public Map<String, ExtPath> updateAwait() {
+        return SafeOpt.ofFuture(populateFolder(true, null, null)).peekError(ErrorReport::report).orElse(ImmutableCollections.mapOf());
+    }
+    
+    public Collection<ExtPath> getFilesCollection() {
         return getFilesMap().values();
     }
     
-    protected ExclusiveFutureTaskExecutor<Map<String,ExtPath>> pupolator = new ExclusiveFutureTaskExecutor<>(D.exe);
-
-    protected abstract Future<Map<String,ExtPath>> populateFolder(boolean auto,ObjectBuffer buffer, BooleanProperty isCanceled);
+    protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, BooleanProperty isCanceled);
     
-    
-     public ExtPath getIgnoreCase(String name) {
+    public ExtPath getIgnoreCase(String name) {
         if (hasFileIgnoreCase(name)) {
             String request = getKey(name);
             return getFilesMap().get(request);
@@ -42,12 +44,12 @@ public abstract class ExtFolder extends ExtPath {
             return null;
         }
     }
-
+    
     public boolean hasFileIgnoreCase(String name) {
         String key = getKey(name);
         return !key.isEmpty();
     }
-
+    
     public String getKey(String name) {
         String request = "";
         for (String key : getFilesMap().keySet()) {
@@ -57,7 +59,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return request;
     }
-
+    
     public Collection<ExtFolder> getFoldersFromFiles() {
         ArrayDeque<ExtFolder> folders = new ArrayDeque<>();
         for (ExtPath file : getFilesCollection()) {
@@ -67,7 +69,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return folders;
     }
-
+    
     @Override
     public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate) {
         Collection<ExtPath> listRecursive = this.getListRecursive(false);
@@ -80,7 +82,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return listRecursive;
     }
-
+    
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
         ArrayDeque<ExtPath> list = new ArrayDeque<>();
@@ -97,7 +99,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return list;
     }
-
+    
     public Collection<ExtPath> getListRecursiveFolders(boolean applyDisable) {
         Collection<ExtPath> listRecursive = this.getListRecursive(applyDisable);
         Iterator<ExtPath> iterator = listRecursive.iterator();
@@ -109,7 +111,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return listRecursive;
     }
-
+    
     private void getRootList(Collection<ExtPath> list, ExtFolder folder) {
         folder.update();
 //        if(!folder.isDisabled.get()){
@@ -119,7 +121,7 @@ public abstract class ExtFolder extends ExtPath {
         });
 //        }
     }
-
+    
     @Override
     public void collectRecursive(Predicate<ExtPath> predicate, Callback<ExtPath, Void> call) {
         this.update();
@@ -127,13 +129,13 @@ public abstract class ExtFolder extends ExtPath {
         this.getFilesCollection().forEach(f -> {
             f.collectRecursive(predicate, call);
         });
-
+        
     }
-
+    
     public abstract void update();
-
-    public abstract Future update(List<ExtPath> list, BooleanProperty isCanceled);
-
+    
+    public abstract Future update(List<ExtPath> receiver, BooleanProperty isCanceled);
+    
     @Override
     public String getAbsoluteDirectory() {
         if (isAbsoluteRoot.get()) {

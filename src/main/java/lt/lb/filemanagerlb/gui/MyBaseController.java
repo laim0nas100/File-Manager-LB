@@ -4,8 +4,10 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import javafx.stage.Stage;
+import lt.lb.commons.javafx.FXActionDelegator;
 import lt.lb.commons.javafx.scenemanagement.Frame;
 import lt.lb.commons.javafx.scenemanagement.InjectableController;
+import lt.lb.filemanagerlb.utility.ErrorReport;
 
 /**
  *
@@ -14,6 +16,7 @@ import lt.lb.commons.javafx.scenemanagement.InjectableController;
  */
 public abstract class MyBaseController<T extends MyBaseController> implements InjectableController<T> {
 
+    protected FXActionDelegator fxDelegator = new FXActionDelegator(ErrorReport::report);
     protected Frame frame;
 
     @Override
@@ -60,7 +63,7 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
 
     public void exit() {
         if (exitInvoked) {
-            return;
+            return; // prevent recusrion
         }
         exitInvoked = true;
         exitLogic();

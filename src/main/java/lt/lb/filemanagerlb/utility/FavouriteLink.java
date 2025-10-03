@@ -1,20 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.utility;
 
 import java.util.Objects;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Tooltip;
 import lt.lb.filemanagerlb.logic.LocationAPI;
-import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class FavouriteLink {
 
@@ -27,7 +21,7 @@ public class FavouriteLink {
     }
 
     public FavouriteLink(String absoluteDir) {
-        ExtPath fileOptimized = LocationAPI.getInstance().getFileOptimized(absoluteDir);
+        ExtPath fileOptimized = LocationAPI.getInstance().getPathNearestUpdate(absoluteDir);
         Objects.requireNonNull(fileOptimized);
         location = fileOptimized;
         propertyName = new SimpleStringProperty(location.getName(false));

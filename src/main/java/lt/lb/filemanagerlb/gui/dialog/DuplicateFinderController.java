@@ -107,7 +107,7 @@ public class DuplicateFinderController extends MyBaseController {
                             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
                             for (Object ob : selectedItems) {
                                 SimpleTableItem item = (SimpleTableItem) ob;
-                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f1.getPath()));
+                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getPathNearest(item.f1.getPath()));
                             }
                         })
                 )
@@ -117,7 +117,7 @@ public class DuplicateFinderController extends MyBaseController {
                             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
                             for (Object ob : selectedItems) {
                                 SimpleTableItem item = (SimpleTableItem) ob;
-                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getFileOptimized(item.f2.getPath()));
+                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getPathNearest(item.f2.getPath()));
                             }
                         })
                 )

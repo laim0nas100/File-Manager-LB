@@ -23,7 +23,7 @@ public class HomeDir extends Dir {
     @FileInfo
     public Dir SCRIPTS;
 
-    @FileInfo(extension = "yaml")
+    @FileInfo(extension = "xml")
     public Fil session_info;
     
     @FileInfo(extension ="properties")
