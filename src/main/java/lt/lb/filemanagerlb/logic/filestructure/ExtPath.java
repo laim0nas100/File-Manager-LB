@@ -38,7 +38,7 @@ public class ExtPath {
                 break;
             }
 
-            default:{
+            default: {
                 virtual = true;
                 break;
             }
@@ -97,16 +97,15 @@ public class ExtPath {
         return Files.getLastModifiedTime(toPath()).toMillis();
     }, D.exe.service("date-size"));
 
-    public BooleanProperty isVirtual;
-    public BooleanProperty isAbsoluteRoot;
-    public BooleanProperty isDisabled;
-    public StringProperty propertyName;
-    public StringProperty propertyType;
-    public LongProperty propertySize;
-    public LongProperty propertyLastModified;
-    public StringProperty propertyDate;
-    public StringProperty propertySizeAuto;
-    public LongProperty readyToUpdate;
+    public final BooleanProperty isVirtual;
+    public final BooleanProperty isAbsoluteRoot;
+    public final BooleanProperty isDisabled;
+    public final StringProperty propertyName;
+    public final StringProperty propertyType;
+    public final LongProperty propertySize;
+    public final LongProperty propertyLastModified;
+    public final StringProperty propertyDate;
+    public final StringProperty propertySizeAuto;
 
     public ExtPath(String str, Object... optional) {
         str = str.trim();
@@ -114,20 +113,9 @@ public class ExtPath {
             str = str.substring(0, str.length() - 1);
         }
         this.absolutePath = str;
-        init();
         if (optional.length > 0) {
             this.path = (Path) optional[0];
         }
-    }
-
-    public Path toPath() {
-        if (this.path == null) {
-            this.path = Paths.get(this.getAbsoluteDirectory());
-        }
-        return this.path;
-    }
-
-    private void init() {
         this.propertyName = new SimpleStringProperty(this.getName(true));
         this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
         this.isDisabled = new SimpleBooleanProperty() {
@@ -204,6 +192,13 @@ public class ExtPath {
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
         this.isVirtual = new SimpleBooleanProperty(getIdentity().equals(Identity.VIRTUAL));
+    }
+
+    public Path toPath() {
+        if (this.path == null) {
+            this.path = Paths.get(this.getAbsoluteDirectory());
+        }
+        return this.path;
     }
 
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
@@ -284,23 +279,23 @@ public class ExtPath {
 
     }
 
-    public String getName(boolean extension) {
+    public final String getName(boolean extension) {
         return new PathStringCommands(this.absolutePath).getName(extension);
     }
 
-    public String getExtension() {
+    public final String getExtension() {
         return new PathStringCommands(this.absolutePath).getExtension();
     }
 
-    public String getParent(int timesToGoUp) {
+    public final String getParent(int timesToGoUp) {
         return new PathStringCommands(this.absolutePath).getParent(timesToGoUp);
     }
 
-    public String relativeFrom(String possibleParent) {
+    public final String relativeFrom(String possibleParent) {
         return new PathStringCommands(absolutePath).relativePathFrom(possibleParent);
     }
 
-    public String relativeTo(String possibleChild) {
+    public final String relativeTo(String possibleChild) {
         return new PathStringCommands(absolutePath).relativePathTo(possibleChild);
     }
 

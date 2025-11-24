@@ -221,7 +221,7 @@ public class CommandWindowController extends MyBaseController {
     public void addToTextArea(boolean logMe, String text) {
         FX.submit(() -> {
             if (logMe) {
-                DLog.println(dlog, StringUtils.removeEnd(text, "\n"));
+                DLog.println(dlog, Strings.CS.removeEnd(text, "\n"));
             }
             String newString = textArea.getText() + text;
             textArea.setText(newString.substring(Math.max(newString.length() - truncateAfter, 0)));

@@ -1,14 +1,13 @@
 package lt.lb.filemanagerlb.logic;
 
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 /**
  * Location Mapping Class Use in LocationAPI
@@ -24,7 +23,7 @@ public class LocationInRoot {
         String rootLoc = "";
         if (!filePath.isEmpty()) {
             for (String s : FileManagerLB.getRootSet()) {
-                if (StringUtils.startsWithIgnoreCase(filePath, s)) {
+                if (Strings.CI.startsWith(filePath, s)) {
                     rootLoc = s;
                     break;
                 }
@@ -36,7 +35,7 @@ public class LocationInRoot {
                 if (doUpperCase) {
                     filePath = StringUtils.upperCase(filePath);
                 }
-                filePath = StringUtils.removeStart(filePath, rootLoc);
+                filePath = Strings.CI.removeStart(filePath, rootLoc);
                 String[] fileArray = StringUtils.split(filePath, File.separatorChar);
                 for(String next:fileArray){
                     if (!StringUtils.isBlank(next)) {
@@ -143,11 +142,11 @@ public class LocationInRoot {
                 String s1 = mine.next();
                 String s2 = other.next();
                 if (ignore) {
-                    if (!StringUtils.equalsIgnoreCase(s1, s2)) {
+                    if (!Strings.CI.equals(s1, s2)) {
                         return false;
                     }
                 } else {
-                    if (!StringUtils.equals(s1, s2)) {
+                    if (!Strings.CS.equals(s1, s2)) {
                         return false;
                     }
                 }

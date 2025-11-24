@@ -111,7 +111,7 @@ public class PathStringCommands {
         if (!possibleChild.contains(path) || possibleChild.equalsIgnoreCase(path)) {
             return absolutePath;
         } else {
-            return ExtStringUtils.replaceOnce(possibleChild, path, "");
+            return Strings.CI.replaceOnce(possibleChild, path, "");
         }
     }
 

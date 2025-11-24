@@ -39,7 +39,7 @@ public class FileAddressField {
                 folder.getFoldersFromFiles().forEach(fold -> {
                     list.add(fold.propertyName.get());
                 });
-                String name = ExtStringUtils.replaceOnce(text, folder.getAbsoluteDirectory(), "");
+                String name = Strings.CI.replaceOnce(text, folder.getAbsoluteDirectory(), "");
                 int index = 0;
                 while (index < list.size()) {
                     String s;
