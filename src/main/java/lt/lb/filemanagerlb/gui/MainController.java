@@ -79,9 +79,9 @@ import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.uncheckedutils.PassableException;
 import lt.lb.uncheckedutils.SafeOpt;
-import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
+import org.apache.commons.lang3.Strings;
 
 /**
  * FXML Controller class
@@ -426,12 +426,14 @@ public class MainController extends MyBaseController<MainController> {
     public void changeToParent() {
         MC.changeToParent();
         this.localSearch.clear();
+        extTableView.resetScrollData();
         update();
     }
 
     public void changeToPrevious() {
         MC.changeToPrevious();
         this.localSearch.clear();
+        extTableView.resetScrollData();
         update();
 
     }
@@ -439,6 +441,7 @@ public class MainController extends MyBaseController<MainController> {
     public void changeToForward() {
         MC.changeToForward();
         this.localSearch.clear();
+        extTableView.resetScrollData();
         update();
     }
 
@@ -447,6 +450,7 @@ public class MainController extends MyBaseController<MainController> {
             localSearch.clear();
         }
         MC.changeDirTo(dir);
+        extTableView.resetScrollData();
         update();
     }
 
@@ -513,24 +517,28 @@ public class MainController extends MyBaseController<MainController> {
             action.cancel(true);
         });
         deq.clear();
+        extTableView.saveScrollState();
         ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
 //        final FutureTask asyncFuture = new FutureTask(Executors.callable(asynchronousSortTask));
         ExtFolder folderInitiated = MC.currentDir;
         ExtTask r = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                asynchronousSortTask.setOnDone(handle -> {
+                asynchronousSortTask.setOnDone(handle -> {// it's done when it's done sorting and only the sort task is cancelled, not the whole search
                     if (canceled.get()) {
                         return;
                     }
                     final int viewSize = extTableView.table.getItems().size();
                     final int neededSize = newList.size();
 
+                    //this is actually the end
                     if (viewSize != neededSize) {
                         Logger.info("View size {}, needed size {}", viewSize, neededSize);
                         FX.runAndWait(() -> {
                             extTableView.updateContentsAndSort(newList);
                         });
+                    } else {
+                        extTableView.restoreScrollState();
                     }
                 });
                 D.exe.submit(asynchronousSortTask);
@@ -549,15 +557,14 @@ public class MainController extends MyBaseController<MainController> {
                     return null;
                 }
                 update.get();
-//                newList.clear();
-//                newList.addAll(folderInitiated.getFilesCollection());
+                //apply local search
                 String lookFor = localSearch.getText().trim();
                 if (!lookFor.isEmpty()) {
                     ArrayList<ExtPath> list = new ArrayList<>();
                     newList.forEach(item -> {
                         ExtPath path = (ExtPath) item;
                         String name = path.propertyName.get();
-                        if (StringUtils.containsIgnoreCase(name, lookFor)) {
+                        if (Strings.CI.contains(name, lookFor)) {
                             list.add(path);
                         }
                     });
@@ -1459,7 +1466,7 @@ public class MainController extends MyBaseController<MainController> {
 
     private void rename() {
         if (this.propertyRenameCondition.get()) {
-            
+
             Logger.info("Invoke rename dialog");
             ExtPath path = (ExtPath) tableView.getSelectionModel().getSelectedItem();
             ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getPathNearest(path.getParent(1));
