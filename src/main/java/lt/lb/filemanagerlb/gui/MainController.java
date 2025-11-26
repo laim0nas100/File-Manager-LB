@@ -184,7 +184,6 @@ public class MainController extends MyBaseController<MainController> {
 
     private FileAddressField fileAddress;
     private ManagingClass MC;
-    private Finder finder;
     private DATA_SIZE unitSize = DATA_SIZE.KB;
     private SimpleStringProperty propertyUnitSizeName = new SimpleStringProperty(unitSize.sizename);
     private SimpleLongProperty propertyUnitSize = new SimpleLongProperty(unitSize.size);
@@ -234,10 +233,7 @@ public class MainController extends MyBaseController<MainController> {
         propertyDeleteCondition.bind(filesProperties.selectedSomething().and(writeableFolder));
         propertyRenameCondition.bind(filesProperties.selectedSize(1).and(writeableFolder));
 
-        finder = new Finder("", useRegex.selectedProperty());
-        Bindings.bindContentBidirectional(finder.list, searchView.getItems());
-
-        itemCount.textProperty().bind(Bindings.size(finder.list).asString());
+        itemCount.textProperty().bind(Bindings.size(searchView.getItems()).asString());
 
         fileAddress = new FileAddressField(currentDirText);
         propertyIsVirtualFolders.bind(MC.isAbsoluteRoot.not().and(miAdvancedRenameFolder.disableProperty()));
@@ -462,19 +458,18 @@ public class MainController extends MyBaseController<MainController> {
 
     public void search() {
         String pattern = this.searchField.getText();
-        finder.list.clear();
         searchView.getItems().clear();
         if (searchTask != null) {
             searchTask.cancel();
         }
         if (pattern.length() > 1) {
-
+            Finder finder = new Finder(pattern, useRegex.isSelected(),searchView.getItems());
             this.searchStatus.setText("Searching");
             searchTask = new SimpleTask() {
+                
                 @Override
                 protected Void call() throws Exception {
-
-                    finder.newTask(pattern);
+                    finder.isCanceled.bind(canceled);
 
                     if (!MC.currentDir.isVirtual.get()) {
                         try {
@@ -496,11 +491,8 @@ public class MainController extends MyBaseController<MainController> {
                 }
             ;
             };
-            searchTask.setOnSucceeded(eh -> {
+            searchTask.appendOnSucceeded(eh -> {
                 searchStatus.setText("Waiting");
-            });
-            searchTask.setOnCancelled(eh -> {
-                finder.isCanceled.set(true);
             });
             new Thread(searchTask).start();
 
@@ -519,12 +511,13 @@ public class MainController extends MyBaseController<MainController> {
         deq.clear();
         extTableView.saveScrollState();
         ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
+
 //        final FutureTask asyncFuture = new FutureTask(Executors.callable(asynchronousSortTask));
         ExtFolder folderInitiated = MC.currentDir;
         ExtTask r = new SimpleTask() {
             @Override
             protected Void call() throws Exception {
-                asynchronousSortTask.setOnDone(handle -> {// it's done when it's done sorting and only the sort task is cancelled, not the whole search
+                asynchronousSortTask.appendOnDone(handle -> {// it's done when it's done sorting and only the sort task is cancelled, not the whole search
                     if (canceled.get()) {
                         return;
                     }
@@ -544,7 +537,7 @@ public class MainController extends MyBaseController<MainController> {
                 D.exe.submit(asynchronousSortTask);
 
                 if (canceled.get()) {
-                    Logger.info("Canceled from task before start");
+                    Logger.info("Cancelled from task before start");
                     return null;
                 }
 
@@ -552,11 +545,12 @@ public class MainController extends MyBaseController<MainController> {
                 can.bind(canceled);
                 Future update = folderInitiated.update(newList, can);
 
+                
+                update.get();
                 if (canceled.get()) {
-                    Logger.info("Canceled from task");
+                    Logger.info("Cancelled from task");
                     return null;
                 }
-                update.get();
                 //apply local search
                 String lookFor = localSearch.getText().trim();
                 if (!lookFor.isEmpty()) {
@@ -575,10 +569,10 @@ public class MainController extends MyBaseController<MainController> {
             }
         };
         deq.addFirst(r);
-        r.setOnCancelled(event -> {
-            Logger.info("Actually canceled");
+        r.appendOnCancelled(event -> {
+            Logger.info("Actually cancelled");
         });
-        r.setOnDone(event -> {
+        r.appendOnDone(event -> {
             asynchronousSortTask.cancel();
         });
         D.exe.service("localSearch-sched").execute(r);
@@ -1333,7 +1327,7 @@ public class MainController extends MyBaseController<MainController> {
         //***************************************
         //Search View
         searchView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        searchView.getItems().setAll(finder.list);
+//        searchView.getItems().setAll(finder.list);
         searchView.setContextMenu(searchContextMenu);
         searchView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(searchView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(searchView.getContextMenu());

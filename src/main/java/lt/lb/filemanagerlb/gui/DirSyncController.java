@@ -4,18 +4,14 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import lt.lb.filemanagerlb.logic.filestructure.*;
 import lt.lb.filemanagerlb.logic.snapshots.*;
-import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicLong;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
@@ -32,7 +28,6 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.uncheckedutils.SafeOpt;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.tinylog.Logger;
 
 /**
@@ -348,7 +343,7 @@ public class DirSyncController extends MyBaseController {
         if (file0.isNotNull() && file1.isNotNull()) {
             SimpleTask<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.get().getAbsolutePath());
             SimpleTask<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.get().getAbsolutePath());
-            task0.setOnSucceeded(eh -> {
+            task0.appendOnSucceeded(eh -> {
                 if (lastUpdated == lastUpdate.get()) {
                     snapshot0 = task0.get();
                     FX.runAndWait(() -> {
@@ -358,7 +353,7 @@ public class DirSyncController extends MyBaseController {
                 }
 
             });
-            task1.setOnSucceeded(eh -> {
+            task1.appendOnSucceeded(eh -> {
                 if (lastUpdated == lastUpdate.get()) {
                     snapshot1 = task1.get();
                     FX.runAndWait(() -> {

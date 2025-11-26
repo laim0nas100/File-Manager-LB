@@ -460,7 +460,7 @@ public class CommandWindowController extends MyBaseController {
                             return null;
                         }
                     };
-                    task.setOnFailed(h -> {
+                    task.appendOnFailed(h -> {
                         ErrorReport.report(task.getException());
                     });
                     ctrl.executor.submit(task);

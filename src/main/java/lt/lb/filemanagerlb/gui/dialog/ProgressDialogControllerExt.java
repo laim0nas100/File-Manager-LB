@@ -104,7 +104,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
         timeWasted.textProperty().bind(clock.timeProperty);
         clock.paused.bind(paused);
 
-        task.setOnSucceeded((e) -> {
+        task.appendOnSucceeded((e) -> {
             Logger.info("Task succeeded");
 
             if (task.childTask != null) {
@@ -116,7 +116,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
                 this.exit();
             }
         });
-        task.setOnDone(e -> {
+        task.appendOnDone(e -> {
             clock.stopTimer(true);
         });
 

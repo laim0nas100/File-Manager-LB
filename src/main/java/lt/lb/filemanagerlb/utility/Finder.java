@@ -5,16 +5,12 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.regex.Matcher;
+import java.util.Set;
 import java.util.regex.Pattern;
-import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.commons.javafx.FX;
 
 /**
@@ -23,26 +19,39 @@ import lt.lb.commons.javafx.FX;
  */
 public class Finder extends SimpleFileVisitor<Path> {
 
+    private static final Set<Character> regexCharSet = MakeStream.fromValues(
+            '\\',
+            '[',
+            ']',
+            '*',
+            '^',
+            '$',
+            '?',
+            '{',
+            '}',
+            '(',
+            ')',
+            ',',
+            '+',
+            '|',
+            '?',
+            '.'
+    ).toSet();
+
     public ObservableList<String> list;
-    private HashSet<Character> regexSet;
     private String patternStr;
     private boolean noRegex;
     private Pattern pattern;
-    public SimpleBooleanProperty useRegex;
+    public final boolean useRegex;
     public SimpleBooleanProperty isCanceled;
 
-    public Finder(String pattern, BooleanProperty property) {
-        setUp();
-        useRegex = new SimpleBooleanProperty(false);
+    public Finder(String pattern, boolean useRegex, ObservableList<String> sink) {
+        this.useRegex = useRegex;
         isCanceled = new SimpleBooleanProperty(false);
-        useRegex.bind(property);
-        list = FXCollections.observableArrayList();
-    }
-
-    public void newTask(String pattern) {
+        list = sink;
         patternStr = pattern.toLowerCase(Locale.ROOT);
         noRegex = true;
-        if (useRegex.get() && hasRegexChar(pattern)) {
+        if (useRegex && hasRegexChar(pattern)) {
             try {
                 this.pattern = Pattern.compile(pattern);
                 noRegex = false;
@@ -58,14 +67,12 @@ public class Finder extends SimpleFileVisitor<Path> {
             if (noRegex) {
                 matches = str.toLowerCase().contains(patternStr);
             } else {
-                Matcher matcher = pattern.matcher(str);
-                matches = matcher.matches();
+                matches = pattern.matcher(str).matches();
             }
             if (matches) {
                 FX.submit(() -> {
-                    String toAdd = file.toAbsolutePath().toString();
-                    if (!list.contains(toAdd)) {
-                        list.add(toAdd);
+                    if (!isCanceled.get()) {
+                        list.add(file.toAbsolutePath().toString());
                     }
                 });
             }
@@ -96,39 +103,15 @@ public class Finder extends SimpleFileVisitor<Path> {
 
     @Override
     public FileVisitResult visitFileFailed(Path file, IOException exc) {
-        System.err.println(exc);
         if (isCanceled.get()) {
             return FileVisitResult.TERMINATE;
         }
         return FileVisitResult.CONTINUE;
     }
 
-    private void setUp() {
-        Character[] array = new Character[]{
-            '\\',
-            '[',
-            ']',
-            '*',
-            '^',
-            '$',
-            '?',
-            '{',
-            '}',
-            '(',
-            ')',
-            ',',
-            '+',
-            '|',
-            '?',
-            '.'
-        };
-        regexSet = new HashSet<>();
-        regexSet.addAll(Arrays.asList(array));
-    }
-
-    private boolean hasRegexChar(String regex) {
+    private static boolean hasRegexChar(String regex) {
         for (char c : regex.toCharArray()) {
-            if (this.regexSet.contains(c)) {
+            if (regexCharSet.contains(c)) {
                 return true;
             }
         }

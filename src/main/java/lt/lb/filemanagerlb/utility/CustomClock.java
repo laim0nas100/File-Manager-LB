@@ -16,19 +16,17 @@ import lt.lb.commons.javafx.FX;
 public class CustomClock {
 
     public CustomClock(ScheduledExecutorService exe) {
-        updateDuration = 500;
         pausedTime = 0;
         timeProperty = new SimpleStringProperty();
         paused = new SimpleBooleanProperty(false);
         scheduled = exe.scheduleAtFixedRate(() -> {
-            FX.runAndWait(() -> {
+            if (paused.get()) {
+                pausedTime += clockTickRateMS;
+            } else {
+                FX.runAndWait(this::updateTimeProperty);
+            }
 
-                updateTimeProperty();
-                if (paused.get()) {
-                    pausedTime += updateDuration;
-                }
-            });
-        }, 0, updateDuration, TimeUnit.MILLISECONDS);
+        }, 0, clockTickRateMS, TimeUnit.MILLISECONDS);
         timeStartPoint = getNow();
     }
     public long pausedTime;
@@ -38,7 +36,7 @@ public class CustomClock {
     private final ScheduledFuture scheduled;
     private boolean done = false;
 
-    public int updateDuration;
+    public static final int clockTickRateMS = 200;
 
     private void updateTimeProperty() {
         timeProperty.set(getSecondsPassedRound() + "");
@@ -48,28 +46,17 @@ public class CustomClock {
         return Clock.systemUTC().instant();
     }
 
-    public long getMiliPassed(Instant... inst) {
-        Instant currentTimePoint;
-        if (inst.length == 0) {
-            currentTimePoint = getNow();
-        } else {
-            currentTimePoint = inst[0];
-        }
-        return currentTimePoint.toEpochMilli() - timeStartPoint.toEpochMilli();
+    public double getSecondsPassed(Instant inst) {
+        return (double) (inst.toEpochMilli() - timeStartPoint.toEpochMilli() - pausedTime + clockTickRateMS) / 1000;
     }
-
-    public double getSecondsPassed(Instant... inst) {
-        Instant currentTimePoint;
-        if (inst.length == 0) {
-            currentTimePoint = Clock.systemUTC().instant();
-        } else {
-            currentTimePoint = inst[0];
-        }
-        return (double) (currentTimePoint.toEpochMilli() - timeStartPoint.toEpochMilli() - pausedTime + updateDuration) / 1000;
-    }
-
-    public long getSecondsPassedRound(Instant... inst) {
+    
+    
+    public long getSecondsPassedRound(Instant inst){
         return (long) Math.floor(getSecondsPassed(inst));
+    }
+
+    public long getSecondsPassedRound() {
+        return getSecondsPassedRound(getNow());
     }
 
     public void stopTimer(boolean update) {
@@ -79,10 +66,10 @@ public class CustomClock {
         done = true;
         scheduled.cancel(true);
         if (update) {
-            FX.runAndWait(()->{
-                timeProperty.set("Done in: " + (getSecondsPassed()));
+            FX.runAndWait(() -> {
+                timeProperty.set("Done in: " + (getSecondsPassed(getNow())));
             });
-            
+
         }
     }
 }
