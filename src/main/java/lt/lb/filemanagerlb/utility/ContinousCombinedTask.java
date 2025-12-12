@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.javafx.FX;
@@ -12,7 +13,7 @@ import org.tinylog.Logger;
 
 /**
  *
- * @author Lemmin
+ * @author laim0nas100
  */
 public abstract class ContinousCombinedTask extends SimpleTask {
 
@@ -22,6 +23,22 @@ public abstract class ContinousCombinedTask extends SimpleTask {
     public SimpleBooleanProperty prepared = new SimpleBooleanProperty(false);
 
     private Executor exe = null;
+
+    public static ContinousCombinedTask noPrep() {
+        return new ContinousCombinedTask() {
+            @Override
+            protected void preparation() throws Exception {
+            }
+        };
+    }
+
+    public static ContinousCombinedTask noPrep(Executor exe) {
+        return new ContinousCombinedTask(exe) {
+            @Override
+            protected void preparation() throws Exception {
+            }
+        };
+    }
 
     public ContinousCombinedTask() {
         this(new InPlaceExecutor());
@@ -37,7 +54,9 @@ public abstract class ContinousCombinedTask extends SimpleTask {
 
     @Override
     protected Void call() throws Exception {
-        preparation();
+        if (!prepared.get()) {
+            preparation();
+        }
         prepared.setValue(true);
         while (currentIndex < tasks.size()) {
 
@@ -50,20 +69,20 @@ public abstract class ContinousCombinedTask extends SimpleTask {
         }
         boolean[] doneArray = new boolean[tasks.size()];
         boolean hasUndone = true;
-        while(hasUndone){
-            if(conditionalWaitOrExit()){
+        while (hasUndone) {
+            if (conditionalWaitOrExit()) {
                 return null;
             }
             hasUndone = false;
-            for(int i = 0; i < doneArray.length; i++){
-                if(doneArray[i]){
+            for (int i = 0; i < doneArray.length; i++) {
+                if (doneArray[i]) {
                     continue;
                 }
                 SimpleTask task = tasks.get(i);
                 task.get(1, TimeUnit.SECONDS);
-                if(!task.isDone()){
+                if (!task.isDone()) {
                     hasUndone = true;
-                }else{
+                } else {
                     doneArray[i] = true;
                 }
             }
@@ -96,10 +115,10 @@ public abstract class ContinousCombinedTask extends SimpleTask {
 
     public void addTask(SimpleTask task) {
         this.tasks.add(task);
-        
+
     }
-    
-    protected void bindTask(SimpleTask task){
+
+    protected void bindTask(SimpleTask task) {
         SimpleTask parent = this;
         task.paused.bind(parent.paused);
         IntegerValue stepProgress = new IntegerValue(0);
@@ -109,9 +128,9 @@ public abstract class ContinousCombinedTask extends SimpleTask {
             Integer prev = stepProgress.getAndSet(ceil);
             if (prev != ceil) {// changed
                 double totalSteps = tasks.size() * 1000;
-                double madeSteps = (ceil - prevProg)/totalSteps;
+                double madeSteps = (ceil - prevProg) / totalSteps;
                 double get = parent.progress.get();
-                parent.progress.setValue(get+madeSteps);
+                parent.progress.setValue(get + madeSteps);
             }
 
         });

@@ -53,4 +53,16 @@ public class ActionFile {
         Files.copy(paths[0], paths[1]);
     }
 
+    public boolean assertPathCount(int count) {
+        if (paths.length != count) {
+            return false;
+        }
+        for (int i = 0; i < count; i++) {
+            if (paths[i] == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

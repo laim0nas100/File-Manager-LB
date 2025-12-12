@@ -361,6 +361,7 @@ public class TaskFactory {
                         leftFolders.sort(ActionFile.COMP_DESCENDING);
                         for (ActionFile f : leftFolders) {
                             try {
+
                                 Logger.info("Deleting " + f.paths[0]);
                                 f.delete();
                             } catch (Exception x) {
@@ -412,10 +413,10 @@ public class TaskFactory {
         String newName = name;
         int index = 1;
         while (folder.hasFileIgnoreCase(newName)) {
-            newName = name+"("+index+")";
+            newName = name + "(" + index + ")";
             index++;
         }
-        return AutoPath.fs(path,newName);
+        return AutoPath.fs(path, newName);
     }
 
     public FXTask markFiles(Collection<String> list) {
@@ -507,65 +508,14 @@ public class TaskFactory {
     }
 
     public ContinousCombinedTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst) {
-        return new ContinousCombinedTask() {
-            @Override
-            protected void preparation() throws Exception {
-                for (ExtEntry entry : listFirst) {
-                    ActionFile actionFile = new ActionFile(folder1 + entry.relativePath, folder2 + entry.relativePath);
-                    SimpleTask task = actionTask(actionFile, entry);
-                    addTask(task);
-                }
 
-            }
-
-//            @Override
-//            protected Void call() throws InterruptedException {
-//
-//                int i = 0;
-//                final int size = listFirst.size();
-//                Logger.info("List");
-//                for (ExtEntry e : listFirst) {
-//                    Logger.info(e.relativePath, "  ", e.action.get());
-//                }
-//                //Log.writeln("Size "+size);
-//                for (ExtEntry entry : listFirst) {
-//                    if (conditionalWaitOrExit()) {
-//                        return null;
-//                    }
-//                    final int current = i;
-//                    ActionFile actionFile = new ActionFile(folder1 + entry.relativePath, folder2 + entry.relativePath);
-//                    ExtTask task = actionTask(actionFile, entry);
-//
-//                    task.progress.addListener(FXDefs.SimpleChangeListener.of(val -> {
-//                        FX.submit(() -> {
-//                            updateProgress(current + task.progress.get(), size);
-//                        });
-//                    }));
-//                    task.setOnDone(handle -> {
-//                        Logger.info("Task done");
-//                    });
-//                    task.run();
-//
-//                    if (task.failed.get()) {
-//                        Logger.info("Task failed");
-//                        ErrorReport.report(task.getException());
-//                    }
-        
-    
-
-    ////                    try{
-////                        action(actionFile,entry);
-////                    }catch(Exception e){
-////                        ErrorReport.report(e);
-////                    }
-//                    this.updateProgress(++i, size);
-//                    this.updateMessage(entry.action.get() + "\n" + entry.relativePath);
-//                }
-//                return null;
-//
-//            }
-
-        };
+        ContinousCombinedTask continousCombinedTask = ContinousCombinedTask.noPrep();
+        for (ExtEntry entry : listFirst) {
+            ActionFile actionFile = new ActionFile(folder1 + entry.relativePath, folder2 + entry.relativePath);
+            SimpleTask task = actionTask(actionFile, entry);
+            continousCombinedTask.addTask(task);
+        }
+        return continousCombinedTask;
     }
 
     private SimpleTask actionTask(ActionFile action, ExtEntry entry) {
@@ -633,6 +583,7 @@ public class TaskFactory {
             }
         };
 
+        task.setDescription(ExtEntry.fullActionDescription(entry, action));
         return task;
     }
 

@@ -3,6 +3,7 @@ package lt.lb.filemanagerlb.logic.snapshots;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import lt.lb.filemanagerlb.logic.filestructure.ActionFile;
 import org.apache.commons.lang3.time.FastDateFormat;
 
 /**
@@ -61,6 +62,40 @@ public class ExtEntry extends Entry {
         }
         this.actionType.set(act);
         this.action.set(getActionDescription(act));
+
+    }
+
+
+    public static String fullActionDescription(ExtEntry entry, ActionFile file) {
+        int act = entry.actionType.get();
+        switch (act) {
+            case 0:
+                return "No action";
+            case 1:
+                if (!file.assertPathCount(2)) {
+                    return "Invalid action";
+                }
+                return "Copy " + file.paths[1] + " to " + file.paths[0];
+
+            case 2:
+                if (!file.assertPathCount(2)) {
+                    return "Invalid action";
+                }
+                return "Copy " + file.paths[0] + " to " + file.paths[1];
+            case 3:
+                if (file.paths[0] == null) {
+                    return "Invalid action";
+                }
+                return "Delete " + file.paths[0];
+            case 4:
+                if (file.paths[1] == null) {
+                    return "Invalid action";
+                }
+                return "Delete " + file.paths[1];
+
+            default:
+                return "Invalid action";
+        }
 
     }
 

@@ -6,7 +6,9 @@ import lt.lb.filemanagerlb.logic.filestructure.*;
 import lt.lb.filemanagerlb.logic.snapshots.*;
 import java.time.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -27,6 +29,7 @@ import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.SimpleTask;
+import lt.lb.uncheckedutils.Checked;
 import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 
@@ -341,6 +344,7 @@ public class DirSyncController extends MyBaseController {
         this.btnCompare.setDisable(true);
         long lastUpdated = lastUpdate.get();
         if (file0.isNotNull() && file1.isNotNull()) {
+            CountDownLatch latch = new CountDownLatch(2);
             SimpleTask<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.get().getAbsolutePath());
             SimpleTask<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.get().getAbsolutePath());
             task0.appendOnSucceeded(eh -> {
@@ -348,6 +352,13 @@ public class DirSyncController extends MyBaseController {
                     snapshot0 = task0.get();
                     FX.runAndWait(() -> {
                         status.setText(status.getText().concat(snapshot0.folderCreatedFrom + "\n"));
+
+                    });
+                    Checked.checkedRun(() -> {
+                        latch.countDown();
+                        if (latch.await(1, TimeUnit.SECONDS)) {
+                            btnCompare.setDisable(false);
+                        }
                     });
 
                 }
@@ -359,22 +370,19 @@ public class DirSyncController extends MyBaseController {
                     FX.runAndWait(() -> {
                         status.setText(status.getText().concat(snapshot1.folderCreatedFrom + "\n"));
                     });
+                    Checked.checkedRun(() -> {
+                        latch.countDown();
+                        if (latch.await(1, TimeUnit.SECONDS)) {
+                            btnCompare.setDisable(false);
+                        }
+                    });
 
                 }
             });
 
-            FutureTask<Object> chainBackward = Futures.chainBackward(() -> {
-                FX.runAndWait(() -> {
-                    btnCompare.setDisable(false);
-                });
-
-                return null;
-            }, task0, task1);
 
             D.exe.submit(task0);
             D.exe.submit(task1);
-            D.exe.submit(chainBackward);
-
         }
     }
 

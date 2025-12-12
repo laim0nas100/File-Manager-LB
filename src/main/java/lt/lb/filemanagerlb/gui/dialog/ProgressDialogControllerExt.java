@@ -62,6 +62,19 @@ public class ProgressDialogControllerExt extends MyBaseController {
         return leaf;
     }
 
+    public void refreshTree(ContinousCombinedTask newTask) {
+        
+        TreeItem<String> treeRoot = this.buildTree(null, newTask, (SimpleTask param) -> {
+            TreeItem<String> node = new TreeItem();
+            node.setValue(param.getDescription());
+            node.setExpanded(true);
+            return node;
+        });
+        FX.submit(() -> {
+            this.treeView.setRoot(treeRoot);
+        });
+    }
+
     public void afterShow(ContinousCombinedTask newTask) {
         super.afterShow();
         boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
@@ -71,19 +84,11 @@ public class ProgressDialogControllerExt extends MyBaseController {
         task.paused.bind(paused);
         treeView.visibleProperty().bind(checkboxTasks.selectedProperty());
         progressBar.progressProperty().bind(task.progressProperty());
+        
+        refreshTree(newTask);
 
         newTask.prepared.addListener(listener -> {
-
-            TreeItem<String> treeRoot = this.buildTree(null, task, (SimpleTask param) -> {
-                TreeItem<String> node = new TreeItem();
-                node.setValue(param.getDescription());
-                node.setExpanded(true);
-                return node;
-            });
-            FX.submit(() -> {
-                this.treeView.setRoot(treeRoot);
-            });
-
+            refreshTree(newTask);
         });
 
         this.labelProgress.textProperty().bind(this.progressBar.progressProperty().multiply(100).asString("%1$.2f").concat("%"));
