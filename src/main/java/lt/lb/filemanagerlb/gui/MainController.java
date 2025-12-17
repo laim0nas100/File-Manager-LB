@@ -463,10 +463,10 @@ public class MainController extends MyBaseController<MainController> {
             searchTask.cancel();
         }
         if (pattern.length() > 1) {
-            Finder finder = new Finder(pattern, useRegex.isSelected(),searchView.getItems());
+            Finder finder = new Finder(pattern, useRegex.isSelected(), searchView.getItems());
             this.searchStatus.setText("Searching");
             searchTask = new SimpleTask() {
-                
+
                 @Override
                 protected Void call() throws Exception {
                     finder.isCanceled.bind(canceled);
@@ -545,7 +545,6 @@ public class MainController extends MyBaseController<MainController> {
                 can.bind(canceled);
                 Future update = folderInitiated.update(newList, can);
 
-                
                 update.get();
                 if (canceled.get()) {
                     Logger.info("Cancelled from task");
@@ -1024,7 +1023,7 @@ public class MainController extends MyBaseController<MainController> {
                             FX.submit(() -> {
                                 filesProperties.selectedItems().stream().forEach(c -> {
 
-                                    c.isDisabled.setValue(c.isDisabled.not().get());
+                                    c.isDisabled.setValue(!c.isDisabled.get());
                                 });
                             });
                         })

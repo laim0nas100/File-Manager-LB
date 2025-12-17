@@ -5,12 +5,19 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.Callback;
 import lt.lb.commons.F;
+import lt.lb.commons.iteration.streams.MakeStream;
+import lt.lb.commons.javafx.FX;
+import lt.lb.commons.javafx.MenuBuilders;
+import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
@@ -62,6 +69,8 @@ public class AdvancedRenameController extends MyBaseController {
     @FXML
     public CheckBox useRegex;
     @FXML
+    public CheckBox normalizeWhitespace;
+    @FXML
     public CheckBox showFullPath;
     @FXML
     public CheckBox recursive;
@@ -72,15 +81,23 @@ public class AdvancedRenameController extends MyBaseController {
     @FXML
     public Button buttonApply;
 
+    @FXML
+    public Label itemCount;
+
+    @FXML
+    public Label affectedItemCount;
+
+    private SelectableViewProperties<TableItemObject> tableSelect;
     private int startingNumber;
     private int increment;
-    private List<TableItemObject> tableList;
+    private ObservableList<TableItemObject> tableList;
     private ExtFolder folder;
+    private Set<String> ignoredPaths = new HashSet<>();
 
     public void beforeShow(String title, ExtFolder folder) {
         super.beforeShow(title);
         this.setNumber();
-        this.tableList = new LinkedList<>();
+        tableList = FXCollections.observableArrayList();
         this.folder = folder;
         Tooltip tp = new Tooltip();
         tp.setText("Name =" + PathStringCommands.fileName + ", Name without extension =" + PathStringCommands.nameNoExt
@@ -91,6 +108,8 @@ public class AdvancedRenameController extends MyBaseController {
         TableColumn<TableItemObject, String> nameCol2 = new TableColumn<>("Rename To");
         TableColumn<TableItemObject, String> sizeCol = new TableColumn<>("Size");
         TableColumn<TableItemObject, String> dateCol = new TableColumn<>("Last Modified");
+        TableColumn<TableItemObject, String> ignoreItem = new TableColumn<>("Ignore");
+
         nameCol1.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<TableItemObject, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<TableItemObject, String> cellData) {
@@ -127,15 +146,43 @@ public class AdvancedRenameController extends MyBaseController {
                 return cellData.getValue().date;
             }
         });
+        ignoreItem.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<TableItemObject, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<TableItemObject, String> cellData) {
+                return cellData.getValue().ignored.asString();
+            }
+        });
         sizeCol.setComparator(ExtPath.COMPARE_SIZE_STRING);
 
         columns.add(nameCol1);
         columns.add(nameCol2);
         columns.add(sizeCol);
         columns.add(dateCol);
+        columns.add(ignoreItem);
         this.table.getColumns().setAll(columns);
+        tableSelect = SelectableViewProperties.ofTableView(table);
 
-        this.table.getItems().addAll(tableList);
+        ContextMenu ctx = new MenuBuilders.ContextMenuBuilder()
+                .addItem(new MenuBuilders.MenuItemBuilder()
+                        .withText("Toggle ignore")
+                        .withAction(eh -> {
+                            FX.submit(() -> {
+                                tableSelect.selectedItems().forEach(item -> {
+                                    item.ignored.set(!item.ignored.get());
+                                });
+                            });
+                        }))
+                .build();
+
+        table.setContextMenu(ctx);
+
+        BooleanProperty selectedProperty = normalizeWhitespace.selectedProperty();
+        useRegex.disableProperty().bind(selectedProperty);
+        tfStrReg.disableProperty().bind(selectedProperty);
+        tfReplaceWith.disableProperty().bind(selectedProperty);
+
+        itemCount.textProperty().bind(Bindings.size(tableList).asString());
+
         updateLists();
     }
 
@@ -155,7 +202,7 @@ public class AdvancedRenameController extends MyBaseController {
         }
         tableList.clear();
         for (ExtPath s : array) {
-            tableList.add(new TableItemObject(s));
+            tableList.add(new TableItemObject(s, ignoredPaths));
         }
         this.fxDelegator.update("updateLists", () -> {
             setTableItems(tableList);
@@ -165,9 +212,7 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void previewSetting() {
-        tableList.clear();
-        tableList.addAll(table.getItems());
-        if (this.tbNumerize.isSelected()) {
+        if (tbNumerize.isSelected()) {//numerize tab
             String filter = this.tfFilter.getText();
             setNumber();
             long number = startingNumber;
@@ -181,24 +226,31 @@ public class AdvancedRenameController extends MyBaseController {
                     ErrorReport.report(ex);
                 }
             }
-        } else {
-            String strRegex = this.tfStrReg.getText();
-            String replacement = "" + this.tfReplaceWith.getText();
-            if (useRegex.isSelected()) {
-                try {
-                    Pattern compiled = Pattern.compile(strRegex);
-                    for (TableItemObject object : this.tableList) {
-                        object.newName(compiled.matcher(object.path1.getName(true)).replaceAll(replacement));
-                    }
-                } catch (PatternSyntaxException ex) {
-                    ErrorReport.report(ex);
-                    return;
+        } else {//specific rename tab
+            if (normalizeWhitespace.selectedProperty().get()) {
+                for (TableItemObject object : this.tableList) {
+                    object.newName(ExtStringUtils.normalizeWhitespace(object.path1.getName(true), '.'));
                 }
             } else {
-                for (TableItemObject object : this.tableList) {
-                    object.newName(ExtStringUtils.parseSimple(object.path1.getName(true), strRegex, replacement));
+                String strRegex = this.tfStrReg.getText();
+                String replacement = "" + this.tfReplaceWith.getText();
+                if (useRegex.isSelected()) {
+                    try {
+                        Pattern compiled = Pattern.compile(strRegex);
+                        for (TableItemObject object : this.tableList) {
+                            object.newName(compiled.matcher(object.path1.getName(true)).replaceAll(replacement));
+                        }
+                    } catch (PatternSyntaxException ex) {
+                        ErrorReport.report(ex);
+                        return;
+                    }
+                } else {
+                    for (TableItemObject object : this.tableList) {
+                        object.newName(ExtStringUtils.parseSimple(object.path1.getName(true), strRegex, replacement));
+                    }
                 }
             }
+
         }
         applyFilters(tableList);
         setTableItems(tableList);
@@ -312,7 +364,9 @@ public class AdvancedRenameController extends MyBaseController {
 
     public void apply() {
 
-        List<TableItemObject> list = new ArrayList(table.getItems());
+        List<TableItemObject> list = MakeStream.from(this.tableList)
+                .filter(item -> item.affected && !item.excludeMe)
+                .toList();
         ContinousCombinedTask combinedTask = new ContinousCombinedTask() {
             @Override
             protected void preparation() throws Exception {
@@ -370,47 +424,81 @@ public class AdvancedRenameController extends MyBaseController {
         public PathStringCommands path1;
         public PathStringCommands path2;
         public StringProperty date;
+
         public LongProperty size;
+        public BooleanProperty ignored;
         public boolean excludeMe;
+        public boolean affected;
+
         public boolean isFolder;
         public ExtPath file;
 
-        public TableItemObject(ExtPath file) {
+        public Set<String> ignoredPaths;
+
+        public TableItemObject(ExtPath file, Set<String> ignoredPaths) {
             this.file = file;
             this.date = file.propertyDate;
             this.size = file.propertySize;
             this.path1 = new PathStringCommands(file.getAbsolutePath());
             this.path2 = new PathStringCommands(file.getAbsolutePath());
             this.isFolder = file.getIdentity().equals(Enums.Identity.FOLDER);
+            this.ignoredPaths = ignoredPaths;
+            this.ignored = new SimpleBooleanProperty() {
+                @Override
+                public void set(boolean bln) {
+                    boolean changed = false;
+                    String p = path1.getPath();
+                    if (!bln && ignoredPaths.contains(p)) {
+                        changed = ignoredPaths.remove(p);
+                    } else if (bln && !ignoredPaths.contains(p)) {
+                        changed = ignoredPaths.add(p);
+                    }
+                    if (changed) {
+                        fireValueChangedEvent();
+                    }
+                }
+
+                @Override
+                public boolean get() {
+                    return ignoredPaths.contains(path1.getPath());
+                }
+
+            };
         }
 
         public void newName(String s) {
             String parent = this.path2.getParent(1);
             this.path2.setPath(parent + File.separator + s);
+            this.affected = !Objects.equals(path1.getPath(), path2.getPath());
         }
     }
 
     private void applyFilters(List<TableItemObject> items) {
         boolean excludeFolders = !includeFolders.isSelected();
-        boolean onlyDiff = showOnlyDifferences.isSelected();
+
+        int affected = 0;
         for (TableItemObject object : items) {
             object.excludeMe = false;
-            if (excludeFolders && object.isFolder) {
+            boolean ignored = ignoredPaths.contains(object.path1.getPath());
+            if (ignored) {
+                object.excludeMe = true;
+            } else if (excludeFolders && object.isFolder) {
                 object.excludeMe = true;
             }
-            if (onlyDiff && Objects.equals(object.path1.getName(true), object.path2.getName(true))) {
-                object.excludeMe = true;
-            }
+            affected += object.affected ? 1 : 0;
         }
+        affectedItemCount.setText(String.valueOf(affected));
     }
 
     private void setTableItems(List<TableItemObject> items) {
         fxDelegator.update("setTable", () -> {
             table.getItems().clear();
+            boolean onlyDiff = showOnlyDifferences.isSelected();
             for (TableItemObject object : items) {
-                if (!object.excludeMe) {
-                    table.getItems().add(object);
+                if (onlyDiff && !object.affected) {//exclude unaffected
+                    continue;
                 }
+                table.getItems().add(object);
             }
             TableColumn get = (TableColumn) table.getColumns().get(0);
             get.setVisible(false);

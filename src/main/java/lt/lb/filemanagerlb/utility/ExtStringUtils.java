@@ -2,6 +2,8 @@ package lt.lb.filemanagerlb.utility;
 
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Set;
+import lt.lb.commons.iteration.streams.MakeStream;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.apache.commons.lang3.StringUtils;
 
@@ -176,6 +178,30 @@ public class ExtStringUtils extends StringUtils {
 
     public static String parseSimple(String originalName, String lookFor, String replacement) {
         return originalName.replace(lookFor, replacement).trim();
+    }
+
+    public static String normalizeWhitespace(String originalName, Character... deleteSpaceBeforeSymbol) {
+        String normalizeSpace = StringUtils.normalizeSpace(originalName);
+
+        if (deleteSpaceBeforeSymbol.length == 0 || normalizeSpace.length() <= 1) {
+            return normalizeSpace;
+        }
+        int[] codePoints = normalizeSpace.codePoints().toArray();
+
+        Set<Integer> symbols = MakeStream.from(deleteSpaceBeforeSymbol).map(m -> (int) m).toSet();
+        StringBuilder sb = new StringBuilder(codePoints.length);
+        int prev = codePoints[0];
+        for (int i = 1; i < codePoints.length; i++) {
+            int current = codePoints[i];
+            if (!(Character.isWhitespace(prev) && symbols.contains(current))) {
+                sb.appendCodePoint(prev);
+                //otherwise a space and forbidden symbol, don't include
+            }
+            prev = current;
+        }
+        sb.appendCodePoint(prev);
+        return sb.toString().trim();
+
     }
 
     public static boolean equalAmmount(String string, String matches0, String matches1, String... matches) {

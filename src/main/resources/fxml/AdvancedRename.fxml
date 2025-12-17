@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.151" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lt.lb.filemanagerlb.gui.dialog.AdvancedRenameController">
+<SplitPane dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lt.lb.filemanagerlb.gui.dialog.AdvancedRenameController">
   <items>
       <VBox>
          <children>
@@ -37,6 +37,7 @@
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                        </HBox.margin>
                                     </CheckBox>
+                                    <CheckBox fx:id="normalizeWhitespace" layoutX="100.0" layoutY="17.0" mnemonicParsing="false" text="Normalize whitespace" />
                                  </children>
                                  <VBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -188,6 +189,29 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </CheckBox>
+               </children>
+            </FlowPane>
+            <FlowPane alignment="CENTER" columnHalignment="CENTER" layoutX="10.0" layoutY="237.0">
+               <children>
+                  <Label text="Items:">
+                     <FlowPane.margin>
+                        <Insets />
+                     </FlowPane.margin>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="2.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label fx:id="itemCount">
+                     <FlowPane.margin>
+                        <Insets />
+                     </FlowPane.margin>
+                  </Label>
+                  <Label layoutX="272.0" layoutY="10.0" text="Affected:">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="2.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label fx:id="affectedItemCount" layoutX="329.0" layoutY="10.0" />
                </children>
             </FlowPane>
          </children>
