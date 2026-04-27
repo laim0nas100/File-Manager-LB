@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,6 @@ public class SessionInfo {
     public boolean pinTextInputDialogs;
     public boolean copyReplaceExisting;
 
-    public HashMap<String, Props<String>> frameInfo = new HashMap<>();
+    public HashMap<Serializable, Props<String>> frameInfo = new HashMap<>();
     public List<String> favoriteLinks = new ArrayList<>();
 }

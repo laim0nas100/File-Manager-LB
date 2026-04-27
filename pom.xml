@@ -12,10 +12,10 @@
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-                <commons-lb.dir>lt.lb.commons</commons-lb.dir>
+        <commons-lb.dir>lt.lb.commons</commons-lb.dir>
         <commons-lb.version>local-jar</commons-lb.version>
         
-<!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
+        <!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
         <commons-lb.version>2025.08v2</commons-lb.version>-->
     </properties>
     <dependencies>
@@ -141,7 +141,13 @@
             <artifactId>vlcj-javafx</artifactId>
             <version>1.0.2</version>
         </dependency>
-
+        
+        <dependency>
+            <groupId>com.github.Dansoftowner</groupId>
+            <artifactId>jSystemThemeDetector</artifactId>
+            <version>3.9.1</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
@@ -149,7 +155,7 @@
         </dependency>
         
         
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>

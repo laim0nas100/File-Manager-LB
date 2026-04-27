@@ -6,10 +6,12 @@ import java.util.Collection;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import lt.lb.commons.io.text.TextFileIO;
 import lt.lb.commons.iteration.ReadOnlyIterator;
 import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MyBaseController;
+import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 
 /**
@@ -48,14 +50,12 @@ public class ListController extends MyBaseController<ListController> {
     public void save() throws FileNotFoundException, UnsupportedEncodingException {
 
         FX.withAlert(() -> {
-            String text = this.pathToSave.getText();
+            String text = this.pathToSave.getText().trim();
             TaskFactory.assertLegalName(text);
             ObservableList<String> items = this.listView.getItems();
             ReadOnlyIterator<String> of = ReadOnlyIterator.of(items.stream().map(m -> m.trim()));
-            lt.lb.commons.io.text.TextFileIO.writeToFile(D.HOME_DIR.SCRIPTS + text, of);
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setContentText("Saved");
-            alert.showAndWait();
+            TextFileIO.writeToFile(D.HOME_DIR.SCRIPTS + text, of);
+            displayMessage("Script operation", "Saved script: " + text);
         });
 
     }

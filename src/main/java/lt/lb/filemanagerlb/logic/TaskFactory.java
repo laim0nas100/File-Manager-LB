@@ -3,18 +3,15 @@ package lt.lb.filemanagerlb.logic;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.*;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import lt.lb.commons.io.CopyOptions;
 import lt.lb.commons.io.autopath.AutoPath;
 import lt.lb.commons.javafx.*;
-import lt.lb.commons.threads.Futures;
-import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.gui.ViewManager;
@@ -46,7 +43,7 @@ public class TaskFactory {
 
     public final ScheduledJobExecutor jobsExecutor;
     public final SimpleBooleanProperty copyReplaceExisting = new SimpleBooleanProperty(false);
-    public static String dragInitWindowID = "";
+    public static Serializable dragInitWindowID = "";
 
     public static TaskFactory getInstance() {
 
@@ -441,7 +438,7 @@ public class TaskFactory {
         };
     }
 
-    public ExtTask snapshotCreateWriteTask(String windowID, ExtFolder folder, File file) {
+    public ExtTask snapshotCreateWriteTask(Serializable windowID, ExtFolder folder, File file) {
         return new ExtTask() {
             @Override
             protected Void call() throws Exception {
@@ -467,7 +464,7 @@ public class TaskFactory {
         };
     }
 
-    public FXTask snapshotLoadTask(String windowID, ExtFolder folder, File nextSnap) {
+    public FXTask snapshotLoadTask(Serializable windowID, ExtFolder folder, File nextSnap) {
         return new FXTask() {
             @Override
             protected Void call() throws Exception {

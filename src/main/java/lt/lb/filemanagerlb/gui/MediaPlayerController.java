@@ -13,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javax.swing.JFrame;
@@ -23,8 +24,10 @@ import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
+import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.MenuBuilders;
+import lt.lb.commons.javafx.fxrows.FXDrows;
 import lt.lb.commons.javafx.scenemanagement.StageFrame;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
@@ -191,9 +194,9 @@ public class MediaPlayerController extends MyBaseController {
         newPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
         imageView.setPreserveRatio(true);
 
-        return SafeOpt.ofFuture(D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
+        return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
             return new Group(imageView);
-        })).map(stageFrame -> {
+        }).map(stageFrame -> {
             if (showVideo.selectedProperty().get()) {
                 stageFrame.show();
             } else {
@@ -268,15 +271,15 @@ public class MediaPlayerController extends MyBaseController {
 
         if (D.DEBUG.get()) {
             events.eventCallbackBefore = event -> {
-                List<String> tags = Arrays.asList(event.tags);
+                List<String> tags = event.tags;
                 if (!tags.contains(PlayerEventType.SEEK)) {
-                    Logger.info("START " + Arrays.asList(event.tags));
+                    Logger.info("START " + event.tags);
                 }
             };
             events.eventCallbackAfter = event -> {
-                List<String> tags = Arrays.asList(event.tags);
+                List<String> tags = event.tags;
                 if (!tags.contains(PlayerEventType.SEEK)) {
-                    Logger.info("END " + Arrays.asList(event.tags) + " Cancel:" + event.isCancelled());
+                    Logger.info("END " + event.tags + " Cancel:" + event.isCancelled());
                 }
             };
         }
@@ -329,7 +332,7 @@ public class MediaPlayerController extends MyBaseController {
             }
             MainController.dragList = table.getSelectionModel().getSelectedItems();
             TaskFactory.dragInitWindowID = this.getID();
-            Logger.info(TaskFactory.dragInitWindowID, MainController.dragList);
+            Logger.info(String.valueOf(TaskFactory.dragInitWindowID), MainController.dragList);
             if (!MainController.dragList.isEmpty()) {
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
@@ -522,7 +525,7 @@ public class MediaPlayerController extends MyBaseController {
         playType.getItems().addAll(typeLoopList, typeLoopSong, typeRandom, typeStopAfterFinish);
 
         playType.getSelectionModel().select(0);
-        
+
         showVideo.selectedProperty().addListener(listener -> {
             boolean visible = showVideo.selectedProperty().get();
             if (oldMode) {
@@ -1077,11 +1080,23 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void saveState() {
-        saveState(D.HOME_DIR.PLAYLISTS.getAbsolutePathWithSeparator() + saveState.getText().trim());
+        FX.withAlert(() -> {
+            String name = saveState.getText().trim();
+            TaskFactory.assertLegalName(name);
+            saveState(D.HOME_DIR.PLAYLISTS.getAbsolutePathWithSeparator() + name);
+            displayMessage("Playlist operation", "Saved playlist: " + name);
+
+        });
     }
 
     public void loadState() {
-        loadState(D.HOME_DIR.PLAYLISTS.getAbsolutePathWithSeparator() + loadState.getText().trim());
+        FX.withAlert(() -> {
+            String name = loadState.getText().trim();
+            TaskFactory.assertLegalName(name);
+            loadState(D.HOME_DIR.PLAYLISTS.getAbsolutePathWithSeparator() + name);
+            displayMessage("Playlist operation", "Loaded playlist: " + name);
+        });
+
     }
 
     private void loadState(String path) {

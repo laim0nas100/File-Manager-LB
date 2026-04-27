@@ -14,6 +14,10 @@ import lt.lb.commons.javafx.FX;
 import lt.lb.commons.threads.executors.FastExecutor;
 import lt.lb.commons.DLog;
 import lt.lb.commons.DLog.LogStream;
+import lt.lb.commons.containers.values.Value;
+import lt.lb.commons.parsing.StringParser;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
@@ -53,7 +57,7 @@ public class CommandWindowController extends MyBaseController {
     @FXML
     TextArea textArea;
     private Commander command;
-    public FastExecutor executor;
+    public FastExecutor executor = new FastWaitingExecutor(maxExecutablesAtOnce, WaitTime.ofSeconds(4));
     public static int maxExecutablesAtOnce;
     public static int truncateAfter;
     public static String commandGenerate,
@@ -94,7 +98,6 @@ public class CommandWindowController extends MyBaseController {
     public void beforeShow(String title) {
         super.beforeShow(title);
 
-        executor = new FastExecutor(maxExecutablesAtOnce);
         command = new Commander(this, textField);
         command.addCommand(commandCopyFolderStructure, (String... params) -> {
             Logger.info("Copy params", Arrays.asList(params));
@@ -133,9 +136,6 @@ public class CommandWindowController extends MyBaseController {
             };
             finalTask.setDescription("Copy folder structure");
 
-//            FXTask copyFiles = TaskFactory.getInstance().copyFiles(root.getListRecursive(true),
-//                    dest, LocationAPI.getInstance().getFileOptimized(root.getPathCommands().getParent(1)));
-//            ViewManager.getInstance().newProgressDialog(copyFiles);
             ViewManager.getInstance().newProgressDialog(finalTask);
 
         });
@@ -222,6 +222,7 @@ public class CommandWindowController extends MyBaseController {
         FX.submit(() -> {
             if (logMe) {
                 DLog.println(dlog, Strings.CS.removeEnd(text, "\n"));
+                DLog.flushBuffer(dlog);
             }
             String newString = textArea.getText() + text;
             textArea.setText(newString.substring(Math.max(newString.length() - truncateAfter, 0)));
@@ -235,10 +236,7 @@ public class CommandWindowController extends MyBaseController {
         ArrayDeque<String> lines = new ArrayDeque<>();
         if (setTextAfterwards) {
             lines.add("$" + command);
-//            addToTextArea(textArea, "Begin: " + command);
-        } else {
-
-        }
+        } 
         while (line != null) {
             lines.add(line);
             if (!setTextAfterwards) {
@@ -424,7 +422,7 @@ public class CommandWindowController extends MyBaseController {
         public void submit(String command) {
             Logger.info(command);
             LinkedList<String> list = new LinkedList<>();
-            String[] split = command.split(" ");
+            String[] split = StringUtils.split(command);
             for (String spl : split) {
                 if (spl.length() > 0) {
                     list.add(spl);
@@ -443,6 +441,7 @@ public class CommandWindowController extends MyBaseController {
                     ctrl.addToTextArea("$:" + command + "\n");
                     Logger.info("Run in-built command:{}", command);
                 } else {
+                    Value<Process> procValue = new Value<>();
                     ExtTask task = new ExtTask() {
                         @Override
                         protected Void call() throws Exception {
@@ -456,10 +455,15 @@ public class CommandWindowController extends MyBaseController {
                             ProcessBuilder processBuilder = new ProcessBuilder(args.stream().toArray(s -> new String[s])).redirectErrorStream(true);
 
                             Process process = processBuilder.start();
+                            procValue.accept(process);
                             ctrl.handleStream(process, setTextAfterwards, command);
                             return null;
                         }
                     };
+                    task.appendOnCancelled(h -> {
+                        Process proc = procValue.get();
+                        proc.destroyForcibly();
+                    });
                     task.appendOnFailed(h -> {
                         ErrorReport.report(task.getException());
                     });
@@ -482,6 +486,7 @@ public class CommandWindowController extends MyBaseController {
 
     @Override
     public void exitLogic() {
+        executor.cancelAll(true);
         executor.shutdown();
         if (dlog != null) {
             DLog.close(dlog);

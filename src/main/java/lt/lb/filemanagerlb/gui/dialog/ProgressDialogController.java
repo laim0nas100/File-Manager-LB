@@ -11,7 +11,7 @@ import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.utility.CustomClock;
 
-import java.util.Arrays;
+import lt.lb.commons.parsing.StringParser;
 import lt.lb.filemanagerlb.D;
 
 /**
@@ -91,7 +91,7 @@ public class ProgressDialogController extends MyBaseController {
     }
 
     public void showFullText() {
-        ViewManager.getInstance().newListFrame("Progress so far", Arrays.asList(fullText.split("\n")));
+        ViewManager.getInstance().newListFrame("Progress so far", StringParser.split(fullText, "\n"));
     }
 
     @Override
@@ -118,7 +118,7 @@ public class ProgressDialogController extends MyBaseController {
     public void update() {
     }
 
-     @Override
+    @Override
     public void exitLogic() {
         clock.stopTimer(false);
     }

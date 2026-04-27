@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -45,7 +46,7 @@ public class ViewManager {
     public final SimpleBooleanProperty autoStartProgressDialogs = new SimpleBooleanProperty(false);
     public final SimpleBooleanProperty pinProgressDialogs = new SimpleBooleanProperty(false);
     public final SimpleBooleanProperty pinTextInputDialogs = new SimpleBooleanProperty(false);
-    private static final ViewManager INSTANCE = new ViewManager();
+    public static final ViewManager INSTANCE = new ViewManager();
 
     protected ViewManager() {
     }
@@ -84,7 +85,7 @@ public class ViewManager {
         });
     }
 
-    public void updateAllFrames(String exception) {
+    public void updateAllFrames(Serializable exception) {
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
         if (exception != null) {
             allControllers = allControllers.filter(f -> !f.getFrameID().equals(exception));
@@ -94,15 +95,15 @@ public class ViewManager {
         });
     }
 
-    public FXMLFrame getFxmlFrame(String id) {
+    public FXMLFrame getFxmlFrame(Serializable id) {
         return (FXMLFrame) D.sm.getFrame(id).get();
     }
 
-    public <T extends MyBaseController> T getController(String id) {
+    public <T extends MyBaseController> T getController(Serializable id) {
         return (T) getFxmlFrame(id).getController();
     }
 
-    public boolean frameIsVisible(String windowID) {
+    public boolean isFrameVisible(String windowID) {
         return D.sm.getFrame(windowID).isPresent();
     }
 
@@ -117,7 +118,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.PROGRESS_DIALOG);
                     ProgressDialogController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
-                    frame.getStage().setMaxHeight(300);
+//                    frame.getStage().setMaxHeight(300);
                     frame.getStage().setMinHeight(250);
                     frame.getStage().setMinWidth(400);
                     frame.getStage().show();
@@ -368,5 +369,5 @@ public class ViewManager {
             D.sm.closeFrame(windowID);
         });
     }
-
+    
 }

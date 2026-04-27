@@ -52,7 +52,7 @@ public class P {
     public static final KeyDefaultProperty<String> commandInit = KeyProp.of("code.init", "init").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<Integer> truncateAfter = KeyProp.of("code.truncateAfter", 100000).toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandGenerate = KeyProp.of("code.commandGenerate", "generate").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandApply = KeyProp.of("code.commandApply", "apply").toCachableDefaultProperty();
+    public static final KeyDefaultProperty<String> commandApply = KeyProp.of("code.commandApply", "apply").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandClear = KeyProp.of("code.clear", "clear").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandCancel = KeyProp.of("code.cancel", "cancel").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandList = KeyProp.of("code.list", "list").toPreparedCachableDefaultProperty(getConfig());

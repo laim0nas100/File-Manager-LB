@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import lt.lb.commons.iteration.streams.MakeStream;
+import lt.lb.commons.parsing.StringParser;
 import org.tinylog.Logger;
 
 /**
@@ -59,13 +61,13 @@ public class DesktopApi {
     private static boolean openSystemSpecific(String what) {
 
         EnumOS os = getOs();
-        
+
         if (os.isWindows()) {
             if (runCommand("explorer", "%s", what)) {
                 return true;
             }
         }
-        
+
         if (os.isLinux()) {
             if (runCommand("kde-open", "%s", what)) {
                 return true;
@@ -189,18 +191,16 @@ public class DesktopApi {
 
     private static String[] prepareCommand(String command, String args, String file) {
 
-        List<String> parts = new ArrayList<>();
-        parts.add(command);
-
-        if (args != null) {
-            for (String s : args.split(" ")) {
-                s = String.format(s, file); // put in the filename thing
-
-                parts.add(s.trim());
-            }
+        if (args == null) {
+            return new String[]{command};
         }
 
-        return parts.toArray(new String[parts.size()]);
+        return MakeStream.from(StringParser.split(args, " "))
+                .map(m -> m.formatted(file))
+                .map(m -> m.trim())
+                .prepend(command)
+                .toArray(s -> new String[s]);
+
     }
 
     private static void logErr(String msg, Throwable t) {

@@ -1,0 +1,12 @@
+/*
+ * Empty Stylesheet file.
+ */
+
+
+.alert-message {
+    -fx-font-size: 16px;
+    -fx-text-fill: #333333;
+    -fx-alignment: center;
+    -fx-wrap-text: true;
+    -fx-padding: 10;
+}

@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import lt.lb.commons.javafx.FX;
+import lt.lb.commons.parsing.StringParser;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.utility.*;
 import org.tinylog.Logger;
@@ -133,7 +134,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
     }
 
     public void showFullText() {
-        ViewManager.getInstance().newListFrame("Progress so far", Arrays.asList(fullText.split("\n")));
+        ViewManager.getInstance().newListFrame("Progress so far", StringParser.split(fullText, "\n"));
     }
 
     @Override

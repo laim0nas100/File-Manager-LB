@@ -1,16 +1,13 @@
 package lt.lb.filemanagerlb.gui;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import com.jthemedetecor.OsThemeDetector;
+import lt.lb.commons.javafx.scenemanagement.FXWinUtil;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +25,7 @@ import lt.lb.commons.javafx.scenemanagement.frames.FrameState;
 import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPositionAndSize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
+import lt.lb.commons.javafx.scenemanagement.frames.WithStylesheet;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
@@ -49,7 +47,7 @@ import org.tinylog.Logger;
  * @author Laimonas Beniušis
  */
 public class FileManagerLB {
-
+    
     public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
@@ -57,22 +55,36 @@ public class FileManagerLB {
 //    public static WithFrameTypeMemorySize sizeInfo = new WithFrameTypeMemorySize();
 
     public static VSManager vsManager = prepareVSManager();
-
+    
     static {
         java.util.logging.LogManager.getLogManager().reset();
         SLF4JBridgeHandler.install();
     }
-
+    
     private static boolean init = false;
-
+    
     public static boolean shutdown = false;
-
+    
+    public static boolean darkMode = OsThemeDetector.getDetector().isDark();
+    
     public static void main(String[] args) {
-
+        
+        
         D.sm = new MultiStageManager(
                 D.cLoader,
                 frameInfo,
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
+                new WithStylesheet(D.cLoader.getResource("css/main.css")),
+                new WithDecoration(FrameState.FrameStateShow.instance, d -> {
+                    if (darkMode) {
+                        URL dark = D.cLoader.getResource("css/dark_theme_1.css");
+                        d.getScene().getStylesheets().add(dark.toExternalForm());
+                        FXWinUtil.setDarkMode(d, true);
+//                        FXWinUtil.setDarkMode(d.getWindow(), true);
+                    }// use defaults
+                    
+                }),
+               
                 new WithDecoration(FrameState.FrameStateClose.instance, d -> {
                     if (shutdown) {
                         return;
@@ -84,9 +96,9 @@ public class FileManagerLB {
         );
         D.exe.service("date-size");
         D.exe.scheduleWithFixedDelay(System::gc, 30, 30, TimeUnit.MINUTES);
-
+        
         Logger.info("Manifest");
-
+        
         Checked.checkedRun(() -> {
             URL res = D.cLoader.getResource("stamped/version.txt");
             ArrayList<String> lines = lt.lb.commons.io.text.TextFileIO.readFrom(res);
@@ -96,13 +108,13 @@ public class FileManagerLB {
         Checked.checkedRun(() -> {
             reInit();
         }).ifPresent(ErrorReport::report);
-
+        
         if (P.showAbout.resolve(P.parameters)) {
             ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
         }
-
+        
     }
-
+    
     private static VSManager prepareVSManager() {
         VSManager manager = new VSManager();
         manager.includeCustom(SessionInfo.class, 0L);
@@ -111,7 +123,7 @@ public class FileManagerLB {
 
         return manager;
     }
-
+    
     public static void remount() {
         remountUpdateList.clear();
 //        remountUpdateList.add(VirtualFolders);
@@ -124,14 +136,14 @@ public class FileManagerLB {
                 remountUpdateList.add(f);
             }
         }
-
+        
         File[] roots = File.listRoots();
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
         remountUpdateList.setAll(ArtificialRoot.getFilesCollection());
     }
-
+    
     public static boolean mountDevice(String name) {
         boolean result = false;
         name = name.toUpperCase();
@@ -149,7 +161,7 @@ public class FileManagerLB {
                     if (!remountUpdateList.contains(device)) {
                         remountUpdateList.add(device);
                     }
-
+                    
                 } else {
                     result = false;
                 }
@@ -157,7 +169,7 @@ public class FileManagerLB {
         }
         return result;
     }
-
+    
     public static boolean folderIsVirtual(ExtPath fileToCheck) {
         VirtualFolder baseFolder = FileManagerLB.VirtualFolders;
         HashSet<String> set = new HashSet<>();
@@ -166,36 +178,42 @@ public class FileManagerLB {
         }
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
-
+    
     public static Set<String> getRootSet() {
         return ArtificialRoot.files.keySet();
     }
-
+    
     public static void doOnExit() {
         if (shutdown) {
             return;
         }
         shutdown = true;
         Logger.info("Exit call invoked");
+        
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
         allControllers.forEach(c -> c.exit());
-        VLCInit.release();
-        TaskFactory.getInstance().jobsExecutor.shutdown();
-        D.exe.shutdown();
-        Logger.info("Write seesion info");
-        try {
-            writeSessionInfo();
-        } catch (Exception ex) {
-            ErrorReport.report(ex);
-        }
-        try {
-            Logger.info("Await termination");
-            D.exe.awaitTermination(1, TimeUnit.DAYS);
-        } catch (Exception ex) {
-        }
-
+        
+        new Thread(() -> {
+            Logger.info("Write session info");
+            try {
+                writeSessionInfo();
+            } catch (Exception ex) {
+                ErrorReport.report(ex);
+            }
+            try {
+                VLCInit.release();
+                TaskFactory.getInstance().jobsExecutor.shutdown();
+                D.exe.shutdown();
+                Logger.info("Await termination");
+                D.exe.awaitTermination(1, TimeUnit.MINUTES);
+            } catch (Exception ex) {
+                Logger.error(ex, "Failed during executor shutdown, terminating");
+                System.exit(0);
+            }
+        }, "Shutdown thread").start();
+        
     }
-
+    
     public static void writeSessionInfo() throws IOException {
         SessionInfo si = D.sessionInfo;
         CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
@@ -218,15 +236,15 @@ public class FileManagerLB {
 
 //        serialize(path, vm);
     }
-
+    
     public static void readSessionInfo() throws IOException {
-
+        
         if (D.HOME_DIR.session_info.isReadable()) {
             
             SafeOpt<SessionInfo> deserialize = vsManager.<SessionInfo>serializingXMLStream().pathToObject(D.HOME_DIR.session_info.getPath());
             D.sessionInfo = deserialize.peekError(ErrorReport::report).orElseGet(SessionInfo::new);
         }
-
+        
         frameInfo.typeMap.putAll(D.sessionInfo.frameInfo);
         ViewManager vm = ViewManager.getInstance();
         vm.autoCloseProgressDialogs.set(D.sessionInfo.autoCloseProgressDialogs);
@@ -238,18 +256,18 @@ public class FileManagerLB {
             MainController.favoriteLinks.add(new FavouriteLink(str));
         }
     }
-
+    
     public static void reInit() {
         Logger.info("INITIALIZE");
         init = true;
         D.sm.getFrames().forEach(frame -> frame.close());
         VLCInit.release();
-
+        
         MainController.actionList = new ArrayList<>();
         MainController.dragList = FXCollections.observableArrayList();
         MainController.errorLog = FXCollections.observableArrayList();
         MainController.favoriteLinks = FXCollections.observableArrayList();
-
+        
         MainController.markedList = FXCollections.observableArrayList();
         MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
         MainController.globalDisabledMap = new HashSet<>();
@@ -257,7 +275,7 @@ public class FileManagerLB {
         VirtualFolders = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
         remount();
-
+        
         try {
             Path userdir = Paths.get(D.USER_DIR);
             if (!Files.isDirectory(userdir)) {
@@ -276,11 +294,11 @@ public class FileManagerLB {
         }
         ViewManager.getInstance().newWindow(ArtificialRoot);
         Logger.info("After new window");
-
+        
         init = false;
-
+        
     }
-
+    
     public static void restart() {
         try {
             Logger.info("Restart request");
@@ -293,5 +311,5 @@ public class FileManagerLB {
         }
         System.exit(707);
     }
-
+    
 }
