@@ -2,21 +2,14 @@ package lt.lb.filemanagerlb;
 
 import java.util.concurrent.Executors;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import lt.lb.commons.Java;
 import lt.lb.commons.io.directoryaccess.Dir;
-import lt.lb.commons.javafx.FX;
-import lt.lb.commons.javafx.FXDefs;
-import lt.lb.commons.javafx.fxrows.FXDrows;
 import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
-import lt.lb.commons.javafx.scenemanagement.StageFrame;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
-import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.uncheckedutils.Checked;
 
