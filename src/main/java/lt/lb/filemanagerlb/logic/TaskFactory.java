@@ -29,6 +29,7 @@ import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.jobsystem.ScheduledJobExecutor;
+import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 
 /**
@@ -71,6 +72,9 @@ public class TaskFactory {
     }
 
     public static void assertLegalName(String newName) throws FileNameException {
+        if (StringUtils.isBlank(newName)) {
+            throw new FileNameException("Blank name");
+        }
         for (Character c : newName.toCharArray()) {
             if (illegalCharacters.contains(c)) {
                 throw new FileNameException(newName + " contains illegal character " + c);
