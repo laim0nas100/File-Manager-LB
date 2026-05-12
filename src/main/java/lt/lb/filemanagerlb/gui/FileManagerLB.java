@@ -31,6 +31,7 @@ import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
 import lt.lb.filemanagerlb.logic.Enums;
+import lt.lb.filemanagerlb.logic.LocationAPI;
 import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
@@ -77,10 +78,10 @@ public class FileManagerLB {
                 new WithStylesheet(D.cLoader.getResource("css/main.css")),
                 new WithDecoration(FrameState.FrameStateShow.instance, d -> {
                     if (darkMode) {
-                        FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm()).ifPresent(theme ->{
-                             d.getScene().getStylesheets().add(theme);
+                        FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm()).ifPresent(theme -> {
+                            d.getScene().getStylesheets().add(theme);
                         });
-                       
+
                         FXWinUtil.setDarkMode(d, true);
 //                        FXWinUtil.setDarkMode(d.getWindow(), true);
                     }// use defaults
@@ -111,7 +112,7 @@ public class FileManagerLB {
         }).ifPresent(ErrorReport::report);
 
         if (P.showAbout.resolve(P.parameters)) {
-            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+            ViewManager.newWebDialog(Enums.WebDialog.About);
         }
 
     }
@@ -127,7 +128,6 @@ public class FileManagerLB {
 
     public static void remount() {
         remountUpdateList.clear();
-//        remountUpdateList.add(VirtualFolders);
 
         ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
         for (ExtPath f : ArtificialRoot.getFilesCollection()) {
@@ -203,7 +203,7 @@ public class FileManagerLB {
             }
             try {
                 VLCInit.release();
-                TaskFactory.getInstance().jobsExecutor.shutdown();
+                TaskFactory.jobsExecutor.shutdown();
                 D.exe.shutdown();
                 Logger.info("Await termination");
                 D.exe.awaitTermination(1, TimeUnit.MINUTES);
@@ -219,19 +219,14 @@ public class FileManagerLB {
         SessionInfo si = D.sessionInfo;
         CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
         CollectionOp.replace(si.favoriteLinks,
-                MainController.favoriteLinks.stream()
-                        .map(m -> m.location)
-                        .filter(f -> !f.isArtificial())
-                        .map(m -> m.getAbsolutePath())
-                        .distinct()
-                        .collect(Collectors.toList())
-        );
-        ViewManager vm = ViewManager.getInstance();
-        si.autoCloseProgressDialogs = vm.autoCloseProgressDialogs.get();
-        si.autoStartProgressDialogs = vm.autoStartProgressDialogs.get();
-        si.pinProgressDialogs = vm.pinProgressDialogs.get();
-        si.pinTextInputDialogs = vm.pinTextInputDialogs.get();
-        si.copyReplaceExisting = TaskFactory.getInstance().copyReplaceExisting.get();
+                LocationAPI.toSerializableStringList(MainController.favoriteLinks, f -> f.location));
+         CollectionOp.replace(si.disabledFiles,D.globalDisabledSet);
+
+        si.autoCloseProgressDialogs = ViewManager.autoCloseProgressDialogs.get();
+        si.autoStartProgressDialogs = ViewManager.autoStartProgressDialogs.get();
+        si.pinProgressDialogs = ViewManager.pinProgressDialogs.get();
+        si.pinTextInputDialogs = ViewManager.pinTextInputDialogs.get();
+        si.copyReplaceExisting = TaskFactory.copyReplaceExisting.get();
 
         vsManager.serializingXMLStream().objectToPathOverwrite(si, D.HOME_DIR.session_info.getPath());
 
@@ -247,15 +242,15 @@ public class FileManagerLB {
         }
 
         frameInfo.typeMap.putAll(D.sessionInfo.frameInfo);
-        ViewManager vm = ViewManager.getInstance();
-        vm.autoCloseProgressDialogs.set(D.sessionInfo.autoCloseProgressDialogs);
-        vm.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
-        vm.pinProgressDialogs.set(D.sessionInfo.pinProgressDialogs);
-        vm.pinTextInputDialogs.set(D.sessionInfo.pinTextInputDialogs);
-        TaskFactory.getInstance().copyReplaceExisting.set(D.sessionInfo.copyReplaceExisting);
+        ViewManager.autoCloseProgressDialogs.set(D.sessionInfo.autoCloseProgressDialogs);
+        ViewManager.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
+        ViewManager.pinProgressDialogs.set(D.sessionInfo.pinProgressDialogs);
+        ViewManager.pinTextInputDialogs.set(D.sessionInfo.pinTextInputDialogs);
+        TaskFactory.copyReplaceExisting.set(D.sessionInfo.copyReplaceExisting);
         for (String str : D.sessionInfo.favoriteLinks) {
             MainController.favoriteLinks.add(new FavouriteLink(str));
         }
+        D.globalDisabledSet.addAll(D.sessionInfo.disabledFiles);
     }
 
     public static void reInit() {
@@ -264,14 +259,11 @@ public class FileManagerLB {
         D.sm.getFrames().forEach(frame -> frame.close());
         VLCInit.release();
 
-        MainController.actionList = new ArrayList<>();
-        MainController.dragList = FXCollections.observableArrayList();
         MainController.errorLog = FXCollections.observableArrayList();
         MainController.favoriteLinks = FXCollections.observableArrayList();
 
         MainController.markedList = FXCollections.observableArrayList();
         MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
-        MainController.globalDisabledMap = new HashSet<>();
         ArtificialRoot = new VirtualFolder(D.ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
@@ -293,7 +285,7 @@ public class FileManagerLB {
         } catch (IOException ex) {
             ErrorReport.report(ex);
         }
-        ViewManager.getInstance().newWindow(ArtificialRoot);
+        ViewManager.newWindow(ArtificialRoot);
         Logger.info("After new window");
 
         init = false;

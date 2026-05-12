@@ -1,10 +1,14 @@
 package lt.lb.filemanagerlb.logic;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import lt.lb.commons.containers.collections.CollectionOp;
+import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
@@ -20,8 +24,6 @@ import org.tinylog.Logger;
  * @author Laimonas Beniušis
  */
 public class LocationAPI {
-    
-    
 
     private static class LocationWalker {
 
@@ -40,10 +42,8 @@ public class LocationAPI {
         }
 
         public LocationWalker(LocationInRoot location) {
-            this(location,false);
+            this(location, false);
         }
-        
-        
 
         public boolean reachedEnd() {
             return index == this.location.length();
@@ -84,7 +84,7 @@ public class LocationAPI {
             if (index >= location.length()) {
                 return false;
             }
-            if(update && currentFolder != null){
+            if (update && currentFolder != null) {
                 currentFolder.updateAwait();
             }
             if (location.isUppercase()) {
@@ -122,20 +122,15 @@ public class LocationAPI {
         }
 
     }
-    private static final LocationAPI INSTANCE = new LocationAPI();
 
     protected LocationAPI() {
     }
 
-    public static LocationAPI getInstance() {
-        return INSTANCE;
-    }
-
-    public LocationInRoot getLocationMapping(String path) {
+    public static LocationInRoot getLocationMapping(String path) {
         return new LocationInRoot(path);
     }
 
-    private Path recursiveRootResolve(Path start, int limmit) {
+    private static Path recursiveRootResolve(Path start, int limmit) {
         Path parent = start.getParent();
         if (parent == null || limmit <= 0) {
             return start;
@@ -144,7 +139,29 @@ public class LocationAPI {
         }
     }
 
-    public ExtPath getFileAndPopulate(String pathl) {
+    public static List<ExtPath> fromFiles(Collection<File> files) {
+        return MakeStream.from(files)
+                .map(file -> new LocationInRoot(file.getAbsolutePath()))
+                .map(location -> getPathByLocation(location, true))
+                .toList();
+    }
+    
+    public static <T> List<String>  toSerializableStringList(Collection<T> paths, Function<T,ExtPath> mapper){
+        return MakeStream.from(paths)
+                .map(mapper)
+                .filter(p -> !p.isArtificial())
+                .map(m -> m.getAbsolutePath())
+                .distinct().toList();
+    }
+
+    public static List<String> toSerializableStringList(Collection<ExtPath> paths) {
+        return MakeStream.from(paths)
+                .filter(p -> !p.isArtificial())
+                .map(m -> m.getAbsolutePath())
+                .distinct().toList();
+    }
+
+    public static ExtPath getFileAndPopulate(String pathl) {
         ExtPath file = FileManagerLB.ArtificialRoot;
         pathl = pathl.trim();
         Logger.info("getFileAndPopulate:" + pathl);
@@ -164,7 +181,7 @@ public class LocationAPI {
                         if (!FileManagerLB.getRootSet().contains(rootStr)) {
                             if (FileManagerLB.mountDevice(rootStr)) {
 //                                FileManagerLB.ArtificialRoot.update();
-                                Logger.info("Mounted "+ path);
+                                Logger.info("Mounted " + path);
                             }
                         }
                     }
@@ -173,7 +190,7 @@ public class LocationAPI {
 //                    ErrorReport.report(new Exception("windows auto pathing exception: " +pathl));
                 }
                 LocationInRoot loc = new LocationInRoot(pathl);
-                Logger.info("Location: "+ loc);
+                Logger.info("Location: " + loc);
                 populateByLocation(loc.getParentLocation());
 
                 file = getPathByLocation(loc);
@@ -186,7 +203,7 @@ public class LocationAPI {
 
     }
 
-    public boolean existByLocation(LocationInRoot location) {
+    public static boolean existByLocation(LocationInRoot location) {
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -195,7 +212,7 @@ public class LocationAPI {
 
     }
 
-    public void removeByLocation(LocationInRoot location) {
+    public static void removeByLocation(LocationInRoot location) {
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -212,7 +229,7 @@ public class LocationAPI {
         }
     }
 
-    public void putByLocation(LocationInRoot location, ExtPath file) {
+    public static void putByLocation(LocationInRoot location, ExtPath file) {
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -224,7 +241,7 @@ public class LocationAPI {
 
     }
 
-    public void putByLocationRecursive(LocationInRoot location, ExtPath file) {
+    public static void putByLocationRecursive(LocationInRoot location, ExtPath file) {
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
@@ -233,48 +250,48 @@ public class LocationAPI {
         walker.currentFolder.getFilesMap().put(file.propertyName.get(), file);
     }
 
-    private void populateByLocation(LocationInRoot location) {
-        Logger.info("Populate by location "+ location);
-        LocationWalker walker = new LocationWalker(location,true);
+    private static void populateByLocation(LocationInRoot location) {
+        Logger.info("Populate by location " + location);
+        LocationWalker walker = new LocationWalker(location, true);
         while (walker.canDoStep(true)) {
             walker.iteration();
         }
     }
 
-    public ExtPath getPathByLocation(LocationInRoot location) {
+    public static ExtPath getPathByLocation(LocationInRoot location) {
         return getPathByLocation(location, false);
     }
-    
-    public ExtPath getPathByLocation(LocationInRoot location, boolean update) {
-        Logger.info("Get file by location "+ location);
-        LocationWalker walker = new LocationWalker(location,update);
+
+    public static ExtPath getPathByLocation(LocationInRoot location, boolean update) {
+        Logger.info("Get file by location " + location);
+        LocationWalker walker = new LocationWalker(location, update);
         while (walker.canDoStep(true)) {
             walker.iteration();
         }
         return walker.currentFile;
     }
 
-    public ExtPath getPathNearest(String path) {
+    public static ExtPath getPathNearest(String path) {
         return getPathByLocation(new LocationInRoot(path));
     }
-    
-    public ExtPath getPathNearestUpdate(String path) {
-        return getPathByLocation(new LocationInRoot(path),true);
+
+    public static ExtPath getPathNearestUpdate(String path) {
+        return getPathByLocation(new LocationInRoot(path), true);
     }
-    
-    public SafeOpt<ExtPath> getFileIfExists(String path){
-        return SafeOpt.ofNullable(path).map(m-> getPathExplicit(m, Enums.Identity.FILE));
+
+    public static SafeOpt<ExtPath> getFileIfExists(String path) {
+        return SafeOpt.ofNullable(path).map(m -> getPathExplicit(m, Enums.Identity.FILE));
     }
-    
-    public ExtPath getPathExplicit(String path, Enums.Identity ident){
+
+    public static ExtPath getPathExplicit(String path, Enums.Identity ident) {
         ExtPath file = getPathNearest(path);
-        if(file.getIdentity() != ident){
+        if (file.getIdentity() != ident) {
             return null;
         }
         return file;
     }
 
-    public ExtPath getPathIfExists(LocationInRoot location) {
+    public static ExtPath getPathIfExists(LocationInRoot location) {
         ExtPath pathByLocation = getPathByLocation(location);
         LocationInRoot mapping = pathByLocation.getMapping();
         if (location.equals(mapping)) {
@@ -284,14 +301,14 @@ public class LocationAPI {
         }
     }
 
-    public void addToCollectionSafe(Collection<ExtPath> collection, LocationInRoot location) {
+    public static void addToCollectionSafe(Collection<ExtPath> collection, LocationInRoot location) {
         ExtPath file = getPathIfExists(location);
         if (file != null) {
             collection.add(file);
         }
     }
 
-    public void filterIfExists(Collection<ExtPath> collection) {
+    public static void filterIfExists(Collection<ExtPath> collection) {
         CollectionOp.filterInPlace(collection, ExtPath.EXISTS);
     }
 }

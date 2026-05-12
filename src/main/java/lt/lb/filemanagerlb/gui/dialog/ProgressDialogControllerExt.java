@@ -78,7 +78,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
 
     public void afterShow(ContinousCombinedTask newTask) {
         super.afterShow();
-        boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
+        boolean pause = !ViewManager.autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
         Logger.info("Start paused:" + paused);
         this.task = newTask;
@@ -116,7 +116,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
             if (task.childTask != null) {
                 task.run();
             }
-            boolean doAutoClose = ViewManager.getInstance().autoCloseProgressDialogs.get();
+            boolean doAutoClose = ViewManager.autoCloseProgressDialogs.get();
             Logger.info("autoClose:" + doAutoClose);
             if (doAutoClose) {
                 this.exit();
@@ -134,7 +134,7 @@ public class ProgressDialogControllerExt extends MyBaseController {
     }
 
     public void showFullText() {
-        ViewManager.getInstance().newListFrame("Progress so far", StringParser.split(fullText, "\n"));
+        ViewManager.newListFrame("Progress so far", StringParser.split(fullText, "\n"));
     }
 
     @Override

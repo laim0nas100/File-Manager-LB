@@ -373,9 +373,9 @@ public class AdvancedRenameController extends MyBaseController {
                 for (TableItemObject ob : list) {
 
                     addTask(SimpleTask.of(ob.path1.getName(true) + ":" + ob.path2.getName(true), () -> {
-                        String renameTo = TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true));
+                        String renameTo = TaskFactory.renameTo(ob.path1.getPath(), ob.path2.getName(true));
                         if (folder.getIdentity() == Identity.VIRTUAL) {
-                            ExtPath file = LocationAPI.getInstance().getPathNearest(renameTo);
+                            ExtPath file = LocationAPI.getPathNearest(renameTo);
                             if (file != null) {
                                 VirtualFolder vf = F.cast(folder);
                                 vf.files.put(file.getName(true), file);
@@ -389,7 +389,7 @@ public class AdvancedRenameController extends MyBaseController {
         };
 
         combinedTask.setDescription("Bulk rename files");
-        ViewManager.getInstance().newProgressDialog(combinedTask);
+        ViewManager.newProgressDialog(combinedTask);
 
     }
 
@@ -398,13 +398,13 @@ public class AdvancedRenameController extends MyBaseController {
         for (Object object : table.getItems()) {
             TableItemObject ob = (TableItemObject) object;
             SafeOpt<String> path = Checked.checkedCall(() -> {
-                return TaskFactory.getInstance().renameTo(ob.path1.getPath(), ob.path2.getName(true));
+                return TaskFactory.renameTo(ob.path1.getPath(), ob.path2.getName(true));
             });
 
             path.getError().ifPresent(ErrorReport::report);
 
             if (folder.getIdentity() == Identity.VIRTUAL && path.isPresent()) {
-                ExtPath file = LocationAPI.getInstance().getPathNearest(path.get());
+                ExtPath file = LocationAPI.getPathNearest(path.get());
                 if (file != null) {
                     VirtualFolder vf = F.cast(folder);
                     vf.files.put(file.getName(true), file);
@@ -415,7 +415,7 @@ public class AdvancedRenameController extends MyBaseController {
         }
 
         this.update();
-        ViewManager.getInstance().updateAllFrames(getFrameID());
+        ViewManager.updateAllFrames(getFrameID());
 
     }
 

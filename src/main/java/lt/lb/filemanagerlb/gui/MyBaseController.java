@@ -60,7 +60,7 @@ public abstract class MyBaseController<T extends MyBaseController> implements In
             exit();
             InjectableController.super.close();
             if (!FileManagerLB.shutdown) {
-                ViewManager.getInstance().updateAllFrames(getFrameID());
+                ViewManager.updateAllFrames(getFrameID());
             }
         } catch (Exception ex) {
             ex.printStackTrace();

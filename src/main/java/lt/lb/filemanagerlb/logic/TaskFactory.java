@@ -11,6 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lt.lb.commons.io.CopyOptions;
 import lt.lb.commons.io.autopath.AutoPath;
+import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.commons.javafx.*;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MainController;
@@ -37,38 +38,30 @@ import org.tinylog.Logger;
  * @author Laimonas Beniušis Produces Tasks
  */
 //
-public class TaskFactory {
+public abstract class TaskFactory {
 
-    private static final HashSet<Character> illegalCharacters = new HashSet<>();
-    private static final TaskFactory INSTANCE = new TaskFactory();
+    private static final Set<Character> illegalCharacters = MakeStream.<Character>fromValues().decorating(stream -> {
+        if (File.separator.equals('/')) {
+            stream.append('/');
+        } else {
+            stream.append( '\\',
+                '/',
+                '<',
+                '*',
+                '>',
+                '|',
+                '?',
+                ':',
+                '\"');
+        }
+        return stream;
+    }).toUnmodifiableSet();
 
-    public final ScheduledJobExecutor jobsExecutor;
-    public final SimpleBooleanProperty copyReplaceExisting = new SimpleBooleanProperty(false);
+    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe.service("jobs"));
+    public static final SimpleBooleanProperty copyReplaceExisting = new SimpleBooleanProperty(false);
     public static Serializable dragInitWindowID = "";
 
-    public static TaskFactory getInstance() {
-
-        return INSTANCE;
-    }
-
     protected TaskFactory() {
-        jobsExecutor = new ScheduledJobExecutor(D.exe.service("jobs"));
-        Character[] arrayWindows = new Character[]{
-            '\\',
-            '/',
-            '<',
-            '*',
-            '>',
-            '|',
-            '?',
-            ':',
-            '\"'
-        };
-        if (File.separator.equals('/')) {
-            illegalCharacters.add('/');
-        } else {
-            illegalCharacters.addAll(Arrays.asList(arrayWindows));
-        }
     }
 
     public static void assertLegalName(String newName) throws FileNameException {
@@ -83,7 +76,7 @@ public class TaskFactory {
     }
 
 //RENAME
-    public String renameTo(String fileToRename, String newName) throws IOException, FileNameException {
+    public static String renameTo(String fileToRename, String newName) throws IOException, FileNameException {
         assertLegalName(newName);
 
         AutoPath toRename = AutoPath.fs(fileToRename);
@@ -107,7 +100,7 @@ public class TaskFactory {
     }
 
 //PREPARE FOR TASKS
-    public void addToMarked(ExtPath file) {
+    public static void addToMarked(ExtPath file) {
         FX.submit(() -> {
             if (file != null && !MainController.markedList.contains(file)) {
                 MainController.markedList.add(file);
@@ -115,7 +108,7 @@ public class TaskFactory {
         });
     }
 
-    public Collection<String> populateStringFileList(Collection<ExtPath> filelist) {
+    public static Collection<String> populateStringFileList(Collection<ExtPath> filelist) {
         Collection<String> collection = FXCollections.observableArrayList();
         filelist.forEach(item -> {
             collection.add(item.getAbsoluteDirectory());
@@ -123,7 +116,7 @@ public class TaskFactory {
         return collection;
     }
 
-    private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest) {
+    private static ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest) {
         Logger.info("List recieved in task");
 
         for (ExtPath file : fileList) {
@@ -133,7 +126,7 @@ public class TaskFactory {
         for (ExtPath file : fileList) {
             Collection<ExtPath> listRecursive = new ArrayList<>();
             listRecursive.addAll(file.getListRecursive(true));
-            ExtPath parentFile = LocationAPI.getInstance().getPathIfExists(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getPathIfExists(file.getMapping().getParentLocation());
             for (ExtPath f : listRecursive) {
                 String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
                 list.add(new ActionFile(f.getAbsoluteDirectory(), dest.getAbsoluteDirectory() + relativePath));
@@ -148,7 +141,7 @@ public class TaskFactory {
 
     }
 
-    private CopyOptions getCopyOptions() {
+    private static CopyOptions getCopyOptions() {
         CopyOptions options = new CopyOptions();
         if (copyReplaceExisting.get()) {
             options = options.with(StandardCopyOption.REPLACE_EXISTING);
@@ -160,7 +153,7 @@ public class TaskFactory {
         return options;
     }
 
-    private CopyOptions getMoveOptions() {
+    private static CopyOptions getMoveOptions() {
         CopyOptions options = new CopyOptions();
         if (copyReplaceExisting.get()) {
             options = options.with(StandardCopyOption.REPLACE_EXISTING);
@@ -173,7 +166,7 @@ public class TaskFactory {
         return options;
     }
 
-    private ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
+    private static ArrayList<ActionFile> prepareForCopy(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
         Logger.info("List recieved in task test");
 
         for (ExtPath file : fileList) {
@@ -195,7 +188,7 @@ public class TaskFactory {
 
     }
 
-    private ArrayList<ActionFile> prepareForDelete(Collection<ExtPath> fileList) {
+    private static ArrayList<ActionFile> prepareForDelete(Collection<ExtPath> fileList) {
         Logger.info("List recieved in task");
         for (ExtPath file : fileList) {
             Logger.info(file.getAbsolutePath());
@@ -217,7 +210,7 @@ public class TaskFactory {
 
     }
 
-    private ArrayList<ActionFile> prepareForMove(Collection<ExtPath> fileList, ExtPath dest) {
+    private static ArrayList<ActionFile> prepareForMove(Collection<ExtPath> fileList, ExtPath dest) {
         Logger.info("List recieved in task");
 
         for (ExtPath file : fileList) {
@@ -226,7 +219,7 @@ public class TaskFactory {
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
             Collection<ExtPath> listRecursive = file.getListRecursive(true);
-            ExtPath parentFile = LocationAPI.getInstance().getPathIfExists(file.getMapping().getParentLocation());
+            ExtPath parentFile = LocationAPI.getPathIfExists(file.getMapping().getParentLocation());
             for (ExtPath f : listRecursive) {
                 try {
                     String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
@@ -247,7 +240,7 @@ public class TaskFactory {
     }
 
 //TASKS
-    public ContinousCombinedTask copyFilesEx(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
+    public static ContinousCombinedTask copyFilesEx(Collection<ExtPath> fileList, ExtPath dest, ExtPath root) {
 
         ContinousCombinedTask fullTask = new ContinousCombinedTask() {
             @Override
@@ -300,7 +293,7 @@ public class TaskFactory {
         return fullTask;
     }
 
-    public ContinousCombinedTask moveFilesEx(Collection<ExtPath> fileList, ExtPath dest) {
+    public static ContinousCombinedTask moveFilesEx(Collection<ExtPath> fileList, ExtPath dest) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {
             @Override
             protected void preparation() throws Exception {
@@ -380,7 +373,7 @@ public class TaskFactory {
         return finalTask;
     }
 
-    public ContinousCombinedTask deleteFilesEx(Collection<ExtPath> fileList) {
+    public static ContinousCombinedTask deleteFilesEx(Collection<ExtPath> fileList) {
         ContinousCombinedTask finalTask = new ContinousCombinedTask() {
             @Override
             protected void preparation() throws Exception {
@@ -420,29 +413,29 @@ public class TaskFactory {
         return AutoPath.fs(path, newName);
     }
 
-    public FXTask markFiles(Collection<String> list) {
+    public static FXTask markFiles(Collection<String> list) {
         return new FXTask() {
             @Override
             protected Void call() {
                 list.forEach(file -> {
-                    addToMarked(LocationAPI.getInstance().getPathNearest(file));
+                    addToMarked(LocationAPI.getPathNearest(file));
                 });
                 return null;
             }
         };
     }
 
-    public SimpleTask<Snapshot> snapshotCreateTask(String folder) {
+    public static SimpleTask<Snapshot> snapshotCreateTask(String folder) {
         return new SimpleTask() {
             @Override
             protected Snapshot call() throws Exception {
-                return new Snapshot((ExtFolder) LocationAPI.getInstance().getFileAndPopulate(folder));
+                return new Snapshot((ExtFolder) LocationAPI.getFileAndPopulate(folder));
             }
 
         };
     }
 
-    public ExtTask snapshotCreateWriteTask(Serializable windowID, ExtFolder folder, File file) {
+    public static ExtTask snapshotCreateWriteTask(Serializable windowID, ExtFolder folder, File file) {
         return new ExtTask() {
             @Override
             protected Void call() throws Exception {
@@ -451,7 +444,7 @@ public class TaskFactory {
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
 
                 return FX.submit(() -> {
-                    MainController controller = (MainController) ViewManager.getInstance().getController(windowID);
+                    MainController controller = (MainController) ViewManager.getController(windowID);
                     controller.snapshotView.getItems().clear();
                     try {
                         mapper.writeValue(file, currentSnapshot);
@@ -460,7 +453,7 @@ public class TaskFactory {
                         ErrorReport.report(ex);
                         controller.snapshotView.getItems().add("Snapshot:" + file + " failed");
                     }
-                    ViewManager.getInstance().updateAllWindows();
+                    ViewManager.updateAllWindows();
                 }).get();
 
             }
@@ -468,18 +461,18 @@ public class TaskFactory {
         };
     }
 
-    public FXTask snapshotLoadTask(Serializable windowID, ExtFolder folder, File nextSnap) {
+    public static FXTask snapshotLoadTask(Serializable windowID, ExtFolder folder, File nextSnap) {
         return new FXTask() {
             @Override
             protected Void call() throws Exception {
 
-                MainController frame = (MainController) ViewManager.getInstance().getController(windowID);
+                MainController frame = (MainController) ViewManager.getController(windowID);
 
                 FX.submit(() -> {
                     frame.snapshotView.getItems().clear();
                     frame.snapshotView.getItems().add("Snapshot Loading");
                 });
-//                    TaskFactory.getInstance().populateRecursiveParallelNew(folder, 50);
+//                    TaskFactory.populateRecursiveParallelNew(folder, 50);
                 ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
                 Snapshot sn = SnapshotAPI.getEmptySnapshot();
@@ -508,7 +501,7 @@ public class TaskFactory {
         };
     }
 
-    public ContinousCombinedTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst) {
+    public static ContinousCombinedTask syncronizeTask(String folder1, String folder2, Collection<ExtEntry> listFirst) {
 
         ContinousCombinedTask continousCombinedTask = ContinousCombinedTask.noPrep();
         for (ExtEntry entry : listFirst) {
@@ -519,7 +512,7 @@ public class TaskFactory {
         return continousCombinedTask;
     }
 
-    private SimpleTask actionTask(ActionFile action, ExtEntry entry) {
+    private static SimpleTask actionTask(ActionFile action, ExtEntry entry) {
         Logger.info(action);
         final int type = entry.actionType.get();
         CopyOptions options = getCopyOptions().with(StandardCopyOption.REPLACE_EXISTING);
@@ -588,7 +581,7 @@ public class TaskFactory {
         return task;
     }
 
-    public FXTask duplicateFinderTask(ArrayList<PathStringCommands> array, double ratio, List list, Map map) {
+    public static FXTask duplicateFinderTask(ArrayList<PathStringCommands> array, double ratio, List list, Map map) {
         FXTaskPooler executor = new FXTaskPooler(D.MAX_THREADS_FOR_TASK, 0);
         for (int i = 0; i < array.size(); i++) {
             ExtTask<Long> task;
@@ -603,7 +596,7 @@ public class TaskFactory {
 
     }
 
-    public ExtTask<Long> duplicateCompareTaskLookUp(int index, ArrayList<PathStringCommands> array, double ratio, List list, Map map) {
+    public static ExtTask<Long> duplicateCompareTaskLookUp(int index, ArrayList<PathStringCommands> array, double ratio, List list, Map map) {
         return new ExtTask<Long>() {
             @Override
             public Long call() throws Exception {
@@ -638,7 +631,7 @@ public class TaskFactory {
         };
     }
 
-    public ExtTask<Long> duplicateCompareTask(int index, ArrayList<PathStringCommands> array, double ratio, List list) {
+    public static ExtTask<Long> duplicateCompareTask(int index, ArrayList<PathStringCommands> array, double ratio, List list) {
         return new ExtTask<Long>() {
             @Override
             public Long call() throws Exception {

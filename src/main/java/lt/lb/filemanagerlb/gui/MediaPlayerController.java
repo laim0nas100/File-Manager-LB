@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.control.*;
@@ -328,14 +329,14 @@ public class MediaPlayerController extends MyBaseController {
                 Logger.info("recently resized");
                 return;
             }
-            MainController.dragList = table.getSelectionModel().getSelectedItems();
+            ObservableList<ExtPath> selectedItems = table.getSelectionModel().getSelectedItems();
             TaskFactory.dragInitWindowID = this.getID();
-            Logger.info(String.valueOf(TaskFactory.dragInitWindowID), MainController.dragList);
-            if (!MainController.dragList.isEmpty()) {
+            if (!selectedItems.isEmpty()) {
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                content.putString("Ready");
+                content.putFiles(selectedItems.stream().map(m -> m.toFile()).toList());
+
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -348,32 +349,33 @@ public class MediaPlayerController extends MyBaseController {
             }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
-            if (event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            if (db.hasFiles()) {
+                event.acceptTransferModes(TransferMode.ANY);
 
                 //Log.writeln(event.getDragboard().getString());
             }
             event.consume();
         });
         table.setOnDragDropped((DragEvent event) -> {
-            Logger.info(() -> "Drag dropped! " + "\n" + MainController.dragList);
             if (this.getID().equals(TaskFactory.dragInitWindowID)) {
                 Logger.info("Same window");
                 return;
             }
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!MainController.dragList.isEmpty()) {
-                MainController.dragList.forEach(item -> {
-                    addIfAbsent(item);
-                });
-
+            if (db.hasFiles()) {
+                LocationAPI.fromFiles(db.getFiles()).forEach(this::addIfAbsent);
                 update();
                 success = true;
-
             }
+
             event.setDropCompleted(success);
             event.consume();
+        });
+        table.setOnDragDone(event -> {
+            if (!event.isDropCompleted()) {
+                update();
+            }
         });
 
         extTableView.updateContentsAndSort(backingList);
@@ -446,7 +448,7 @@ public class MediaPlayerController extends MyBaseController {
                                 .withText("Add to marked")
                                 .withAction(eh -> {
                                     tableProperties.selectedItems().forEach(item -> {
-                                        TaskFactory.getInstance().addToMarked(item);
+                                        TaskFactory.addToMarked(item);
                                     });
                                 })
                                 .visibleWhen(tableProperties.selectedSomething())
@@ -480,9 +482,9 @@ public class MediaPlayerController extends MyBaseController {
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Delete")
                         .withAction(eh -> {
-                            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(table.getSelectionModel().getSelectedItems());
+                            ContinousCombinedTask task = TaskFactory.deleteFilesEx(table.getSelectionModel().getSelectedItems());
                             task.setDescription("Delete selected files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                         .visibleWhen(tableProperties.selectedSomething())
                 )
@@ -500,7 +502,7 @@ public class MediaPlayerController extends MyBaseController {
                             };
 
                             String parent = selected.getParent(1);
-                            ViewManager.getInstance().newRenameDialog((ExtFolder) LocationAPI.getInstance().getPathNearest(parent), selected, cb);
+                            ViewManager.newRenameDialog((ExtFolder) LocationAPI.getPathNearest(parent), selected, cb);
                         })
                         .visibleWhen(tableProperties.selectedSize(1))
                 )
@@ -741,7 +743,7 @@ public class MediaPlayerController extends MyBaseController {
     @Override
     public void update() {
 
-        LocationAPI.getInstance().filterIfExists(backingList);
+        LocationAPI.filterIfExists(backingList);
         fxDelegator.update("update", () -> {
             extTableView.updateContentsAndSort(backingList);
             if (filePlaying != null) {
@@ -1047,7 +1049,7 @@ public class MediaPlayerController extends MyBaseController {
                 backingList.clear();
             }
             state.root.resolve(false).forEach(item -> {
-                LocationAPI.getInstance().getFileIfExists(item).ifPresent(this::addIfAbsent);
+                LocationAPI.getFileIfExists(item).ifPresent(this::addIfAbsent);
                 num.incrementAndGet();
             });
             Logger.info("Loaded files:", num.get());

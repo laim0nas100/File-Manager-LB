@@ -3,6 +3,7 @@ package lt.lb.filemanagerlb.logic.filestructure;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.util.Callback;
@@ -123,7 +124,7 @@ public abstract class ExtFolder extends ExtPath {
     }
     
     @Override
-    public void collectRecursive(Predicate<ExtPath> predicate, Callback<ExtPath, Void> call) {
+    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> call) {
         this.update();
         super.collectRecursive(predicate, call);
         this.getFilesCollection().forEach(f -> {

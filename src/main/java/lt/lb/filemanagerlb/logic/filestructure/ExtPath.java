@@ -3,9 +3,9 @@ package lt.lb.filemanagerlb.logic.filestructure;
 import java.io.File;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javafx.beans.property.*;
-import javafx.util.Callback;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.Lazy;
 import lt.lb.commons.containers.collections.ImmutableCollections;
@@ -88,6 +88,7 @@ public class ExtPath {
     public static Predicate<ExtPath> IS_NOT_DISABLED = (ExtPath t) -> !t.isDisabled.get();
 
     private Path path;
+    private File file;
     private final String absolutePath;
     private Lazy<Long> size = Lazy.ofSupplyAsync(() -> {
         return Files.size(toPath());
@@ -122,10 +123,15 @@ public class ExtPath {
             @Override
             public void set(boolean bln) {
                 boolean changed = false;
-                if (bln) {
-                    changed = MainController.globalDisabledMap.add(getAbsolutePath());
-                } else {
-                    changed = MainController.globalDisabledMap.remove(getAbsolutePath());
+                D.lock.lock();
+                try {
+                    if (bln) {
+                        changed = D.globalDisabledSet.add(getAbsolutePath());
+                    } else {
+                        changed = D.globalDisabledSet.remove(getAbsolutePath());
+                    }
+                } finally {
+                    D.lock.unlock();
                 }
                 if (changed) {
                     fireValueChangedEvent();
@@ -134,7 +140,7 @@ public class ExtPath {
 
             @Override
             public boolean get() {
-                return MainController.globalDisabledMap.contains(getAbsolutePath());
+                return D.globalDisabledSet.contains(getAbsolutePath());
             }
 
         };
@@ -201,6 +207,13 @@ public class ExtPath {
         return this.path;
     }
 
+    public File toFile() {
+        if (file == null) {
+            file = toPath().toFile();
+        }
+        return file;
+    }
+
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
         if (applyDisable && this.isDisabled.get()) {
             return ImmutableCollections.listOf();
@@ -216,9 +229,9 @@ public class ExtPath {
         return list;
     }
 
-    public void collectRecursive(Predicate<ExtPath> predicate, Callback<ExtPath, Void> call) {
+    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> call) {
         if (predicate.test(this)) {
-            call.call(this);
+            call.accept(this);
         }
     }
 

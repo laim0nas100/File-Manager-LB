@@ -95,10 +95,10 @@ public class RenameDialogController extends TextInputDialogController {
         if (nameIsAvailable.get()) {
             try {
 
-                String renameTo = TaskFactory.getInstance().renameTo(itemToRename.getAbsolutePath(), textField.getText().trim());
+                String renameTo = TaskFactory.renameTo(itemToRename.getAbsolutePath(), textField.getText().trim());
                 folder.update();//force update if only capitalization changes
                 if (callback != null) {
-                    ExtPath fileOptimized = LocationAPI.getInstance().getPathNearest(renameTo);
+                    ExtPath fileOptimized = LocationAPI.getPathNearest(renameTo);
                     callback.callback(fileOptimized);
                 }
                 exit();

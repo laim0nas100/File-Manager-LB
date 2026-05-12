@@ -20,6 +20,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -110,11 +111,13 @@ public class MainController extends MyBaseController<MainController> {
 
     public static ObservableList<FavouriteLink> favoriteLinks;
     public static ObservableList<ErrorReport> errorLog;
-    public static ObservableList<ExtPath> dragList;
+
     public static ObservableList<ExtPath> markedList;
     public static IntegerBinding propertyMarkedSize;
-    public static ArrayList<ExtPath> actionList;
-    public static Set<String> globalDisabledMap;
+//    public static ArrayList<ExtPath> actionList;
+   
+
+    public ObservableList<ExtPath> dragList = FXCollections.observableArrayList();
 
     @FXML
     public CheckBox useRegex;
@@ -224,11 +227,11 @@ public class MainController extends MyBaseController<MainController> {
         selectedIsFolder.bind(createBooleanBinding);
         menuItemTest.visibleProperty().bind(D.DEBUG);
 
-        autoClose.selectedProperty().bindBidirectional(ViewManager.getInstance().autoCloseProgressDialogs);
-        autoStart.selectedProperty().bindBidirectional(ViewManager.getInstance().autoStartProgressDialogs);
-        pinDialogs.selectedProperty().bindBidirectional(ViewManager.getInstance().pinProgressDialogs);
-        pinTextInput.selectedProperty().bindBidirectional(ViewManager.getInstance().pinTextInputDialogs);
-        replaceOnCopy.selectedProperty().bindBidirectional(TaskFactory.getInstance().copyReplaceExisting);
+        autoClose.selectedProperty().bindBidirectional(ViewManager.autoCloseProgressDialogs);
+        autoStart.selectedProperty().bindBidirectional(ViewManager.autoStartProgressDialogs);
+        pinDialogs.selectedProperty().bindBidirectional(ViewManager.pinProgressDialogs);
+        pinTextInput.selectedProperty().bindBidirectional(ViewManager.pinTextInputDialogs);
+        replaceOnCopy.selectedProperty().bindBidirectional(TaskFactory.copyReplaceExisting);
 
         propertyDeleteCondition.bind(filesProperties.selectedSomething().and(writeableFolder));
         propertyRenameCondition.bind(filesProperties.selectedSize(1).and(writeableFolder));
@@ -253,7 +256,7 @@ public class MainController extends MyBaseController<MainController> {
                 localSearch();
             }
             try {
-                LocationAPI.getInstance().filterIfExists(MainController.markedList);
+                LocationAPI.filterIfExists(MainController.markedList);
             } catch (Exception e) {
                 ErrorReport.report(e);
             }
@@ -276,7 +279,7 @@ public class MainController extends MyBaseController<MainController> {
             fileAddress.field.positionCaret(fileAddress.field.getLength());
 
             fileAddress.folder = MC.currentDir;
-            fileAddress.f = null;
+            fileAddress.entered = null;
         });
 
     }
@@ -286,7 +289,7 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void createNewWindow() {
-        ViewManager.getInstance().newWindow(MC.currentDir);
+        ViewManager.newWindow(MC.currentDir);
     }
 
     public void restart() throws InterruptedException {
@@ -295,33 +298,33 @@ public class MainController extends MyBaseController<MainController> {
 
     public void advancedRenameFolder() {
         if (!MC.currentDir.isAbsoluteRoot.get()) {
-            ViewManager.getInstance().newAdvancedRenameDialog(MC.currentDir);
+            ViewManager.newAdvancedRenameDialog(MC.currentDir);
         }
     }
 
     public void advancedRenameMarked() {
         VirtualFolder folder = new VirtualFolder("Marked Files");
         folder.addAll(markedList);
-        ViewManager.getInstance().newAdvancedRenameDialog(folder);
+        ViewManager.newAdvancedRenameDialog(folder);
 
     }
 
     public void duplicateFinderMarked() {
         VirtualFolder folder = new VirtualFolder("Marked Files");
         folder.addAll(markedList);
-        ViewManager.getInstance().newDuplicateFinderDialog(folder);
+        ViewManager.newDuplicateFinderDialog(folder);
     }
 
     public void duplicateFinderFolder() {
         if (!MC.currentDir.isAbsoluteRoot.get()) {
             VirtualFolder folder = new VirtualFolder(MC.currentDir.getAbsoluteDirectory());
             folder.addAll(MC.currentDir.getFilesCollection());
-            ViewManager.getInstance().newDuplicateFinderDialog(folder);
+            ViewManager.newDuplicateFinderDialog(folder);
         }
     }
 
     public void mediaPlayer() {
-        ViewManager.getInstance().newMediaPlayer();
+        ViewManager.newMediaPlayer();
 
     }
 
@@ -362,38 +365,38 @@ public class MainController extends MyBaseController<MainController> {
 //            Log.write(p);
 //        }
 //
-//        Log.write(ViewManager.getInstance().frames.keySet());
+//        Log.write(ViewManager.frames.keySet());
 //        Log.write(FileManagerLB.getRootSet());
 //        Log.write(Log.getInstance().list);
 //        Log.writeln(MainController.class.getFields());
 //        Log.write("Try to get field");
 //        Field f = this.getClass().getField("autoClose");
-//        CheckMenuItem get = (CheckMenuItem) f.get(ViewManager.getInstance().getFrame(windowID).getController());
+//        CheckMenuItem get = (CheckMenuItem) f.get(ViewManager.getFrame(windowID).getController());
 //        get.selectedProperty().set(true);
-//        ExtTask copyFiles = TaskFactory.getInstance().copyFiles(MC.currentDir.getListRecursiveFolders(true), LocationAPI.getInstance().getFileOptimized("E:\\Dev\\dest"),
-//                LocationAPI.getInstance().getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));
-//        ViewManager.getInstance().newProgressDialog(copyFiles);
+//        ExtTask copyFiles = TaskFactory.copyFiles(MC.currentDir.getListRecursiveFolders(true), LocationAPI.getFileOptimized("E:\\Dev\\dest"),
+//                LocationAPI.getFileOptimized(MC.currentDir.getPathCommands().getParent(1)));
+//        ViewManager.newProgressDialog(copyFiles);
 //        CodeSource codeSource = FileManagerLB.class.getProtectionDomain().getCodeSource();
 //        File jarFile = new File(codeSource.getLocation().toURI().getPath());
 //        System.out.println(jarFile.getAbsolutePath());
 //        ExtPath path = new ExtPath("E:\\FileZZZ\\General Music Folder\\[CHILLSTEP]\\Unsorted\\2 Senses - Found.mp3");
 //        LocationInRoot folder = new LocationInRoot("E:\\FileZZZ\\General Music Folder\\[CHILLSTEP]");
 //        LocationInRoot file = new LocationInRoot(path.getAbsoluteDirectory());
-//        ExtPath closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
+//        ExtPath closestFileByLocation = LocationAPI.getFileByLocation(file);
 //        Log.write("Closest",closestFileByLocation);
-//        LocationAPI.getInstance().putByLocation(file, path);
-//        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
-//        Log.write("folder",LocationAPI.getInstance().existByLocation(folder));
+//        LocationAPI.putByLocation(file, path);
+//        closestFileByLocation = LocationAPI.getFileByLocation(file);
+//        Log.write("folder",LocationAPI.existByLocation(folder));
 //        Log.write("Closest",closestFileByLocation);
-//        Log.write("file",LocationAPI.getInstance().existByLocation(file));
-//        LocationAPI.getInstance().removeByLocation(file);
-//        closestFileByLocation = LocationAPI.getInstance().getFileByLocation(file);
-//        Log.write("file",LocationAPI.getInstance().existByLocation(file));
+//        Log.write("file",LocationAPI.existByLocation(file));
+//        LocationAPI.removeByLocation(file);
+//        closestFileByLocation = LocationAPI.getFileByLocation(file);
+//        Log.write("file",LocationAPI.existByLocation(file));
 //        Log.write("Closest",closestFileByLocation);
 //        Logger.infoln(1,2,3);
-//            Thread t = new Thread(TaskFactory.getInstance().populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
+//            Thread t = new Thread(TaskFactory.populateRecursiveParallel(MC.currentDir,FileManagerLB.DEPTH));
 //            t.start();
-//        TaskFactory.getInstance().populateRecursiveParallelContained(MC.currentDir, 4);
+//        TaskFactory.populateRecursiveParallelContained(MC.currentDir, 4);
         Logger.info("END TEST");
     }
 
@@ -406,7 +409,7 @@ public class MainController extends MyBaseController<MainController> {
             if (possibleDir.equals(D.ROOT_NAME) || possibleDir.isEmpty()) {
                 changeToDir(FileManagerLB.ArtificialRoot);
             } else {
-                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getInstance().getFileAndPopulate(possibleDir);
+                ExtFolder fileAndPopulate = (ExtFolder) LocationAPI.getFileAndPopulate(possibleDir);
                 if (!MC.currentDir.equals(fileAndPopulate)) {
                     this.changeToDir(fileAndPopulate);
                 } else {
@@ -584,7 +587,7 @@ public class MainController extends MyBaseController<MainController> {
             File file = new File(possibleSnapshot);
 
             if (file.exists()) {
-                new Thread(TaskFactory.getInstance().snapshotLoadTask(this.getID(), MC.currentDir, file)).start();
+                new Thread(TaskFactory.snapshotLoadTask(this.getID(), MC.currentDir, file)).start();
             } else {
                 ErrorReport.report(new Exception("No such File:" + file.getAbsolutePath()));
             }
@@ -601,29 +604,29 @@ public class MainController extends MyBaseController<MainController> {
         this.snapshotView.getItems().add("Creating snapshot at " + MC.currentDir.getAbsoluteDirectory());
         String possibleSnapshot = this.snapshotCreateField.getText().trim();
         File file = new File(TaskFactory.resolveAvailablePath(MC.currentDir, possibleSnapshot).toString());
-        new Thread(TaskFactory.getInstance().snapshotCreateWriteTask(getID(), MC.currentDir, file)).start();
+        new Thread(TaskFactory.snapshotCreateWriteTask(getID(), MC.currentDir, file)).start();
 
     }
 
     public void dirSync() {
-        ViewManager.getInstance().newDirSyncDialog();
+        ViewManager.newDirSyncDialog();
 
     }
 
     public void regexHelp() {
         FX.submit(() -> {
-            ViewManager.getInstance().newWebDialog(Enums.WebDialog.Regex);
+            ViewManager.newWebDialog(Enums.WebDialog.Regex);
         });
     }
 
     public void aboutPage() {
         FX.submit(() -> {
-            ViewManager.getInstance().newWebDialog(Enums.WebDialog.About);
+            ViewManager.newWebDialog(Enums.WebDialog.About);
         });
     }
 
     public void commandWindow() {
-        ViewManager.getInstance().newCommandDialog();
+        ViewManager.newCommandDialog();
     }
 
     private void handleOpen(ExtPath file) {
@@ -641,9 +644,9 @@ public class MainController extends MyBaseController<MainController> {
                     ExtLink link = (ExtLink) file;
                     LocationInRoot location = new LocationInRoot(link.getTargetDir());
                     if (link.isPointsToDirectory()) {
-                        changeToDir((ExtFolder) LocationAPI.getInstance().getPathIfExists(location));
+                        changeToDir((ExtFolder) LocationAPI.getPathIfExists(location));
                     } else {
-                        DesktopApi.open(LocationAPI.getInstance().getPathIfExists(location).toPath().toFile());
+                        DesktopApi.open(LocationAPI.getPathIfExists(location).toPath().toFile());
                     }
                 } else if (Enums.Identity.FILE.equals(file.getIdentity())) {
                     DesktopApi.open(file.toPath().toFile());
@@ -680,7 +683,7 @@ public class MainController extends MyBaseController<MainController> {
                             try {
                                 ExtPath createNewFolder = MC.createNewFolder();
                                 if (createNewFolder != null) {
-                                    ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFolder);
+                                    ViewManager.newRenameDialog(MC.currentDir, createNewFolder);
                                 }
                                 localSearch();
                             } catch (Exception ex) {
@@ -695,7 +698,7 @@ public class MainController extends MyBaseController<MainController> {
                             try {
                                 ExtPath createNewFile = MC.createNewFile();
                                 if (createNewFile != null) {
-                                    ViewManager.getInstance().newRenameDialog(MC.currentDir, createNewFile);
+                                    ViewManager.newRenameDialog(MC.currentDir, createNewFile);
                                 }
                                 localSearch();
                             } catch (IOException ex) {
@@ -730,7 +733,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withAction(eh -> {
                             FX.submit(() -> {
                                 ArrayDeque<String> list = new ArrayDeque<>(searchView.getSelectionModel().getSelectedItems());
-                                FXTask markFiles = TaskFactory.getInstance().markFiles(list);
+                                FXTask markFiles = TaskFactory.markFiles(list);
                                 D.exe.execute(markFiles);
                             });
                         })
@@ -804,9 +807,9 @@ public class MainController extends MyBaseController<MainController> {
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Delete selected")
                         .withAction(eh -> {
-                            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedView.getSelectionModel().getSelectedItems());
+                            ContinousCombinedTask task = TaskFactory.deleteFilesEx(markedView.getSelectionModel().getSelectedItems());
                             task.setDescription("Delete selected marked files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                         .visibleWhen(
                                 Bindings.and(
@@ -823,31 +826,22 @@ public class MainController extends MyBaseController<MainController> {
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Move here selected")
                         .withAction(eh -> {
-                            MainController.actionList.clear();
-                            MainController.actionList.addAll(MainController.dragList);
-                            ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(MainController.actionList, MC.currentDir);
+                            ContinousCombinedTask task = TaskFactory.moveFilesEx(new ArrayList<>(dragList), MC.currentDir);
                             task.setDescription("Move Dragged files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                 )
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Copy here selected")
                         .withAction(eh -> {
-                            MainController.actionList.clear();
-                            MainController.actionList.addAll(MainController.dragList);
-                            ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(MainController.actionList, MC.currentDir, null);
+                            ContinousCombinedTask task = TaskFactory.copyFilesEx(new ArrayList<>(dragList), MC.currentDir, null);
                             task.setDescription("Copy Dragged files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                 )
                 .addNestedDisableBind()
                 .addNestedVisibilityBind()
                 .build();
-
-        Callback<ExtPath, Void> addToMarkedCallback = (ExtPath p) -> {
-            TaskFactory.getInstance().addToMarked(p);
-            return null;
-        };
 
         Menu submenuMarkFiles = new MenuBuilders.MenuBuilder()
                 .withText("Mark...")
@@ -855,9 +849,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Selected")
                         .withAction(eh -> {
 
-                            filesProperties.selectedItems().forEach((file) -> {
-                                TaskFactory.getInstance().addToMarked(file);
-                            });
+                            filesProperties.selectedItems().forEach(TaskFactory::addToMarked);
                         }).visibleWhen(
                         Bindings.and(
                                 miDuplicateFinderFolder.disableProperty().not(),
@@ -870,7 +862,7 @@ public class MainController extends MyBaseController<MainController> {
                             filesProperties.selectedItems().forEach((file) -> {
 
                                 Runnable run = () -> {
-                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), addToMarkedCallback);
+                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), TaskFactory::addToMarked);
                                 };
                                 D.exe.execute(run);
 
@@ -889,7 +881,7 @@ public class MainController extends MyBaseController<MainController> {
                             filesProperties.selectedItems().forEach((file) -> {
 
                                 Runnable run = () -> {
-                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), addToMarkedCallback);
+                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), TaskFactory::addToMarked);
                                 };
                                 D.exe.execute(run);
 
@@ -912,9 +904,9 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Copy here marked")
                         .withAction(eh -> {
                             Logger.info("Copy Marked");
-                            ContinousCombinedTask task = TaskFactory.getInstance().copyFilesEx(markedList, MC.currentDir, null);
+                            ContinousCombinedTask task = TaskFactory.copyFilesEx(markedList, MC.currentDir, null);
                             task.setDescription("Copy marked files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                         .visibleWhen(
                                 Bindings.and(
@@ -927,9 +919,9 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Move here marked")
                         .withAction(eh -> {
                             Logger.info("Move Marked");
-                            ContinousCombinedTask task = TaskFactory.getInstance().moveFilesEx(markedList, MC.currentDir);
+                            ContinousCombinedTask task = TaskFactory.moveFilesEx(markedList, MC.currentDir);
                             task.setDescription("Move marked files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                         .visibleWhen(
                                 Bindings.and(
@@ -942,9 +934,9 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Delete marked")
                         .withAction(eh -> {
                             Logger.info("Delete Marked");
-                            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(markedList);
+                            ContinousCombinedTask task = TaskFactory.deleteFilesEx(markedList);
                             task.setDescription("Delete marked files");
-                            ViewManager.getInstance().newProgressDialog(task);
+                            ViewManager.newProgressDialog(task);
                         })
                         .visibleWhen(
                                 propertyMarkedSize.greaterThan(0)
@@ -983,7 +975,7 @@ public class MainController extends MyBaseController<MainController> {
                 .addItem(new MenuBuilders.MenuItemBuilder()
                         .withText("Open in new window")
                         .withAction(eh -> {
-                            ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
+                            ViewManager.newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
                         })
                         .visibleWhen(selectedIsFolder)
                 )
@@ -1059,68 +1051,6 @@ public class MainController extends MyBaseController<MainController> {
                 .addNestedDisableBind()
                 .addNestedVisibilityBind()
                 .build();
-
-        /*
-        tableContextMenu.getItems().setAll(
-        CosmeticsFX.simpleMenuItem("Open",
-        event -> {
-        handleOpen((ExtPath) tableView.getSelectionModel().getSelectedItem());
-        }, filesProperties.selectedSize(1)),//
-        CosmeticsFX.simpleMenuItem("Open in new window",
-        event -> {
-        ViewManager.getInstance().newWindow((ExtFolder) tableView.getSelectionModel().getSelectedItem());
-        }, selectedIsFolder),
-        CosmeticsFX.simpleMenuItem("Rename",
-        event -> {
-        rename();
-        }, propertyRenameCondition),
-        CosmeticsFX.simpleMenuItem("Delete",
-        event -> {
-        delete();
-        }, propertyDeleteCondition),
-        CosmeticsFX.simpleMenuItem("Copy path",
-        event -> {
-        String absolutePath = filesProperties.selectedItem().get().getAbsolutePath();
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(absolutePath), null);
-        }, propertyRenameCondition),
-        CosmeticsFX.simpleMenuItem("Copy name",
-        event -> {
-        String name = filesProperties.selectedItem().get().getName(true);
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(name), null);
-        }, propertyRenameCondition),
-        CosmeticsFX.simpleMenuItem("Toggle Enable/Disable",
-        event -> {
-        FX.submit(() -> {
-        filesProperties.selectedItems().stream().forEach(c -> {
-        c.isDisabled.setValue(c.isDisabled.not().get());
-        });
-        });
-        }, propertyDeleteCondition),
-        CosmeticsFX.simpleMenuItem("Create Virtual Folder",
-        event -> {
-        FX.submit(() -> {
-        VirtualFolder.createVirtualFolder();
-        update();
-        });
-        }, propertyIsVirtualFolders),
-        CosmeticsFX.simpleMenuItem("Remove selected from Virtual Folder",
-        event -> {
-        FX.submit(() -> {
-        ObservableList<ExtPath> selectedItems = tableView.getSelectionModel().getSelectedItems();
-        selectedItems.forEach((item) -> {
-        ExtPath remove = MC.currentDir.files.remove(item.propertyName.get());
-        if (remove instanceof ExtFolder) {
-        ExtFolder folder = (ExtFolder) remove;
-        folder.files.clear();
-        }
-        });
-        update();
-        });
-        }, MC.isVirtual.and(filesProperties.selectedItemNotNull())),
-        submenuCreate,
-        submenuMarked,
-        submenuMarkFiles
-        );*/
     }
 
     private void setUpTableView() {
@@ -1194,12 +1124,11 @@ public class MainController extends MyBaseController<MainController> {
                 return;
             }
             // drag was detected, start drag-and-drop gesture
-            MainController.dragList = filesProperties.selectedItems();
-            if (!MainController.dragList.isEmpty()) {
+            if (!filesProperties.selectedItems().isEmpty()) {
                 Dragboard db = tableView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                content.putString("Ready");
+                content.putFiles(filesProperties.selectedItems().stream().map(m -> m.toPath().toFile()).toList());
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -1216,8 +1145,8 @@ public class MainController extends MyBaseController<MainController> {
             }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
-            if (event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            if (db.hasFiles()) {
+                event.acceptTransferModes(TransferMode.ANY);
 
                 //Log.writeln(event.getDragboard().getString());
             }
@@ -1234,18 +1163,21 @@ public class MainController extends MyBaseController<MainController> {
             }
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!MainController.dragList.isEmpty()) {
-
+            if (db.hasFiles()) {
+                dragList.clear();
+                dragList.addAll(LocationAPI.fromFiles(db.getFiles()));
                 tableDragContextMenu.show(tableView, event.getScreenX(), event.getScreenY());
                 tableDragContextMenu.getOwnerNode().requestFocus();
                 tableDragContextMenu.getOwnerWindow().requestFocus();
-                //ViewManager.getInstance().windows.get(title).getStage().requestFocus();
                 success = true;
-            } else {
-                Logger.info("Drag list is empty");
             }
             event.setDropCompleted(success);
             event.consume();
+        });
+        tableView.setOnDragDone(event -> {
+            if (!event.isDropCompleted()) {
+                update();
+            }
         });
 
         extTableView = new ExtTableView(tableView);
@@ -1281,12 +1213,12 @@ public class MainController extends MyBaseController<MainController> {
             }
 
             // drag was detected, start drag-and-drop gesture
-            dragList = markedView.getSelectionModel().getSelectedItems();
-            if (!MainController.dragList.isEmpty()) {
-                Dragboard db = markedView.startDragAndDrop(TransferMode.ANY);
+            ObservableList<ExtPath> selectedItems = markedView.getSelectionModel().getSelectedItems();
+            if (!selectedItems.isEmpty()) {
+                Dragboard db = markedView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                content.putString("Ready");
+                content.putFiles(selectedItems.stream().map(m -> m.toFile()).toList());
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -1299,8 +1231,8 @@ public class MainController extends MyBaseController<MainController> {
             }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
-            if (event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.MOVE);
+            if (db.hasFiles()) {
+                event.acceptTransferModes(TransferMode.ANY);
 
                 //Log.writeln(event.getDragboard().getString());
             }
@@ -1313,9 +1245,11 @@ public class MainController extends MyBaseController<MainController> {
             }
             Dragboard db = event.getDragboard();
             boolean success = false;
-            if (!MainController.dragList.isEmpty()) {
-                for (ExtPath f : MainController.dragList) {
-                    TaskFactory.getInstance().addToMarked(f);
+            if (db.hasFiles()) {
+                dragList.clear();
+                dragList.addAll(LocationAPI.fromFiles(db.getFiles()));
+                for (ExtPath f : dragList) {
+                    TaskFactory.addToMarked(f);
                 }
                 success = true;
             }
@@ -1450,9 +1384,9 @@ public class MainController extends MyBaseController<MainController> {
     private void delete() {
         if (this.propertyDeleteCondition.get()) {
             Logger.info("Deleting");
-            ContinousCombinedTask task = TaskFactory.getInstance().deleteFilesEx(filesProperties.selectedItems());
+            ContinousCombinedTask task = TaskFactory.deleteFilesEx(filesProperties.selectedItems());
             task.setDescription("Delete selected files");
-            ViewManager.getInstance().newProgressDialog(task);
+            ViewManager.newProgressDialog(task);
         }
 
     }
@@ -1462,8 +1396,8 @@ public class MainController extends MyBaseController<MainController> {
 
             Logger.info("Invoke rename dialog");
             ExtPath path = (ExtPath) tableView.getSelectionModel().getSelectedItem();
-            ExtFolder parent = (ExtFolder) LocationAPI.getInstance().getPathNearest(path.getParent(1));
-            ViewManager.getInstance().newRenameDialog(parent, path);
+            ExtFolder parent = (ExtFolder) LocationAPI.getPathNearest(path.getParent(1));
+            ViewManager.newRenameDialog(parent, path);
         }
     }
 

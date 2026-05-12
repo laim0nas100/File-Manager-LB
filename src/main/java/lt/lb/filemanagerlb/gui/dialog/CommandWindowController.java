@@ -103,44 +103,38 @@ public class CommandWindowController extends MyBaseController {
             Logger.info("Copy params", Arrays.asList(params));
             String newCom = (String) params[0];
             newCom = Strings.CS.replaceOnce(newCom, commandCopyFolderStructure + " ", "");
-            ExtFolder root = (ExtFolder) LocationAPI.getInstance().getPathNearest(newCom);
-            ExtFolder dest = (ExtFolder) LocationAPI.getInstance().getPathNearest(D.customPath.getPath());
+            ExtFolder root = (ExtFolder) LocationAPI.getPathNearest(newCom);
+            ExtFolder dest = (ExtFolder) LocationAPI.getPathNearest(D.customPath.getPath());
             Logger.info("Copy structure:", root, dest);
 
             ContinousCombinedTask finalTask = new ContinousCombinedTask() {
                 @Override
                 protected void preparation() throws Exception {
                     ArrayList<ExtPath> collection = new ArrayList<>();
-                    Callback<ExtPath, Void> call = new Callback<ExtPath, Void>() {
-                        @Override
-                        public Void call(ExtPath param) {
-                            collection.add(param);
-                            return null;
-                        }
-                    };
                     SimpleTask collectFolders = new SimpleTask() {
                         @Override
                         protected Void call() throws Exception {
-                            root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), call);
+                            root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), collection::add);
                             return null;
                         }
                     };
                     collectFolders.setDescription("Collect folders");
                     this.addTask(collectFolders);
 
-                    ExtPath parent = LocationAPI.getInstance().getPathNearest(root.getPathCommands().getParent(1));
-                    ContinousCombinedTask copyFiles = TaskFactory.getInstance().copyFilesEx(collection, dest, parent);
+                    ExtPath parent = LocationAPI.getPathNearest(root.getPathCommands().getParent(1));
+                    ContinousCombinedTask copyFiles = TaskFactory.copyFilesEx(collection, dest, parent);
                     this.addTask(copyFiles);
 
                 }
             };
             finalTask.setDescription("Copy folder structure");
 
-            ViewManager.getInstance().newProgressDialog(finalTask);
+            ViewManager.newProgressDialog(finalTask);
 
         });
         command.addCommand(commandCancel, (String... params) -> {
-            executor.cancelAll(false);
+            DLog.print("Cancel all");
+            executor.cancelAll(true);
         });
         command.addCommand(commandGenerate, (String... params) -> {
             String newCom = (String) params[0];
@@ -166,19 +160,19 @@ public class CommandWindowController extends MyBaseController {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
             newCom = Strings.CS.replaceOnce(newCom, commandListRec + " ", "");
-            ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+            ExtPath file = LocationAPI.getFileAndPopulate(newCom);
 
             for (ExtPath f : file.getListRecursive(false)) {
                 deque.add(f.getAbsoluteDirectory());
             }
             String desc = "Listing recursive:" + deque.removeFirst();
-            ViewManager.getInstance().newListFrame(desc, deque);
+            ViewManager.newListFrame(desc, deque);
         });
         command.addCommand(commandList, (String... params) -> {
             ArrayDeque<String> deque = new ArrayDeque<>();
             String newCom = (String) params[0];
             newCom = Strings.CS.replaceOnce(newCom, commandList + " ", "");
-            ExtPath file = LocationAPI.getInstance().getFileAndPopulate(newCom);
+            ExtPath file = LocationAPI.getFileAndPopulate(newCom);
             if (file.getIdentity().equals(Identity.FOLDER)) {
                 String desc = "Listing:" + file.getAbsoluteDirectory();
 
@@ -187,7 +181,7 @@ public class CommandWindowController extends MyBaseController {
                 for (ExtPath f : folder.getFilesCollection()) {
                     deque.add(f.getAbsoluteDirectory());
                 }
-                ViewManager.getInstance().newListFrame(desc, deque);
+                ViewManager.newListFrame(desc, deque);
             }
         });
         command.addCommand(commandSetCustom, (String... params) -> {
@@ -230,17 +224,20 @@ public class CommandWindowController extends MyBaseController {
         });
     }
 
-    public void handleStream(Process process, boolean setTextAfterwards, String command) throws IOException {
+    public void handleStream(ExtTask me, Process process, boolean setTextAfterwards, String command) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = reader.readLine();
         ArrayDeque<String> lines = new ArrayDeque<>();
         if (setTextAfterwards) {
             lines.add("$" + command);
-        } 
+        }
         while (line != null) {
             lines.add(line);
             if (!setTextAfterwards) {
                 addToTextArea(line + "\n");
+            }
+            if (me.isCancelled()) {
+                return;
             }
             line = reader.readLine();
         }
@@ -344,79 +341,11 @@ public class CommandWindowController extends MyBaseController {
                     Logger.info(command + " => " + sb);
                     index++;
                 }
-                ViewManager.getInstance().newListFrame("Script generation", allCommands);
+                ViewManager.newListFrame("Script generation", allCommands);
             } catch (Exception ex) {
                 ErrorReport.report(ex);
             }
         }
-
-//        public void generateOld(String command) {
-//            try {
-//
-        ////                System.out.println(MainController.markedList);
-//                LinkedList<String> l = new LinkedList<>();
-//                MainController.markedList.forEach(item -> {
-//                    l.add(item.getAbsolutePath());
-//                });
-//                LinkedList<String> allCommands = new LinkedList<>();
-//                Lexer lexer = new Lexer();
-//                lexer.resetLines(Arrays.asList(command));
-//                lexer.setSkipWhitespace(false);
-//                lexer.addKeywordBreaking(PathStringCommands.returnDefinedKeys().stream().toArray(s -> new String[s]));
-//                int index = 1;
-//                for (String absPath : l) {
-//                    PathStringCommands pathInfo = new PathStringCommands(absPath);
-//                    lexer.reset();
-//                    String commandToAdd = "";
-//                    int numbersToAdd = 0;
-//                    while (true) {
-//                        Optional<Token> opt = lexer.getNextToken();
-//                        if (!opt.isPresent()) {
-//                            break;
-//                        }
-//                        Token token = opt.get();
-//                        if (token.value.equals(PathStringCommands.number)) {
-//                            numbersToAdd++;
-//                            continue;
-//                        } else if (numbersToAdd > 0) {
-//                            commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
-//                            numbersToAdd = 0;
-//                        }
-//
-//                        if (token.value.equals(PathStringCommands.fileName)) {
-//                            commandToAdd += pathInfo.getName(true);
-//                        } else if (token.value.equals(PathStringCommands.nameNoExt)) {
-//                            commandToAdd += pathInfo.getName(false);
-//                        } else if (token.value.equals(PathStringCommands.filePath)) {
-//                            commandToAdd += pathInfo.getPath();
-//                        } else if (token.value.equals(PathStringCommands.extension)) {
-//                            commandToAdd += pathInfo.getExtension();
-//                        } else if (token.value.equals(PathStringCommands.parent1)) {
-//                            commandToAdd += pathInfo.getParent(1);
-//                        } else if (token.value.equals(PathStringCommands.parent2)) {
-//                            commandToAdd += pathInfo.getParent(2);
-//                        } else if (token.value.equals(PathStringCommands.custom)) {
-//                            commandToAdd += D.customPath.getPath();
-//                        } else if (token.value.equals(PathStringCommands.relativeCustom)) {
-//                            commandToAdd += D.customPath.relativePathTo(pathInfo.getPath());
-//                        } else {
-//                            Literal lit = (Literal) token;
-//                            commandToAdd += lit.value;
-//                        }
-//
-//                    }
-//                    if (numbersToAdd > 0) {
-//                        commandToAdd += ExtStringUtils.simpleFormat(index, numbersToAdd);
-//                    }
-//                    allCommands.add(commandToAdd);
-//                    Logger.info(command + " => " + commandToAdd);
-//                    index++;
-//                }
-//                ViewManager.getInstance().newListFrame("Script generation", allCommands);
-//            } catch (Exception ex) {
-//                ErrorReport.report(ex);
-//            }
-//        }
 
         @Override
         public void submit(String command) {
@@ -441,38 +370,51 @@ public class CommandWindowController extends MyBaseController {
                     ctrl.addToTextArea("$:" + command + "\n");
                     Logger.info("Run in-built command:{}", command);
                 } else {
-                    Value<Process> procValue = new Value<>();
-                    ExtTask task = new ExtTask() {
-                        @Override
-                        protected Void call() throws Exception {
-                            Logger.info("Run native command:{}", command);
-                            CommandLine parse = CommandLine.parse(command);
-                            List<String> args = new ArrayList<>();
-                            args.add(parse.getExecutable());
-                            for (String s : parse.getArguments()) {
-                                args.add(s);
-                            }
-                            ProcessBuilder processBuilder = new ProcessBuilder(args.stream().toArray(s -> new String[s])).redirectErrorStream(true);
-
-                            Process process = processBuilder.start();
-                            procValue.accept(process);
-                            ctrl.handleStream(process, setTextAfterwards, command);
-                            return null;
-                        }
-                    };
-                    task.appendOnCancelled(h -> {
-                        Process proc = procValue.get();
-                        proc.destroyForcibly();
-                    });
-                    task.appendOnFailed(h -> {
-                        ErrorReport.report(task.getException());
-                    });
-                    ctrl.executor.submit(task);
+                    ctrl.executor.submit(new CommandTask(ctrl, setTextAfterwards, command));
                 }
             } catch (Exception ex) {
                 ErrorReport.report(ex);
             }
         }
+    }
+
+    public static class CommandTask extends ExtTask {
+
+        public final String command;
+        public final CommandWindowController ctrl;
+        public final boolean setTextAfterwards;
+        public Process process;
+
+        public CommandTask(CommandWindowController ctrl, boolean setTextAfterwards, String command) {
+            this.ctrl = ctrl;
+            this.setTextAfterwards = setTextAfterwards;
+            this.command = command;
+            appendOnCancelled(h -> {
+                if (process != null) {
+                    process.destroyForcibly();
+                }
+            });
+            appendOnFailed(h -> {
+                ErrorReport.report(getException());
+            });
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            Logger.info("Run native command:{}", command);
+            CommandLine parse = CommandLine.parse(command);
+            List<String> args = new ArrayList<>();
+            args.add(parse.getExecutable());
+            for (String s : parse.getArguments()) {
+                args.add(s);
+            }
+            ProcessBuilder processBuilder = new ProcessBuilder(args.stream().toArray(s -> new String[s])).redirectErrorStream(true);
+
+            process = processBuilder.start();
+            ctrl.handleStream(this, process, setTextAfterwards, command);
+            return null;
+        }
+
     }
 
     @Override

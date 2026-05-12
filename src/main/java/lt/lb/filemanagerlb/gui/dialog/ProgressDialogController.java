@@ -47,7 +47,7 @@ public class ProgressDialogController extends MyBaseController {
 
     public void afterShow(FXTask newTask) {
         super.afterShow();
-        boolean pause = !ViewManager.getInstance().autoStartProgressDialogs.get();
+        boolean pause = !ViewManager.autoStartProgressDialogs.get();
         paused = new SimpleBooleanProperty(pause);
         this.task = newTask;
         task.paused.bind(paused);
@@ -78,7 +78,7 @@ public class ProgressDialogController extends MyBaseController {
             if (task.childTask != null) {
                 task.run();
             }
-            if (ViewManager.getInstance().autoCloseProgressDialogs.get()) {
+            if (ViewManager.autoCloseProgressDialogs.get()) {
                 this.exit();
             }
         });
@@ -91,7 +91,7 @@ public class ProgressDialogController extends MyBaseController {
     }
 
     public void showFullText() {
-        ViewManager.getInstance().newListFrame("Progress so far", StringParser.split(fullText, "\n"));
+        ViewManager.newListFrame("Progress so far", StringParser.split(fullText, "\n"));
     }
 
     @Override

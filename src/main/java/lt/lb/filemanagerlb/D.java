@@ -1,6 +1,10 @@
 package lt.lb.filemanagerlb;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.Java;
 import lt.lb.commons.io.directoryaccess.Dir;
@@ -8,12 +12,14 @@ import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
+import lt.lb.commons.threads.sync.ReadWriteLock;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.uncheckedutils.Checked;
 
 /**
+ * Definitions
  *
  * @author laim0nas100
  */
@@ -56,5 +62,8 @@ public class D {
     public static MultiStageManager sm;
 
     public static final ClassLoader cLoader = D.class.getClassLoader();
+
+    public static Set<String> globalDisabledSet = new HashSet<>();
+    public static ReentrantLock lock = new ReentrantLock();
 
 }

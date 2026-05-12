@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lt.lb.commons.Predicates;
+import lt.lb.commons.io.autopath.AutoPath;
 
 /**
  * create file tree
@@ -32,6 +33,7 @@ public class LocationInRootNode implements Comparable {
         this.self = self;
         this.index = i;
         this.leafs = new HashMap<>();
+        AutoPath.fs("");
     }
 
     public void add(LocationInRoot loc, int index) {
@@ -95,23 +97,18 @@ public class LocationInRootNode implements Comparable {
         }
         if (index >= 0) { // included
             String part = index + "" + indexEnd + self;
-//            res+= part+ "\n";
             result.add(part);
         }
         if (isFolder) {
             String part = folderStart + self;
             result.add(part);
-//            res+=part + "\n";
         }
         Collections.sort(values);
         for (LocationInRootNode node : values) {
             result.addAll(node.specialString());
-//            res+=node.specialString();
-
         }
         if (isFolder) {
             result.add(folderEnd);
-//            res+=folderEnd + "\n";
         }
         return result;
     }

@@ -21,7 +21,7 @@ public class FavouriteLink {
     }
 
     public FavouriteLink(String absoluteDir) {
-        ExtPath fileOptimized = LocationAPI.getInstance().getPathNearestUpdate(absoluteDir);
+        ExtPath fileOptimized = LocationAPI.getPathNearestUpdate(absoluteDir);
         Objects.requireNonNull(fileOptimized);
         location = fileOptimized;
         propertyName = new SimpleStringProperty(location.getName(false));

@@ -42,21 +42,17 @@ import org.tinylog.Logger;
  */
 public class ViewManager {
 
-    public final SimpleBooleanProperty autoCloseProgressDialogs = new SimpleBooleanProperty(false);
-    public final SimpleBooleanProperty autoStartProgressDialogs = new SimpleBooleanProperty(false);
-    public final SimpleBooleanProperty pinProgressDialogs = new SimpleBooleanProperty(false);
-    public final SimpleBooleanProperty pinTextInputDialogs = new SimpleBooleanProperty(false);
-    public static final ViewManager INSTANCE = new ViewManager();
-
+    public static final  SimpleBooleanProperty autoCloseProgressDialogs = new SimpleBooleanProperty(false);
+    public static final SimpleBooleanProperty autoStartProgressDialogs = new SimpleBooleanProperty(false);
+    public static final SimpleBooleanProperty pinProgressDialogs = new SimpleBooleanProperty(false);
+    public static final SimpleBooleanProperty pinTextInputDialogs = new SimpleBooleanProperty(false);
     protected ViewManager() {
     }
 
-    public static ViewManager getInstance() {
-        return INSTANCE;
-    }
+  
 
 // WINDOW ACTIONS
-    public void newWindow(ExtFolder currentFolder) {
+    public static void newWindow(ExtFolder currentFolder) {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -79,13 +75,13 @@ public class ViewManager {
 
     }
 
-    public void updateAllWindows() {
+    public static void updateAllWindows() {
         D.sm.getAllControllers(MainController.class).forEach(conrt -> {
             conrt.update();
         });
     }
 
-    public void updateAllFrames(Serializable exception) {
+    public static void updateAllFrames(Serializable exception) {
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
         if (exception != null) {
             allControllers = allControllers.filter(f -> !f.getFrameID().equals(exception));
@@ -95,20 +91,20 @@ public class ViewManager {
         });
     }
 
-    public FXMLFrame getFxmlFrame(Serializable id) {
+    public static FXMLFrame getFxmlFrame(Serializable id) {
         return (FXMLFrame) D.sm.getFrame(id).get();
     }
 
-    public <T extends MyBaseController> T getController(Serializable id) {
+    public static <T extends MyBaseController> T getController(Serializable id) {
         return (T) getFxmlFrame(id).getController();
     }
 
-    public boolean isFrameVisible(String windowID) {
+    public static boolean isFrameVisible(String windowID) {
         return D.sm.getFrame(windowID).isPresent();
     }
 
 //DIALOG ACTIONS
-    public void newProgressDialog(FXTask task) {
+    public static void newProgressDialog(FXTask task) {
 
         FXTask et = new FXTask() {
             @Override
@@ -135,7 +131,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newProgressDialog(ContinousCombinedTask task) {
+    public static void newProgressDialog(ContinousCombinedTask task) {
 
         FXTask et = new FXTask() {
             @Override
@@ -162,11 +158,11 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newRenameDialog(ExtFolder folder, ExtPath itemToRename) {
+    public static void newRenameDialog(ExtFolder folder, ExtPath itemToRename) {
         newRenameDialog(folder, itemToRename, null);
     }
 
-    public void newRenameDialog(ExtFolder folder, ExtPath itemToRename, FileCallback callback) {
+    public static void newRenameDialog(ExtFolder folder, ExtPath itemToRename, FileCallback callback) {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -177,7 +173,7 @@ public class ViewManager {
                     frame.getStage().setMaxHeight(200);
                     frame.getStage().setMinHeight(200);
                     frame.getStage().setMinWidth(500);
-                    frame.getStage().show();
+                    frame.show();
                     frame.getStage().setAlwaysOnTop(pinTextInputDialogs.get());
                     controller.afterShow(folder, itemToRename);
                     controller.callback = callback;
@@ -192,7 +188,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newAdvancedRenameDialog(ExtFolder folder) {
+    public static void newAdvancedRenameDialog(ExtFolder folder) {
 
         FXTask et = new FXTask() {
             @Override
@@ -201,7 +197,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.ADVANCED_RENAME_DIALOG);
                     AdvancedRenameController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle(), folder);
-                    frame.getStage().show();
+                    frame.show();
                     controller.afterShow();
                     frame.getStage().toFront();
                 } catch (Exception ex) {
@@ -213,7 +209,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newDirSyncDialog() {
+    public static void newDirSyncDialog() {
 
         FXTask et = new FXTask() {
             @Override
@@ -222,7 +218,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.DIR_SYNC_DIALOG);
                     DirSyncController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
-                    frame.getStage().show();
+                    frame.show();
                     controller.afterShow();
                     frame.getStage().toFront();
 
@@ -236,7 +232,7 @@ public class ViewManager {
 
     }
 
-    public void newDuplicateFinderDialog(ExtFolder root) {
+    public static void newDuplicateFinderDialog(ExtFolder root) {
 
         FXTask et = new FXTask() {
             @Override
@@ -245,7 +241,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.DUPLICATE_FINDER_DIALOG);
                     DuplicateFinderController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle(), root);
-                    frame.getStage().show();
+                    frame.show();
                     controller.afterShow();
                     frame.getStage().toFront();
 
@@ -258,7 +254,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newWebDialog(Enums.WebDialog info) {
+    public static void newWebDialog(Enums.WebDialog info) {
 
         FXTask et = new FXTask() {
             @Override
@@ -267,7 +263,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.WEB_DIALOG);
                     WebDialogController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
-                    frame.getStage().show();
+                    frame.show();
                     controller.afterShow(info);
                     frame.getStage().toFront();
 
@@ -281,7 +277,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newCommandDialog() {
+    public static void newCommandDialog() {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -289,7 +285,7 @@ public class ViewManager {
                     Frame frame = newFrame(FrameTitle.COMMAND_DIALOG);
                     CommandWindowController controller = getController(frame.getID());
                     controller.beforeShow(frame.getStage().getTitle());
-                    frame.getStage().show();
+                    frame.show();
                     controller.afterShow();
                     frame.getStage().toFront();
 
@@ -302,7 +298,7 @@ public class ViewManager {
         et.runOnPlatform();
     }
 
-    public void newListFrame(String description, Collection<String> list) {
+    public static void newListFrame(String description, Collection<String> list) {
         FXTask et = new FXTask() {
             @Override
             protected Void call() throws Exception {
@@ -325,7 +321,7 @@ public class ViewManager {
 
     }
 
-    public void newMediaPlayer() {
+    public static void newMediaPlayer() {
 
         Job<Boolean> discoverJob = new Job<>(me -> {
 
@@ -340,31 +336,33 @@ public class ViewManager {
         FXJob showJob = new FXJob(me -> {
 
             FXMLFrame frame = newFrame(FrameTitle.MEDIA_PLAYER);
-            frame.getStage().show();
-            frame.getStage().toFront();
+            
             MediaPlayerController controller = getController(frame.getID());
+            controller.beforeShow();
+            frame.show();
+            frame.getStage().toFront();
             controller.afterShow();
             frame.getStage().toFront();
 
         });
 
         showJob.addDependency(Dependencies.standard(discoverJob, SystemJobEventName.ON_SUCCESSFUL));
-        TaskFactory.getInstance().jobsExecutor.submitAll(showJob, discoverJob);
+        TaskFactory.jobsExecutor.submitAll(discoverJob,showJob);
 
     }
 
-    private <T> FXMLFrame newFrame(FrameTitle info) throws FrameException, InterruptedException, ExecutionException {
+    private static <T> FXMLFrame newFrame(FrameTitle info) throws FrameException, InterruptedException, ExecutionException {
         return newFrame(info, false, Util.emptyConsumer);
     }
 
-    private <T extends MyBaseController> FXMLFrame newFrame(FrameTitle info, boolean singleton, Consumer<T> cons) throws FrameException, InterruptedException, ExecutionException {
+    private static <T extends MyBaseController> FXMLFrame newFrame(FrameTitle info, boolean singleton, Consumer<T> cons) throws FrameException, InterruptedException, ExecutionException {
         if (singleton) {
             return D.sm.newFxmlFrameSingleton(info.recourse, info.title, cons).get();
         }
         return D.sm.newFxmlFrame(info.recourse, info.title, cons).get();
     }
 
-    public void closeFrame(String windowID) {
+    public static void closeFrame(String windowID) {
         FX.submit(() -> {
             D.sm.closeFrame(windowID);
         });

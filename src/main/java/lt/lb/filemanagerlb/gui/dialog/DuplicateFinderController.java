@@ -106,7 +106,7 @@ public class DuplicateFinderController extends MyBaseController {
                             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
                             for (Object ob : selectedItems) {
                                 SimpleTableItem item = (SimpleTableItem) ob;
-                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getPathNearest(item.f1.getPath()));
+                                TaskFactory.addToMarked(LocationAPI.getPathNearest(item.f1.getPath()));
                             }
                         })
                 )
@@ -116,7 +116,7 @@ public class DuplicateFinderController extends MyBaseController {
                             ObservableList selectedItems = list.getSelectionModel().getSelectedItems();
                             for (Object ob : selectedItems) {
                                 SimpleTableItem item = (SimpleTableItem) ob;
-                                TaskFactory.getInstance().addToMarked(LocationAPI.getInstance().getPathNearest(item.f2.getPath()));
+                                TaskFactory.addToMarked(LocationAPI.getPathNearest(item.f2.getPath()));
                             }
                         })
                 )
@@ -139,9 +139,9 @@ public class DuplicateFinderController extends MyBaseController {
                 array.add(new PathStringCommands(item.getAbsolutePath()));
             });
             if (this.checkUseHash.selectedProperty().get()) {
-                task = TaskFactory.getInstance().duplicateFinderTask(array, ratio, synchronizedList, map);
+                task = TaskFactory.duplicateFinderTask(array, ratio, synchronizedList, map);
             } else {
-                task = TaskFactory.getInstance().duplicateFinderTask(array, ratio, synchronizedList, null);
+                task = TaskFactory.duplicateFinderTask(array, ratio, synchronizedList, null);
 
             }
             this.progressBar.progressProperty().bind(task.progressProperty());

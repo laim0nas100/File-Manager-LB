@@ -264,7 +264,7 @@ public class DirSyncController extends MyBaseController {
     }
 
     public void checkDir(String path, Value<ExtPath> file) throws IOException {
-        ExtPath found = LocationAPI.getInstance().getFileAndPopulate(path);
+        ExtPath found = LocationAPI.getFileAndPopulate(path);
         file.set(null);
         if (!Paths.get(path).equals(found.toPath())) {
 
@@ -287,13 +287,13 @@ public class DirSyncController extends MyBaseController {
         });
 
         SafeOpt<Boolean> p1 = SafeOpt.ofAsync(directory0.getText()).map(v -> {
-            file0.set(LocationAPI.getInstance().getFileAndPopulate(v));
+            file0.set(LocationAPI.getFileAndPopulate(v));
             Logger.info("Check 0");
             return file0.get().getIdentity().equals(Enums.Identity.FOLDER);
         });
 
         SafeOpt<Boolean> p2 = SafeOpt.ofAsync(directory1.getText()).map(v -> {
-            file1.set(LocationAPI.getInstance().getFileAndPopulate(v));
+            file1.set(LocationAPI.getFileAndPopulate(v));
             Logger.info("Check 1");
             return file1.get().getIdentity().equals(Enums.Identity.FOLDER);
         });
@@ -345,8 +345,8 @@ public class DirSyncController extends MyBaseController {
         long lastUpdated = lastUpdate.get();
         if (file0.isNotNull() && file1.isNotNull()) {
             CountDownLatch latch = new CountDownLatch(2);
-            SimpleTask<Snapshot> task0 = TaskFactory.getInstance().snapshotCreateTask(file0.get().getAbsolutePath());
-            SimpleTask<Snapshot> task1 = TaskFactory.getInstance().snapshotCreateTask(file1.get().getAbsolutePath());
+            SimpleTask<Snapshot> task0 = TaskFactory.snapshotCreateTask(file0.get().getAbsolutePath());
+            SimpleTask<Snapshot> task1 = TaskFactory.snapshotCreateTask(file1.get().getAbsolutePath());
             task0.appendOnSucceeded(eh -> {
                 if (lastUpdated == lastUpdate.get()) {
                     snapshot0 = task0.get();
@@ -558,13 +558,13 @@ public class DirSyncController extends MyBaseController {
             Logger.info(en.toString());
         }
 
-        ContinousCombinedTask task = TaskFactory.getInstance().syncronizeTask(this.snapshot0.folderCreatedFrom, this.snapshot1.folderCreatedFrom, list);
+        ContinousCombinedTask task = TaskFactory.syncronizeTask(this.snapshot0.folderCreatedFrom, this.snapshot1.folderCreatedFrom, list);
 
         task.setDescription("Synchronization: " + "\n"
                 + "Source:" + this.snapshot0.folderCreatedFrom + "\n"
                 + "Compared:" + this.snapshot1.folderCreatedFrom);
 
-        ViewManager.getInstance().newProgressDialog(task);
+        ViewManager.newProgressDialog(task);
 
     }
 

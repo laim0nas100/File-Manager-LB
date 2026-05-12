@@ -21,7 +21,7 @@ import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.tinylog.Logger;
 
 /**
- *
+ * Parameters
  * @author laim0nas100
  */
 public class P {
@@ -50,7 +50,7 @@ public class P {
     public static final KeyDefaultProperty<String> relativeCustom = KeyProp.of("filter.relativeCustom", "<rc>").toPreparedCachableDefaultProperty(getConfig());
 
     public static final KeyDefaultProperty<String> commandInit = KeyProp.of("code.init", "init").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Integer> truncateAfter = KeyProp.of("code.truncateAfter", 100000).toPreparedCachableDefaultProperty(getConfig());
+    public static final KeyDefaultProperty<Integer> truncateAfter = KeyProp.of("code.truncateAfter", 1000000).toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandGenerate = KeyProp.of("code.commandGenerate", "generate").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandApply = KeyProp.of("code.commandApply", "apply").toPreparedCachableDefaultProperty(getConfig());
     public static final KeyDefaultProperty<String> commandClear = KeyProp.of("code.clear", "clear").toPreparedCachableDefaultProperty(getConfig());

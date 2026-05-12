@@ -1,15 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.gui.custom;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import lt.lb.commons.containers.collections.LoopingList;
+import lt.lb.commons.javafx.FX;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 
 /**
@@ -20,22 +15,30 @@ public abstract class AbstractCommandField {
 
     public HashMap<String, Command> commands = new HashMap<>();
     public TextField field;
-    public LoopingList<String> commandHistory = new LoopingList<>();
+    public ArrayList<String> commandHistory = new ArrayList<>();
+    private int index = 0;
 
     public AbstractCommandField(TextField tf) {
         field = tf;
         field.setOnKeyReleased(eh -> {
             KeyCode code = eh.getCode();
             if (code.equals(KeyCode.UP)) {
-                field.setText(commandHistory.prev());
+                if (index - 1 >= 0) {
+                    index--;
+                    field.setText(commandHistory.get(index));
+                }
             }
             if (code.equals(KeyCode.DOWN)) {
-                field.setText(commandHistory.next());
+                if (index + 1 < commandHistory.size()) {
+                    index++;
+                    field.setText(commandHistory.get(index));
+                }
             }
         });
         field.setOnAction(eh -> {
             String command = field.getText();
             commandHistory.add(command);
+            index = commandHistory.size();
             field.clear();
             submit(command);
         });
@@ -49,7 +52,7 @@ public abstract class AbstractCommandField {
 
     public boolean runCommand(String commandInit, String[] params) throws Exception {
         if (this.commands.containsKey(commandInit)) {
-            Platform.runLater(() -> {
+            FX.submit(() -> {
                 try {
                     this.commands.get(commandInit).run(params);
                 } catch (Exception ex) {
