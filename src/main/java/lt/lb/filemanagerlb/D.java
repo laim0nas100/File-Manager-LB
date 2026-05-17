@@ -34,7 +34,7 @@ public class D {
 //            this.defaultSupplier = () -> new FastWaitingExecutor(8, WaitTime.ofSeconds(4));
             this.defaultSchedulerSupplier = () -> Executors.newScheduledThreadPool(4);
 
-            setService("date-size", () -> new FastWaitingExecutor(4, WaitTime.ofSeconds(3)));
+            setService("date-size", () -> new FastWaitingExecutor(16, WaitTime.ofSeconds(12)));
 
             setMainService("MAIN");
             setService("MAIN", () -> {
