@@ -57,9 +57,7 @@ public abstract class TaskFactory {
         return stream;
     }).toUnmodifiableSet();
 
-    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe.service("jobs"));
     public static final SimpleBooleanProperty copyReplaceExisting = new SimpleBooleanProperty(false);
-    public static Serializable dragInitWindowID = "";
 
     protected TaskFactory() {
     }

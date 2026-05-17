@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javafx.beans.property.BooleanProperty;
 import javafx.util.Callback;
 import lt.lb.commons.containers.collections.ImmutableCollections;
@@ -35,7 +36,7 @@ public abstract class ExtFolder extends ExtPath {
         return getFilesMap().values();
     }
     
-    protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, BooleanProperty isCanceled);
+    protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled);
     
     public ExtPath getIgnoreCase(String name) {
         if (hasFileIgnoreCase(name)) {
@@ -135,7 +136,7 @@ public abstract class ExtFolder extends ExtPath {
     
     public abstract void update();
     
-    public abstract Future update(List<ExtPath> receiver, BooleanProperty isCanceled);
+    public abstract Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled);
     
     @Override
     public String getAbsoluteDirectory() {

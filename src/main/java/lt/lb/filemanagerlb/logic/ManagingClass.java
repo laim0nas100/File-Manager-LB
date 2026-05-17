@@ -96,7 +96,7 @@ public class ManagingClass {
     }
 
     public void getCurrentContents(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
-        currentDir.update(list, isCanceled);
+        currentDir.update(list, isCanceled::get);
     }
 
     public ObservableList<ExtPath> getAllContents() {

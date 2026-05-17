@@ -1,25 +1,16 @@
 package lt.lb.filemanagerlb.utility;
 
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import lt.lb.commons.javafx.FX;
-import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.events.SystemJobEventName;
 import lt.lb.uncheckedutils.func.UncheckedConsumer;
 
 /**
  *
  * @author Lemmin
  */
-public class FXJob extends Job<Void> {
+public class FXJob extends SafeJob<Void> {
 
     public FXJob(UncheckedConsumer<FXJob> call) {
-        super((Consumer) call);
-        this.addListener(SystemJobEventName.ON_EXCEPTIONAL, lis -> {
-            Optional<ExecutionException> data = lis.getData();
-            data.map(m -> m.getCause()).ifPresent(ErrorReport::report);
-        });
+        super((UncheckedConsumer) call);
     }
 
     @Override

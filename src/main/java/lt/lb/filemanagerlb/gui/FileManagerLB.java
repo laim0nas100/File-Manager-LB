@@ -27,6 +27,7 @@ import lt.lb.commons.javafx.scenemanagement.frames.WithDecoration;
 import lt.lb.commons.javafx.scenemanagement.frames.WithFrameTypeMemoryPositionAndSize;
 import lt.lb.commons.javafx.scenemanagement.frames.WithIcon;
 import lt.lb.commons.javafx.scenemanagement.frames.WithStylesheet;
+import lt.lb.commons.threads.executors.FastExecutor;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.SessionInfo;
@@ -203,8 +204,13 @@ public class FileManagerLB {
             }
             try {
                 VLCInit.release();
-                TaskFactory.jobsExecutor.shutdown();
+                D.jobsExecutor.shutdown();
                 D.exe.shutdown();
+                D.exe.forEach(service ->{
+                    if(service instanceof FastExecutor fast){
+                        fast.cancelAll(true);
+                    }
+                });
                 Logger.info("Await termination");
                 D.exe.awaitTermination(1, TimeUnit.MINUTES);
             } catch (Exception ex) {

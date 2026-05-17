@@ -330,34 +330,29 @@ public class MediaPlayerController extends MyBaseController {
                 return;
             }
             ObservableList<ExtPath> selectedItems = table.getSelectionModel().getSelectedItems();
-            TaskFactory.dragInitWindowID = this.getID();
+            D.dragInitWindowID = this.getID();
             if (!selectedItems.isEmpty()) {
                 Dragboard db = table.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
-                //Log.writeln("Drag detected:"+selected.getAbsolutePath());
                 content.putFiles(selectedItems.stream().map(m -> m.toFile()).toList());
-
-                //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
             }
         });
 
         table.setOnDragOver((DragEvent event) -> {
-            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(D.dragInitWindowID)) {
                 return;
             }
             // data is dragged over the target
             Dragboard db = event.getDragboard();
             if (db.hasFiles()) {
                 event.acceptTransferModes(TransferMode.ANY);
-
-                //Log.writeln(event.getDragboard().getString());
             }
             event.consume();
         });
         table.setOnDragDropped((DragEvent event) -> {
-            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(D.dragInitWindowID)) {
                 Logger.info("Same window");
                 return;
             }
@@ -376,6 +371,8 @@ public class MediaPlayerController extends MyBaseController {
             if (!event.isDropCompleted()) {
                 update();
             }
+            D.dragInitWindowID = "";
+
         });
 
         extTableView.updateContentsAndSort(backingList);

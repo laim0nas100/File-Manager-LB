@@ -347,7 +347,7 @@ public class ViewManager {
         });
 
         showJob.addDependency(Dependencies.standard(discoverJob, SystemJobEventName.ON_SUCCESSFUL));
-        TaskFactory.jobsExecutor.submitAll(discoverJob,showJob);
+        D.jobsExecutor.submitAll(discoverJob,showJob);
 
     }
 

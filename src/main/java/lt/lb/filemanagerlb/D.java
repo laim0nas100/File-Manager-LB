@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,6 +17,7 @@ import lt.lb.commons.threads.sync.ReadWriteLock;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import lt.lb.jobsystem.ScheduledJobExecutor;
 import lt.lb.uncheckedutils.Checked;
 
 /**
@@ -29,6 +31,7 @@ public class D {
 
         public ServiceExecutorAggregatorMain() {
             this.defaultSupplier = () -> Checked.createDefaultExecutorService();
+//            this.defaultSupplier = () -> new FastWaitingExecutor(8, WaitTime.ofSeconds(4));
             this.defaultSchedulerSupplier = () -> Executors.newScheduledThreadPool(4);
 
             setService("date-size", () -> new FastWaitingExecutor(4, WaitTime.ofSeconds(3)));
@@ -43,6 +46,7 @@ public class D {
     }
 
     public static final ServiceExecutorAggregatorBase exe = new ServiceExecutorAggregatorMain();
+    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe.service("jobs"));
 
     public static SessionInfo sessionInfo = new SessionInfo();
 
@@ -65,5 +69,7 @@ public class D {
 
     public static Set<String> globalDisabledSet = new HashSet<>();
     public static ReentrantLock lock = new ReentrantLock();
+
+    public static Serializable dragInitWindowID = "";
 
 }

@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javafx.beans.binding.Bindings;
@@ -39,6 +38,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -49,6 +49,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
+import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
 import lt.lb.commons.javafx.ExtTask;
@@ -82,6 +83,11 @@ import lt.lb.uncheckedutils.PassableException;
 import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
+import lt.lb.commons.threads.sync.Awaiter;
+import lt.lb.filemanagerlb.utility.SafeJob;
+import lt.lb.jobsystem.Job;
+import lt.lb.jobsystem.events.SystemJobEventName;
+import lt.lb.uncheckedutils.Checked;
 import org.apache.commons.lang3.Strings;
 
 /**
@@ -109,15 +115,17 @@ public class MainController extends MyBaseController<MainController> {
     @FXML
     public TextField localSearch;
 
+    @FXML
+    public Label localSearchLabel;
+
     public static ObservableList<FavouriteLink> favoriteLinks;
     public static ObservableList<ErrorReport> errorLog;
 
     public static ObservableList<ExtPath> markedList;
     public static IntegerBinding propertyMarkedSize;
 //    public static ArrayList<ExtPath> actionList;
-   
 
-    public ObservableList<ExtPath> dragList = FXCollections.observableArrayList();
+    public List<ExtPath> dragList = new ArrayList<>();
 
     @FXML
     public CheckBox useRegex;
@@ -203,7 +211,8 @@ public class MainController extends MyBaseController<MainController> {
     private SelectableViewProperties<ErrorReport> errorProperties;
     private SimpleTask searchTask;
     public ExtTableView extTableView;
-    public ArrayDeque<Future> deq = new ArrayDeque<>();
+    public Job<Void> localSearchJob = new Job<>(m -> {
+    });
     private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe.scheduledService("localSearch-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::localSearch));
     private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe.scheduledService("search-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::search));
     private boolean firstTime = true;
@@ -508,76 +517,72 @@ public class MainController extends MyBaseController<MainController> {
 
     public void localSearch() {
         List<ExtPath> newList = new ArrayList<>();
-        deq.forEach(action -> {
-            action.cancel(true);
-        });
-        deq.clear();
-        extTableView.saveScrollState();
-        ExtTask asynchronousSortTask = extTableView.asynchronousSortTask(newList);
+        this.localSearchJob.cancel(true);
 
-//        final FutureTask asyncFuture = new FutureTask(Executors.callable(asynchronousSortTask));
-        ExtFolder folderInitiated = MC.currentDir;
-        ExtTask r = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                asynchronousSortTask.appendOnDone(handle -> {// it's done when it's done sorting and only the sort task is cancelled, not the whole search
-                    if (canceled.get()) {
-                        return;
-                    }
-                    final int viewSize = extTableView.table.getItems().size();
-                    final int neededSize = newList.size();
+        SafeJob<Void> sortTask = new SafeJob<>(me -> {
+            Checked.checkedRun(() -> Thread.sleep(200));
+            while (!me.isCancelled()) {
 
-                    //this is actually the end
-                    if (viewSize != neededSize) {
-                        Logger.info("View size {}, needed size {}", viewSize, neededSize);
-                        FX.runAndWait(() -> {
-                            extTableView.updateContentsAndSort(newList);
-                        });
-                    } else {
-                        extTableView.restoreScrollState();
-                    }
-                });
-                D.exe.submit(asynchronousSortTask);
-
-                if (canceled.get()) {
-                    Logger.info("Cancelled from task before start");
-                    return null;
-                }
-
-                SimpleBooleanProperty can = new SimpleBooleanProperty(canceled.get());
-                can.bind(canceled);
-                Future update = folderInitiated.update(newList, can);
-
-                update.get();
-                if (canceled.get()) {
-                    Logger.info("Cancelled from task");
-                    return null;
-                }
-                //apply local search
-                String lookFor = localSearch.getText().trim();
-                if (!lookFor.isEmpty()) {
-                    ArrayList<ExtPath> list = new ArrayList<>();
-                    newList.forEach(item -> {
-                        ExtPath path = (ExtPath) item;
-                        String name = path.propertyName.get();
-                        if (Strings.CI.contains(name, lookFor)) {
-                            list.add(path);
-                        }
+                if (extTableView.table.getItems().size() != newList.size()) {
+                    FX.runAndWait(() -> {
+                        extTableView.updateContentsAndSortPartial(newList);
                     });
-                    newList.clear();
-                    newList.addAll(list);
                 }
+                Checked.checkedRun(() -> Thread.sleep(500));
+
+            }
+
+        });
+        ExtFolder folderInitiated = MC.currentDir;
+        SafeJob<Void> mainJob = new SafeJob<>(me -> {
+            if (me.isCancelled()) {
                 return null;
             }
-        };
-        deq.addFirst(r);
-        r.appendOnCancelled(event -> {
-            Logger.info("Actually cancelled");
+            extTableView.saveScrollState();
+            Future update = folderInitiated.update(newList, me::isCancelled);
+
+            Checked.checkedCall(update::get);
+            if (me.isCancelled()) {
+                return null;
+            }
+            //apply local search
+            String lookFor = localSearch.getText().trim();
+            if (!lookFor.isEmpty()) {
+                ArrayList<ExtPath> list = new ArrayList<>();
+                newList.forEach(path -> {
+                    if (Strings.CI.contains(path.propertyName.get(), lookFor)) {
+                        list.add(path);
+                    }
+                });
+                newList.clear();
+                newList.addAll(list);
+                sortTask.cancel(true);
+            }
+            FX.submit(() -> {
+
+                localSearchLabel.setText("Local(" + newList.size() + ")");
+                if (me.isCancelled()) {
+                    return;
+                }
+                final int viewSize = extTableView.table.getItems().size();
+                final int neededSize = newList.size();
+                extTableView.updateContentsAndSort(newList);
+                if (viewSize != neededSize && MC.currentDir == folderInitiated) { // still the same folder
+                    Logger.info("View size {}, needed size {}", viewSize, neededSize);
+                    extTableView.updateContentsAndSort(newList);
+                } else {
+                    extTableView.restoreScrollState();
+                }
+            });
+            return null;
         });
-        r.appendOnDone(event -> {
-            asynchronousSortTask.cancel();
+
+        mainJob.addListener(SystemJobEventName.ON_DONE, job -> {
+            sortTask.cancel(true);// just in case
         });
-        D.exe.service("localSearch-sched").execute(r);
+        localSearchJob = mainJob;
+        D.jobsExecutor.submitAll(mainJob, sortTask);
+
     }
 
     public void loadSnapshot() {
@@ -635,7 +640,6 @@ public class MainController extends MyBaseController<MainController> {
             return;
         }
         if (file instanceof ExtFolder) {
-            Logger.info("Change to dir " + file.getAbsoluteDirectory());
             changeToDir((ExtFolder) file);
         } else {
 
@@ -1119,7 +1123,7 @@ public class MainController extends MyBaseController<MainController> {
             if (MC.currentDir.isArtificial()) {
                 return;
             }
-            TaskFactory.dragInitWindowID = this.getID();
+            D.dragInitWindowID = this.getID();
             if (this.extTableView.recentlyResized.get()) {
                 return;
             }
@@ -1128,7 +1132,7 @@ public class MainController extends MyBaseController<MainController> {
                 Dragboard db = tableView.startDragAndDrop(TransferMode.COPY_OR_MOVE);
                 ClipboardContent content = new ClipboardContent();
                 //Log.writeln("Drag detected:"+selected.getAbsolutePath());
-                content.putFiles(filesProperties.selectedItems().stream().map(m -> m.toPath().toFile()).toList());
+                content.putFiles(filesProperties.selectedItems().stream().map(m -> m.toFile()).toList());
                 //content.putString(selected.getAbsolutePath());
                 db.setContent(content);
                 event.consume();
@@ -1139,7 +1143,7 @@ public class MainController extends MyBaseController<MainController> {
             if (MC.currentDir.isArtificial()) {
                 return;
             }
-            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(D.dragInitWindowID)) {
 
                 return;
             }
@@ -1158,7 +1162,7 @@ public class MainController extends MyBaseController<MainController> {
             if (MC.currentDir.isVirtual.get()) {
                 return;
             }
-            if (this.getID().equals(TaskFactory.dragInitWindowID)) {
+            if (this.getID().equals(D.dragInitWindowID)) {
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -1178,6 +1182,7 @@ public class MainController extends MyBaseController<MainController> {
             if (!event.isDropCompleted()) {
                 update();
             }
+            D.dragInitWindowID = "";
         });
 
         extTableView = new ExtTableView(tableView);
@@ -1207,7 +1212,7 @@ public class MainController extends MyBaseController<MainController> {
         CosmeticsFX.simpleMenuBindingWrap(markedView.getContextMenu());
 
         markedView.setOnDragDetected((MouseEvent event) -> {
-            TaskFactory.dragInitWindowID = "MARKED";
+            D.dragInitWindowID = "MARKED";
             if (MC.currentDir.isArtificial()) {
                 return;
             }

@@ -24,7 +24,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
  * @author Lemmin
  */
 public class ExtPath {
-
+    
     public static boolean exists(ExtPath path) {
         if (path == null) {
             return false;
@@ -88,7 +88,7 @@ public class ExtPath {
     public static Predicate<ExtPath> IS_NOT_DISABLED = (ExtPath t) -> !t.isDisabled.get();
 
     private Path path;
-    private File file;
+    private ExtFile file;
     private final String absolutePath;
     private Lazy<Long> size = Lazy.ofSupplyAsync(() -> {
         return Files.size(toPath());
@@ -209,7 +209,7 @@ public class ExtPath {
 
     public File toFile() {
         if (file == null) {
-            file = toPath().toFile();
+            file = new ExtFile(this);
         }
         return file;
     }

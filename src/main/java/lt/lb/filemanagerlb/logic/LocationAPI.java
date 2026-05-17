@@ -11,6 +11,7 @@ import lt.lb.commons.containers.collections.CollectionOp;
 import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
+import lt.lb.filemanagerlb.logic.filestructure.ExtFile;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
@@ -141,12 +142,18 @@ public class LocationAPI {
 
     public static List<ExtPath> fromFiles(Collection<File> files) {
         return MakeStream.from(files)
-                .map(file -> new LocationInRoot(file.getAbsolutePath()))
-                .map(location -> getPathByLocation(location, true))
+                .nonNull()
+                .map(file -> {
+                    if (file instanceof ExtFile ext) {
+                        return ext.path; // shortcut
+                    } else {
+                        return getPathByLocation(new LocationInRoot(file.getAbsolutePath()));
+                    }
+                })
                 .toList();
     }
-    
-    public static <T> List<String>  toSerializableStringList(Collection<T> paths, Function<T,ExtPath> mapper){
+
+    public static <T> List<String> toSerializableStringList(Collection<T> paths, Function<T, ExtPath> mapper) {
         return MakeStream.from(paths)
                 .map(mapper)
                 .filter(p -> !p.isArtificial())

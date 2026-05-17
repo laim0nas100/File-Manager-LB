@@ -10,10 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import javafx.beans.property.BooleanProperty;
+import java.util.function.Supplier;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.commons.containers.collections.ObjectBuffer;
-import lt.lb.commons.threads.TimestampingExecution;
 import lt.lb.commons.threads.TimestampingExecutionExclusive;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -39,7 +38,7 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, BooleanProperty isCanceled) {
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled) {
 
         Callable<Map<String, ExtPath>> call = () -> {
 
@@ -95,7 +94,7 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    public Future update(List<ExtPath> receiver, BooleanProperty isCanceled) {
+    public Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
         ObjectBuffer<ExtPath> buffer = new ObjectBuffer(receiver, 500);
         return populateFolder(true, buffer, isCanceled);

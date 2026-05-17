@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -48,7 +49,7 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    public Future update(List<ExtPath> receiver, BooleanProperty isCanceled) {
+    public Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled) {
         
         if (this.equals(FileManagerLB.VirtualFolders)) {
             receiver.clear();
@@ -105,7 +106,7 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, BooleanProperty isCanceled) {
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled) {
         if (buffer != null) {
             buffer.addAll(getFilesCollection());
         }

@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/8.0.101" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lt.lb.filemanagerlb.gui.MainController">
+<BorderPane prefWidth="925.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lt.lb.filemanagerlb.gui.MainController">
     <top>
         <VBox BorderPane.alignment="CENTER">
             <children>
@@ -31,7 +31,7 @@
                             <items>
                                 <MenuItem mnemonicParsing="false" onAction="#createNewWindow" text="New Window" />
                                 <MenuItem mnemonicParsing="false" onAction="#exit" text="Close this window" />
-                                <MenuItem mnemonicParsing="false" onAction="#restart" text="Restart" disable="true"/>
+                                <MenuItem disable="true" mnemonicParsing="false" onAction="#restart" text="Restart" />
                                 <MenuItem mnemonicParsing="false" onAction="#closeAllWindows" text="Exit" />
                             </items>
                         </Menu>
@@ -144,12 +144,15 @@
                     <children>
                         <HBox>
                             <children>
-                                <Label text="Local Search:" HBox.hgrow="NEVER">
+                                <Label fx:id="localSearchLabel" text="Local" HBox.hgrow="NEVER">
                                     <HBox.margin>
                                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                     </HBox.margin>
                                 </Label>
-                                <TextField fx:id="localSearch" onKeyReleased="#localSearchTask" HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="localSearch" onKeyReleased="#localSearchTask" HBox.hgrow="ALWAYS">
+                           <HBox.margin>
+                              <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                           </HBox.margin></TextField>
                             </children>
                         </HBox>
                         <TableView fx:id="tableView" minWidth="-Infinity" prefHeight="400.0" prefWidth="151.0" VBox.vgrow="ALWAYS" />
