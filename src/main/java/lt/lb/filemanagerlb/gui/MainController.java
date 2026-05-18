@@ -19,7 +19,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -38,7 +37,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -49,10 +47,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lt.lb.commons.F;
-import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
-import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXDefs;
 import lt.lb.commons.javafx.FXTask;
@@ -83,7 +79,6 @@ import lt.lb.uncheckedutils.PassableException;
 import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
-import lt.lb.commons.threads.sync.Awaiter;
 import lt.lb.filemanagerlb.utility.SafeJob;
 import lt.lb.jobsystem.Job;
 import lt.lb.jobsystem.events.SystemJobEventName;
@@ -123,7 +118,6 @@ public class MainController extends MyBaseController<MainController> {
 
     public static ObservableList<ExtPath> markedList;
     public static IntegerBinding propertyMarkedSize;
-//    public static ArrayList<ExtPath> actionList;
 
     public List<ExtPath> dragList = new ArrayList<>();
 
@@ -516,24 +510,22 @@ public class MainController extends MyBaseController<MainController> {
     }
 
     public void localSearch() {
-        List<ExtPath> newList = new ArrayList<>();
         this.localSearchJob.cancel(true);
+        final ExtFolder folderInitiated = MC.currentDir;
+        final List<ExtPath> newList = new ArrayList<>();
 
         SafeJob<Void> sortTask = new SafeJob<>(me -> {
-            Checked.checkedRun(() -> Thread.sleep(200));
-            while (!me.isCancelled()) {
-
+            Thread.sleep(200);
+            while (!me.isCancelled() && MC.currentDir == folderInitiated) {
                 if (extTableView.table.getItems().size() != newList.size()) {
                     FX.runAndWait(() -> {
                         extTableView.updateContentsAndSortPartial(newList);
                     });
                 }
-                Checked.checkedRun(() -> Thread.sleep(500));
-
+                Thread.sleep(500);
             }
-
         });
-        ExtFolder folderInitiated = MC.currentDir;
+
         SafeJob<Void> mainJob = new SafeJob<>(me -> {
             if (me.isCancelled()) {
                 return null;
@@ -577,11 +569,16 @@ public class MainController extends MyBaseController<MainController> {
             return null;
         });
 
+        mainJob.addListener(SystemJobEventName.ON_EXECUTE, job -> {
+            D.jobsExecutor.submit(sortTask);// only relevant if the directory load takes a while
+        });
+
         mainJob.addListener(SystemJobEventName.ON_DONE, job -> {
             sortTask.cancel(true);// just in case
         });
+        mainJob.addAfter(sortTask);
         localSearchJob = mainJob;
-        D.jobsExecutor.submitAll(mainJob, sortTask);
+        D.jobsExecutor.submitAll(mainJob);
 
     }
 
@@ -615,19 +612,14 @@ public class MainController extends MyBaseController<MainController> {
 
     public void dirSync() {
         ViewManager.newDirSyncDialog();
-
     }
 
     public void regexHelp() {
-        FX.submit(() -> {
-            ViewManager.newWebDialog(Enums.WebDialog.Regex);
-        });
+        ViewManager.newWebDialog(Enums.WebDialog.Regex);
     }
 
     public void aboutPage() {
-        FX.submit(() -> {
-            ViewManager.newWebDialog(Enums.WebDialog.About);
-        });
+        ViewManager.newWebDialog(Enums.WebDialog.About);
     }
 
     public void commandWindow() {
