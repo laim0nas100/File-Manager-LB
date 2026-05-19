@@ -37,8 +37,8 @@ import lt.lb.filemanagerlb.utility.SimpleTask;
 import lt.lb.recombinator.CodepointFlattener;
 import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
-import lt.lb.uncheckedutils.Checked;
-import lt.lb.uncheckedutils.SafeOpt;
+import com.github.laim0nas100.uncheckedutils.Checked;
+import com.github.laim0nas100.uncheckedutils.SafeOpt;
 
 /**
  * FXML Controller class

@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import lt.lb.uncheckedutils.func.UncheckedConsumer;
-import lt.lb.uncheckedutils.func.UncheckedFunction;
+import com.github.laim0nas100.uncheckedutils.func.UncheckedConsumer;
+import com.github.laim0nas100.uncheckedutils.func.UncheckedFunction;
 
 /**
  *

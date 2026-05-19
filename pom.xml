@@ -65,14 +65,9 @@
         <dependency>
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>JobSystem</artifactId>
-            <version>2026.05v4</version>
+            <version>2026.05v5</version>
         </dependency>
         
-        <!--        <dependency>
-            <groupId>com.github.laim0nas100</groupId>
-            <artifactId>Error-tolerant-commons-config</artifactId>
-            <version>1.4</version>
-        </dependency>-->
         
         <dependency>
             <groupId>com.github.laim0nas100</groupId>

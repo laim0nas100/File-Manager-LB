@@ -18,7 +18,7 @@ import lt.lb.commons.threads.sync.ReadWriteLock;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
-import lt.lb.uncheckedutils.Checked;
+import com.github.laim0nas100.uncheckedutils.Checked;
 
 /**
  * Definitions

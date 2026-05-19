@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
 import javafx.beans.property.*;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
-import lt.lb.uncheckedutils.func.UncheckedRunnable;
+import com.github.laim0nas100.uncheckedutils.func.UncheckedRunnable;
 
 /**
  *

@@ -39,7 +39,7 @@ import lt.lb.recombinator.CodepointFlattener;
 import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
 import lt.lb.recombinator.impl.codepoint.CodepointMatchers;
-import lt.lb.uncheckedutils.Checked;
+import com.github.laim0nas100.uncheckedutils.Checked;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;

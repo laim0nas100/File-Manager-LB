@@ -77,12 +77,12 @@ import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import lt.lb.filemanagerlb.utility.Finder;
 import lt.lb.filemanagerlb.utility.SimpleTask;
-import lt.lb.uncheckedutils.PassableException;
-import lt.lb.uncheckedutils.SafeOpt;
+import com.github.laim0nas100.uncheckedutils.PassableException;
+import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import lt.lb.filemanagerlb.utility.SafeJob;
-import lt.lb.uncheckedutils.Checked;
+import com.github.laim0nas100.uncheckedutils.Checked;
 import org.apache.commons.lang3.Strings;
 
 /**

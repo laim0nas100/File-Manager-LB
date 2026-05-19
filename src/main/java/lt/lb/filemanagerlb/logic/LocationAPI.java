@@ -17,7 +17,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.utility.DesktopApi;
 import lt.lb.filemanagerlb.utility.ErrorReport;
-import lt.lb.uncheckedutils.SafeOpt;
+import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 
 /**

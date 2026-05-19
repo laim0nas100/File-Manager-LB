@@ -41,8 +41,8 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtRealFolder;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
-import lt.lb.uncheckedutils.Checked;
-import lt.lb.uncheckedutils.SafeOpt;
+import com.github.laim0nas100.uncheckedutils.Checked;
+import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
 
