@@ -29,7 +29,6 @@ import lt.lb.filemanagerlb.utility.ExtStringUtils;
 import lt.lb.filemanagerlb.utility.FileNameException;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import lt.lb.filemanagerlb.utility.SimpleTask;
-import lt.lb.jobsystem.ScheduledJobExecutor;
 import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 

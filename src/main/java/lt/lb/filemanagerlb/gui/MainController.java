@@ -1,5 +1,7 @@
 package lt.lb.filemanagerlb.gui;
 
+import com.github.laim0nas100.jobsystem.Job;
+import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
@@ -80,8 +82,6 @@ import lt.lb.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import lt.lb.filemanagerlb.utility.SafeJob;
-import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.events.SystemJobEventName;
 import lt.lb.uncheckedutils.Checked;
 import org.apache.commons.lang3.Strings;
 
@@ -569,11 +569,11 @@ public class MainController extends MyBaseController<MainController> {
             return null;
         });
 
-        mainJob.addListener(SystemJobEventName.ON_EXECUTE, job -> {
+        mainJob.addListener(SystemJobEventName.ON_EXECUTE, (j,cl,data) -> {
             D.jobsExecutor.submit(sortTask);// only relevant if the directory load takes a while
         });
 
-        mainJob.addListener(SystemJobEventName.ON_DONE, job -> {
+        mainJob.addListener(SystemJobEventName.ON_DONE, (j,cl,data) -> {
             sortTask.cancel(true);// just in case
         });
         mainJob.addAfter(sortTask);

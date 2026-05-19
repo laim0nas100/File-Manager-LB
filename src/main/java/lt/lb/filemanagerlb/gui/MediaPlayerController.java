@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
+import lt.lb.filemanagerlb.VLCInit;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.util.*;
@@ -37,9 +38,9 @@ import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
 import lt.lb.commons.threads.sync.WaitTime;
-import lt.lb.fastid.FastID;
+import com.github.laim0nas100.fastid.FastID;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.gui.VLCInit.VLCException;
+import lt.lb.filemanagerlb.VLCInit.VLCException;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;

@@ -1,12 +1,13 @@
 package lt.lb.filemanagerlb.utility;
 
+import com.github.laim0nas100.jobsystem.Job;
+import com.github.laim0nas100.jobsystem.events.JobEventListener;
+import com.github.laim0nas100.jobsystem.events.SystemJobDependency;
+import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.events.JobEventListener;
-import lt.lb.jobsystem.events.SystemJobDependency;
-import lt.lb.jobsystem.events.SystemJobEventName;
+
 import lt.lb.uncheckedutils.func.UncheckedConsumer;
 import lt.lb.uncheckedutils.func.UncheckedFunction;
 
@@ -27,8 +28,8 @@ public class SafeJob<T> extends Job<T> {
     }
 
     public static JobEventListener errorListener() {
-        return lis -> {
-            Optional<ExecutionException> data = lis.getData();
+        return (j, type, d) -> {
+            Optional<ExecutionException> data = d;
             data.map(m -> m.getCause())
                     //                    .filter(ex -> !(ex instanceof CancellationException))// expected
                     .ifPresent(ErrorReport::report);

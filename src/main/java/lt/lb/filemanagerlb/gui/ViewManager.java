@@ -1,5 +1,8 @@
 package lt.lb.filemanagerlb.gui;
 
+import lt.lb.filemanagerlb.VLCInit;
+import com.github.laim0nas100.jobsystem.Dependencies;
+import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -24,15 +27,12 @@ import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.gui.dialog.WebDialogController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.FrameTitle;
-import lt.lb.filemanagerlb.logic.TaskFactory;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FXJob;
-import lt.lb.jobsystem.Dependencies;
-import lt.lb.jobsystem.Job;
-import lt.lb.jobsystem.events.SystemJobEventName;
+import lt.lb.filemanagerlb.utility.SafeJob;
 import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
 
@@ -42,14 +42,13 @@ import org.tinylog.Logger;
  */
 public class ViewManager {
 
-    public static final  SimpleBooleanProperty autoCloseProgressDialogs = new SimpleBooleanProperty(false);
+    public static final SimpleBooleanProperty autoCloseProgressDialogs = new SimpleBooleanProperty(false);
     public static final SimpleBooleanProperty autoStartProgressDialogs = new SimpleBooleanProperty(false);
     public static final SimpleBooleanProperty pinProgressDialogs = new SimpleBooleanProperty(false);
     public static final SimpleBooleanProperty pinTextInputDialogs = new SimpleBooleanProperty(false);
+
     protected ViewManager() {
     }
-
-  
 
 // WINDOW ACTIONS
     public static void newWindow(ExtFolder currentFolder) {
@@ -323,20 +322,22 @@ public class ViewManager {
 
     public static void newMediaPlayer() {
 
-        Job<Boolean> discoverJob = new Job<>(me -> {
+        SafeJob showJob = new FXJob(me -> {
 
-            Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
-                VLCInit.discover();
-            });
-            checkedRun.ifPresent(ErrorReport::report);
-
-            return !checkedRun.isPresent();
-        });
-
-        FXJob showJob = new FXJob(me -> {
+            if (!VLCInit.VLCfound) {
+                Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
+                    VLCInit.discover();
+                });
+                checkedRun.ifPresent(ErrorReport::report);
+                
+                if(!VLCInit.VLCfound){
+                    return;
+                }
+            }
+            
 
             FXMLFrame frame = newFrame(FrameTitle.MEDIA_PLAYER);
-            
+
             MediaPlayerController controller = getController(frame.getID());
             controller.beforeShow();
             frame.show();
@@ -346,8 +347,7 @@ public class ViewManager {
 
         });
 
-        showJob.addDependency(Dependencies.standard(discoverJob, SystemJobEventName.ON_SUCCESSFUL));
-        D.jobsExecutor.submitAll(discoverJob,showJob);
+        D.jobsExecutor.submitAll( showJob);
 
     }
 
@@ -367,5 +367,5 @@ public class ViewManager {
             D.sm.closeFrame(windowID);
         });
     }
-    
+
 }

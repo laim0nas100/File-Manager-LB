@@ -11,7 +11,6 @@ import lt.lb.commons.Java;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.commons.reflect.unified.ReflFields;
 import lt.lb.filemanagerlb.gui.MediaPlayerController;
-import lt.lb.filemanagerlb.gui.VLCInit;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
