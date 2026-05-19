@@ -53,7 +53,7 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.uncheckedutils.Checked;
 import org.tinylog.Logger;
-import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
+import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
@@ -191,7 +191,7 @@ public class MediaPlayerController extends MyBaseController {
 
         EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
         javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
-        newPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
+        newPlayer.videoSurface().set(new ImageViewVideoSurface(imageView));
         imageView.setPreserveRatio(true);
 
         return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {

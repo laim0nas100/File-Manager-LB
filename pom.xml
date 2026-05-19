@@ -129,17 +129,19 @@
             <version>${jackson.version}</version>
         </dependency>
         
-        <!-- https://mvnrepository.com/artifact/uk.co.caprica/vlcj -->
+        <!-- Source: https://mvnrepository.com/artifact/uk.co.caprica/vlcj -->
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj</artifactId>
-            <version>4.8.2</version>
+            <version>4.8.4</version>
+            <scope>compile</scope>
+
         </dependency>
         
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj-javafx</artifactId>
-            <version>1.0.2</version>
+            <version>1.2.0</version>
         </dependency>
         
         <dependency>

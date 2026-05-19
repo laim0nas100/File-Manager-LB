@@ -343,7 +343,6 @@ public class ViewManager {
             frame.show();
             frame.getStage().toFront();
             controller.afterShow();
-            frame.getStage().toFront();
 
         });
 
