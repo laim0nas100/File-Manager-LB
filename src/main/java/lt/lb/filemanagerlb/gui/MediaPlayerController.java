@@ -384,14 +384,15 @@ public class MediaPlayerController extends MyBaseController {
 
         events.add(PlayerEventType.VOL, () -> {
             int tries = 100;
-            while (player.status().isPlaying() && player.audio().volume() != vol) {
-                player.audio().setVolume(vol);
-                Thread.sleep(50);
-                tries--;
-                if (tries <= 0) {
+            var volume = player.audio().volume();
+            do {
+                if(--tries <0 || volume == vol){
                     return;
                 }
-            }
+                player.audio().setVolume(vol);
+                volume = player.audio().volume();
+                Thread.sleep(50);
+            }while(true);
         });
 
     }
@@ -569,18 +570,6 @@ public class MediaPlayerController extends MyBaseController {
                 labelDuration.setText("/ " + formatTimeFull(currentLength));
             }
         });
-//        FX.submit(() -> {
-//            if (!stopping && !pls.isEmpty()) {
-//
-//                this.labelTimePassed.setText(formatTimeFull(millisPassed));
-//                if (inSeekChange.compareAndSet(false, true)) {
-//                    this.seekSlider.valueProperty().set(position * 100);
-//                    inSeekChange.set(false);
-//                }
-//
-//                labelDuration.setText("/ " + formatTimeFull(currentLength));
-//            }
-//        });
     }
 
     public void updateSeek() {
