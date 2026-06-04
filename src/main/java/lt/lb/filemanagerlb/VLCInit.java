@@ -22,8 +22,15 @@ public class VLCInit {
             factoryInstance = null;
         }
     }
+    
+    public static MediaPlayerFactory getFactory(){
+        if(factoryInstance == null){
+            throw new IllegalStateException("Must initialize VLC first");
+        }
+        return factoryInstance;
+    }
 
-    public static MediaPlayerFactory getFactory() throws VLCException {
+    public static MediaPlayerFactory getOrInitFactory() throws VLCException {
         if (factoryInstance != null) {
             return factoryInstance;
         }
@@ -33,7 +40,7 @@ public class VLCInit {
         return factoryInstance;
     }
 
-    public static class VLCException extends RuntimeException {
+    public static class VLCException extends Exception {
 
         public VLCException(String str) {
             super(str);

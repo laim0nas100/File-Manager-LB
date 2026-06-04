@@ -162,7 +162,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private Player gcp() {
         if (pls.isEmpty()) {
-            throw new VLCException("No available players");
+            throw new IllegalStateException("No available players");
         }
         return pls.get(playerIDs.getLast());
     }

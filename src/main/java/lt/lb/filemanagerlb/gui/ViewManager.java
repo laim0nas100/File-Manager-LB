@@ -1,8 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
 import lt.lb.filemanagerlb.VLCInit;
-import com.github.laim0nas100.jobsystem.Dependencies;
-import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -326,7 +324,7 @@ public class ViewManager {
 
             if (!VLCInit.VLCfound) {
                 Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
-                    VLCInit.discover();
+                    VLCInit.getOrInitFactory();// init a media player factory here
                 });
                 checkedRun.ifPresent(ErrorReport::report);
                 
