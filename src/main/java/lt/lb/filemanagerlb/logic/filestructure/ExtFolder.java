@@ -6,10 +6,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import javafx.beans.property.BooleanProperty;
-import javafx.util.Callback;
 import lt.lb.commons.containers.collections.ImmutableCollections;
-import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -36,7 +33,7 @@ public abstract class ExtFolder extends ExtPath {
         return getFilesMap().values();
     }
     
-    protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled);
+    protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> buffer, Supplier<Boolean> isCanceled);
     
     public ExtPath getIgnoreCase(String name) {
         if (hasFileIgnoreCase(name)) {

@@ -515,14 +515,15 @@ public class MainController extends MyBaseController<MainController> {
         final List<ExtPath> newList = new ArrayList<>();
 
         SafeJob<Void> sortTask = new SafeJob<>(me -> {
-            Thread.sleep(200);
+            Thread.sleep(100);
             while (!me.isCancelled() && MC.currentDir == folderInitiated) {
                 if (extTableView.table.getItems().size() != newList.size()) {
                     FX.runAndWait(() -> {
                         extTableView.updateContentsAndSortPartial(newList);
+                        localSearchLabel.setText("Local(" + newList.size() + ")");
                     });
                 }
-                Thread.sleep(500);
+                Thread.sleep(200);
             }
         });
 

@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lt.lb.commons.containers.collections.ImmutableCollections;
-import lt.lb.commons.containers.collections.ObjectBuffer;
 import lt.lb.commons.threads.TimestampingExecutionExclusive;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -38,7 +38,7 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled) {
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> buffer, Supplier<Boolean> isCanceled) {
 
         Callable<Map<String, ExtPath>> call = () -> {
 
@@ -49,13 +49,13 @@ public class ExtRealFolder extends ExtFolder {
 
                 try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(parent))) {
                     for (Path f : dirStream) {
+
                         if (isCanceled != null && isCanceled.get()) {
                             Logger.info("Canceled from populate");
                             break;
                         }
 
                         final String name = f.getFileName().toString();
-//                        final String name = ExtStringUtils.replaceOnce(f.toString(), parent, "");
                         final String filePathStr = f.toString();
                         ExtPath file = null;
                         if (Files.exists(f)) {
@@ -68,16 +68,15 @@ public class ExtRealFolder extends ExtFolder {
                             }
                             paths.put(name, file);
                             if (buffer != null) {
-                                buffer.add(file);
+                                if (D.slowDownFiles) {
+                                    Thread.sleep(10);
+                                }
+                                buffer.accept(file);
                             }
                         }
 
                     }
                 }
-            }
-
-            if (buffer != null) {
-                buffer.flush();
             }
 
             return paths;
@@ -96,7 +95,7 @@ public class ExtRealFolder extends ExtFolder {
     @Override
     public Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
-        ObjectBuffer<ExtPath> buffer = new ObjectBuffer(receiver, 500);
+        Consumer<ExtPath> buffer = receiver != null ? receiver::add : null;
         return populateFolder(true, buffer, isCanceled);
     }
 

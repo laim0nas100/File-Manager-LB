@@ -2,7 +2,6 @@ package lt.lb.filemanagerlb;
 
 import com.github.laim0nas100.jobsystem.ScheduledJobExecutor;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -14,7 +13,6 @@ import lt.lb.commons.javafx.scenemanagement.MultiStageManager;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
-import lt.lb.commons.threads.sync.ReadWriteLock;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
@@ -34,12 +32,14 @@ public class D {
 //            this.defaultSupplier = () -> new FastWaitingExecutor(8, WaitTime.ofSeconds(4));
             this.defaultSchedulerSupplier = () -> Executors.newScheduledThreadPool(4);
 
-            setService("date-size", () -> new FastWaitingExecutor(16, WaitTime.ofSeconds(12)));
+//            setService("date-size", () -> new FastWaitingExecutor(16, WaitTime.ofSeconds(12)));
+            setService("date-size", () -> Checked.createDefaultExecutorService());
 
             setMainService("MAIN");
             setService("MAIN", () -> {
 //            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(120));
-                return new NestedTaskSubmitionExecutorLayer(Checked.createDefaultExecutorService());
+//                return new NestedTaskSubmitionExecutorLayer(Checked.createDefaultExecutorService());
+                return Checked.createDefaultExecutorService();
             });
         }
 
@@ -71,5 +71,8 @@ public class D {
     public static ReentrantLock lock = new ReentrantLock();
 
     public static Serializable dragInitWindowID = "";
+    
+    
+    public static boolean slowDownFiles = false; // for partial folder view display testing
 
 }

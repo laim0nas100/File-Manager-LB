@@ -5,12 +5,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import lt.lb.commons.containers.collections.ObjectBuffer;
-import lt.lb.commons.javafx.FXTask;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
@@ -106,9 +103,9 @@ public class VirtualFolder extends ExtFolder {
     }
     
     @Override
-    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, ObjectBuffer buffer, Supplier<Boolean> isCanceled) {
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> buffer, Supplier<Boolean> isCanceled) {
         if (buffer != null) {
-            buffer.addAll(getFilesCollection());
+            getFilesCollection().forEach(buffer);
         }
         return CompletableFuture.completedFuture(null);
         

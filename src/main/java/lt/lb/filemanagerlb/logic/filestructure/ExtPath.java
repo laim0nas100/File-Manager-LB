@@ -11,7 +11,6 @@ import lt.lb.commons.Lazy;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
-import lt.lb.filemanagerlb.gui.MainController;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
@@ -21,7 +20,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 
 /**
  *
- * @author Lemmin
+ * @author laim0nas100
  */
 public class ExtPath {
     

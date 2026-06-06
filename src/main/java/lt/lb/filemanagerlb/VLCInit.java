@@ -7,7 +7,7 @@ import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 
 /**
  *
- * @author Lemmin
+ * @author laim0nas100
  */
 public class VLCInit {
 
@@ -49,8 +49,6 @@ public class VLCInit {
 
     public static void discover() throws VLCException {
         if (!VLCfound) {
-//            MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
-//            mediaPlayerFactory.release();
             VLCfound = new NativeDiscovery().discover();
             
             if (VLCfound) {

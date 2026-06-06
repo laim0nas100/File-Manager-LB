@@ -323,16 +323,14 @@ public class ViewManager {
         SafeJob showJob = new FXJob(me -> {
 
             if (!VLCInit.VLCfound) {
-                Optional<Throwable> checkedRun = Checked.checkedRun(() -> {
+                Checked.checkedRun(() -> {
                     VLCInit.getOrInitFactory();// init a media player factory here
-                });
-                checkedRun.ifPresent(ErrorReport::report);
-                
-                if(!VLCInit.VLCfound){
+                }).ifPresent(ErrorReport::report);
+
+                if (!VLCInit.VLCfound) {
                     return;
                 }
             }
-            
 
             FXMLFrame frame = newFrame(FrameTitle.MEDIA_PLAYER);
 
@@ -344,7 +342,7 @@ public class ViewManager {
 
         });
 
-        D.jobsExecutor.submitAll( showJob);
+        D.jobsExecutor.submitAll(showJob);
 
     }
 
