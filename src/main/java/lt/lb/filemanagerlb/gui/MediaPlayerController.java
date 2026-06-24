@@ -40,7 +40,6 @@ import lt.lb.commons.threads.sync.EventQueue;
 import lt.lb.commons.threads.sync.WaitTime;
 import com.github.laim0nas100.fastid.FastID;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.VLCInit.VLCException;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -197,14 +196,14 @@ public class MediaPlayerController extends MyBaseController {
         return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
             return new Group(imageView);
         }).map(stageFrame -> {
-            if (showVideo.selectedProperty().get()) {
+            if (showVideo.isSelected()) {
                 stageFrame.show();
             } else {
                 stageFrame.hide();
             }
             Stage stage = stageFrame.getStage();
             stage.setOnCloseRequest(eh -> {
-                showVideo.selectedProperty().set(false);
+                showVideo.setSelected(false);
                 eh.consume();
                 stage.hide();
             });
@@ -340,6 +339,13 @@ public class MediaPlayerController extends MyBaseController {
                 event.consume();
             }
         });
+        
+         table.setOnDragDone(event -> {
+            if (!event.isDropCompleted()) {
+                update();
+            }
+            D.dragInitWindowID = "";
+        });
 
         table.setOnDragOver((DragEvent event) -> {
             if (this.getID().equals(D.dragInitWindowID)) {
@@ -368,13 +374,7 @@ public class MediaPlayerController extends MyBaseController {
             event.setDropCompleted(success);
             event.consume();
         });
-        table.setOnDragDone(event -> {
-            if (!event.isDropCompleted()) {
-                update();
-            }
-            D.dragInitWindowID = "";
-
-        });
+       
 
         extTableView.updateContentsAndSort(backingList);
     }
@@ -526,7 +526,7 @@ public class MediaPlayerController extends MyBaseController {
         playType.getSelectionModel().select(0);
 
         showVideo.selectedProperty().addListener(listener -> {
-            boolean visible = showVideo.selectedProperty().get();
+            boolean visible = showVideo.isSelected();
             if (oldMode) {
                 getCurrentFrameOld().setVisible(visible);
                 if (visible) {
