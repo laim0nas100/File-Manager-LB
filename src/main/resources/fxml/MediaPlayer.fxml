@@ -37,7 +37,10 @@
             <Slider fx:id="seekSlider" minWidth="-Infinity" prefHeight="14.0" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets />
-               </HBox.margin></Slider>
+               </HBox.margin>
+               <effect>
+                  <DropShadow />
+               </effect></Slider>
             <Label fx:id="labelTimePassed" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
@@ -60,6 +63,9 @@
                <FlowPane.margin>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </FlowPane.margin>
+               <effect>
+                  <DropShadow />
+               </effect>
             </Slider>
             <Button fx:id="buttonPlayPrev" alignment="TOP_CENTER" contentDisplay="TOP" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="26.0" prefWidth="40.0" text="⏮" textAlignment="CENTER" textOverrun="CLIP">
                <effect>
@@ -109,38 +115,30 @@
                <FlowPane.margin>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </FlowPane.margin>
+               <effect>
+                  <DropShadow />
+               </effect>
             </ChoiceBox>
-            <VBox>
+            <Button alignment="TOP_CENTER" mnemonicParsing="false" onAction="#shuffle" text="Shuffle">
                <FlowPane.margin>
-                  <Insets />
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </FlowPane.margin>
-               <children>
-                  <CheckBox fx:id="showVideo" mnemonicParsing="false" text="Show Video">
-                     <VBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" />
-                     </VBox.margin>
-                  </CheckBox>
-                  <CheckBox fx:id="seamless" minWidth="-Infinity" mnemonicParsing="false" prefHeight="17.0" prefWidth="90.0" text="Seamless">
-                     <VBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" />
-                     </VBox.margin>
-                  </CheckBox>
-               </children>
-            </VBox>
-            <HBox>
-               <children>
-                  <Button mnemonicParsing="false" onAction="#shuffle" text="Shuffle">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
-                  </Button>
-                  <Button mnemonicParsing="false" onAction="#stateChange" text="State">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
-                  </Button>
-               </children>
-            </HBox>
+               <effect>
+                  <DropShadow />
+               </effect>
+            </Button>
+            <Button alignment="TOP_CENTER" mnemonicParsing="false" onAction="#stateChange" text="State">
+               <FlowPane.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </FlowPane.margin>
+               <effect>
+                  <DropShadow />
+               </effect>
+            </Button>
+            <CheckBox fx:id="showVideo" mnemonicParsing="false" text="Video">
+               <effect>
+                  <DropShadow />
+               </effect></CheckBox>
          </children>
       </FlowPane>
       <TableView fx:id="table" prefHeight="277.0" prefWidth="693.0" VBox.vgrow="ALWAYS">

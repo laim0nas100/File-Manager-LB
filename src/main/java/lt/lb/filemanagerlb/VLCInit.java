@@ -4,6 +4,7 @@ import org.tinylog.Logger;
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
 
 /**
  *
@@ -14,28 +15,30 @@ public class VLCInit {
     public static String VLC_SEARCH_PATH;
     public static boolean VLCfound = false;
     private static MediaPlayerFactory factoryInstance;
-    
-    public static void release(){
+
+    public static synchronized void release() {
         VLCfound = false;
-        if(factoryInstance != null){
+        if (factoryInstance != null) {
             factoryInstance.release();
             factoryInstance = null;
         }
     }
-    
-    public static MediaPlayerFactory getFactory(){
-        if(factoryInstance == null){
+
+    public static MediaPlayerFactory getFactory() {
+        if (factoryInstance == null) {
             throw new IllegalStateException("Must initialize VLC first");
         }
         return factoryInstance;
     }
 
-    public static MediaPlayerFactory getOrInitFactory() throws VLCException {
+    public static synchronized MediaPlayerFactory getOrInitFactory() throws VLCException {
         if (factoryInstance != null) {
             return factoryInstance;
         }
         discover();
         factoryInstance = new MediaPlayerFactory();
+        MediaPlayer mediaPlayer = factoryInstance.mediaPlayers().newMediaPlayer();
+        mediaPlayer.release();
 
         return factoryInstance;
     }
@@ -47,10 +50,10 @@ public class VLCInit {
         }
     }
 
-    public static void discover() throws VLCException {
+    public static synchronized void discover() throws VLCException {
         if (!VLCfound) {
             VLCfound = new NativeDiscovery().discover();
-            
+
             if (VLCfound) {
                 Logger.info(RuntimeUtil.getLibVlcLibraryName());
             } else {

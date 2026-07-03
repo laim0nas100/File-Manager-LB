@@ -38,7 +38,6 @@ import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.EventQueue;
 import lt.lb.commons.threads.sync.WaitTime;
-import com.github.laim0nas100.fastid.FastID;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.dialog.RenameDialogController.FileCallback;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
@@ -77,8 +76,7 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
-    public final static boolean seamlessDisabled = true;
-    public static boolean oldMode = true;
+    public static boolean oldMode = false;
 
     public static enum PlayerState {
         PLAYING, PAUSED, STOPPED, NEW
@@ -103,23 +101,18 @@ public class MediaPlayerController extends MyBaseController {
     @FXML
     public ChoiceBox<String> playType;
     @FXML
-    public CheckBox seamless;
-    @FXML
     public Button buttonPlayPrev;
     @FXML
     public Button buttonPlayNext;
 
     private SelectableViewProperties<ExtPath> tableProperties;
 
-    private volatile MediaPlayer oldplayer;
     private boolean startedWithVideo = false;
     private int index = 0;
-    private Float minDelta = 0.0001f;
-    private long seamlessSecondsMax = 12;
+    private static final Float minDelta = 0.0001f;
     private long currentLength = 0;
     private AtomicInteger lastVolume = new AtomicInteger(-1);
     private boolean stopping = false;
-    private boolean inSeamless = false;
     private boolean ignoreSeek = false;
     private static final String typeLoopSong = "Loop file";
     private static final String typeLoopList = "Loop list";
@@ -130,16 +123,12 @@ public class MediaPlayerController extends MyBaseController {
     private ExtPath filePlaying;
     private ArrayList<ExtPath> backingList = new ArrayList<>();
 
-    private HashMap<FastID, Player> pls = new HashMap<>();
-    private ArrayDeque<FastID> playerIDs = new ArrayDeque<>();
+    private ArrayDeque<Player> pls = new ArrayDeque<>();
 
     private static class Player {
-
         public MediaPlayer media;
         public StageFrame stageFrame;
         public JFrame jFrame;
-        public final FastID id = FastID.getAndIncrementGlobal();
-
     }
     private ExecutorService exe = new FastWaitingExecutor(1);
     private ExecutorService exe2 = new FastWaitingExecutor(1);
@@ -163,7 +152,7 @@ public class MediaPlayerController extends MyBaseController {
         if (pls.isEmpty()) {
             throw new IllegalStateException("No available players");
         }
-        return pls.get(playerIDs.getLast());
+        return pls.getLast();
     }
 
     private MediaPlayer getCurrentPlayer() {
@@ -398,13 +387,11 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     private void addPlayer(Player player) {
-        pls.put(player.id, player);
-        playerIDs.addLast(player.id);
+        pls.addLast(player);
     }
 
     private void removePlayer(Player player) {
-        pls.remove(player.id);
-        playerIDs.remove(player.id);
+        pls.remove(player);
     }
 
     @Override
@@ -573,7 +560,6 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void updateSeek() {
-        final boolean seamlessVal = !seamlessDisabled && seamless.selectedProperty().get();
         events.add(PlayerEventType.SEEK, () -> {
             if (ignoreSeek || stopping) {
                 return;
@@ -589,10 +575,7 @@ public class MediaPlayerController extends MyBaseController {
             double secondsLeft = (double) (this.currentLength - millisPassed) / 1000;
             this.updateSeekLabels(position, millisPassed);
 
-            if (seamlessVal && (secondsLeft < seamlessSecondsMax) && (secondsLeft > 2)) {
-                playNext(1, false, true, this.currentLength - millisPassed);
-
-            } else if (secondsLeft < minDelta) {
+            if (secondsLeft < minDelta) {
                 Logger.info("Seconds left" + secondsLeft);
                 playNext(1, false);
             }
@@ -662,7 +645,7 @@ public class MediaPlayerController extends MyBaseController {
         stopping = true;
 
         stop();
-        pls.values().forEach(player -> {
+        pls.forEach(player -> {
             Checked.checkedRun(() -> {
                 player.media.controls().stop();
                 player.media.release();
@@ -673,19 +656,19 @@ public class MediaPlayerController extends MyBaseController {
                 }
                 Logger.info("Released vlc player");
             }).ifPresent(ErrorReport::report);
-
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
         execService.shutdown();
         exe.shutdown();
         exe2.shutdown();
         events.shutdown();
+//        pls.clear();
 //        events = null;
 
-        Logger.info("FINAL EXIT " + extTableView.resizeTask.isInAction());
+        Logger.info("FINAL EXIT ");
     }
 
-    public void playNext(int increment, boolean ignoreModifiers, Object... opt) {
+    public void playNext(int increment, boolean ignoreModifiers) {
 //        events.cancelAll("PLAY");
         events.add(PlayerEventType.PLAY, () -> {
 
@@ -716,12 +699,7 @@ public class MediaPlayerController extends MyBaseController {
                 item = (ExtPath) backingList.get(index);
             }
 
-            if (!seamlessDisabled && this.pls.size() == 1 && opt.length > 1 && (boolean) opt[0]) {
-//                playSeemless(item, (long) opt[1]);
-                play(item);
-            } else {
-                play(item);
-            }
+             play(item);
 
         });
 
@@ -820,106 +798,6 @@ public class MediaPlayerController extends MyBaseController {
 
     }
 
-    /*
-    private void playSeemless(ExtPath item, final long millisLeft) {
-        if (seamlessDisabled) {
-            return;
-        }
-
-        inSeamless = true;
-        oldplayer = getCurrentPlayer();
-        Value<Double> oldVolume = new Value<>((double) oldplayer.audio().volume());
-//        oldplayer.removeMediaPlayerEventListener(defaultPlayerEventAdapter);
-        oldplayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
-            @Override
-            public void finished(MediaPlayer mediaPlayer) {
-                Logger.info("Finished old player");
-                int i = 1;
-                while (players.size() > 1) {
-                    framesOld.pollFirst().dispose();
-                    players.pollFirst().release();
-//                    oldplayer.release();
-                    Logger.info("Frame/Player collected " + i++);
-                }
-            }
-
-            @Override
-            public void stopped(MediaPlayer mediaPlayer) {
-                Logger.info("Finished old player");
-                int i = 1;
-                while (players.size() > 1) {
-                    framesOld.pollFirst().dispose();
-                    players.pollFirst().release();
-//                    oldplayer.release();
-                    Logger.info("Frame/Player collected " + i++);
-                }
-            }
-        });
-        MediaPlayer newPlayer = getPreparedMediaPlayer();
-        players.add(newPlayer);
-
-        Value<Future> promise = new Value<>();
-
-        Thread toThread = new SimpleTask() {
-            @Override
-            protected Void call() throws Exception {
-                promise.get().get();
-
-                double timeChangeMillis = 1000;
-                double overTime = millisLeft;
-
-                double inc = oldVolume.get() / (overTime / timeChangeMillis);
-                double difference = inc;
-//                
-//                  oldVolume 100
-//                  over 12 seconds
-//                  change volume each 500 millis
-//                  12000 / 500 = 24 iterations
-//                  100 / 24 ~ 4.16
-//                 
-//                 
-//                  oldVolume 100
-//                  over 8 seconds
-//                 
-//                  8000 / 500 = 16 iterations
-//                  100 / 16 ~ 6.25
-                 
-                 
-                long millis = millisLeft;
-
-                while (oldVolume.get() - difference > 1 && millis > 10) {
-
-                    int setOldVol = (int) (oldVolume.get() - difference);
-                    setVolume(oldplayer, setOldVol);
-                    setVolume(getCurrentPlayer(), (int) difference);
-//                    Logger.info("Players==", oldplayer.mediaPlayerInstance(), getCurrentPlayer().mediaPlayerInstance());
-//                    Logger.info("Volume sets:", setOldVol, (int) difference);
-                    long time = System.currentTimeMillis();
-                    Thread.sleep((long) timeChangeMillis);
-
-                    time = System.currentTimeMillis() - time;
-
-                    millis -= time;
-                    difference += inc;
-
-                }
-                Logger.info("End volume resize task");
-                setVolume(getCurrentPlayer(), oldVolume.get().intValue());
-                inSeamless = false;
-
-                return null;
-            }
-        }.toThread();
-        this.onPlayTaskComplete.add(() -> {
-//            inSeamless = false;
-            setVolume(getCurrentPlayer(), 0); // set new player volume 0 asap
-        });
-
-        Future play = play(item, 0);
-        promise.set(play);
-        toThread.start();
-    }
-     */
     private static String format2Digit(long time) {
         return time >= 10 ? ":" + time : ":0" + time;
     }
