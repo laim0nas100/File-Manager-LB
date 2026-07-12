@@ -48,7 +48,7 @@ import org.tinylog.Logger;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class FileManagerLB {
 
@@ -69,7 +69,7 @@ public class FileManagerLB {
 
     public static boolean shutdown = false;
 
-    public static boolean darkMode = OsThemeDetector.getDetector().isDark();
+    public static SafeOpt<Boolean> darkMode = SafeOpt.ofLazy(() -> OsThemeDetector.getDetector().isDark());
 
     public static void main(String[] args) {
 
@@ -79,7 +79,7 @@ public class FileManagerLB {
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
                 new WithStylesheet(D.cLoader.getResource("css/main.css")),
                 new WithDecoration(FrameState.FrameStateShow.instance, d -> {
-                    if (darkMode) {
+                    if (darkMode.orElse(false)) {
                         FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm()).ifPresent(theme -> {
                             d.getScene().getStylesheets().add(theme);
                         });
@@ -281,10 +281,11 @@ public class FileManagerLB {
             if (!Files.isDirectory(userdir)) {
                 Files.createDirectories(userdir);
             }
+            P.reload();
         } catch (IOException e) {
             ErrorReport.report(e);
         }
-        P.reload();
+        
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
         MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
         try {

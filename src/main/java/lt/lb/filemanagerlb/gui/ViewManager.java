@@ -36,7 +36,7 @@ import org.tinylog.Logger;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class ViewManager {
 

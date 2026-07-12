@@ -43,7 +43,7 @@ import com.github.laim0nas100.uncheckedutils.SafeOpt;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class AdvancedRenameController extends MyBaseController {
 

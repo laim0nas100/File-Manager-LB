@@ -9,6 +9,16 @@
                 <goal>-Dshaderelease</goal>
             </goals>
         </action>
+        
+        <action>
+            <actionName>CUSTOM-Native</actionName>
+            <displayName>Native image</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+                <goal>-Dnative</goal>
+            </goals>
+        </action>
         <action>
             <actionName>CUSTOM-clean install update</actionName>
             <displayName>clean install update</displayName>

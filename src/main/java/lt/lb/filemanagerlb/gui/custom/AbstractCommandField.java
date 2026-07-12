@@ -9,7 +9,7 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public abstract class AbstractCommandField {
 

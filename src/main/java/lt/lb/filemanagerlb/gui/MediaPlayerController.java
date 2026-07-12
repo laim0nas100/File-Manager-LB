@@ -51,12 +51,14 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import com.github.laim0nas100.uncheckedutils.Checked;
 import org.tinylog.Logger;
-import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
+//import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
+import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
+import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurface;
 
 /**
  * FXML Controller class
@@ -179,7 +181,8 @@ public class MediaPlayerController extends MyBaseController {
 
         EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
         javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
-        newPlayer.videoSurface().set(new ImageViewVideoSurface(imageView));
+        VideoSurface surface = ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView);
+        newPlayer.videoSurface().set(surface);
         imageView.setPreserveRatio(true);
 
         return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {

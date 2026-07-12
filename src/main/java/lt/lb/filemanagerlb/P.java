@@ -1,12 +1,16 @@
 package lt.lb.filemanagerlb;
 
+import com.github.laim0nas100.cfg.KeyProp;
+import com.github.laim0nas100.cfg.KeyProp.KP;
+import com.github.laim0nas100.cfg.KeyProp.KeyDefaultProperty;
+import com.github.laim0nas100.cfg.TolerantConfig;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Supplier;
-import lt.lb.KeyProp;
-import lt.lb.TolerantConfig;
-import lt.lb.KeyProp.KP;
-import lt.lb.KeyProp.KeyDefaultProperty;
 import lt.lb.commons.Java;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.commons.reflect.unified.ReflFields;
@@ -15,52 +19,65 @@ import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.tinylog.Logger;
 
 /**
  * Parameters
+ *
  * @author laim0nas100
  */
 public class P {
-    
-    public static TolerantConfig<ImmutableConfiguration> parameters;
 
-    public static final KeyDefaultProperty<Boolean> debug = KeyProp.of("debug",false).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Boolean> showAbout = KeyProp.of("showAbout",true).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Integer> lookDepth = KeyProp.of("lookDepth", 2).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> ROOT_NAME = KeyProp.of("ROOT_NAME", "ROOT").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Integer> maxThreadsForTask = KeyProp.of("maxThreadsForTask", Java.getAvailableProcessors()).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> userDir = KeyProp.of("userDir", D.HOME_DIR.absolutePath).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Boolean> bufferedFileStreams = KeyProp.of("bufferedFileStreams", Boolean.FALSE).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> virtualPrefix = KeyProp.of("virtualPrefix", "Virtual_").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> vlcPath = KeyProp.of("vlcPath", D.HOME_DIR + Java.getFileSeparator() + "lib").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Boolean> oldPlayerMode = KeyProp.of("oldPlayerMode", false).toPreparedCachableDefaultProperty(getConfig());
+    public static TolerantConfig parameters;
 
-    public static final KeyDefaultProperty<String> number = KeyProp.of("filter.number", "#").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> fileName = KeyProp.of("filter.fileName", "<n>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> nameNoExt = KeyProp.of("filter.nameNoExt", "<nne>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> filePath = KeyProp.of("filter.filePath", "<ap>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> extension = KeyProp.of("filter.extension", "<ne>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> parent1 = KeyProp.of("filter.parent1", "<p1>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> parent2 = KeyProp.of("filter.parent2", "<p2>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> custom = KeyProp.of("filter.custom", "<c>").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> relativeCustom = KeyProp.of("filter.relativeCustom", "<rc>").toPreparedCachableDefaultProperty(getConfig());
+    public static <T> KeyDefaultProperty<T> prop(String key, T def) {
+        KeyDefaultProperty prop = null;
+        if (def instanceof Boolean) {
+            prop = KeyProp.ofBoolean(key).cache(true).toPreparedKeyDefaultProperty((boolean) def, getConfig());
+        } else if (def instanceof Integer) {
+            prop = KeyProp.ofInteger(key).cache(true).toPreparedKeyDefaultProperty((int) def, getConfig());
+        } else if (def instanceof String) {
+            prop = KeyProp.ofString(key).cache(true).toPreparedKeyDefaultProperty((String) def, getConfig());
+        } else {
+            throw new IllegalArgumentException("type of " + def + " is not implemented");
+        }
+        return Objects.requireNonNull(prop);
+    }
 
-    public static final KeyDefaultProperty<String> commandInit = KeyProp.of("code.init", "init").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Integer> truncateAfter = KeyProp.of("code.truncateAfter", 1000000).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandGenerate = KeyProp.of("code.commandGenerate", "generate").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandApply = KeyProp.of("code.commandApply", "apply").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandClear = KeyProp.of("code.clear", "clear").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandCancel = KeyProp.of("code.cancel", "cancel").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandList = KeyProp.of("code.list", "list").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandListRec = KeyProp.of("code.listRec", "listRec").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandSetCustom = KeyProp.of("code.setCustom", "setCustom").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandHelp = KeyProp.of("code.help", "help").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandListParams = KeyProp.of("code.listParameters", "list").toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<Integer> maxExecutablesAtOnce = KeyProp.of("code.maxThreadsForCommand", maxThreadsForTask.getDefault()).toPreparedCachableDefaultProperty(getConfig());
-    public static final KeyDefaultProperty<String> commandCopyFolderStructure = KeyProp.of("code.copyFolderStructure", "copyStructure").toPreparedCachableDefaultProperty(getConfig());
+    public static final KeyDefaultProperty<Boolean> debug = prop("debug", false);
+    public static final KeyDefaultProperty<Boolean> showAbout = prop("showAbout", false);
+    public static final KeyDefaultProperty<Integer> lookDepth = prop("lookDepth", 2);
+    public static final KeyDefaultProperty<String> ROOT_NAME = prop("ROOT_NAME", "ROOT");
+    public static final KeyDefaultProperty<Integer> maxThreadsForTask = prop("maxThreadsForTask", Java.getAvailableProcessors());
+    public static final KeyDefaultProperty<String> userDir = prop("userDir", D.HOME_DIR.absolutePath);
+    public static final KeyDefaultProperty<Boolean> bufferedFileStreams = prop("bufferedFileStreams", false);
+    public static final KeyDefaultProperty<String> virtualPrefix = prop("virtualPrefix", "Virtual_");
+    public static final KeyDefaultProperty<String> vlcPath = prop("vlcPath", D.HOME_DIR + Java.getFileSeparator() + "lib");
+    public static final KeyDefaultProperty<Boolean> oldPlayerMode = prop("oldPlayerMode", false);
+
+    public static final KeyDefaultProperty<String> number = prop("filter.number", "#");
+    public static final KeyDefaultProperty<String> fileName = prop("filter.fileName", "<n>");
+    public static final KeyDefaultProperty<String> nameNoExt = prop("filter.nameNoExt", "<nne>");
+    public static final KeyDefaultProperty<String> filePath = prop("filter.filePath", "<ap>");
+    public static final KeyDefaultProperty<String> extension = prop("filter.extension", "<ne>");
+    public static final KeyDefaultProperty<String> parent1 = prop("filter.parent1", "<p1>");
+    public static final KeyDefaultProperty<String> parent2 = prop("filter.parent2", "<p2>");
+    public static final KeyDefaultProperty<String> custom = prop("filter.custom", "<c>");
+    public static final KeyDefaultProperty<String> relativeCustom = prop("filter.relativeCustom", "<rc>");
+
+    public static final KeyDefaultProperty<String> commandInit = prop("code.init", "init");
+    public static final KeyDefaultProperty<Integer> truncateAfter = prop("code.truncateAfter", 1000000);
+    public static final KeyDefaultProperty<String> commandGenerate = prop("code.commandGenerate", "generate");
+    public static final KeyDefaultProperty<String> commandApply = prop("code.commandApply", "apply");
+    public static final KeyDefaultProperty<String> commandClear = prop("code.clear", "clear");
+    public static final KeyDefaultProperty<String> commandCancel = prop("code.cancel", "cancel");
+    public static final KeyDefaultProperty<String> commandList = prop("code.list", "list");
+    public static final KeyDefaultProperty<String> commandListRec = prop("code.listRec", "listRec");
+    public static final KeyDefaultProperty<String> commandSetCustom = prop("code.setCustom", "setCustom");
+    public static final KeyDefaultProperty<String> commandHelp = prop("code.help", "help");
+    public static final KeyDefaultProperty<String> commandListParams = prop("code.listParameters", "list");
+    public static final KeyDefaultProperty<Integer> maxExecutablesAtOnce = prop("code.maxThreadsForCommand", maxThreadsForTask.getDefault());
+    public static final KeyDefaultProperty<String> commandCopyFolderStructure = prop("code.copyFolderStructure", "copyStructure");
 
     public static List<KP> getActiveParameters() {
         return ReflFields.getConstantFields(P.class, KeyProp.KeyProperty.class)
@@ -68,15 +85,19 @@ public class P {
                 .map(f -> new KP(f.getKey(), f.resolve(P.parameters)))
                 .toUnmodifiableList();
     }
-    
-    private static Supplier<List<TolerantConfig>> getConfig(){
+
+    private static Supplier<List<TolerantConfig>> getConfig() {
         return () -> ImmutableCollections.listOf(P.parameters);
     }
 
-    public static void reload() {
+    public static void reload() throws IOException {
 
-        Configurations conf = new Configurations();
-        TolerantConfig<ImmutableConfiguration> param = TolerantConfig.ofSuplierCached(() -> conf.properties(D.HOME_DIR.Parameters.absolutePath));
+        Properties properties = new Properties();
+        properties.load(Files.newBufferedReader(D.HOME_DIR.Parameters.getPath()));
+
+        TolerantConfig param = TolerantConfig.of(properties);
+
+
         P.parameters = param;
         D.DEBUG.set(P.debug.resolve(param));
         D.DEPTH = P.lookDepth.resolve(param);
@@ -112,7 +133,6 @@ public class P {
 
         param.getEntries().forEachRemaining(entry -> Logger.info(entry.getKey() + "=" + entry.getValue()));
 
-        
     }
 
 }

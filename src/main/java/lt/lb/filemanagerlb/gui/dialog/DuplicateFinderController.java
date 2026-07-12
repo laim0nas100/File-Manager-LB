@@ -21,7 +21,7 @@ import lt.lb.filemanagerlb.utility.PathStringCommands;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class DuplicateFinderController extends MyBaseController {
 

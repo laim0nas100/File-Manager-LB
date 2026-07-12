@@ -18,7 +18,7 @@ import lt.lb.filemanagerlb.utility.*;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class RenameDialogController extends TextInputDialogController {
 
@@ -47,16 +47,6 @@ public class RenameDialogController extends TextInputDialogController {
 
     });
 
-//    private TimeoutTask folderUpdateTask = new TimeoutTask(500, 100, () -> {
-//        update();
-//        FX.submit(() -> {
-//            String trim = textField.getText().trim();
-//            if (!listToCheck.contains(trim) && trim.length() > 0) {
-//                nameAvailable.setText("Available");
-//                nameIsAvailable.set(true);
-//            }
-//        });
-//    });
     @Override
     public void exit() {
         super.exit();

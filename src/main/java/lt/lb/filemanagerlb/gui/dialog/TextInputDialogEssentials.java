@@ -2,7 +2,7 @@ package lt.lb.filemanagerlb.gui.dialog;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public interface TextInputDialogEssentials {
     public void apply();

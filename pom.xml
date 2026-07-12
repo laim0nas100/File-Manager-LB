@@ -14,6 +14,7 @@
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
         <commons-lb.dir>lt.lb.commons</commons-lb.dir>
         <commons-lb.version>local-jar</commons-lb.version>
+        <native.maven.plugin.version>1.1.3</native.maven.plugin.version>
         
         <!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
         <commons-lb.version>2025.08v2</commons-lb.version>-->
@@ -69,12 +70,6 @@
         </dependency>
         
         
-        <dependency>
-            <groupId>com.github.laim0nas100</groupId>
-            <artifactId>Error-tolerant-commons-config</artifactId>
-            <version>1.10</version>
-        </dependency>
-        
         <!-- https://mvnrepository.com/artifact/org.tinylog/slf4j-tinylog -->
         <dependency>
             <groupId>org.tinylog</groupId>
@@ -103,25 +98,10 @@
             <version>2.13.3</version>
         </dependency>
 
-
-        
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.60</version>
         </dependency>
         
         <!-- Source: https://mvnrepository.com/artifact/uk.co.caprica/vlcj -->
@@ -136,7 +116,7 @@
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj-javafx</artifactId>
-            <version>1.1.0</version>
+            <version>1.0.2</version>
         </dependency>
         
         <dependency>
@@ -152,33 +132,16 @@
         </dependency>
         
         
-        <!--        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.25</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>me.xdrop</groupId>
             <artifactId>fuzzywuzzy</artifactId>
             <version>1.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-configuration2</artifactId>
-            <version>2.7</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.18.0</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>1.9.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -192,10 +155,58 @@
             <version>local-jar</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>com.github.laim0nas100</groupId>
+            <artifactId>TolerantConfig</artifactId>
+            <version>2026.07v1</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform-jpms</artifactId>
+            <version>5.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-jpms</artifactId>
+            <version>5.14.0</version>
+        </dependency>
     </dependencies>
     
     
     <profiles>
+        
+        
+        <profile>
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native.maven.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            
+        </profile>
+        
         <profile>
             <id>shaderelease</id>
             <activation>
@@ -208,22 +219,6 @@
                 
                 <plugins>
             
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>lt.lb.filemanagerlb.gui.FileManagerLB</mainClass>
-                                </manifest>
-                                <manifestEntries>
-                                    <Build-Time>${maven.build.timestamp}</Build-Time>
-                                </manifestEntries>
-                            </archive>
-                            <finalName>FileManagerLB</finalName>
-                        </configuration>
-                    </plugin>
 
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -241,6 +236,7 @@
                             </execution>
                         </executions>
                     </plugin>
+                    
                 </plugins>
             </build>
             
@@ -249,6 +245,24 @@
     </profiles>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>lt.lb.filemanagerlb.gui.FileManagerLB</mainClass>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                        </manifestEntries>
+                    </archive>
+                    <finalName>FileManagerLB</finalName>
+                </configuration>
+            </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -275,7 +289,6 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-            
         </resources>
     </build>
     

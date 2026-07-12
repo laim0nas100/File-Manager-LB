@@ -17,7 +17,7 @@ import lt.lb.filemanagerlb.logic.TaskFactory;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class ListController extends MyBaseController<ListController> {
 

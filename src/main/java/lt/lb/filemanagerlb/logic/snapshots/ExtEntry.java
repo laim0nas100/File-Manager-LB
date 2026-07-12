@@ -8,7 +8,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class ExtEntry extends Entry {
 

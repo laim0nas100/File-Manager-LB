@@ -10,7 +10,7 @@ import javafx.scene.control.TextField;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 
 public abstract class TextInputDialogController extends MyBaseController implements TextInputDialogEssentials {

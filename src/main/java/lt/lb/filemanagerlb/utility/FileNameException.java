@@ -1,33 +1,30 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lt.lb.filemanagerlb.utility;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class FileNameException extends Exception {
-    public FileNameException(){}
 
-    public FileNameException(String message){
-            super(message);
+    public FileNameException() {
     }
 
-    public FileNameException(Throwable cause){
-            super(cause);
+    public FileNameException(String message) {
+        super(message);
     }
 
-    public FileNameException(String message, Throwable cause){
-            super(message, cause);
+    public FileNameException(Throwable cause) {
+        super(cause);
+    }
+
+    public FileNameException(String message, Throwable cause) {
+        super(message, cause);
     }
 
     public FileNameException(String message,
-                        Throwable cause, 
-                        boolean enableSuppression, 
-                        boolean writableStackTrace){
-            super(message, cause, enableSuppression, writableStackTrace);
+            Throwable cause,
+            boolean enableSuppression,
+            boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

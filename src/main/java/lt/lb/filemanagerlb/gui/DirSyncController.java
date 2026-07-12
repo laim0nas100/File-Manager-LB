@@ -7,7 +7,6 @@ import lt.lb.filemanagerlb.logic.snapshots.*;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,7 +20,6 @@ import javafx.util.Callback;
 import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.commons.javafx.*;
-import lt.lb.commons.threads.Futures;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.LocationAPI;
@@ -36,7 +34,7 @@ import org.tinylog.Logger;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class DirSyncController extends MyBaseController {
 
@@ -109,125 +107,118 @@ public class DirSyncController extends MyBaseController {
 
     @Override
     public void beforeShow(String title) {
-        FX.submit(() -> {
 
-//            this.directoryCheckTask.addOnUpdate(() -> {
-//                this.btnLoad.setDisable(true);
-//                this.btnCompare.setDisable(true);
-//                this.btnSync.setDisable(true);
-//            });
-            this.btnLoad.setDisable(true);
-            this.btnCompare.setDisable(true);
-            this.btnSync.setDisable(true);
-            ObservableList<String> options = FXCollections.observableArrayList();
-            options.add("Bidirectional");
-            options.add("Make B like A");
-            options.add("Make A like B");
-            syncMode.getItems().setAll(options);
-            syncMode.getSelectionModel().selectFirst();
+        this.btnLoad.setDisable(true);
+        this.btnCompare.setDisable(true);
+        this.btnSync.setDisable(true);
+        ObservableList<String> options = FXCollections.observableArrayList();
+        options.add("Bidirectional");
+        options.add("Make B like A");
+        options.add("Make A like B");
+        syncMode.getItems().setAll(options);
+        syncMode.getSelectionModel().selectFirst();
 
-            ObservableList<String> dateModeOptions = FXCollections.observableArrayList();
-            dateModeOptions.add("Ignore After");
-            dateModeOptions.add("Ignore Before");
-            dateMode.getItems().setAll(dateModeOptions);
-            dateMode.getSelectionModel().selectFirst();
+        ObservableList<String> dateModeOptions = FXCollections.observableArrayList();
+        dateModeOptions.add("Ignore After");
+        dateModeOptions.add("Ignore Before");
+        dateMode.getItems().setAll(dateModeOptions);
+        dateMode.getSelectionModel().selectFirst();
 
-            Locale.setDefault(Locale.ROOT);
-            datePicker.setValue(LocalDate.now().plusDays(1));
+        Locale.setDefault(Locale.ROOT);
+        datePicker.setValue(LocalDate.now().plusDays(1));
 
-            tableColumns = table.getColumns();
+        tableColumns = table.getColumns();
 
-            checkIgnoreFolderDate.setSelected(true);
-            checkShowOnlyDifferences.setSelected(true);
-            tableColumns.add(new TableColumn<>("Path"));
-            tableColumns.get(0).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
-                @Override
-                public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-                    String path = cellData.getValue().relativePath;
-                    SimpleStringProperty string = new SimpleStringProperty(path);
-                    if (checkShowAbsolutePath.selectedProperty().get()) {
-                        path = cellData.getValue().absolutePath;
-                        string.set(path);
-                    }
-                    return string;
+        checkIgnoreFolderDate.setSelected(true);
+        checkShowOnlyDifferences.setSelected(true);
+        tableColumns.add(new TableColumn<>("Path"));
+        tableColumns.get(0).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
+                String path = cellData.getValue().relativePath;
+                SimpleStringProperty string = new SimpleStringProperty(path);
+                if (checkShowAbsolutePath.selectedProperty().get()) {
+                    path = cellData.getValue().absolutePath;
+                    string.set(path);
                 }
-            });
-            tableColumns.add(new TableColumn<>("Condition"));
-            tableColumns.get(1).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
-                @Override
-                public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-
-                    SimpleStringProperty string = new SimpleStringProperty("No changes");
-                    String s = "";
-                    ExtEntry entry = cellData.getValue();
-                    if (entry.isNew) {
-                        s += " new";
-                    } else if (entry.isMissing) {
-                        s += " missing";
-                    } else if (entry.isModified) {
-                        s += " modified";
-                        int ageCmp = entry.ageCmp;
-                        if (ageCmp < 0) {
-                            s += " older";
-                        } else if (ageCmp > 0) {
-                            s += " newer";
-                        } else {
-                            s += " same date";
-                        }
-                        int sizeCmp = entry.sizeCmp;
-                        if (sizeCmp < 0) {
-                            s += " smaller";
-                        } else if (sizeCmp > 0) {
-                            s += " bigger";
-                        } else {
-                            s += " same size";
-                        }
-                    }
-                    string.set(s);
-                    return string;
-                }
-            });
-            tableColumns.add(new TableColumn<>("Last Modified"));
-            tableColumns.get(2).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
-                @Override
-                public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-                    return cellData.getValue().date;
-                }
-            });
-            tableColumns.add(new TableColumn<>("Action"));
-            tableColumns.get(3).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
-                @Override
-                public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-                    return cellData.getValue().action;
-                }
-            });
-            tableColumns.add(new TableColumn<>("Sync Complete"));
-            tableColumns.get(4).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
-                @Override
-                public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
-                    return cellData.getValue().actionCompleted.asString();
-                }
-            });
-            MenuBuilders.ContextMenuBuilder builder = new MenuBuilders.ContextMenuBuilder();
-            for (int i = 0; i < 5; i++) {
-                final int action = i;
-                builder = builder.addItem(new MenuBuilders.MenuItemBuilder()
-                        .withText("Set " + ExtEntry.getActionDescription(action))
-                        .withAction(eh -> {
-                            ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
-                            for (Object ob : selectedItems) {
-                                ExtEntry entry = (ExtEntry) ob;
-                                entry.setAction(action);
-                            }
-                        })
-                );
+                return string;
             }
-            ContextMenu build = builder.addNestedDisableBind().addNestedVisibilityBind().build();
-            MenuItem wrapSelectContextMenu = CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel());
-            build.getItems().add(wrapSelectContextMenu);
-            this.table.setContextMenu(build);
-
         });
+        tableColumns.add(new TableColumn<>("Condition"));
+        tableColumns.get(1).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
+
+                SimpleStringProperty string = new SimpleStringProperty("No changes");
+                String s = "";
+                ExtEntry entry = cellData.getValue();
+                if (entry.isNew) {
+                    s += " new";
+                } else if (entry.isMissing) {
+                    s += " missing";
+                } else if (entry.isModified) {
+                    s += " modified";
+                    int ageCmp = entry.ageCmp;
+                    if (ageCmp < 0) {
+                        s += " older";
+                    } else if (ageCmp > 0) {
+                        s += " newer";
+                    } else {
+                        s += " same date";
+                    }
+                    int sizeCmp = entry.sizeCmp;
+                    if (sizeCmp < 0) {
+                        s += " smaller";
+                    } else if (sizeCmp > 0) {
+                        s += " bigger";
+                    } else {
+                        s += " same size";
+                    }
+                }
+                string.set(s);
+                return string;
+            }
+        });
+        tableColumns.add(new TableColumn<>("Last Modified"));
+        tableColumns.get(2).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
+                return cellData.getValue().date;
+            }
+        });
+        tableColumns.add(new TableColumn<>("Action"));
+        tableColumns.get(3).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
+                return cellData.getValue().action;
+            }
+        });
+        tableColumns.add(new TableColumn<>("Sync Complete"));
+        tableColumns.get(4).setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ExtEntry, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ExtEntry, String> cellData) {
+                return cellData.getValue().actionCompleted.asString();
+            }
+        });
+        MenuBuilders.ContextMenuBuilder builder = new MenuBuilders.ContextMenuBuilder();
+        for (int i = 0; i < 5; i++) {
+            final int action = i;
+            builder = builder.addItem(new MenuBuilders.MenuItemBuilder()
+                    .withText("Set " + ExtEntry.getActionDescription(action))
+                    .withAction(eh -> {
+                        ObservableList selectedItems = table.getSelectionModel().getSelectedItems();
+                        for (Object ob : selectedItems) {
+                            ExtEntry entry = (ExtEntry) ob;
+                            entry.setAction(action);
+                        }
+                    })
+            );
+        }
+        ContextMenu build = builder.addNestedDisableBind().addNestedVisibilityBind().build();
+        MenuItem wrapSelectContextMenu = CosmeticsFX.wrapSelectContextMenu(table.getSelectionModel());
+        build.getItems().add(wrapSelectContextMenu);
+        this.table.setContextMenu(build);
+
     }
 
     @Override
@@ -379,7 +370,6 @@ public class DirSyncController extends MyBaseController {
 
                 }
             });
-
 
             D.exe.submit(task0);
             D.exe.submit(task1);

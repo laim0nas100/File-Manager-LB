@@ -88,7 +88,7 @@ import org.apache.commons.lang3.Strings;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class MainController extends MyBaseController<MainController> {
 

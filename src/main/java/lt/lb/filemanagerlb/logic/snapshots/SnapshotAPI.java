@@ -11,7 +11,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class SnapshotAPI {
 

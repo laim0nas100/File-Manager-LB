@@ -1,14 +1,19 @@
 package lt.lb.filemanagerlb.logic;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import lt.lb.commons.F;
 import lt.lb.commons.io.CopyOptions;
 import lt.lb.commons.io.autopath.AutoPath;
 import lt.lb.commons.iteration.streams.MakeStream;
@@ -20,6 +25,7 @@ import lt.lb.filemanagerlb.gui.dialog.DuplicateFinderController;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import lt.lb.filemanagerlb.logic.filestructure.ActionFile;
+import lt.lb.filemanagerlb.logic.snapshots.Entry;
 import lt.lb.filemanagerlb.logic.snapshots.ExtEntry;
 import lt.lb.filemanagerlb.logic.snapshots.Snapshot;
 import lt.lb.filemanagerlb.logic.snapshots.SnapshotAPI;
@@ -34,7 +40,7 @@ import org.tinylog.Logger;
 
 /**
  *
- * @author Laimonas Beniušis Produces Tasks
+ * @author laim0nas100 Produces Tasks
  */
 //
 public abstract class TaskFactory {
@@ -43,15 +49,15 @@ public abstract class TaskFactory {
         if (File.separator.equals('/')) {
             stream.append('/');
         } else {
-            stream.append( '\\',
-                '/',
-                '<',
-                '*',
-                '>',
-                '|',
-                '?',
-                ':',
-                '\"');
+            stream.append('\\',
+                    '/',
+                    '<',
+                    '*',
+                    '>',
+                    '|',
+                    '?',
+                    ':',
+                    '\"');
         }
         return stream;
     }).toUnmodifiableSet();
@@ -437,15 +443,16 @@ public abstract class TaskFactory {
             @Override
             protected Void call() throws Exception {
 
-                ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
 
                 return FX.submit(() -> {
                     MainController controller = (MainController) ViewManager.getController(windowID);
                     controller.snapshotView.getItems().clear();
                     try {
-                        mapper.writeValue(file, currentSnapshot);
+                        OutputStream newOutputStream = Files.newOutputStream(file.toPath(), StandardOpenOption.WRITE);
+                        JSON.writeTo(newOutputStream, currentSnapshot);
                         controller.snapshotView.getItems().add("Snapshot:" + file + " created");
+                        newOutputStream.close();
                     } catch (IOException ex) {
                         ErrorReport.report(ex);
                         controller.snapshotView.getItems().add("Snapshot:" + file + " failed");
@@ -465,16 +472,28 @@ public abstract class TaskFactory {
 
                 MainController frame = (MainController) ViewManager.getController(windowID);
 
-                FX.submit(() -> {
-                    frame.snapshotView.getItems().clear();
-                    frame.snapshotView.getItems().add("Snapshot Loading");
-                });
+                frame.snapshotView.getItems().clear();
+                frame.snapshotView.getItems().add("Snapshot Loading");
 //                    TaskFactory.populateRecursiveParallelNew(folder, 50);
-                ObjectMapper mapper = new ObjectMapper();
                 Snapshot currentSnapshot = SnapshotAPI.createSnapshot(folder);
                 Snapshot sn = SnapshotAPI.getEmptySnapshot();
-                sn = mapper.readValue(nextSnap, sn.getClass());
-
+                InputStream newInputStream = Files.newInputStream(nextSnap.toPath(), StandardOpenOption.READ);
+                JSONObject parsed = JSON.parseObject(new String(newInputStream.readAllBytes(), StandardCharsets.UTF_8));
+                sn.dateCreated = parsed.getString("dateCreated");
+                sn.folderCreatedFrom = parsed.getString("folderCreatedFrom");
+                JSONObject entries = parsed.getJSONObject("map");
+                Set<Map.Entry<String, Object>> entrySet = entries.entrySet();
+                for (Map.Entry<String, Object> entry : entrySet) {
+                    Entry ent = new Entry();
+                    JSONObject json = F.cast(entry.getValue());
+                    ent.size = json.getLong("size");
+                    ent.lastModified = json.getLong("lastModified");
+                    ent.relativePath = json.getString("relativePath");
+                    ent.absolutePath = json.getString("absolutePath");
+                    ent.isFolder = json.getBoolean("isFolder");
+                    sn.map.put(entry.getKey(), ent);
+                }
+                newInputStream.close();
                 Snapshot result = SnapshotAPI.getOnlyDifferences(SnapshotAPI.compareSnapshots(currentSnapshot, sn));
                 ObservableList list = FXCollections.observableArrayList();
                 list.addAll(result.map.values());

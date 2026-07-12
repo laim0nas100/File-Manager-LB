@@ -48,7 +48,7 @@ import org.tinylog.Logger;
 /**
  * FXML Controller class
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class CommandWindowController extends MyBaseController {
 

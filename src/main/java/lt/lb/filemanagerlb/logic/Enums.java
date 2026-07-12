@@ -2,7 +2,7 @@ package lt.lb.filemanagerlb.logic;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class Enums {
 

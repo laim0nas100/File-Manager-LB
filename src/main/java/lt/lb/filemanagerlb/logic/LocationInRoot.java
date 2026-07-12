@@ -12,7 +12,7 @@ import org.apache.commons.lang3.Strings;
 /**
  * Location Mapping Class Use in LocationAPI
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class LocationInRoot {
 

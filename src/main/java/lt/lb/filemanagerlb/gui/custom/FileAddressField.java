@@ -11,7 +11,7 @@ import org.apache.commons.lang3.Strings;
 
 /**
  *
- * @author Laimonas Beniušis
+ * @author laim0nas100
  */
 public class FileAddressField {
 
