@@ -51,14 +51,12 @@ import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import com.github.laim0nas100.uncheckedutils.Checked;
 import org.tinylog.Logger;
-//import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
-import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
-import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurface;
+import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
 
 /**
  * FXML Controller class
@@ -128,6 +126,7 @@ public class MediaPlayerController extends MyBaseController {
     private ArrayDeque<Player> pls = new ArrayDeque<>();
 
     private static class Player {
+
         public MediaPlayer media;
         public StageFrame stageFrame;
         public JFrame jFrame;
@@ -179,13 +178,15 @@ public class MediaPlayerController extends MyBaseController {
 
     private Player getPreparedMediaPlayerNew() {
 
-        EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
-        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
-        VideoSurface surface = ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView);
-        newPlayer.videoSurface().set(surface);
-        imageView.setPreserveRatio(true);
-
+        Value<javafx.scene.image.ImageView> view = new Value<>();
+        Value<MediaPlayer> player = new Value<>();
         return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
+            EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
+            player.set(newPlayer);
+            javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
+            view.set(imageView);
+            newPlayer.videoSurface().set(new ImageViewVideoSurface(imageView));
+            imageView.setPreserveRatio(true);
             return new Group(imageView);
         }).map(stageFrame -> {
             if (showVideo.isSelected()) {
@@ -199,8 +200,8 @@ public class MediaPlayerController extends MyBaseController {
                 eh.consume();
                 stage.hide();
             });
-            imageView.fitHeightProperty().bind(stage.heightProperty());
-            imageView.fitWidthProperty().bind(stage.widthProperty());
+            view.get().fitHeightProperty().bind(stage.heightProperty());
+            view.get().fitWidthProperty().bind(stage.widthProperty());
 
             return stageFrame;
 
@@ -208,7 +209,7 @@ public class MediaPlayerController extends MyBaseController {
             Logger.error(err);
         }).map(videoFrame -> {
             Player pl = new Player();
-            pl.media = newPlayer;
+            pl.media = player.get();
             pl.stageFrame = videoFrame;
             return pl;
         }).orNull();
@@ -331,8 +332,8 @@ public class MediaPlayerController extends MyBaseController {
                 event.consume();
             }
         });
-        
-         table.setOnDragDone(event -> {
+
+        table.setOnDragDone(event -> {
             if (!event.isDropCompleted()) {
                 update();
             }
@@ -366,7 +367,6 @@ public class MediaPlayerController extends MyBaseController {
             event.setDropCompleted(success);
             event.consume();
         });
-       
 
         extTableView.updateContentsAndSort(backingList);
     }
@@ -378,13 +378,13 @@ public class MediaPlayerController extends MyBaseController {
             int tries = 100;
             var volume = player.audio().volume();
             do {
-                if(--tries <0 || volume == vol){
+                if (--tries < 0 || volume == vol) {
                     return;
                 }
                 player.audio().setVolume(vol);
                 volume = player.audio().volume();
                 Thread.sleep(50);
-            }while(true);
+            } while (true);
         });
 
     }
@@ -702,7 +702,7 @@ public class MediaPlayerController extends MyBaseController {
                 item = (ExtPath) backingList.get(index);
             }
 
-             play(item);
+            play(item);
 
         });
 

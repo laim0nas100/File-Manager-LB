@@ -24,7 +24,7 @@
         <dependency>
             <groupId>lt.lb</groupId>
             <artifactId>JavaFXLibs</artifactId>
-            <version>24</version>
+            <version>25</version>
             <type>pom</type>
         </dependency>
         
@@ -116,13 +116,23 @@
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj-javafx</artifactId>
-            <version>1.0.2</version>
+            <version>1.2.0</version>
         </dependency>
         
         <dependency>
             <groupId>com.github.Dansoftowner</groupId>
             <artifactId>jSystemThemeDetector</artifactId>
             <version>3.9.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna-platform</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <dependency>
@@ -164,12 +174,12 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform-jpms</artifactId>
-            <version>5.14.0</version>
+            <version>5.19.1</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-jpms</artifactId>
-            <version>5.14.0</version>
+            <version>5.19.1</version>
         </dependency>
     </dependencies>
     
