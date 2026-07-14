@@ -73,9 +73,13 @@ public class ViewManager {
     }
 
     public static void updateAllWindows() {
-        D.sm.getAllControllers(MainController.class).forEach(conrt -> {
-            conrt.update();
+        Stream<MainController> allControllers = D.sm.getAllControllers(MainController.class);
+        FX.submit(() -> {
+            allControllers.forEach(conrt -> {
+                conrt.update();
+            });
         });
+
     }
 
     public static void updateAllFrames(Serializable exception) {
@@ -83,9 +87,13 @@ public class ViewManager {
         if (exception != null) {
             allControllers = allControllers.filter(f -> !f.getFrameID().equals(exception));
         }
-        allControllers.forEach(con -> {
-            con.update();
+        Stream<MyBaseController> stream = allControllers;
+        FX.submit(() -> {
+            stream.forEach(con -> {
+                con.update();
+            });
         });
+
     }
 
     public static FXMLFrame getFxmlFrame(Serializable id) {

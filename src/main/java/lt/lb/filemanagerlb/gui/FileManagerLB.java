@@ -70,6 +70,7 @@ public class FileManagerLB {
     public static boolean shutdown = false;
 
     public static SafeOpt<Boolean> darkMode = SafeOpt.ofLazy(() -> OsThemeDetector.getDetector().isDark());
+    public static SafeOpt<String> darkCss = FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm());
 
     public static void main(String[] args) {
 
@@ -78,14 +79,17 @@ public class FileManagerLB {
                 frameInfo,
                 new WithIcon(new Image(D.cLoader.getResourceAsStream("images/ico.png"))),
                 new WithStylesheet(D.cLoader.getResource("css/main.css")),
-                new WithDecoration(FrameState.FrameStateShow.instance, d -> {
+                new WithDecoration(FrameState.FrameStateOpen.instance, d -> {
                     if (darkMode.orElse(false)) {
-                        FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm()).ifPresent(theme -> {
+                        darkCss.ifPresent(theme -> {
                             d.getScene().getStylesheets().add(theme);
                         });
+                    }
 
+                }),
+                new WithDecoration(FrameState.FrameStateShow.instance, d -> {
+                    if (darkMode.orElse(false)) {
                         FXWinUtil.setDarkMode(d, true);
-//                        FXWinUtil.setDarkMode(d.getWindow(), true);
                     }// use defaults
 
                 }),
@@ -207,8 +211,8 @@ public class FileManagerLB {
                 VLCInit.release();
                 D.jobsExecutor.shutdown();
                 D.exe.shutdown();
-                D.exe.forEach(service ->{
-                    if(service instanceof FastExecutor fast){
+                D.exe.forEach(service -> {
+                    if (service instanceof FastExecutor fast) {
                         fast.cancelAll(true);
                     }
                 });
@@ -227,7 +231,7 @@ public class FileManagerLB {
         CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
         CollectionOp.replace(si.favoriteLinks,
                 LocationAPI.toSerializableStringList(MainController.favoriteLinks, f -> f.location));
-         CollectionOp.replace(si.disabledFiles,D.globalDisabledSet);
+        CollectionOp.replace(si.disabledFiles, D.globalDisabledSet);
 
         si.autoCloseProgressDialogs = ViewManager.autoCloseProgressDialogs.get();
         si.autoStartProgressDialogs = ViewManager.autoStartProgressDialogs.get();
@@ -285,7 +289,7 @@ public class FileManagerLB {
         } catch (IOException e) {
             ErrorReport.report(e);
         }
-        
+
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
         MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
         try {
