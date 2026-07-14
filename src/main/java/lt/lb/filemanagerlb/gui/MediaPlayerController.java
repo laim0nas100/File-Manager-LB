@@ -142,10 +142,10 @@ public class MediaPlayerController extends MyBaseController {
         float position = getCurrentPlayer().status().position();// 0-1.00
         float val = pos / 100f;
 
-        Logger.info(getCurrentPlayer().status().position() + ", " + val);
+        Logger.debug(getCurrentPlayer().status().position() + ", " + val);
         if (Math.abs(position - val) > minDelta) {
             getCurrentPlayer().controls().setPosition(val);
-            Logger.info("Set new seek");
+            Logger.debug("Set new seek "+val);
         }
     }
 
@@ -271,7 +271,7 @@ public class MediaPlayerController extends MyBaseController {
             events.eventCallbackAfter = event -> {
                 List<String> tags = event.tags;
                 if (!tags.contains(PlayerEventType.SEEK)) {
-                    Logger.info("END " + event.tags + " Cancel:" + event.isCancelled());
+                    Logger.debug("END " + event.tags + " Cancel:" + event.isCancelled());
                 }
             };
         }
@@ -319,7 +319,7 @@ public class MediaPlayerController extends MyBaseController {
 
         table.setOnDragDetected((MouseEvent event) -> {
             if (this.extTableView.recentlyResized.get()) {
-                Logger.info("recently resized");
+                Logger.debug("recently resized");
                 return;
             }
             ObservableList<ExtPath> selectedItems = table.getSelectionModel().getSelectedItems();
@@ -353,7 +353,7 @@ public class MediaPlayerController extends MyBaseController {
         });
         table.setOnDragDropped((DragEvent event) -> {
             if (this.getID().equals(D.dragInitWindowID)) {
-                Logger.info("Same window");
+                Logger.debug("Same window");
                 return;
             }
             Dragboard db = event.getDragboard();
@@ -379,11 +379,15 @@ public class MediaPlayerController extends MyBaseController {
             var volume = player.audio().volume();
             do {
                 if (--tries < 0 || volume == vol) {
-                    return;
+                    break;
                 }
                 player.audio().setVolume(vol);
                 volume = player.audio().volume();
-                Thread.sleep(50);
+                if (volume != vol) {
+                    LockSupport.parkNanos(WaitTime.ofMillis(10).toNanos());
+                }else{
+                    break;
+                }
             } while (true);
         });
 
@@ -578,8 +582,8 @@ public class MediaPlayerController extends MyBaseController {
             double secondsLeft = (double) (this.currentLength - millisPassed) / 1000;
             this.updateSeekLabels(position, millisPassed);
 
-            if (secondsLeft < minDelta) {
-                Logger.info("Seconds left" + secondsLeft);
+            if (secondsLeft < minDelta && playerState == PlayerState.PLAYING) {
+                Logger.debug("Seconds left" + secondsLeft);
                 playNext(1, false);
             }
         });
@@ -611,18 +615,26 @@ public class MediaPlayerController extends MyBaseController {
         Set<PlayerState> stoppableStates = ImmutableCollections.setOf(PlayerState.PAUSED, PlayerState.PLAYING);
         events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
+            boolean stopped = false;
             while (getCurrentPlayer().status().isPlaying() && stoppableStates.contains(playerState)) {
                 getCurrentPlayer().controls().stop();
-                LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
+                if (getCurrentPlayer().status().isPlaying()) {
+                    LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
+                    continue;
+                }
+                stopped = true;
+                break;
             }
-            this.playerState = PlayerState.STOPPED;
+            if (stopped) {
+                this.playerState = PlayerState.STOPPED;
+            }
         });
 
     }
 
     public void relaunch() {
         events.add("RELAUNCH outer", () -> {
-            Logger.info("Relaunch");
+            Logger.debug("Relaunch");
             relaunch(getCurrentPlayer().status().position());
         });
 
@@ -630,21 +642,14 @@ public class MediaPlayerController extends MyBaseController {
 
     private void relaunch(float position) {
         events.add("RELAUNCH inner", () -> {
-            onPlayTaskComplete.add(() -> {
-                events.add("Set position after relaunch", () -> {
-                    Logger.info("Set position", position);
-                    getCurrentPlayer().controls().setPosition(position);
-                });
-
-            });
-            play(filePlaying);
+            play(new PlayInfo(filePlaying, Optional.ofNullable(index), Optional.ofNullable(lastVolume.get()), Optional.of(position)));
         });
 
     }
 
     @Override
     public void exitLogic() {
-        Logger.info("CLOSE MEDIA PLAYER");
+        Logger.debug("CLOSE MEDIA PLAYER");
         stopping = true;
 
         stop();
@@ -657,7 +662,7 @@ public class MediaPlayerController extends MyBaseController {
                 } else {
                     player.stageFrame.close();
                 }
-                Logger.info("Released vlc player");
+                Logger.debug("Released vlc player");
             }).ifPresent(ErrorReport::report);
         });
         saveState(D.HOME_DIR.PLAYLISTS.DEFAULT_PLAYLIST.absolutePath);
@@ -668,7 +673,7 @@ public class MediaPlayerController extends MyBaseController {
 //        pls.clear();
 //        events = null;
 
-        Logger.info("FINAL EXIT ");
+        Logger.debug("FINAL EXIT ");
     }
 
     public void playNext(int increment, boolean ignoreModifiers) {
@@ -701,8 +706,7 @@ public class MediaPlayerController extends MyBaseController {
                 index = (index + increment) % backingList.size();
                 item = (ExtPath) backingList.get(index);
             }
-
-            play(item);
+            play(PlayInfo.ofItemIndex(item, index));
 
         });
 
@@ -725,39 +729,44 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void playSelected() {
-        Object selectedItem = table.getSelectionModel().getSelectedItem();
-        if (table.getSelectionModel().getSelectedItem() == null) {
+        TableView.TableViewSelectionModel sel = table.getSelectionModel();
+        Object selectedItem = sel.getSelectedItem();
+        if (sel.getSelectedItem() == null) {
             return;
         }
         update();
 
-        play(F.cast(selectedItem), lastVolume.get());
-
-    }
-    private ArrayDeque<Runnable> onPlayTaskComplete = new ArrayDeque<>();
-
-    private void play(ExtPath item) {
-
-        update();
-        play(item, lastVolume.get());
-//        FX.submit(() -> {
-//            play(item, lastVolume.get());
-//        });
+        play(PlayInfo.ofItemIndexVolume(F.cast(selectedItem), sel.getSelectedIndex(), lastVolume.get()));
 
     }
 
-    private Future play(ExtPath item, final Integer volume) {
+    public record PlayInfo(ExtPath item, Optional<Integer> index, Optional<Integer> volume, Optional<Float> position) {
+
+        public static PlayInfo ofItem(ExtPath item) {
+            return new PlayInfo(item, Optional.empty(), Optional.empty(), Optional.empty());
+        }
+
+        public static PlayInfo ofItemIndex(ExtPath item, Integer index) {
+            return new PlayInfo(item, Optional.ofNullable(index), Optional.empty(), Optional.empty());
+        }
+
+        public static PlayInfo ofItemIndexVolume(ExtPath item, Integer index, Integer vol) {
+            return new PlayInfo(item, Optional.ofNullable(index), Optional.ofNullable(vol), Optional.empty());
+        }
+    }
+
+    private Future play(PlayInfo playInfo) {
         events.dequeueAll(PlayerEventType.PLAY_TASK);
         return events.add(PlayerEventType.PLAY_TASK, () -> {
             ignoreSeek = true;
-            Logger.info("Execute play task");
-            int i = this.getIndex(item);
+            Logger.debug("Execute play task");
+            int i = playInfo.index().orElseGet(() -> getIndex(playInfo.item()));
             if (i < 0) {
-                Logger.info("Play next");
+                Logger.debug("Play next");
                 playNext(0, true);//increment by zero 
                 return null;
             }
-            filePlaying = item;
+            filePlaying = playInfo.item();
 
             stop();
             if (oldMode) {
@@ -768,7 +777,6 @@ public class MediaPlayerController extends MyBaseController {
                 Stage stage = currentFrame.getStage();
                 String title = filePlaying.getName(true);
                 fxDelegator.set(stage.titleProperty(), title);
-
                 startedWithVideo = stage.isShowing();
             }
 
@@ -781,21 +789,25 @@ public class MediaPlayerController extends MyBaseController {
 
                 //wait to start playing
                 while (!getCurrentPlayer().status().isPlaying()) {
-                    Logger.info("Keep sleeping");
-                    LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
+                    Logger.debug("Keep sleeping");
+                    LockSupport.parkNanos(WaitTime.ofMillis(10).toNanos());
+                }
+                Logger.debug("Started playing");
+                // set the after initialization things
+                playInfo.volume().filter(v -> v >= 0 && v <= 100).ifPresent(v -> {
+                    Logger.debug("Set volume", v);
+                    setVolume(getCurrentPlayer(), v);
+                });
+                playInfo.position.ifPresent(pos -> {
+                    Logger.debug("Set position", pos);
+                    getCurrentPlayer().controls().setPosition(pos);
+                });
 
-                }
-                Logger.info("Started playing");
-                if (volume != null && (volume >= 0 && volume <= 100)) {
-                    setVolume(getCurrentPlayer(), volume);
-                }
-            }
-            this.update();
-            while (!onPlayTaskComplete.isEmpty()) {
-                onPlayTaskComplete.pollFirst().run();
             }
             this.playerState = PlayerState.PLAYING;
             ignoreSeek = false;
+            this.update();
+
             return null;
         });
 
@@ -900,7 +912,7 @@ public class MediaPlayerController extends MyBaseController {
             ExtPath path = (ExtPath) item;
             state.root.add(new LocationInRoot(path.getAbsoluteDirectory(), false), i++);
         }
-        Logger.info("Got items", i);
+        Logger.debug("Got items", i);
         return state;
     }
 
@@ -910,7 +922,7 @@ public class MediaPlayerController extends MyBaseController {
         }
         events.add("LOAD_PLAYLIST", () -> {
 
-            Logger.info("INSIDE LOAD PLAYLIST");
+            Logger.debug("INSIDE LOAD PLAYLIST");
 //            this.table.getItems().clear();
             IntegerValue num = new IntegerValue(0);
             if (replace) {
@@ -920,7 +932,7 @@ public class MediaPlayerController extends MyBaseController {
                 LocationAPI.getFileIfExists(item).ifPresent(this::addIfAbsent);
                 num.incrementAndGet();
             });
-            Logger.info("Loaded files:", num.get());
+            Logger.debug("Loaded files:", num.get());
             fxDelegator.update("loadState", () -> {
                 playType.getSelectionModel().select(state.type);
                 volumeSlider.setValue(state.volume);
