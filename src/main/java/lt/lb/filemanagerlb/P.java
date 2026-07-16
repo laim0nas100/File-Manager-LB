@@ -131,7 +131,7 @@ public class P {
         CommandWindowController.maxExecutablesAtOnce = maxExecutablesAtOnce.resolve(param);
         CommandWindowController.commandCopyFolderStructure = commandCopyFolderStructure.resolve(param);
 
-        param.getEntries().forEachRemaining(entry -> Logger.info(entry.getKey() + "=" + entry.getValue()));
+        param.getEntries().forEach(entry -> Logger.info(entry.getKey() + "=" + entry.getValue()));
 
     }
 
