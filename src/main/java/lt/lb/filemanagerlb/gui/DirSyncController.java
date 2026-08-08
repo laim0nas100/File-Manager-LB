@@ -269,37 +269,37 @@ public class DirSyncController extends MyBaseController {
     }
 
     public void checkDirs() {
-        FX.runAndWait(() -> {
-            btnSync.setDisable(true);
-            btnLoad.setDisable(true);
 
-            status0.setText("Checking");
-            status1.setText("Checking");
-        });
+        FX.asyncFxStarter()
+                .peek(m -> {
+                    btnSync.setDisable(true);
+                    btnLoad.setDisable(true);
 
-        SafeOpt<Boolean> p1 = SafeOpt.ofAsync(directory0.getText()).map(v -> {
-            file0.set(LocationAPI.getFileAndPopulate(v));
-            Logger.info("Check 0");
-            return file0.get().getIdentity().equals(Enums.Identity.FOLDER);
-        });
+                    status0.setText("Checking");
+                    status1.setText("Checking");
+                }).peek(m -> {
 
-        SafeOpt<Boolean> p2 = SafeOpt.ofAsync(directory1.getText()).map(v -> {
-            file1.set(LocationAPI.getFileAndPopulate(v));
-            Logger.info("Check 1");
-            return file1.get().getIdentity().equals(Enums.Identity.FOLDER);
-        });
+            SafeOpt<Boolean> p1 = SafeOpt.ofAsync(directory0.getText()).map(v -> {
+                file0.set(LocationAPI.getFileAndPopulate(v));
+                Logger.info("Check 0");
+                return file0.get().getIdentity().equals(Enums.Identity.FOLDER);
+            });
 
-        D.exe.submit(() -> {
+            SafeOpt<Boolean> p2 = SafeOpt.ofAsync(directory1.getText()).map(v -> {
+                file1.set(LocationAPI.getFileAndPopulate(v));
+                Logger.info("Check 1");
+                return file1.get().getIdentity().equals(Enums.Identity.FOLDER);
+            });
+
             boolean c0 = p1.orElse(false);
             boolean c1 = p2.orElse(false);
-            FX.runAndWait(() -> {
-                mapCondition(c0, status0);
-                mapCondition(c1, status1);
-                if (c0 && c1) {
-                    btnLoad.setDisable(false);
-                }
-            });
+            mapCondition(c0, status0);
+            mapCondition(c1, status1);
+            if (c0 && c1) {
+                btnLoad.setDisable(false);
+            }
         });
+
     }
 
     private static void mapCondition(boolean cond, Text text) {
@@ -343,12 +343,14 @@ public class DirSyncController extends MyBaseController {
                     snapshot0 = task0.get();
                     FX.runAndWait(() -> {
                         status.setText(status.getText().concat(snapshot0.folderCreatedFrom + "\n"));
-
                     });
                     Checked.checkedRun(() -> {
                         latch.countDown();
                         if (latch.await(1, TimeUnit.SECONDS)) {
-                            btnCompare.setDisable(false);
+                            FX.runAndWait(() -> {
+                                btnCompare.setDisable(false);
+                            });
+
                         }
                     });
 
@@ -364,7 +366,9 @@ public class DirSyncController extends MyBaseController {
                     Checked.checkedRun(() -> {
                         latch.countDown();
                         if (latch.await(1, TimeUnit.SECONDS)) {
-                            btnCompare.setDisable(false);
+                            FX.runAndWait(() -> {
+                                btnCompare.setDisable(false);
+                            });
                         }
                     });
 
@@ -391,7 +395,6 @@ public class DirSyncController extends MyBaseController {
         this.status.setText("Comparing");
         Runnable r = () -> {
             ObservableList sortOrder = table.getSortOrder();
-
             Long date = Instant.now().toEpochMilli();
             try {
                 date = datePicker.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -515,7 +518,6 @@ public class DirSyncController extends MyBaseController {
                     this.status.textProperty().set("Directories has been modified, resync");
                     this.btnSync.setDisable(true);
                 }
-
             });
         };
         D.exe.execute(r);
@@ -526,7 +528,6 @@ public class DirSyncController extends MyBaseController {
         Logger.info("Syncronize!");
         ArrayList<ExtEntry> list = new ArrayList<>();
         ArrayList<ExtEntry> listDelete = new ArrayList<>();
-//        table.sort();
         for (Object object : table.getItems()) {
             ExtEntry entry = (ExtEntry) object;
             int actionType = entry.actionType.get();

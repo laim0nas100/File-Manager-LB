@@ -504,7 +504,7 @@ public abstract class TaskFactory {
                 frame.snapshotTextFolder.setVisible(true);
                 FX.submit(() -> {
                     frame.snapshotView.getItems().clear();
-                    if (list.size() > 0) {
+                    if (!list.isEmpty()) {
                         frame.snapshotView.getItems().addAll(list);
                     } else {
                         frame.snapshotView.getItems().add("No Differences Detected");
@@ -575,7 +575,6 @@ public abstract class TaskFactory {
                         break;
                     }
                     case (3): {
-
                         Files.delete(action.paths[0]);
                         break;
                     }
@@ -588,7 +587,10 @@ public abstract class TaskFactory {
                     }
                 }
                 entry.actionCompleted.set(true);
-                progress.set(1);
+                FX.submit(() -> {
+                    progress.set(1);
+                });
+
                 return null;
             }
         };

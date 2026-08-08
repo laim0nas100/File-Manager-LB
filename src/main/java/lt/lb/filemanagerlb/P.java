@@ -32,12 +32,13 @@ public class P {
 
     public static <T> KeyDefaultProperty<T> prop(String key, T def) {
         KeyDefaultProperty prop = null;
+        boolean cache = false;
         if (def instanceof Boolean) {
-            prop = KeyProp.ofBoolean(key).cache(true).toPreparedKeyDefaultProperty((boolean) def, getConfig());
+            prop = KeyProp.ofBoolean(key).cache(cache).toPreparedKeyDefaultProperty((boolean) def, getConfig());
         } else if (def instanceof Integer) {
-            prop = KeyProp.ofInteger(key).cache(true).toPreparedKeyDefaultProperty((int) def, getConfig());
+            prop = KeyProp.ofInteger(key).cache(cache).toPreparedKeyDefaultProperty((int) def, getConfig());
         } else if (def instanceof String) {
-            prop = KeyProp.ofString(key).cache(true).toPreparedKeyDefaultProperty((String) def, getConfig());
+            prop = KeyProp.ofString(key).cache(cache).toPreparedKeyDefaultProperty((String) def, getConfig());
         } else {
             throw new IllegalArgumentException("type of " + def + " is not implemented");
         }

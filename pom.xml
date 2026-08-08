@@ -168,7 +168,7 @@
         <dependency>
             <groupId>com.github.laim0nas100</groupId>
             <artifactId>TolerantConfig</artifactId>
-            <version>2026.07v3</version>
+            <version>2026.07v4</version>
             <type>jar</type>
         </dependency>
         <dependency>

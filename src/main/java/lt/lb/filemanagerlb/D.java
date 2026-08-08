@@ -14,6 +14,9 @@ import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import com.github.laim0nas100.uncheckedutils.Checked;
+import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
+import lt.lb.commons.threads.sync.WaitTime;
 
 /**
  * Definitions
@@ -27,17 +30,20 @@ public class D {
         public ServiceExecutorAggregatorMain() {
             this.defaultSupplier = () -> Checked.createDefaultExecutorService();
 //            this.defaultSupplier = () -> new FastWaitingExecutor(8, WaitTime.ofSeconds(4));
-            this.defaultSchedulerSupplier = () -> Executors.newScheduledThreadPool(4);
+            this.defaultSchedulerSupplier = () -> new DelayedTaskExecutor(getMain());
 
 //            setService("date-size", () -> new FastWaitingExecutor(16, WaitTime.ofSeconds(12)));
             setService("date-size", () -> Checked.createDefaultExecutorService());
 
+            
             setMainService("MAIN");
             setService("MAIN", () -> {
-//            FastWaitingExecutor exe = new FastWaitingExecutor(Math.max(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(120));
+                return new FastWaitingExecutor(Math.min(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(60));
 //                return new NestedTaskSubmitionExecutorLayer(Checked.createDefaultExecutorService());
-                return Checked.createDefaultExecutorService();
+//                return Checked.createDefaultExecutorService();
             });
+            setMainSchedulerService("MAIN_SCHED");
+            setService("MAIN_SCHED", ()-> new DelayedTaskExecutor(getMain()));
         }
 
     }
@@ -68,8 +74,7 @@ public class D {
     public static ReentrantLock lock = new ReentrantLock();
 
     public static Serializable dragInitWindowID = "";
-    
-    
+
     public static boolean slowDownFiles = false; // for partial folder view display testing
 
 }
