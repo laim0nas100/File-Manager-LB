@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import com.github.laim0nas100.uncheckedutils.func.UncheckedConsumer;
 import com.github.laim0nas100.uncheckedutils.func.UncheckedFunction;
+import java.io.Serializable;
 
 /**
  *
@@ -17,14 +18,22 @@ import com.github.laim0nas100.uncheckedutils.func.UncheckedFunction;
  */
 public class SafeJob<T> extends Job<T> {
 
-    public SafeJob(UncheckedConsumer<SafeJob<Void>> call) {
-        super((Consumer) call);
+    public SafeJob(Serializable id, UncheckedConsumer<SafeJob<Void>> call) {
+        super(id, (Consumer) call);
         this.addListener(SystemJobEventName.ON_EXCEPTIONAL, errorListener());
     }
 
-    public SafeJob(UncheckedFunction<SafeJob<T>, T> call) {
-        super((UncheckedFunction) call);
+    public SafeJob(Serializable id, UncheckedFunction<SafeJob<T>, T> call) {
+        super(id, (UncheckedFunction) call);
         this.addListener(SystemJobEventName.ON_EXCEPTIONAL, errorListener());
+    }
+
+    public SafeJob(UncheckedConsumer<SafeJob<Void>> call) {
+        this(Job.getNextID(), call);
+    }
+
+    public SafeJob(UncheckedFunction<SafeJob<T>, T> call) {
+        this(Job.getNextID(), call);
     }
 
     public static JobEventListener errorListener() {

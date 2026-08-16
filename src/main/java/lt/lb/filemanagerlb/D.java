@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb;
 
+import com.github.laim0nas100.jobsystem.JobExecutor;
 import com.github.laim0nas100.jobsystem.ScheduledJobExecutor;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -14,9 +15,13 @@ import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import com.github.laim0nas100.uncheckedutils.Checked;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
+import org.tinylog.Logger;
 
 /**
  * Definitions
@@ -27,29 +32,45 @@ public class D {
 
     public static class ServiceExecutorAggregatorMain extends ServiceExecutorAggregatorBase {
 
+        @Override
+        protected ScheduledExecutorService createScheduledExecutor(int threads) {
+//            return Executors.newScheduledThreadPool(threads);
+            return new DelayedTaskExecutor(3, createExecutor(threads));
+        }
+
+        @Override
+        protected ExecutorService createExecutor(int threads) {
+
+            if (threads <= 1 || threads >= 8) {
+//                return Executors.newFixedThreadPool(threads);
+                return new FastWaitingExecutor(threads);
+            }
+            return Checked.createDefaultExecutorService();
+        }
+
         public ServiceExecutorAggregatorMain() {
-            this.defaultSupplier = () -> Checked.createDefaultExecutorService();
-//            this.defaultSupplier = () -> new FastWaitingExecutor(8, WaitTime.ofSeconds(4));
-            this.defaultSchedulerSupplier = () -> new DelayedTaskExecutor(getMain());
 
 //            setService("date-size", () -> new FastWaitingExecutor(16, WaitTime.ofSeconds(12)));
             setService("date-size", () -> Checked.createDefaultExecutorService());
 
-            
             setMainService("MAIN");
             setService("MAIN", () -> {
-                return new FastWaitingExecutor(Math.min(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(60));
+                return new FastWaitingExecutor(Math.min(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(4));
 //                return new NestedTaskSubmitionExecutorLayer(Checked.createDefaultExecutorService());
 //                return Checked.createDefaultExecutorService();
             });
             setMainSchedulerService("MAIN_SCHED");
-            setService("MAIN_SCHED", ()-> new DelayedTaskExecutor(getMain()));
+//            setService("MAIN_SCHED", () -> new DelayedTaskExecutor(getMain()));
         }
 
     }
 
+    
     public static final ServiceExecutorAggregatorBase exe = new ServiceExecutorAggregatorMain();
-    public static final ScheduledJobExecutor jobsExecutor = new ScheduledJobExecutor(D.exe.service("jobs"));
+    
+    
+    
+    public static final JobExecutor jobsExecutor = new JobExecutor(D.exe.service("jobs"));
 
     public static SessionInfo sessionInfo = new SessionInfo();
 

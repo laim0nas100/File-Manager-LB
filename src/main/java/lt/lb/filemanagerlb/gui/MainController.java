@@ -1,5 +1,7 @@
 package lt.lb.filemanagerlb.gui;
 
+import com.github.laim0nas100.fastid.FastID;
+import com.github.laim0nas100.fastid.FastIDGen;
 import com.github.laim0nas100.jobsystem.Job;
 import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.awt.Toolkit;
@@ -207,8 +209,8 @@ public class MainController extends MyBaseController<MainController> {
     public ExtTableView extTableView;
     public Job<Void> localSearchJob = new Job<>(m -> {
     });
-    private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe.scheduledService("localSearch-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::localSearch));
-    private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe.scheduledService("search-sched"), FX::submit, WaitTime.ofMillis(200), Executors.callable(this::search));
+    private ServiceTimeoutTask localSearchTask2 = new ServiceTimeoutTask(D.exe, FX::submit, WaitTime.ofMillis(200), Executors.callable(this::localSearch));
+    private ServiceTimeoutTask searchTimeoutTask2 = new ServiceTimeoutTask(D.exe, FX::submit, WaitTime.ofMillis(200), Executors.callable(this::search));
     private boolean firstTime = true;
 
     public void beforeShow(String title, ExtFolder currentDir) {
@@ -514,9 +516,11 @@ public class MainController extends MyBaseController<MainController> {
         final ExtFolder folderInitiated = MC.currentDir;
         final List<ExtPath> newList = new ArrayList<>();
 
+        final FastID jobID = Job.getNextID();
+
         SafeJob<Void> sortTask = new SafeJob<>(me -> {
             Thread.sleep(100);
-            while (!me.isCancelled() && MC.currentDir == folderInitiated) {
+            while (!me.isCancelled() && localSearchJob.getID().equals(jobID)) {
                 if (extTableView.table.getItems().size() != newList.size()) {
                     FX.runAndWait(() -> {
                         extTableView.updateContentsAndSortPartial(newList);
@@ -527,7 +531,7 @@ public class MainController extends MyBaseController<MainController> {
             }
         });
 
-        SafeJob<Void> mainJob = new SafeJob<>(me -> {
+        SafeJob<Void> mainJob = new SafeJob<>(jobID, me -> {
             if (me.isCancelled()) {
                 return null;
             }
@@ -570,13 +574,14 @@ public class MainController extends MyBaseController<MainController> {
             return null;
         });
 
-        mainJob.addListener(SystemJobEventName.ON_EXECUTE, (j,cl,data) -> {
+        mainJob.addListener(SystemJobEventName.ON_EXECUTE, (j, cl, data) -> {
             D.jobsExecutor.submit(sortTask);// only relevant if the directory load takes a while
         });
 
-        mainJob.addListener(SystemJobEventName.ON_DONE, (j,cl,data) -> {
+        mainJob.addListener(SystemJobEventName.ON_DONE, (j, cl, data) -> {
             sortTask.cancel(true);// just in case
         });
+        
         mainJob.addAfter(sortTask);
         localSearchJob = mainJob;
         D.jobsExecutor.submitAll(mainJob);
