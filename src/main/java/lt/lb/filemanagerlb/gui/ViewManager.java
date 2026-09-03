@@ -1,6 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
-import lt.lb.filemanagerlb.VLCInit;
+import lt.lb.filemanagerlb.vlc.VLCInit;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutionException;

@@ -1,6 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
-import lt.lb.filemanagerlb.VLCInit;
+import lt.lb.filemanagerlb.vlc.VLCInit;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.util.*;
@@ -56,7 +56,12 @@ import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.ComponentVideoSurface;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
+import lt.lb.filemanagerlb.vlc.VLCException;
+import lt.lb.filemanagerlb.vlc.VLCMediaPlayerEventListener;
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
+import uk.co.caprica.vlcj.media.MediaRef;
+import uk.co.caprica.vlcj.media.TrackType;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
 
 /**
  * FXML Controller class
@@ -127,6 +132,7 @@ public class MediaPlayerController extends MyBaseController {
 
     private static class Player {
 
+        public VLCMediaPlayerEventListener listener;
         public MediaPlayer media;
         public StageFrame stageFrame;
         public JFrame jFrame;
@@ -145,7 +151,7 @@ public class MediaPlayerController extends MyBaseController {
         Logger.debug(getCurrentPlayer().status().position() + ", " + val);
         if (Math.abs(position - val) > minDelta) {
             getCurrentPlayer().controls().setPosition(val);
-            Logger.debug("Set new seek "+val);
+            Logger.debug("Set new seek " + val);
         }
     }
 
@@ -183,6 +189,7 @@ public class MediaPlayerController extends MyBaseController {
         return D.sm.newStageFrame("VLC VIDEO OUTPUT", () -> {
             EmbeddedMediaPlayer newPlayer = VLCInit.getFactory().mediaPlayers().newEmbeddedMediaPlayer();
             player.set(newPlayer);
+
             javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
             view.set(imageView);
             newPlayer.videoSurface().set(new ImageViewVideoSurface(imageView));
@@ -210,6 +217,9 @@ public class MediaPlayerController extends MyBaseController {
         }).map(videoFrame -> {
             Player pl = new Player();
             pl.media = player.get();
+            VLCMediaPlayerEventListener listener = new VLCMediaPlayerEventListener();
+            pl.media.events().addMediaPlayerEventListener(listener);
+            pl.listener = listener;
             pl.stageFrame = videoFrame;
             return pl;
         }).orNull();
@@ -385,7 +395,7 @@ public class MediaPlayerController extends MyBaseController {
                 volume = player.audio().volume();
                 if (volume != vol) {
                     LockSupport.parkNanos(WaitTime.ofMillis(10).toNanos());
-                }else{
+                } else {
                     break;
                 }
             } while (true);
@@ -616,13 +626,15 @@ public class MediaPlayerController extends MyBaseController {
         events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
             boolean stopped = false;
+            int limit = 500;
             while (getCurrentPlayer().status().isPlaying() && stoppableStates.contains(playerState)) {
                 getCurrentPlayer().controls().stop();
-                if (getCurrentPlayer().status().isPlaying()) {
-                    LockSupport.parkNanos(WaitTime.ofMillis(100).toNanos());
+                if (getCurrentPlayer().status().isPlaying() && limit > 0) {
+                    Thread.sleep(10);
+                    limit--;
                     continue;
                 }
-                stopped = true;
+                stopped = limit > 0;
                 break;
             }
             if (stopped) {
@@ -677,7 +689,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     public void playNext(int increment, boolean ignoreModifiers) {
-//        events.cancelAll("PLAY");
+        events.cancelAll(PlayerEventType.PLAY);
         events.add(PlayerEventType.PLAY, () -> {
 
             ExtPath item = null;
@@ -697,7 +709,7 @@ public class MediaPlayerController extends MyBaseController {
 
                             filePlaying = null;
                             update();
-                            stop();
+//                            stop();
                             return;
                         }
                     }
@@ -756,7 +768,7 @@ public class MediaPlayerController extends MyBaseController {
     }
 
     private Future play(PlayInfo playInfo) {
-        events.dequeueAll(PlayerEventType.PLAY_TASK);
+        events.cancelAll(PlayerEventType.PLAY_TASK);
         return events.add(PlayerEventType.PLAY_TASK, () -> {
             ignoreSeek = true;
             Logger.debug("Execute play task");
@@ -768,7 +780,7 @@ public class MediaPlayerController extends MyBaseController {
             }
             filePlaying = playInfo.item();
 
-            stop();
+//            stop();
             if (oldMode) {
                 getCurrentFrameOld().setTitle(filePlaying.getName(true));
                 startedWithVideo = getCurrentFrameOld().isVisible();
@@ -779,19 +791,45 @@ public class MediaPlayerController extends MyBaseController {
                 fxDelegator.set(stage.titleProperty(), title);
                 startedWithVideo = stage.isShowing();
             }
+            Player player = gcp();
+            player.listener.clearEvents();
 
-            boolean playable = getCurrentPlayer().media().prepare(filePlaying.getAbsolutePath(), getOptions());
-            if (!playable) {
-                table.getItems().remove(filePlaying);
+            String absolutePath = filePlaying.getAbsolutePath();
+            boolean prepared = player.media.media().prepare(absolutePath, getOptions()); // this is not reliable
+            boolean valid = prepared && getCurrentPlayer().media().isValid();
+            boolean startedPlaying = false;
+            if (!valid) {
+                ErrorReport.report(new VLCException("Not valid media file, skipping " + absolutePath));
+                stop();
 
             } else {
                 getCurrentPlayer().controls().start();
+                VLCMediaPlayerEventListener.VLCPlayerEvent lastEvent = player.listener.getLastEvent();
+                if (lastEvent != null) {
+                    if (lastEvent.event() == VLCMediaPlayerEventListener.VLCPlayerEvents.mediaPlayerReady) {
 
-                //wait to start playing
-                while (!getCurrentPlayer().status().isPlaying()) {
-                    Logger.debug("Keep sleeping");
-                    LockSupport.parkNanos(WaitTime.ofMillis(10).toNanos());
+                        try {
+                            int limit = 500;
+                            //wait to start playing
+                            while (!getCurrentPlayer().status().isPlaying() && limit > 0) {
+                                Logger.debug("Keep sleeping");
+                                Thread.sleep(10);
+                                limit--;
+                            }
+                            startedPlaying = limit > 0;
+                        } catch (InterruptedException inter) {
+
+                        }
+
+                    } else if (lastEvent.event() == VLCMediaPlayerEventListener.VLCPlayerEvents.error) {
+                        startedPlaying = false;
+                        // error
+                    }
                 }
+
+            }
+
+            if (startedPlaying) {
                 Logger.debug("Started playing");
                 // set the after initialization things
                 playInfo.volume().filter(v -> v >= 0 && v <= 100).ifPresent(v -> {
@@ -802,9 +840,13 @@ public class MediaPlayerController extends MyBaseController {
                     Logger.debug("Set position", pos);
                     getCurrentPlayer().controls().setPosition(pos);
                 });
+                this.playerState = PlayerState.PLAYING;
+            } else {
+                stop();
+                this.playerState = PlayerState.STOPPED;
+                ErrorReport.report(new VLCException("Failure to play " + absolutePath));
 
             }
-            this.playerState = PlayerState.PLAYING;
             ignoreSeek = false;
             this.update();
 

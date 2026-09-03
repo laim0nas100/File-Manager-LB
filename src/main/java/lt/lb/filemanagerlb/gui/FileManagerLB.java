@@ -1,6 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
-import lt.lb.filemanagerlb.VLCInit;
+import lt.lb.filemanagerlb.vlc.VLCInit;
 import com.jthemedetecor.OsThemeDetector;
 import lt.lb.commons.javafx.scenemanagement.FXWinUtil;
 import java.io.File;

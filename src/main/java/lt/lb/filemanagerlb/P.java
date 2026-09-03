@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb;
 
+import lt.lb.filemanagerlb.vlc.VLCInit;
 import com.github.laim0nas100.cfg.KeyProp;
 import com.github.laim0nas100.cfg.KeyProp.KP;
 import com.github.laim0nas100.cfg.KeyProp.KeyDefaultProperty;

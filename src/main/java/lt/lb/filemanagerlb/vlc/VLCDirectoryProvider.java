@@ -1,4 +1,4 @@
-package lt.lb.filemanagerlb;
+package lt.lb.filemanagerlb.vlc;
 
 import java.util.ArrayList;
 import java.util.List;

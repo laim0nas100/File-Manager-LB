@@ -1,4 +1,4 @@
-package lt.lb.filemanagerlb;
+package lt.lb.filemanagerlb.vlc;
 
 import org.tinylog.Logger;
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
@@ -36,18 +36,13 @@ public class VLCInit {
             return factoryInstance;
         }
         discover();
+        //warm up
         factoryInstance = new MediaPlayerFactory();
         MediaPlayer mediaPlayer = factoryInstance.mediaPlayers().newMediaPlayer();
+        mediaPlayer.media().prepare("");
         mediaPlayer.release();
 
         return factoryInstance;
-    }
-
-    public static class VLCException extends Exception {
-
-        public VLCException(String str) {
-            super(str);
-        }
     }
 
     public static synchronized void discover() throws VLCException {
