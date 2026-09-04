@@ -160,16 +160,10 @@
                 </VBox>
                 <TabPane>
                     <tabs>
-                        <Tab closable="false" text="Marked List">
+                        <Tab fx:id="markedTab" closable="false">
                             <content>
                                 <VBox>
                                     <children>
-                                        <HBox>
-                                            <children>
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Marked count:" />
-                                                <Text fx:id="markedSize" strokeType="OUTSIDE" strokeWidth="0.0" text="0" />
-                                            </children>
-                                        </HBox>
                                         <ListView fx:id="markedView" VBox.vgrow="ALWAYS" />
                                     </children>
                                 </VBox>

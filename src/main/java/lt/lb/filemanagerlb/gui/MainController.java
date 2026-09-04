@@ -85,6 +85,7 @@ import org.tinylog.Logger;
 import lt.lb.commons.javafx.properties.SelectableViewProperties;
 import lt.lb.filemanagerlb.utility.SafeJob;
 import com.github.laim0nas100.uncheckedutils.Checked;
+import javafx.scene.control.Tab;
 import org.apache.commons.lang3.Strings;
 
 /**
@@ -136,7 +137,7 @@ public class MainController extends MyBaseController<MainController> {
     @FXML
     public ListView markedView;
     @FXML
-    public Text markedSize;
+    public Tab markedTab;
 
     @FXML
     public ListView linkView;
@@ -581,7 +582,7 @@ public class MainController extends MyBaseController<MainController> {
         mainJob.addListener(SystemJobEventName.ON_DONE, (j, cl, data) -> {
             sortTask.cancel(true);// just in case
         });
-        
+
         mainJob.addAfter(sortTask);
         localSearchJob = mainJob;
         D.jobsExecutor.submitAll(mainJob);
@@ -1204,7 +1205,7 @@ public class MainController extends MyBaseController<MainController> {
         markedView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         markedView.setItems(MainController.markedList);
         IntegerBinding size = Bindings.size(markedView.getItems());
-        markedSize.textProperty().bind(size.asString());
+        markedTab.textProperty().bind(Bindings.createStringBinding(() -> "Marked(" + size.get() + ")", size));
         markedView.setContextMenu(markedContextMenu);
         markedView.getContextMenu().getItems().add(CosmeticsFX.wrapSelectContextMenu(markedView.getSelectionModel()));
         CosmeticsFX.simpleMenuBindingWrap(markedView.getContextMenu());
