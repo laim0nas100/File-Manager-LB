@@ -80,7 +80,6 @@ public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
 
             for (VLCPlayerEvents ev : types) {
                 if (ev == lastEvent.event()) {
-                    Logger.info("Awaited " + ev);
                     return true;
                 }
             }
