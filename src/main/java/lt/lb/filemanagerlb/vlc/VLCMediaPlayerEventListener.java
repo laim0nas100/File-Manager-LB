@@ -1,7 +1,13 @@
 package lt.lb.filemanagerlb.vlc;
 
-import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import lt.lb.commons.Java;
+import lt.lb.commons.threads.sync.Awaiter;
+import lt.lb.commons.threads.sync.WaitTime;
+import org.tinylog.Logger;
 import uk.co.caprica.vlcj.media.MediaRef;
 import uk.co.caprica.vlcj.media.TrackType;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
@@ -12,20 +18,85 @@ import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
  * @author laim0nas100
  */
 public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
-    
-    public static enum VLCPlayerEvents{
-        error, mediaPlayerReady
+
+    public static enum VLCPlayerEvents {
+        error, mediaPlayerReady, playing, stopped, volume
     }
-    
-    public record VLCPlayerEvent(long time, VLCPlayerEvents event){};
-    
-    protected ArrayDeque<VLCPlayerEvent> events = new ArrayDeque<>();
-    public void clearEvents(){
-        events.clear();
+
+    public record VLCPlayerEvent(long time, VLCPlayerEvents event) {}
+
+    protected ReentrantLock lock = new ReentrantLock();
+    protected Condition con = lock.newCondition();
+    protected List<VLCPlayerEvent> events = new ArrayList<>();
+    protected Awaiter.AwaiterTime awaiter = Awaiter.fromLockCondition(() -> !events.isEmpty(), lock, con);
+
+    public void clearEvents() {
+        lock.lock();
+        try {
+            events.clear();
+        } finally {
+            lock.unlock();
+        }
+
     }
-    
-    public VLCPlayerEvent getLastEvent(){
-        return events.peekLast();
+
+    public VLCPlayerEvent getLastEvent() {
+        return events.getLast();
+    }
+
+    public VLCPlayerEvent awaitLastEvent(WaitTime time) throws InterruptedException {
+        if (awaiter.awaitBool(time)) {
+            Logger.info("Awaited ok");
+            return getLastEvent();
+        }
+        return null;
+    }
+
+    public boolean ready() throws InterruptedException {
+        return awaitEvent(VLCPlayerEvents.mediaPlayerReady, VLCPlayerEvents.playing);
+    }
+
+    public boolean stopped() throws InterruptedException {
+        return awaitEvent(VLCPlayerEvents.stopped);
+    }
+
+    public boolean volumeSet() throws InterruptedException {
+        return awaitEvent(VLCPlayerEvents.volume);
+    }
+
+    public boolean awaitEvent(VLCPlayerEvents... types) throws InterruptedException {
+        boolean awaitBool = awaiter.awaitBool(WaitTime.ofSeconds(1));// has events
+        if (!awaitBool) {
+            return false;
+        }
+        if (types.length == 0) { // non empty
+            return true;
+        }
+        int lockedSize = events.size();
+
+        // check last 2 events, because stopped also sets volume to 0.
+        for (int i = lockedSize - 1; i >= 0 && i > lockedSize - 3; i--) {
+            VLCPlayerEvent lastEvent = events.get(i);
+
+            for (VLCPlayerEvents ev : types) {
+                if (ev == lastEvent.event()) {
+                    Logger.info("Awaited " + ev);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected void addEvent(VLCPlayerEvents event) {
+        VLCPlayerEvent vlcPlayerEvent = new VLCPlayerEvent(Java.getNanoTime(), event);
+        lock.lock();
+        try {
+            events.add(vlcPlayerEvent);
+            con.signal();
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -42,6 +113,7 @@ public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
 
     @Override
     public void playing(MediaPlayer mediaPlayer) {
+        addEvent(VLCPlayerEvents.playing);
     }
 
     @Override
@@ -50,6 +122,7 @@ public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
 
     @Override
     public void stopped(MediaPlayer mediaPlayer) {
+        addEvent(VLCPlayerEvents.stopped);
     }
 
     @Override
@@ -122,6 +195,7 @@ public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
 
     @Override
     public void volumeChanged(MediaPlayer mediaPlayer, float volume) {
+        addEvent(VLCPlayerEvents.volume);
     }
 
     @Override
@@ -134,12 +208,12 @@ public class VLCMediaPlayerEventListener implements MediaPlayerEventListener {
 
     @Override
     public void error(MediaPlayer mediaPlayer) {
-        events.add(new VLCPlayerEvent(Java.getNanoTime(),VLCPlayerEvents.error));
+        addEvent(VLCPlayerEvents.error);
     }
 
     @Override
     public void mediaPlayerReady(MediaPlayer mediaPlayer) {
-        events.add(new VLCPlayerEvent(Java.getNanoTime(),VLCPlayerEvents.mediaPlayerReady));
+        addEvent(VLCPlayerEvents.mediaPlayerReady);
     }
-    
+
 }

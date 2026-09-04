@@ -59,9 +59,6 @@ import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import lt.lb.filemanagerlb.vlc.VLCException;
 import lt.lb.filemanagerlb.vlc.VLCMediaPlayerEventListener;
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
-import uk.co.caprica.vlcj.media.MediaRef;
-import uk.co.caprica.vlcj.media.TrackType;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
 
 /**
  * FXML Controller class
@@ -151,7 +148,7 @@ public class MediaPlayerController extends MyBaseController {
         Logger.debug(getCurrentPlayer().status().position() + ", " + val);
         if (Math.abs(position - val) > minDelta) {
             getCurrentPlayer().controls().setPosition(val);
-            Logger.debug("Set new seek " + val);
+            Logger.info("Set new seek " + val);
         }
     }
 
@@ -381,24 +378,17 @@ public class MediaPlayerController extends MyBaseController {
         extTableView.updateContentsAndSort(backingList);
     }
 
-    private void setVolume(MediaPlayer player, int vol) {
+    private void setVolume(Player player, int vol) {
         events.cancelAll(PlayerEventType.VOL);
 
         events.add(PlayerEventType.VOL, () -> {
-            int tries = 100;
-            var volume = player.audio().volume();
-            do {
-                if (--tries < 0 || volume == vol) {
-                    break;
-                }
-                player.audio().setVolume(vol);
-                volume = player.audio().volume();
-                if (volume != vol) {
-                    LockSupport.parkNanos(WaitTime.ofMillis(10).toNanos());
-                } else {
-                    break;
-                }
-            } while (true);
+
+            var volume = player.media.audio().volume();
+            if (vol == volume) {//already set
+                return;
+            }
+            player.media.audio().setVolume(vol);
+            player.listener.volumeSet();
         });
 
     }
@@ -422,7 +412,7 @@ public class MediaPlayerController extends MyBaseController {
             if (pls.isEmpty() || !getCurrentPlayer().status().isPlaying() || stopping) {
                 return;
             }
-            setVolume(getCurrentPlayer(), rounded);
+            setVolume(gcp(), rounded);
         }));
         volumeSlider.setValue(100);
         seekSlider.valueProperty().addListener(FXDefs.SimpleChangeListener.of(val -> {
@@ -518,7 +508,7 @@ public class MediaPlayerController extends MyBaseController {
         CosmeticsFX.simpleMenuBindingWrap(table.getContextMenu());
 
         extTableView.prepareChangeListeners();
-        execService.scheduleWithFixedDelay(WaitTime.ofMillis(500), () -> {
+        execService.scheduleWithFixedDelay(WaitTime.ofMillis(250), () -> {
             if (ignoreSeek || stopping || this.playerState != PlayerState.PLAYING) {
                 return;
             }
@@ -612,7 +602,7 @@ public class MediaPlayerController extends MyBaseController {
                     getCurrentPlayer().controls().play();
                 }
 
-                this.setVolume(getCurrentPlayer(), lastVolume.get());
+                this.setVolume(gcp(), lastVolume.get());
 
             } else {
                 playNext(0, true);
@@ -625,20 +615,12 @@ public class MediaPlayerController extends MyBaseController {
         Set<PlayerState> stoppableStates = ImmutableCollections.setOf(PlayerState.PAUSED, PlayerState.PLAYING);
         events.dequeueAll(PlayerEventType.STOP, PlayerEventType.PLAY, PlayerEventType.PLAY_OR_PAUSE, PlayerEventType.PLAY_TASK);
         events.add(PlayerEventType.STOP, () -> {
-            boolean stopped = false;
-            int limit = 500;
-            while (getCurrentPlayer().status().isPlaying() && stoppableStates.contains(playerState)) {
-                getCurrentPlayer().controls().stop();
-                if (getCurrentPlayer().status().isPlaying() && limit > 0) {
-                    Thread.sleep(10);
-                    limit--;
-                    continue;
+            Player gcp = gcp();
+            if (gcp.media.status().isPlaying() && stoppableStates.contains(playerState)) {
+                gcp.media.controls().stop();
+                if (gcp.listener.stopped()) {
+                    this.playerState = PlayerState.STOPPED;
                 }
-                stopped = limit > 0;
-                break;
-            }
-            if (stopped) {
-                this.playerState = PlayerState.STOPPED;
             }
         });
 
@@ -770,15 +752,16 @@ public class MediaPlayerController extends MyBaseController {
     private Future play(PlayInfo playInfo) {
         events.cancelAll(PlayerEventType.PLAY_TASK);
         return events.add(PlayerEventType.PLAY_TASK, () -> {
-            ignoreSeek = true;
-            Logger.debug("Execute play task");
+
             int i = playInfo.index().orElseGet(() -> getIndex(playInfo.item()));
             if (i < 0) {
                 Logger.debug("Play next");
                 playNext(0, true);//increment by zero 
+                Logger.info("Early exit playNext");
                 return null;
             }
             filePlaying = playInfo.item();
+            ignoreSeek = true;
 
 //            stop();
             if (oldMode) {
@@ -796,55 +779,50 @@ public class MediaPlayerController extends MyBaseController {
 
             String absolutePath = filePlaying.getAbsolutePath();
             boolean prepared = player.media.media().prepare(absolutePath, getOptions()); // this is not reliable
-            boolean valid = prepared && getCurrentPlayer().media().isValid();
+            boolean valid = prepared && player.media.media().isValid();
             boolean startedPlaying = false;
+            VLCException exception = null;
             if (!valid) {
-                ErrorReport.report(new VLCException("Not valid media file, skipping " + absolutePath));
-                stop();
+                exception = new VLCException("Not valid media file, skipping " + absolutePath);
 
             } else {
-                getCurrentPlayer().controls().start();
-                VLCMediaPlayerEventListener.VLCPlayerEvent lastEvent = player.listener.getLastEvent();
-                if (lastEvent != null) {
-                    if (lastEvent.event() == VLCMediaPlayerEventListener.VLCPlayerEvents.mediaPlayerReady) {
+                player.media.controls().start();
+                try {
 
-                        try {
-                            int limit = 500;
-                            //wait to start playing
-                            while (!getCurrentPlayer().status().isPlaying() && limit > 0) {
-                                Logger.debug("Keep sleeping");
-                                Thread.sleep(10);
-                                limit--;
-                            }
-                            startedPlaying = limit > 0;
-                        } catch (InterruptedException inter) {
-
-                        }
-
-                    } else if (lastEvent.event() == VLCMediaPlayerEventListener.VLCPlayerEvents.error) {
+                    if (player.listener.ready()) {
+                        startedPlaying = true;
+                    } else if (player.listener.getLastEvent().event() == VLCMediaPlayerEventListener.VLCPlayerEvents.error) {
                         startedPlaying = false;
-                        // error
+                        exception = new VLCException("Failed to play with error: " + absolutePath);
                     }
+                } catch (InterruptedException interrupted) {
+                    exception = null;
                 }
 
             }
 
             if (startedPlaying) {
+                this.playerState = PlayerState.PLAYING;
                 Logger.debug("Started playing");
                 // set the after initialization things
                 playInfo.volume().filter(v -> v >= 0 && v <= 100).ifPresent(v -> {
                     Logger.debug("Set volume", v);
-                    setVolume(getCurrentPlayer(), v);
+                    setVolume(player, v);
                 });
                 playInfo.position.ifPresent(pos -> {
                     Logger.debug("Set position", pos);
-                    getCurrentPlayer().controls().setPosition(pos);
+                    player.media.controls().setPosition(pos);
                 });
-                this.playerState = PlayerState.PLAYING;
+
             } else {
-                stop();
-                this.playerState = PlayerState.STOPPED;
-                ErrorReport.report(new VLCException("Failure to play " + absolutePath));
+
+                if (exception != null) {
+                    ErrorReport.report(exception);
+                } else {
+                    Logger.info("Failed to start playing without exception");
+                    ignoreSeek = false;
+                    return null;
+                }// if exception is null, we have been interrupted, don't react anymore
 
             }
             ignoreSeek = false;
