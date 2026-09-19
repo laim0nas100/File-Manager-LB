@@ -537,7 +537,7 @@ public class MainController extends MyBaseController<MainController> {
                 return null;
             }
             extTableView.saveScrollState();
-            Future update = folderInitiated.update(newList, me::isCancelled);
+            Future update = folderInitiated.update(newList::add, me::isCancelled);
 
             Checked.checkedCall(update::get);
             if (me.isCancelled()) {

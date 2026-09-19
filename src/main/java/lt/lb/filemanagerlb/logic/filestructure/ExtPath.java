@@ -228,9 +228,9 @@ public class ExtPath {
         return list;
     }
 
-    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> call) {
+    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> receiver) {
         if (predicate.test(this)) {
-            call.accept(this);
+            receiver.accept(this);
         }
     }
 

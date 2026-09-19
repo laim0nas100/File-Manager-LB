@@ -18,23 +18,23 @@ import com.github.laim0nas100.uncheckedutils.SafeOpt;
  * @author Laimonas Beiušis Extended Folder for custom actions
  */
 public abstract class ExtFolder extends ExtPath {
-    
+
     public ExtFolder(String src, Object... optional) {
         super(src, optional);
     }
-    
+
     public abstract Map<String, ExtPath> getFilesMap();
-    
+
     public Map<String, ExtPath> updateAwait() {
         return SafeOpt.ofFuture(populateFolder(true, null, null)).peekError(ErrorReport::report).orElse(ImmutableCollections.mapOf());
     }
-    
+
     public Collection<ExtPath> getFilesCollection() {
         return getFilesMap().values();
     }
-    
+
     protected abstract Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> buffer, Supplier<Boolean> isCanceled);
-    
+
     public ExtPath getIgnoreCase(String name) {
         if (hasFileIgnoreCase(name)) {
             String request = getKey(name);
@@ -43,12 +43,12 @@ public abstract class ExtFolder extends ExtPath {
             return null;
         }
     }
-    
+
     public boolean hasFileIgnoreCase(String name) {
         String key = getKey(name);
         return !key.isEmpty();
     }
-    
+
     public String getKey(String name) {
         String request = "";
         for (String key : getFilesMap().keySet()) {
@@ -58,7 +58,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return request;
     }
-    
+
     public Collection<ExtFolder> getFoldersFromFiles() {
         ArrayDeque<ExtFolder> folders = new ArrayDeque<>();
         for (ExtPath file : getFilesCollection()) {
@@ -68,7 +68,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return folders;
     }
-    
+
     @Override
     public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate) {
         Collection<ExtPath> listRecursive = this.getListRecursive(false);
@@ -81,7 +81,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return listRecursive;
     }
-    
+
     @Override
     public Collection<ExtPath> getListRecursive(boolean applyDisable) {
         ArrayDeque<ExtPath> list = new ArrayDeque<>();
@@ -98,7 +98,7 @@ public abstract class ExtFolder extends ExtPath {
         }
         return list;
     }
-    
+
     public Collection<ExtPath> getListRecursiveFolders(boolean applyDisable) {
         Collection<ExtPath> listRecursive = this.getListRecursive(applyDisable);
         Iterator<ExtPath> iterator = listRecursive.iterator();
@@ -110,31 +110,27 @@ public abstract class ExtFolder extends ExtPath {
         }
         return listRecursive;
     }
-    
+
     private void getRootList(Collection<ExtPath> list, ExtFolder folder) {
         folder.update();
-//        if(!folder.isDisabled.get()){
         list.addAll(folder.getFilesCollection());
         folder.getFoldersFromFiles().forEach(fold -> {
             getRootList(list, fold);
         });
-//        }
     }
-    
+
     @Override
-    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> call) {
-        this.update();
-        super.collectRecursive(predicate, call);
-        this.getFilesCollection().forEach(f -> {
-            f.collectRecursive(predicate, call);
-        });
-        
+    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> reciever) {
+        super.collectRecursive(predicate,reciever);
+        Future update = this.update(path -> {
+            path.collectRecursive(predicate, reciever);
+        }, null);
     }
-    
+
     public abstract void update();
-    
-    public abstract Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled);
-    
+
+    public abstract Future update(Consumer<ExtPath> receiver, Supplier<Boolean> isCanceled);
+
     @Override
     public String getAbsoluteDirectory() {
         if (isAbsoluteRoot.get()) {

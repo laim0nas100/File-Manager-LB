@@ -90,21 +90,6 @@ public class ManagingClass {
         }
     }
 
-    public Collection<ExtPath> getCurrentContents() {
-        currentDir.update();
-        return currentDir.getFilesCollection();
-    }
-
-    public void getCurrentContents(ObservableList<ExtPath> list, BooleanProperty isCanceled) {
-        currentDir.update(list, isCanceled::get);
-    }
-
-    public ObservableList<ExtPath> getAllContents() {
-        ObservableList<ExtPath> list = FXCollections.observableArrayList();
-        list.addAll(FileManagerLB.ArtificialRoot.getListRecursive(false));
-        return list;
-    }
-
     private void addCacheNode(ExtFolder folder) {
         if (!folderCache.isEmpty()) {
             ArrayList<ExtPath> saveList = new ArrayList<>();

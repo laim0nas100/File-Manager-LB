@@ -38,7 +38,7 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> buffer, Supplier<Boolean> isCanceled) {
+    protected Future<Map<String, ExtPath>> populateFolder(boolean auto, Consumer<ExtPath> reciever, Supplier<Boolean> isCanceled) {
 
         Callable<Map<String, ExtPath>> call = () -> {
 
@@ -67,11 +67,11 @@ public class ExtRealFolder extends ExtFolder {
                                 file = new ExtPath(filePathStr, f);
                             }
                             paths.put(name, file);
-                            if (buffer != null) {
+                            if (reciever != null) {
                                 if (D.slowDownFiles) {
                                     Thread.sleep(10);
                                 }
-                                buffer.accept(file);
+                                reciever.accept(file);
                             }
                         }
 
@@ -93,10 +93,9 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    public Future update(List<ExtPath> receiver, Supplier<Boolean> isCanceled) {
+    public Future update(Consumer<ExtPath> receiver, Supplier<Boolean> isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
-        Consumer<ExtPath> buffer = receiver != null ? receiver::add : null;
-        return populateFolder(true, buffer, isCanceled);
+        return populateFolder(true, receiver, isCanceled);
     }
 
     @Override
