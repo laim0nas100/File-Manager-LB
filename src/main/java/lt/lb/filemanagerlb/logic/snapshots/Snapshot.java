@@ -38,7 +38,7 @@ public class Snapshot implements Serializable {
 
     public Snapshot(ExtFolder folder) {
         init();
-        folder.update();
+        folder.updateAwait();
         this.folderCreatedFrom = folder.getAbsoluteDirectory();
         Logger.info("Folder size: " + folder.getFilesMap().size());
         folder.getListRecursive(true).forEach(file -> {

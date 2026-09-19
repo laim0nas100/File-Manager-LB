@@ -187,7 +187,7 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void updateLists() {
-        folder.update();
+        folder.updateAwait();
         ArrayList<ExtPath> array = new ArrayList<>();
         if (recursive.selectedProperty().get()) {
             this.folder.getListRecursive(true).stream().forEach(file -> {

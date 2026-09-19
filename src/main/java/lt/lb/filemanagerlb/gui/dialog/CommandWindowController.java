@@ -177,7 +177,6 @@ public class CommandWindowController extends MyBaseController {
                 String desc = "Listing:" + file.getAbsoluteDirectory();
 
                 ExtFolder folder = (ExtFolder) file;
-                folder.update();
                 for (ExtPath f : folder.getFilesCollection()) {
                     deque.add(f.getAbsoluteDirectory());
                 }

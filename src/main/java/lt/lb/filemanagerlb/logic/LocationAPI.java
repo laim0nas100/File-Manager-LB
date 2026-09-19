@@ -252,7 +252,7 @@ public class LocationAPI {
         LocationWalker walker = new LocationWalker(location);
         while (walker.canDoStep(true)) {
             walker.iteration();
-            walker.currentFolder.update();
+//            walker.currentFolder.update();
         }
         walker.currentFolder.getFilesMap().put(file.propertyName.get(), file);
     }

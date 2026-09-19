@@ -112,7 +112,6 @@ public abstract class ExtFolder extends ExtPath {
     }
 
     private void getRootList(Collection<ExtPath> list, ExtFolder folder) {
-        folder.update();
         list.addAll(folder.getFilesCollection());
         folder.getFoldersFromFiles().forEach(fold -> {
             getRootList(list, fold);

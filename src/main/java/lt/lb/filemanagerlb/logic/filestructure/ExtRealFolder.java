@@ -108,9 +108,4 @@ public class ExtRealFolder extends ExtFolder {
         }
     }
 
-    @Override
-    public Collection<ExtPath> getFilesCollection() {
-        return getFilesMap().values();
-    }
-
 }

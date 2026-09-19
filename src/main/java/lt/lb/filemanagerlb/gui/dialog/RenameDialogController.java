@@ -6,6 +6,7 @@ import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -104,7 +105,6 @@ public class RenameDialogController extends TextInputDialogController {
     public void update() {
 
         listToCheck.clear();
-        folder.update();
         for (ExtPath file : folder.getFilesCollection()) {
             listToCheck.add(file.propertyName.get());
         }
