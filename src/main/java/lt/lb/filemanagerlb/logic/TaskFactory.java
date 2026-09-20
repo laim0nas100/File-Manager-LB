@@ -2,6 +2,7 @@ package lt.lb.filemanagerlb.logic;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,16 +11,22 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lt.lb.commons.F;
 import lt.lb.commons.io.CopyOptions;
 import lt.lb.commons.io.autopath.AutoPath;
+import lt.lb.commons.iteration.For;
 import lt.lb.commons.iteration.streams.MakeStream;
 import lt.lb.commons.javafx.*;
+import lt.lb.commons.threads.TimestampingExecutionExclusive;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.MainController;
+import static lt.lb.filemanagerlb.gui.MainController.markedList;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.gui.dialog.DuplicateFinderController;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
@@ -29,6 +36,7 @@ import lt.lb.filemanagerlb.logic.snapshots.Entry;
 import lt.lb.filemanagerlb.logic.snapshots.ExtEntry;
 import lt.lb.filemanagerlb.logic.snapshots.Snapshot;
 import lt.lb.filemanagerlb.logic.snapshots.SnapshotAPI;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import lt.lb.filemanagerlb.utility.ContinousCombinedTask;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.ExtStringUtils;
@@ -102,7 +110,21 @@ public abstract class TaskFactory {
         return newFile.getStringPath();
     }
 
-//PREPARE FOR TASKS
+    public static final TimestampingExecutionExclusive<ObservableList<ExtPath>> markedListRefresher = new TimestampingExecutionExclusive<>(D.exe.getMain(), WaitTime.ofSeconds(10), 8);
+
+    public static final BulkConsumer<ExtPath> ADD_TO_MARKED = new BulkConsumer<>() {
+        @Override
+        public void accept(ExtPath t) {
+            addToMarked(t);
+        }
+
+        @Override
+        public void acceptAll(List<ExtPath> list) {
+            addAllToMarked(list);
+        }
+
+    };
+
     public static void addToMarked(ExtPath file) {
         FX.submit(() -> {
             if (file != null && !MainController.markedList.contains(file)) {
@@ -111,6 +133,70 @@ public abstract class TaskFactory {
         });
     }
 
+    public static void addAllToMarked(List<ExtPath> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        FX.submit(() -> {
+            List<ExtPath> checked = new ArrayList<>(files.size());
+            for (ExtPath file : files) {
+                if (file != null && !MainController.markedList.contains(file)) {
+                    checked.add(file);
+                }
+            }
+            MainController.markedList.addAll(checked);
+        });
+    }
+
+    public static Future<ObservableList<ExtPath>> refreshMarkedFuture(){
+        return markedListRefresher.execute(false, () -> {
+                Map<Integer, ExtPath> removed = new HashMap<>();
+                List<Integer> ordered = new ArrayList<>();
+                int i = 0;
+                int size = markedList.size();
+                for (; i < size; i++) {
+                    SafeOpt<ExtPath> map = SafeOpt.of(i).map(index -> markedList.get(index));
+                    if (map.isEmpty()) {
+                        return markedList;// race condition, fast exit size changed
+                    }
+                    ExtPath get = map.get();
+                    if (!ExtPath.EXISTS.test(get)) {
+                        removed.put(i, get);
+                        ordered.add(i);
+                    }
+                }
+                if (!removed.isEmpty()) {
+                    FX.submit(() -> {
+                        For.elements().findBackwards(ordered, (j, index) -> {// can't remove from the front, all the elements shift back
+                            ExtPath get = removed.get(index);
+                            if (get == null) {
+                                return true;
+                            }
+                            if (markedList.get(index) == get) {//same file, safe to remove
+                                markedList.remove((int) index);
+                            }else{// identity missmatch, abort
+                                return true;
+                            }
+                            return false;
+                        });
+                        
+                    }).get();
+                    
+                }
+                return markedList;
+            });
+    }
+    
+    public static ObservableList<ExtPath> refreshMarked() {
+        try {
+            return refreshMarkedFuture().get();
+        } catch (InterruptedException | ExecutionException ex) {
+            ErrorReport.report(ex);
+        }
+        return markedList;
+    }
+
+    //PREPARE FOR TASKS
     public static Collection<String> populateStringFileList(Collection<ExtPath> filelist) {
         Collection<String> collection = FXCollections.observableArrayList();
         filelist.forEach(item -> {
@@ -128,7 +214,7 @@ public abstract class TaskFactory {
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
             Collection<ExtPath> listRecursive = new ArrayList<>();
-            listRecursive.addAll(file.getListRecursive(true));
+            file.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.fromCollection(listRecursive).sync());
             ExtPath parentFile = LocationAPI.getPathIfExists(file.getMapping().getParentLocation());
             for (ExtPath f : listRecursive) {
                 String relativePath = parentFile.relativeTo(f.getAbsoluteDirectory());
@@ -198,11 +284,9 @@ public abstract class TaskFactory {
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
-            Collection<ExtPath> listRecursive = file.getListRecursive(true);
-            for (ExtPath f : listRecursive) {
-//                f.path = null;
+            file.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.sync(f -> {
                 list.add(new ActionFile(f.getAbsoluteDirectory()));
-            }
+            }));
         }
         list.sort(ActionFile.COMP_ASCENDING);
         Logger.info("List after computing");
@@ -221,9 +305,8 @@ public abstract class TaskFactory {
         }
         ArrayList<ActionFile> list = new ArrayList<>();
         for (ExtPath file : fileList) {
-            Collection<ExtPath> listRecursive = file.getListRecursive(true);
             ExtPath parentFile = LocationAPI.getPathIfExists(file.getMapping().getParentLocation());
-            for (ExtPath f : listRecursive) {
+            file.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.sync(f -> {
                 try {
                     String relativePath = f.relativeFrom(parentFile.getAbsolutePath());
                     ActionFile AF = new ActionFile(f.getAbsoluteDirectory(), dest.getAbsoluteDirectory() + relativePath);
@@ -231,7 +314,7 @@ public abstract class TaskFactory {
                 } catch (Exception e) {
                     ErrorReport.report(e);
                 }
-            }
+            }));
 
         }
         list.sort(ActionFile.COMP_DESCENDING);

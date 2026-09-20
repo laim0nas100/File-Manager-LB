@@ -39,6 +39,7 @@ import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
 import com.github.laim0nas100.uncheckedutils.Checked;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 
 /**
  * FXML Controller class
@@ -187,19 +188,8 @@ public class AdvancedRenameController extends MyBaseController {
     }
 
     public void updateLists() {
-        folder.updateAwait();
         ArrayList<ExtPath> array = new ArrayList<>();
-        if (recursive.selectedProperty().get()) {
-            this.folder.getListRecursive(true).stream().forEach(file -> {
-                array.add(file);
-            });
-        } else {
-            this.folder.getFilesCollection().stream().forEach(file -> {
-                if (!file.isDisabled.get()) {
-                    array.add(file);
-                }
-            });
-        }
+        this.folder.collect(recursive.selectedProperty().get(), ExtPath.IS_NOT_DISABLED, BulkConsumer.fromCollection(array));
         tableList.clear();
         for (ExtPath s : array) {
             tableList.add(new TableItemObject(s, ignoredPaths));

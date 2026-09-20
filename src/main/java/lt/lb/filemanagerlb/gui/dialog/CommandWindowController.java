@@ -8,14 +8,11 @@ import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.util.Callback;
 import lt.lb.commons.javafx.ExtTask;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.threads.executors.FastExecutor;
 import lt.lb.commons.DLog;
 import lt.lb.commons.DLog.LogStream;
-import lt.lb.commons.containers.values.Value;
-import lt.lb.commons.parsing.StringParser;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -40,6 +37,7 @@ import lt.lb.recombinator.FlatMatched;
 import lt.lb.recombinator.Utils;
 import lt.lb.recombinator.impl.codepoint.CodepointMatchers;
 import com.github.laim0nas100.uncheckedutils.Checked;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -114,7 +112,7 @@ public class CommandWindowController extends MyBaseController {
                     SimpleTask collectFolders = new SimpleTask() {
                         @Override
                         protected Void call() throws Exception {
-                            root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), collection::add);
+                            root.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), BulkConsumer.fromCollection(collection));
                             return null;
                         }
                     };
@@ -161,10 +159,10 @@ public class CommandWindowController extends MyBaseController {
             String newCom = (String) params[0];
             newCom = Strings.CS.replaceOnce(newCom, commandListRec + " ", "");
             ExtPath file = LocationAPI.getFileAndPopulate(newCom);
+            file.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.sync(path -> {
+                deque.add(path.getAbsoluteDirectory());
+            }));
 
-            for (ExtPath f : file.getListRecursive(false)) {
-                deque.add(f.getAbsoluteDirectory());
-            }
             String desc = "Listing recursive:" + deque.removeFirst();
             ViewManager.newListFrame(desc, deque);
         });
@@ -286,7 +284,7 @@ public class CommandWindowController extends MyBaseController {
             try {
 
                 LinkedList<String> l = new LinkedList<>();
-                MainController.markedList.forEach(item -> {
+                TaskFactory.refreshMarked().forEach(item -> {
                     l.add(item.getAbsolutePath());
                 });
                 LinkedList<String> allCommands = new LinkedList<>();

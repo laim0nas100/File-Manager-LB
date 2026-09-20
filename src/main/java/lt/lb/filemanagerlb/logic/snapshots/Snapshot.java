@@ -8,11 +8,11 @@ package lt.lb.filemanagerlb.logic.snapshots;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
+import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.tinylog.Logger;
 
@@ -38,15 +38,12 @@ public class Snapshot implements Serializable {
 
     public Snapshot(ExtFolder folder) {
         init();
-        folder.updateAwait();
         this.folderCreatedFrom = folder.getAbsoluteDirectory();
-        Logger.info("Folder size: " + folder.getFilesMap().size());
-        folder.getListRecursive(true).forEach(file -> {
-
+        folder.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.sync(file ->{
             String relPath = file.relativeFrom(folder.getAbsolutePath());
             Entry entry = new Entry(file, relPath);
             map.put(relPath, entry);
-        });
+        }));
         map.remove(folder.getAbsolutePath());
     }
 

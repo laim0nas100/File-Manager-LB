@@ -449,7 +449,7 @@ public class MediaPlayerController extends MyBaseController {
                         .addItem(new MenuBuilders.MenuItemBuilder()
                                 .withText("Add marked")
                                 .withAction(eh -> {
-                                    MainController.markedList.forEach(item -> {
+                                    TaskFactory.refreshMarked().forEach(item -> {
                                         addIfAbsent(item);
                                     });
                                     update();

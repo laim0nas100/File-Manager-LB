@@ -8,10 +8,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.filemanagerlb.D;
-import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 
 /**
  *
@@ -26,7 +26,9 @@ public abstract class ExtFolder extends ExtPath {
     public abstract Map<String, ExtPath> getFilesMap();
 
     public Map<String, ExtPath> updateAwait() {
-        return SafeOpt.ofFuture(populateFolder(true, null, null)).peekError(ErrorReport::report).orElse(ImmutableCollections.mapOf());
+        return SafeOpt.ofFuture(populateFolder(true, null, null))
+                .peekError(ErrorReport::report)
+                .orElse(ImmutableCollections.mapOf());
     }
 
     public Collection<ExtPath> getFilesCollection() {
@@ -70,60 +72,51 @@ public abstract class ExtFolder extends ExtPath {
     }
 
     @Override
-    public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate) {
-        Collection<ExtPath> listRecursive = this.getListRecursive(false);
-        Iterator<ExtPath> iterator = listRecursive.iterator();
-        while (iterator.hasNext()) {
-            ExtPath path = iterator.next();
-            if (!predicate.test(path)) {
-                iterator.remove();
-            }
+    public void collectRecursive(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
+        List<ExtPath> local = new ArrayList<>();
+        if (predicate.test(this)) {
+            local.add(this);
         }
-        return listRecursive;
-    }
 
-    @Override
-    public Collection<ExtPath> getListRecursive(boolean applyDisable) {
-        ArrayDeque<ExtPath> list = new ArrayDeque<>();
-        list.add(this);
-        getRootList(list, this);
-        if (applyDisable) {
-            Iterator<ExtPath> iterator = list.iterator();
-            while (iterator.hasNext()) {
-                ExtPath next = iterator.next();
-                if (next.isDisabled.get()) {
-                    iterator.remove();
-                }
+        Future<?> update = this.update(path -> {
+            if (predicate.test(path)) {
+                local.add(path);
             }
-        }
-        return list;
-    }
+            if (path instanceof ExtFolder) {
+                //start new local list for each folder
+                path.collectRecursive(predicate, receiver);
+            }//ExtPath just adds it to the receiver, so we ignore that
 
-    public Collection<ExtPath> getListRecursiveFolders(boolean applyDisable) {
-        Collection<ExtPath> listRecursive = this.getListRecursive(applyDisable);
-        Iterator<ExtPath> iterator = listRecursive.iterator();
-        while (iterator.hasNext()) {
-            ExtPath next = iterator.next();
-            if (!next.getIdentity().equals(Enums.Identity.FOLDER)) {
-                iterator.remove();
-            }
-        }
-        return listRecursive;
-    }
-
-    private void getRootList(Collection<ExtPath> list, ExtFolder folder) {
-        list.addAll(folder.getFilesCollection());
-        folder.getFoldersFromFiles().forEach(fold -> {
-            getRootList(list, fold);
-        });
-    }
-
-    @Override
-    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> reciever) {
-        super.collectRecursive(predicate,reciever);
-        Future update = this.update(path -> {
-            path.collectRecursive(predicate, reciever);
         }, null);
+        SafeOpt.ofFuture(update)
+                .peek(ignored -> {
+                    //if no error, just feed to to the receiver
+                    receiver.acceptAll(local);
+                })
+                .peekError(ErrorReport::report)
+                .orNull();//await
+    }
+
+    @Override
+    public void collectLocal(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
+        List<ExtPath> local = new ArrayList<>();
+        if (predicate.test(this)) {
+            local.add(this);
+        }
+
+        Future<?> update = this.update(path -> {
+            if (predicate.test(path)) {
+                local.add(path);
+            }
+
+        }, null);
+        SafeOpt.ofFuture(update)
+                .peek(ignored -> {
+                    //if no error, just feed to to the receiver
+                    receiver.acceptAll(local);
+                })
+                .peekError(ErrorReport::report)
+                .orNull();//await
     }
 
     public abstract void update();

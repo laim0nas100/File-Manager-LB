@@ -1,7 +1,6 @@
 package lt.lb.filemanagerlb.gui;
 
 import com.github.laim0nas100.fastid.FastID;
-import com.github.laim0nas100.fastid.FastIDGen;
 import com.github.laim0nas100.jobsystem.Job;
 import com.github.laim0nas100.jobsystem.events.SystemJobEventName;
 import java.awt.Toolkit;
@@ -261,11 +260,7 @@ public class MainController extends MyBaseController<MainController> {
             } else {
                 localSearch();
             }
-            try {
-                LocationAPI.filterIfExists(MainController.markedList);
-            } catch (Exception e) {
-                ErrorReport.report(e);
-            }
+            TaskFactory.refreshMarkedFuture();// don't wait
             this.buttonForw.setDisable(!MC.hasForward());
             this.buttonPrev.setDisable(!MC.hasPrev());
             this.buttonParent.setDisable(!MC.hasParent());
@@ -865,7 +860,7 @@ public class MainController extends MyBaseController<MainController> {
                             filesProperties.selectedItems().forEach((file) -> {
 
                                 Runnable run = () -> {
-                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), TaskFactory::addToMarked);
+                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FILE), TaskFactory.ADD_TO_MARKED);
                                 };
                                 D.exe.execute(run);
 
@@ -884,7 +879,7 @@ public class MainController extends MyBaseController<MainController> {
                             filesProperties.selectedItems().forEach((file) -> {
 
                                 Runnable run = () -> {
-                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), TaskFactory::addToMarked);
+                                    file.collectRecursive(ExtPath.IS_NOT_DISABLED.and(ExtPath.IS_FOLDER), TaskFactory.ADD_TO_MARKED);
                                 };
                                 D.exe.execute(run);
 
@@ -907,7 +902,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Copy here marked")
                         .withAction(eh -> {
                             Logger.info("Copy Marked");
-                            ContinousCombinedTask task = TaskFactory.copyFilesEx(markedList, MC.currentDir, null);
+                            ContinousCombinedTask task = TaskFactory.copyFilesEx(TaskFactory.refreshMarked(), MC.currentDir, null);
                             task.setDescription("Copy marked files");
                             ViewManager.newProgressDialog(task);
                         })
@@ -922,7 +917,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Move here marked")
                         .withAction(eh -> {
                             Logger.info("Move Marked");
-                            ContinousCombinedTask task = TaskFactory.moveFilesEx(markedList, MC.currentDir);
+                            ContinousCombinedTask task = TaskFactory.moveFilesEx(TaskFactory.refreshMarked(), MC.currentDir);
                             task.setDescription("Move marked files");
                             ViewManager.newProgressDialog(task);
                         })
@@ -937,7 +932,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withText("Delete marked")
                         .withAction(eh -> {
                             Logger.info("Delete Marked");
-                            ContinousCombinedTask task = TaskFactory.deleteFilesEx(markedList);
+                            ContinousCombinedTask task = TaskFactory.deleteFilesEx(TaskFactory.refreshMarked());
                             task.setDescription("Delete marked files");
                             ViewManager.newProgressDialog(task);
                         })
@@ -950,7 +945,7 @@ public class MainController extends MyBaseController<MainController> {
                         .withAction(eh -> {
                             FX.submit(() -> {
                                 VirtualFolder vf = F.cast(MC.currentDir);
-                                MainController.markedList.forEach((f) -> {
+                                TaskFactory.refreshMarked().forEach((f) -> {
 
                                     vf.files.put(f.propertyName.get(), f);
                                 });

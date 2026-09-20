@@ -81,12 +81,6 @@ public class VirtualFolder extends ExtFolder {
         return CompletableFuture.completedFuture(null);
     }
 
-    @Override
-    public Collection<ExtPath> getListRecursive(boolean applyDisable) {
-        ArrayList<ExtPath> listRecursive = new ArrayList(super.getListRecursive(applyDisable));
-        listRecursive.remove(0);
-        return listRecursive;
-    }
 
     @Override
     public Enums.Identity getIdentity() {

@@ -3,17 +3,16 @@ package lt.lb.filemanagerlb.logic.filestructure;
 import java.io.File;
 import java.nio.file.*;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javafx.beans.property.*;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.Lazy;
-import lt.lb.commons.containers.collections.ImmutableCollections;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.LocationInRoot;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -213,23 +212,21 @@ public class ExtPath {
         return file;
     }
 
-    public Collection<ExtPath> getListRecursive(boolean applyDisable) {
-        if (applyDisable && this.isDisabled.get()) {
-            return ImmutableCollections.listOf();
+    
+    public void collect(boolean recursive, Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver){
+        if(recursive){
+            collectRecursive(predicate, receiver);
+        }else{
+            collectLocal(predicate, receiver);
         }
-        return ImmutableCollections.listOf(this);
     }
 
-    public Collection<ExtPath> getListRecursive(Predicate<ExtPath> predicate) {
-        ArrayDeque<ExtPath> list = new ArrayDeque<>();
-        if (predicate.test(this)) {
-            list.add(this);
-        }
-        return list;
+    public void collectRecursive(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
+        collectLocal(predicate, receiver);
     }
-
-    public void collectRecursive(Predicate<ExtPath> predicate, Consumer<ExtPath> receiver) {
-        if (predicate.test(this)) {
+    
+    public void collectLocal(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver){
+        if(predicate == null || predicate.test(this)){
             receiver.accept(this);
         }
     }

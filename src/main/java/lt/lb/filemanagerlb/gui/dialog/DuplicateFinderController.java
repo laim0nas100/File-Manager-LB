@@ -16,6 +16,8 @@ import lt.lb.commons.javafx.CosmeticsFX;
 import lt.lb.commons.javafx.FX;
 import lt.lb.commons.javafx.FXTask;
 import lt.lb.commons.javafx.MenuBuilders;
+import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 
 /**
@@ -135,15 +137,11 @@ public class DuplicateFinderController extends MyBaseController {
             list.getItems().clear();
             List synchronizedList = Collections.synchronizedList(list.getItems());
             ArrayList<PathStringCommands> array = new ArrayList<>();
-            root.getListRecursive(true).stream().forEach(item -> {
+            root.collectRecursive(ExtPath.IS_NOT_DISABLED, BulkConsumer.sync(item ->{
                 array.add(new PathStringCommands(item.getAbsolutePath()));
-            });
-            if (this.checkUseHash.selectedProperty().get()) {
-                task = TaskFactory.duplicateFinderTask(array, ratio, synchronizedList, map);
-            } else {
-                task = TaskFactory.duplicateFinderTask(array, ratio, synchronizedList, null);
-
-            }
+            }));
+            boolean hash = this.checkUseHash.selectedProperty().get();
+            task = TaskFactory.duplicateFinderTask(array, ratio, synchronizedList, hash ? map : null);
             this.progressBar.progressProperty().bind(task.progressProperty());
 
             Thread t = new Thread(task);
