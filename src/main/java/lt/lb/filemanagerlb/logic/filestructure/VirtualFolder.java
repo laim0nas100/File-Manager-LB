@@ -7,11 +7,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javafx.collections.FXCollections;
+import lt.lb.commons.threads.Futures;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import org.tinylog.Logger;
 
 /**
@@ -47,20 +48,19 @@ public class VirtualFolder extends ExtFolder {
     }
 
     @Override
-    public Future update(Consumer<ExtPath> receiver, Supplier<Boolean> isCanceled) {
+    public Future update(BulkConsumer<ExtPath> receiver, Supplier<Boolean> isCanceled) {
 
         if (this.equals(FileManagerLB.VirtualFolders)) {
             if (receiver != null) {
                 getFilesCollection().forEach(receiver);
             }
-
-            return CompletableFuture.completedFuture(null);
+            return Futures.emptyDone;
         }
 
         if (isAbsoluteRoot.get()) {
             Logger.info("Start update");
             FileManagerLB.remount();
-             if (receiver != null) {
+            if (receiver != null) {
                 FileManagerLB.remountUpdateList.forEach(receiver);
             }
             Logger.info("End update");
@@ -71,16 +71,15 @@ public class VirtualFolder extends ExtFolder {
                 ExtPath next = iter.next();
                 if (!Files.exists(next.toPath())) {
                     iter.remove();
-                }else{
-                    if(receiver != null){
+                } else {
+                    if (receiver != null) {
                         receiver.accept(next);
                     }
                 }
             }
         }
-        return CompletableFuture.completedFuture(null);
+        return Futures.emptyDone;
     }
-
 
     @Override
     public Enums.Identity getIdentity() {

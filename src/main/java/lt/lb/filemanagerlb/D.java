@@ -19,6 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
+import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
 import org.tinylog.Logger;
@@ -56,7 +57,7 @@ public class D {
             setMainService("MAIN");
             setService("MAIN", () -> {
                 return new FastWaitingExecutor(Math.min(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(4));
-//                return new NestedTaskSubmitionExecutorLayer(Checked.createDefaultExecutorService());
+//                return new NestedTaskSubmitionExecutorLayer(new FastWaitingExecutor(Math.min(Java.getAvailableProcessors() * 4, 40), WaitTime.ofSeconds(4)));
 //                return Checked.createDefaultExecutorService();
             });
             setMainSchedulerService("MAIN_SCHED");

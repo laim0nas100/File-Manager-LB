@@ -4,9 +4,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -17,6 +15,7 @@ import lt.lb.commons.threads.TimestampingExecutionExclusive;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
+import lt.lb.filemanagerlb.utility.BulkConsumer;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import org.tinylog.Logger;
 
@@ -30,7 +29,11 @@ public class ExtRealFolder extends ExtFolder {
         super(src, optional);
     }
 
-    protected TimestampingExecutionExclusive<Map<String, ExtPath>> pupolator = new TimestampingExecutionExclusive<>(D.exe.getMain(), WaitTime.ofSeconds(10), 8);
+    protected TimestampingExecutionExclusive<Map<String, ExtPath>> pupolator
+            = new TimestampingExecutionExclusive<>(
+                    D.exe.getMain(),
+                    WaitTime.ofSeconds(10),
+                    32);//should not pass this cycle without overwriting incomplete slots, or deadlock might happen
 
     @Override
     public Enums.Identity getIdentity() {
@@ -93,7 +96,7 @@ public class ExtRealFolder extends ExtFolder {
     }
 
     @Override
-    public Future update(Consumer<ExtPath> receiver, Supplier<Boolean> isCanceled) {
+    public Future update(BulkConsumer<ExtPath> receiver, Supplier<Boolean> isCanceled) {
         Logger.info("Update observable:" + this.getAbsoluteDirectory());
         return populateFolder(true, receiver, isCanceled);
     }

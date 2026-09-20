@@ -14,8 +14,9 @@ import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import lt.lb.filemanagerlb.utility.BulkConsumer;
 
 /**
+ * Extended Folder
  *
- * @author Laimonas Beiušis Extended Folder for custom actions
+ * @author laim0nas100
  */
 public abstract class ExtFolder extends ExtPath {
 
@@ -121,7 +122,7 @@ public abstract class ExtFolder extends ExtPath {
 
     public abstract void update();
 
-    public abstract Future update(Consumer<ExtPath> receiver, Supplier<Boolean> isCanceled);
+    public abstract Future update(BulkConsumer<ExtPath> receiver, Supplier<Boolean> isCanceled);
 
     @Override
     public String getAbsoluteDirectory() {
