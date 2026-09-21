@@ -22,7 +22,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
  * @author laim0nas100
  */
 public class ExtPath {
-    
+
     public static boolean exists(ExtPath path) {
         if (path == null) {
             return false;
@@ -115,22 +115,17 @@ public class ExtPath {
         if (optional.length > 0) {
             this.path = (Path) optional[0];
         }
+        final Identity identity = this.getIdentity();
         this.propertyName = new SimpleStringProperty(this.getName(true));
-        this.propertyType = new SimpleStringProperty(this.getIdentity().toString());
+        this.propertyType = new SimpleStringProperty(identity.toString());
         this.isDisabled = new SimpleBooleanProperty() {
             @Override
-            public void set(boolean bln) {
-                boolean changed = false;
-                D.lock.lock();
-                try {
-                    if (bln) {
-                        changed = D.globalDisabledSet.add(getAbsolutePath());
-                    } else {
-                        changed = D.globalDisabledSet.remove(getAbsolutePath());
-                    }
-                } finally {
-                    D.lock.unlock();
-                }
+            public void set(final boolean bln) {
+                PathState state = D.globalPathState.computeIfAbsent(absolutePath, (k) -> new PathState());
+
+                boolean changed = state.disabled != bln;
+                state.disabled = bln;
+
                 if (changed) {
                     fireValueChangedEvent();
                 }
@@ -138,7 +133,7 @@ public class ExtPath {
 
             @Override
             public boolean get() {
-                return D.globalDisabledSet.contains(getAbsolutePath());
+                return D.globalPathState.getOrDefault(absolutePath, PathState.DEFAULT).disabled;
             }
 
         };
@@ -195,7 +190,7 @@ public class ExtPath {
 
         };
         this.isAbsoluteRoot = new SimpleBooleanProperty(false);
-        this.isVirtual = new SimpleBooleanProperty(getIdentity().equals(Identity.VIRTUAL));
+        this.isVirtual = new SimpleBooleanProperty(identity.equals(Identity.VIRTUAL));
     }
 
     public Path toPath() {
@@ -212,11 +207,10 @@ public class ExtPath {
         return file;
     }
 
-    
-    public void collect(boolean recursive, Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver){
-        if(recursive){
+    public void collect(boolean recursive, Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
+        if (recursive) {
             collectRecursive(predicate, receiver);
-        }else{
+        } else {
             collectLocal(predicate, receiver);
         }
     }
@@ -224,9 +218,9 @@ public class ExtPath {
     public void collectRecursive(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
         collectLocal(predicate, receiver);
     }
-    
-    public void collectLocal(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver){
-        if(predicate == null || predicate.test(this)){
+
+    public void collectLocal(Predicate<ExtPath> predicate, BulkConsumer<ExtPath> receiver) {
+        if (predicate == null || predicate.test(this)) {
             receiver.accept(this);
         }
     }

@@ -43,6 +43,13 @@ import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.FavouriteLink;
 import com.github.laim0nas100.uncheckedutils.Checked;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
+import java.util.HashMap;
+import java.util.Map;
+import lt.lb.commons.F;
+import lt.lb.commons.io.serialization.VersionedChanges;
+import lt.lb.commons.io.serialization.VersionedSerialization;
+import lt.lb.commons.io.serialization.VersionedSerializationContext;
+import lt.lb.filemanagerlb.logic.filestructure.PathState;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
 
@@ -125,9 +132,32 @@ public class FileManagerLB {
 
     private static VSManager prepareVSManager() {
         VSManager manager = new VSManager();
-        manager.includeCustom(SessionInfo.class, 0L);
+        manager.includeCustom(SessionInfo.class, 1L);//current version
+        manager.includeCustom(PathState.class, 0L);
         //nothing to ignore
         //add version changes if needed
+        // update 0 to 1
+        manager.addVersionChanger(VersionedChanges.builderVerionInc(SessionInfo.class, 0L) // refactor disabled files
+                .withFieldRefactor("disabledFiles", field -> {
+
+                    if (field instanceof VersionedSerialization.ArrayVSUF) {
+                        VersionedSerialization.ArrayVSUF array = F.cast(field);
+                        Map<String, PathState> map = new HashMap<>();
+                        for (VersionedSerialization.VSUnit val : array.values) {
+                            //assume it is string
+                            if (val instanceof VersionedSerialization.StringVSU) {
+                                VersionedSerialization.StringVSU string = F.cast(val);
+                                PathState pathState = new PathState();
+                                pathState.disabled = true;
+                                map.put(string.getValue(), pathState);
+                            }
+                        }
+                        return manager.getSerializer().serializeMap("globalPathState", map, null);
+                    }
+                    return field;
+
+                })
+        );
 
         return manager;
     }
@@ -231,7 +261,7 @@ public class FileManagerLB {
         CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
         CollectionOp.replace(si.favoriteLinks,
                 LocationAPI.toSerializableStringList(MainController.favoriteLinks, f -> f.location));
-        CollectionOp.replace(si.disabledFiles, D.globalDisabledSet);
+        CollectionOp.replace(si.globalPathState, D.globalPathState);
 
         si.autoCloseProgressDialogs = ViewManager.autoCloseProgressDialogs.get();
         si.autoStartProgressDialogs = ViewManager.autoStartProgressDialogs.get();
@@ -261,7 +291,7 @@ public class FileManagerLB {
         for (String str : D.sessionInfo.favoriteLinks) {
             MainController.favoriteLinks.add(new FavouriteLink(str));
         }
-        D.globalDisabledSet.addAll(D.sessionInfo.disabledFiles);
+        D.globalPathState.putAll(D.sessionInfo.globalPathState);
     }
 
     public static void reInit() {

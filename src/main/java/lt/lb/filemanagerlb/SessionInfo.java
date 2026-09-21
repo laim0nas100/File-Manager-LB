@@ -3,10 +3,10 @@ package lt.lb.filemanagerlb;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import lt.lb.commons.containers.collections.Props;
+import lt.lb.filemanagerlb.logic.filestructure.PathState;
 
 /**
  *
@@ -22,5 +22,5 @@ public class SessionInfo {
 
     public HashMap<Serializable, Props<String>> frameInfo = new HashMap<>();
     public List<String> favoriteLinks = new ArrayList<>();
-    public Set<String> disabledFiles = new HashSet<>();
+    public Map<String, PathState> globalPathState = new HashMap<>();
 }

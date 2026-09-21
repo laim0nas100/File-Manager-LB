@@ -1,5 +1,6 @@
 package lt.lb.filemanagerlb.logic.filestructure;
 
+import com.github.laim0nas100.uncheckedutils.Checked;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lt.lb.commons.containers.collections.ImmutableCollections;
+import lt.lb.commons.threads.Futures;
 import lt.lb.commons.threads.TimestampingExecutionExclusive;
 import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
@@ -28,12 +30,6 @@ public class ExtRealFolder extends ExtFolder {
     public ExtRealFolder(String src, Object... optional) {
         super(src, optional);
     }
-
-    protected TimestampingExecutionExclusive<Map<String, ExtPath>> pupolator
-            = new TimestampingExecutionExclusive<>(
-                    D.exe.getMain(),
-                    WaitTime.ofSeconds(10),
-                    32);//should not pass this cycle without overwriting incomplete slots, or deadlock might happen
 
     @Override
     public Enums.Identity getIdentity() {
@@ -85,8 +81,22 @@ public class ExtRealFolder extends ExtFolder {
             return paths;
         };
 
-        return pupolator.execute(auto, call);
+        TimestampingExecutionExclusive<Map<String, ExtPath>> populator = D.folderPopulatorCache.get(this.getAbsolutePath(), p -> {
+            return createPopulator();
+        });
+        if (populator != null) {
+            return populator.execute(auto, call);
+        }else{
+            //should never happen
+            return Futures.done(Checked.uncheckedCall(call::call));
+        }
+    }
 
+    protected TimestampingExecutionExclusive<Map<String, ExtPath>> createPopulator() {
+        return new TimestampingExecutionExclusive<>(
+                D.exe.getMain(),
+                WaitTime.ofSeconds(10),
+                32); //should not pass this cycle without overwriting incomplete slots, or deadlock might happen
     }
 
     @Override

@@ -1,12 +1,9 @@
 package lt.lb.filemanagerlb;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.laim0nas100.jobsystem.JobExecutor;
-import com.github.laim0nas100.jobsystem.ScheduledJobExecutor;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReentrantLock;
 import javafx.beans.property.SimpleBooleanProperty;
 import lt.lb.commons.Java;
 import lt.lb.commons.io.directoryaccess.Dir;
@@ -15,14 +12,17 @@ import lt.lb.commons.threads.service.ServiceExecutorAggregatorBase;
 import lt.lb.filemanagerlb.dirinfo.HomeDir;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
 import com.github.laim0nas100.uncheckedutils.Checked;
-import java.util.concurrent.Executor;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import lt.lb.commons.threads.TimestampingExecutionExclusive;
 import lt.lb.commons.threads.executors.FastWaitingExecutor;
-import lt.lb.commons.threads.executors.layers.NestedTaskSubmitionExecutorLayer;
 import lt.lb.commons.threads.executors.scheduled.DelayedTaskExecutor;
 import lt.lb.commons.threads.sync.WaitTime;
-import org.tinylog.Logger;
+import lt.lb.filemanagerlb.logic.filestructure.ExtPath;
+import lt.lb.filemanagerlb.logic.filestructure.PathState;
 
 /**
  * Definitions
@@ -69,8 +69,6 @@ public class D {
     
     public static final ServiceExecutorAggregatorBase exe = new ServiceExecutorAggregatorMain();
     
-    
-    
     public static final JobExecutor jobsExecutor = new JobExecutor(D.exe.service("jobs"));
 
     public static SessionInfo sessionInfo = new SessionInfo();
@@ -92,8 +90,20 @@ public class D {
 
     public static final ClassLoader cLoader = D.class.getClassLoader();
 
-    public static Set<String> globalDisabledSet = new HashSet<>();
-    public static ReentrantLock lock = new ReentrantLock();
+    public static ConcurrentHashMap<String, PathState> globalPathState = new ConcurrentHashMap<>();
+    
+    
+    /**
+     * protected TimestampingExecutionExclusive<Map<String, ExtPath>> pupolator
+            = new TimestampingExecutionExclusive<>(
+                    D.exe.getMain(),
+                    WaitTime.ofSeconds(10),
+                    32);//should not pass this cycle without overwriting incomplete slots, or deadlock might happen
+     */
+    
+    public static Cache<String,TimestampingExecutionExclusive<Map<String, ExtPath>>> folderPopulatorCache = Caffeine.newBuilder()
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     public static Serializable dragInitWindowID = "";
 
