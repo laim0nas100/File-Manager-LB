@@ -3,7 +3,7 @@ package lt.lb.filemanagerlb.utility;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
-import lt.lb.commons.reflect.unified.ReflFields;
+import com.github.laim0nas100.commonslb.reflect.unified.ReflFields;
 import org.apache.commons.lang3.Strings;
 
 /**

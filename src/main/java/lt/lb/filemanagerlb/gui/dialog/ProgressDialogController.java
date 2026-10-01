@@ -6,12 +6,12 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
-import lt.lb.commons.javafx.FXTask;
+import com.github.laim0nas100.commonslb.javafx.FXTask;
 import lt.lb.filemanagerlb.gui.MyBaseController;
 import lt.lb.filemanagerlb.gui.ViewManager;
 import lt.lb.filemanagerlb.utility.CustomClock;
 
-import lt.lb.commons.parsing.StringParser;
+import com.github.laim0nas100.commonslb.parsing.StringParser;
 import lt.lb.filemanagerlb.D;
 
 /**

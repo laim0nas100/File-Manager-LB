@@ -12,12 +12,12 @@
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-        <commons-lb.dir>lt.lb.commons</commons-lb.dir>
-        <commons-lb.version>local-jar</commons-lb.version>
+        <!--        <commons-lb.dir>com.github.laim0nas100.commonslb</commons-lb.dir>
+        <commons-lb.version>local-jar</commons-lb.version>-->
         <native.maven.plugin.version>1.1.3</native.maven.plugin.version>
         
-        <!--        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
-        <commons-lb.version>2025.08v2</commons-lb.version>-->
+        <commons-lb.dir>com.github.laim0nas100.Commons</commons-lb.dir>
+        <commons-lb.version>2026.10v1-new</commons-lb.version>
     </properties>
     <dependencies>
         

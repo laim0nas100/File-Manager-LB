@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.FX;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import org.apache.commons.lang3.Strings;

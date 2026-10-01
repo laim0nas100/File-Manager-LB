@@ -1,7 +1,7 @@
 package lt.lb.filemanagerlb.utility;
 
 import java.util.Set;
-import lt.lb.commons.iteration.streams.MakeStream;
+import com.github.laim0nas100.commonslb.iteration.streams.MakeStream;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.apache.commons.lang3.StringUtils;
 

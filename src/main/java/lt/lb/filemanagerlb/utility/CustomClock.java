@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.FX;
 
 /**
  *

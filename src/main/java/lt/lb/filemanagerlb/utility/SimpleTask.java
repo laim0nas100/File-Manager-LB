@@ -5,8 +5,8 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import javafx.beans.property.*;
-import lt.lb.commons.javafx.ExtTask;
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.ExtTask;
+import com.github.laim0nas100.commonslb.javafx.FX;
 import com.github.laim0nas100.uncheckedutils.func.UncheckedRunnable;
 
 /**

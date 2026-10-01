@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
-import lt.lb.commons.iteration.streams.MakeStream;
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.iteration.streams.MakeStream;
+import com.github.laim0nas100.commonslb.javafx.FX;
 
 /**
  *

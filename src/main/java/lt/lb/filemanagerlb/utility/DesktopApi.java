@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import lt.lb.commons.iteration.streams.MakeStream;
-import lt.lb.commons.parsing.StringParser;
+import com.github.laim0nas100.commonslb.iteration.streams.MakeStream;
+import com.github.laim0nas100.commonslb.parsing.StringParser;
 import org.tinylog.Logger;
 
 /**

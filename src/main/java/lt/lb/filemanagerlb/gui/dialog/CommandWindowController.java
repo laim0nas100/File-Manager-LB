@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import lt.lb.commons.javafx.ExtTask;
-import lt.lb.commons.javafx.FX;
-import lt.lb.commons.threads.executors.FastExecutor;
-import lt.lb.commons.DLog;
-import lt.lb.commons.DLog.LogStream;
-import lt.lb.commons.threads.executors.FastWaitingExecutor;
-import lt.lb.commons.threads.sync.WaitTime;
+import com.github.laim0nas100.commonslb.javafx.ExtTask;
+import com.github.laim0nas100.commonslb.javafx.FX;
+import com.github.laim0nas100.commonslb.threads.executors.FastExecutor;
+import com.github.laim0nas100.commonslb.DLog;
+import com.github.laim0nas100.commonslb.DLog.LogStream;
+import com.github.laim0nas100.commonslb.threads.executors.FastWaitingExecutor;
+import com.github.laim0nas100.commonslb.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.P;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
@@ -267,7 +267,7 @@ public class CommandWindowController extends MyBaseController {
             try {
 
                 ArrayDeque<String> readFromFile = new ArrayDeque(
-                        lt.lb.commons.io.text.TextFileIO.readFromFile(script));
+                        com.github.laim0nas100.commonslb.io.text.TextFileIO.readFromFile(script));
                 this.setTextAfterwards = true;
                 ctrl.addToTextArea("Running script:" + script + "\n");
                 for (String command : readFromFile) {

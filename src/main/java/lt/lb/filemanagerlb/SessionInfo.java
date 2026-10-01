@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lt.lb.commons.containers.collections.Props;
+import com.github.laim0nas100.commonslb.containers.collections.Props;
 import lt.lb.filemanagerlb.logic.filestructure.PathState;
 
 /**

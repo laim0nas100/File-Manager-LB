@@ -1,6 +1,6 @@
 package lt.lb.filemanagerlb.utility;
 
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.FX;
 import com.github.laim0nas100.uncheckedutils.func.UncheckedConsumer;
 
 /**

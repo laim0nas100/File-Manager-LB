@@ -2,7 +2,7 @@ package lt.lb.filemanagerlb.vlc;
 
 import java.util.ArrayList;
 import java.util.List;
-import lt.lb.commons.iteration.streams.MakeStream;
+import com.github.laim0nas100.commonslb.iteration.streams.MakeStream;
 import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
 import uk.co.caprica.vlcj.factory.discovery.provider.DiscoveryDirectoryProvider;

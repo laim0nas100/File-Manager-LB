@@ -49,15 +49,15 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import lt.lb.commons.F;
-import lt.lb.commons.javafx.CosmeticsFX;
-import lt.lb.commons.javafx.CosmeticsFX.ExtTableView;
-import lt.lb.commons.javafx.FX;
-import lt.lb.commons.javafx.FXDefs;
-import lt.lb.commons.javafx.FXTask;
-import lt.lb.commons.javafx.MenuBuilders;
-import lt.lb.commons.threads.service.ServiceTimeoutTask;
-import lt.lb.commons.threads.sync.WaitTime;
+import com.github.laim0nas100.commonslb.F;
+import com.github.laim0nas100.commonslb.javafx.CosmeticsFX;
+import com.github.laim0nas100.commonslb.javafx.CosmeticsFX.ExtTableView;
+import com.github.laim0nas100.commonslb.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.FXDefs;
+import com.github.laim0nas100.commonslb.javafx.FXTask;
+import com.github.laim0nas100.commonslb.javafx.MenuBuilders;
+import com.github.laim0nas100.commonslb.threads.service.ServiceTimeoutTask;
+import com.github.laim0nas100.commonslb.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.gui.custom.FileAddressField;
 import lt.lb.filemanagerlb.logic.Enums;
@@ -81,7 +81,7 @@ import lt.lb.filemanagerlb.utility.SimpleTask;
 import com.github.laim0nas100.uncheckedutils.PassableException;
 import com.github.laim0nas100.uncheckedutils.SafeOpt;
 import org.tinylog.Logger;
-import lt.lb.commons.javafx.properties.SelectableViewProperties;
+import com.github.laim0nas100.commonslb.javafx.properties.SelectableViewProperties;
 import lt.lb.filemanagerlb.utility.SafeJob;
 import com.github.laim0nas100.uncheckedutils.Checked;
 import javafx.scene.control.Tab;
@@ -354,13 +354,13 @@ public class MainController extends MyBaseController<MainController> {
 //
 //        ArrayList<Sfor(ExtPath item:this.MC.currentDir.getListRecursive()){
 //            root.add(new LocationInRoot(item.getAbsoluteDirectory(),false),i++);
-//        }tring> resolve = LocationInRootNode.nodeFromFile(lt.lb.commons.FileManaging.FileReader.readFromFile("Here.txt")).resolve(true);
+//        }tring> resolve = LocationInRootNode.nodeFromFile(com.github.laim0nas100.commonslb.FileManaging.FileReader.readFromFile("Here.txt")).resolve(true);
 //        resolve.forEach(file ->{
 //            Log.write(file);
 //        });
-        ////        lt.lb.commons.FileManaging.FileReader.writeToFile("Raw.txt", resolve);
+        ////        com.github.laim0nas100.commonslb.FileManaging.FileReader.writeToFile("Raw.txt", resolve);
 //        Log.write(root.specialString());
-//        lt.lb.commons.FileManaging.FileReader.writeToFile("Here.txt", Arrays.asList(new String[]{root.specialString()}));
+//        com.github.laim0nas100.commonslb.FileManaging.FileReader.writeToFile("Here.txt", Arrays.asList(new String[]{root.specialString()}));
 //        Log.write("RESOLVED");
 //        for(String p:root.resolve(true)){
 //            Log.write(p);

@@ -1,8 +1,8 @@
 package lt.lb.filemanagerlb.dirinfo;
 
-import lt.lb.commons.io.directoryaccess.Dir;
-import lt.lb.commons.io.directoryaccess.Fil;
-import lt.lb.commons.io.directoryaccess.FileInfo;
+import com.github.laim0nas100.commonslb.io.directoryaccess.Dir;
+import com.github.laim0nas100.commonslb.io.directoryaccess.Fil;
+import com.github.laim0nas100.commonslb.io.directoryaccess.FileInfo;
 
 /**
  *

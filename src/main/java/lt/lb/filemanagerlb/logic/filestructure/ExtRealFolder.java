@@ -1,6 +1,5 @@
 package lt.lb.filemanagerlb.logic.filestructure;
 
-import com.github.laim0nas100.uncheckedutils.Checked;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,10 +10,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import lt.lb.commons.containers.collections.ImmutableCollections;
-import lt.lb.commons.threads.Futures;
-import lt.lb.commons.threads.TimestampingExecutionExclusive;
-import lt.lb.commons.threads.sync.WaitTime;
+import com.github.laim0nas100.commonslb.containers.collections.ImmutableCollections;
+import com.github.laim0nas100.commonslb.threads.TimestampingExecutionExclusive;
+import com.github.laim0nas100.commonslb.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums;
 import lt.lb.filemanagerlb.utility.BulkConsumer;
@@ -80,23 +78,18 @@ public class ExtRealFolder extends ExtFolder {
 
             return paths;
         };
-
         TimestampingExecutionExclusive<Map<String, ExtPath>> populator = D.folderPopulatorCache.get(this.getAbsolutePath(), p -> {
             return createPopulator();
         });
-        if (populator != null) {
-            return populator.execute(auto, call);
-        }else{
-            //should never happen
-            return Futures.done(Checked.uncheckedCall(call::call));
-        }
+
+        return populator.execute(auto, call);
     }
 
     protected TimestampingExecutionExclusive<Map<String, ExtPath>> createPopulator() {
         return new TimestampingExecutionExclusive<>(
                 D.exe.getMain(),
                 WaitTime.ofSeconds(10),
-                32); //should not pass this cycle without overwriting incomplete slots, or deadlock might happen
+                32); //should not pass this cycle without overwriting incomplete slots, or deadlock might happen.
     }
 
     @Override

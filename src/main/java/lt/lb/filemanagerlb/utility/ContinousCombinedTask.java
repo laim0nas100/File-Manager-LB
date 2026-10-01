@@ -6,9 +6,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import lt.lb.commons.containers.values.IntegerValue;
-import lt.lb.commons.javafx.FX;
-import lt.lb.commons.threads.executors.InPlaceExecutor;
+import com.github.laim0nas100.commonslb.containers.values.IntegerValue;
+import com.github.laim0nas100.commonslb.javafx.FX;
+import com.github.laim0nas100.commonslb.threads.executors.InPlaceExecutor;
 import org.tinylog.Logger;
 
 /**

@@ -8,7 +8,7 @@ import javafx.collections.ObservableList;
 import java.util.Collection;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import lt.lb.commons.io.autopath.AutoPath;
+import com.github.laim0nas100.commonslb.io.autopath.AutoPath;
 import lt.lb.filemanagerlb.gui.FileManagerLB;
 import lt.lb.filemanagerlb.logic.filestructure.ExtFolder;
 import lt.lb.filemanagerlb.logic.filestructure.ExtPath;

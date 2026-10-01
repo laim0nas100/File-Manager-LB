@@ -6,7 +6,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import lt.lb.commons.containers.collections.ImmutableCollections;
+import com.github.laim0nas100.commonslb.containers.collections.ImmutableCollections;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.logic.Enums.Identity;
 import lt.lb.filemanagerlb.utility.ErrorReport;

@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import lt.lb.commons.javafx.FX;
-import lt.lb.commons.threads.service.ServiceTimeoutTask;
-import lt.lb.commons.threads.sync.WaitTime;
+import com.github.laim0nas100.commonslb.javafx.FX;
+import com.github.laim0nas100.commonslb.threads.service.ServiceTimeoutTask;
+import com.github.laim0nas100.commonslb.threads.sync.WaitTime;
 import lt.lb.filemanagerlb.D;
 import lt.lb.filemanagerlb.utility.*;
 

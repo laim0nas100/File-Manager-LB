@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import lt.lb.commons.javafx.FX;
+import com.github.laim0nas100.commonslb.javafx.FX;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 
 /**

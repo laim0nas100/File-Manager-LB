@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lt.lb.commons.Predicates;
-import lt.lb.commons.io.autopath.AutoPath;
+import com.github.laim0nas100.commonslb.Predicates;
+import com.github.laim0nas100.commonslb.io.autopath.AutoPath;
 
 /**
  * create file tree
