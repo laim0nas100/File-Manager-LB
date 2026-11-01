@@ -85,6 +85,18 @@ public class ExtPath {
 
     public static Predicate<ExtPath> IS_NOT_DISABLED = (ExtPath t) -> !t.isDisabled.get();
 
+    public static Predicate<ExtPath> isNot(ExtPath path) {
+
+        return test -> {
+            if (path == null) {
+                return test != null;
+            } else {
+                return !path.equals(test);
+            }
+
+        };
+    }
+
     private Path path;
     private ExtFile file;
     private final String absolutePath;

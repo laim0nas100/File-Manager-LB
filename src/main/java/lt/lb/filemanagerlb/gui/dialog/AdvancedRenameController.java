@@ -189,7 +189,7 @@ public class AdvancedRenameController extends MyBaseController {
 
     public void updateLists() {
         ArrayList<ExtPath> array = new ArrayList<>();
-        this.folder.collect(recursive.selectedProperty().get(), ExtPath.IS_NOT_DISABLED, BulkConsumer.fromCollection(array));
+        this.folder.collect(recursive.selectedProperty().get(), ExtPath.IS_NOT_DISABLED.and(ExtPath.isNot(folder)), BulkConsumer.fromCollection(array));
         tableList.clear();
         for (ExtPath s : array) {
             tableList.add(new TableItemObject(s, ignoredPaths));
