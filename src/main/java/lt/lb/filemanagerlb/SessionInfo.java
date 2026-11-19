@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.github.laim0nas100.commonslb.containers.collections.Props;
 import lt.lb.filemanagerlb.logic.filestructure.PathState;
 
 /**
@@ -20,7 +19,7 @@ public class SessionInfo {
     public boolean pinTextInputDialogs;
     public boolean copyReplaceExisting;
 
-    public HashMap<Serializable, Props<String>> frameInfo = new HashMap<>();
+    public HashMap<Serializable, Map<String,Object>> frameInfo = new HashMap<>();
     public List<String> favoriteLinks = new ArrayList<>();
     public Map<String, PathState> globalPathState = new HashMap<>();
 }

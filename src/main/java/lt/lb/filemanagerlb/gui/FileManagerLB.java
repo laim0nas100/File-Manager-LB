@@ -48,8 +48,9 @@ import java.util.Map;
 import com.github.laim0nas100.commonslb.F;
 import com.github.laim0nas100.commonslb.io.serialization.VersionedChanges;
 import com.github.laim0nas100.commonslb.io.serialization.VersionedSerialization;
-import com.github.laim0nas100.commonslb.io.serialization.VersionedSerializationContext;
+import com.github.laim0nas100.commonslb.io.serialization.VersionedSerialization.MapVSU;
 import lt.lb.filemanagerlb.logic.filestructure.PathState;
+import lt.lb.filemanagerlb.vlc.VLCException;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.Logger;
 
@@ -58,7 +59,7 @@ import org.tinylog.Logger;
  * @author laim0nas100
  */
 public class FileManagerLB {
-
+    
     public static ObservableList<ExtPath> remountUpdateList = FXCollections.observableArrayList();
     public static VirtualFolder ArtificialRoot;// = new VirtualFolder(ARTIFICIAL_ROOT_DIR);
     public static VirtualFolder VirtualFolders;// = new VirtualFolder(VIRTUAL_FOLDERS_DIR);
@@ -66,21 +67,21 @@ public class FileManagerLB {
 //    public static WithFrameTypeMemorySize sizeInfo = new WithFrameTypeMemorySize();
 
     public static VSManager vsManager = prepareVSManager();
-
+    
     static {
         java.util.logging.LogManager.getLogManager().reset();
         SLF4JBridgeHandler.install();
     }
-
+    
     private static boolean init = false;
-
+    
     public static boolean shutdown = false;
-
+    
     public static SafeOpt<Boolean> darkMode = SafeOpt.ofLazy(() -> OsThemeDetector.getDetector().isDark());
     public static SafeOpt<String> darkCss = FXDefs.DARK_THEME_CSS.map(m -> m.toExternalForm());
-
+    
     public static void main(String[] args) {
-
+        
         D.sm = new MultiStageManager(
                 D.cLoader,
                 frameInfo,
@@ -92,7 +93,7 @@ public class FileManagerLB {
                             d.getScene().getStylesheets().add(theme);
                         });
                     }
-
+                    
                 }),
                 new WithDecoration(FrameState.FrameStateShow.instance, d -> {
                     if (darkMode.orElse(false)) {
@@ -111,9 +112,9 @@ public class FileManagerLB {
         );
         D.exe.service("date-size");
         D.exe.scheduleWithFixedDelay(System::gc, 30, 30, TimeUnit.MINUTES);
-
+        
         Logger.info("Manifest");
-
+        
         Checked.checkedRun(() -> {
             URL res = D.cLoader.getResource("stamped/version.txt");
             ArrayList<String> lines = com.github.laim0nas100.commonslb.io.text.TextFileIO.readFrom(res);
@@ -123,23 +124,33 @@ public class FileManagerLB {
         Checked.checkedRun(() -> {
             reInit();
         }).ifPresent(ErrorReport::report);
-
+        
+        D.exe.execute(() -> {
+            //warm up
+            try {
+                VLCInit.getOrInitFactory();
+            } catch (VLCException ex) {
+                ErrorReport.report(ex);
+            }
+            
+        });
+        
         if (P.showAbout.resolve(P.parameters)) {
             ViewManager.newWebDialog(Enums.WebDialog.About);
         }
-
+        
     }
-
+    
     private static VSManager prepareVSManager() {
         VSManager manager = new VSManager();
-        manager.includeCustom(SessionInfo.class, 1L);//current version
+        manager.includeCustom(SessionInfo.class, 2L);//current version
         manager.includeCustom(PathState.class, 0L);
         //nothing to ignore
         //add version changes if needed
         // update 0 to 1
         manager.addVersionChanger(VersionedChanges.builderVerionInc(SessionInfo.class, 0L) // refactor disabled files
                 .withFieldRefactor("disabledFiles", field -> {
-
+                    
                     if (field instanceof VersionedSerialization.ArrayVSUF) {
                         VersionedSerialization.ArrayVSUF array = F.cast(field);
                         Map<String, PathState> map = new HashMap<>();
@@ -155,16 +166,31 @@ public class FileManagerLB {
                         return manager.getSerializer().serializeMap("globalPathState", map, null);
                     }
                     return field;
-
+                    
+                })
+        ).addVersionChanger(VersionedChanges.builderVerionInc(SessionInfo.class, 1L) // refactor frameinfo map class change files
+                .withFieldRefactor("frameInfo", field -> {
+                    if (field instanceof VersionedSerialization.MapVSUF) {
+                        VersionedSerialization.MapVSUF mapVSU = F.cast(field);
+                        mapVSU.children().forEach(child -> {
+                            if (child.val instanceof VersionedSerialization.MapVSU innerMap) {
+                                if (!innerMap.getCollectionType().equals(HashMap.class.getName())) {
+                                    innerMap.setCollectionType(HashMap.class.getName());
+                                }
+                            }
+                        });
+                    }
+                    return field;
+                    
                 })
         );
-
+        
         return manager;
     }
-
+    
     public static void remount() {
         remountUpdateList.clear();
-
+        
         ArtificialRoot.files.put(VirtualFolders.propertyName.get(), VirtualFolders);
         for (ExtPath f : ArtificialRoot.getFilesCollection()) {
             if (!Files.isDirectory(f.toPath()) && !f.isVirtual.get()) {
@@ -173,14 +199,14 @@ public class FileManagerLB {
                 remountUpdateList.add(f);
             }
         }
-
+        
         File[] roots = File.listRoots();
         for (File root : roots) {
             mountDevice(root.getAbsolutePath());
         }
         remountUpdateList.setAll(ArtificialRoot.getFilesCollection());
     }
-
+    
     public static boolean mountDevice(String name) {
         boolean result = false;
         name = name.toUpperCase();
@@ -198,7 +224,7 @@ public class FileManagerLB {
                     if (!remountUpdateList.contains(device)) {
                         remountUpdateList.add(device);
                     }
-
+                    
                 } else {
                     result = false;
                 }
@@ -206,7 +232,7 @@ public class FileManagerLB {
         }
         return result;
     }
-
+    
     public static boolean folderIsVirtual(ExtPath fileToCheck) {
         VirtualFolder baseFolder = FileManagerLB.VirtualFolders;
         HashSet<String> set = new HashSet<>();
@@ -215,21 +241,21 @@ public class FileManagerLB {
         }
         return set.contains(fileToCheck.getAbsoluteDirectory());
     }
-
+    
     public static Set<String> getRootSet() {
         return ArtificialRoot.files.keySet();
     }
-
+    
     public static void doOnExit() {
         if (shutdown) {
             return;
         }
         shutdown = true;
         Logger.info("Exit call invoked");
-
+        
         Stream<MyBaseController> allControllers = D.sm.getAllControllers(MyBaseController.class);
         allControllers.forEach(c -> c.exit());
-
+        
         new Thread(() -> {
             Logger.info("Write session info");
             try {
@@ -253,35 +279,35 @@ public class FileManagerLB {
                 System.exit(0);
             }
         }, "Shutdown thread").start();
-
+        
     }
-
+    
     public static void writeSessionInfo() throws IOException {
         SessionInfo si = D.sessionInfo;
         CollectionOp.replace(si.frameInfo, frameInfo.typeMap);
         CollectionOp.replace(si.favoriteLinks,
                 LocationAPI.toSerializableStringList(MainController.favoriteLinks, f -> f.location));
         CollectionOp.replace(si.globalPathState, D.globalPathState);
-
+        
         si.autoCloseProgressDialogs = ViewManager.autoCloseProgressDialogs.get();
         si.autoStartProgressDialogs = ViewManager.autoStartProgressDialogs.get();
         si.pinProgressDialogs = ViewManager.pinProgressDialogs.get();
         si.pinTextInputDialogs = ViewManager.pinTextInputDialogs.get();
         si.copyReplaceExisting = TaskFactory.copyReplaceExisting.get();
-
+        
         vsManager.serializingXMLStream().objectToPathOverwrite(si, D.HOME_DIR.session_info.getPath());
 
 //        serialize(path, vm);
     }
-
+    
     public static void readSessionInfo() throws IOException {
-
+        
         if (D.HOME_DIR.session_info.isReadable()) {
-
+            
             SafeOpt<SessionInfo> deserialize = vsManager.<SessionInfo>serializingXMLStream().pathToObject(D.HOME_DIR.session_info.getPath());
             D.sessionInfo = deserialize.peekError(ErrorReport::report).orElseGet(SessionInfo::new);
         }
-
+        
         frameInfo.typeMap.putAll(D.sessionInfo.frameInfo);
         ViewManager.autoCloseProgressDialogs.set(D.sessionInfo.autoCloseProgressDialogs);
         ViewManager.autoStartProgressDialogs.set(D.sessionInfo.autoStartProgressDialogs);
@@ -293,23 +319,23 @@ public class FileManagerLB {
         }
         D.globalPathState.putAll(D.sessionInfo.globalPathState);
     }
-
+    
     public static void reInit() {
         Logger.info("INITIALIZE");
         init = true;
         D.sm.getFrames().forEach(frame -> frame.close());
         VLCInit.release();
-
+        
         MainController.errorLog = FXCollections.observableArrayList();
         MainController.favoriteLinks = FXCollections.observableArrayList();
-
+        
         MainController.markedList = FXCollections.observableArrayList();
         MainController.propertyMarkedSize = Bindings.size(MainController.markedList);
         ArtificialRoot = new VirtualFolder(D.ARTIFICIAL_ROOT_DIR);
         VirtualFolders = new VirtualFolder(D.VIRTUAL_FOLDERS_DIR);
         ArtificialRoot.setIsAbsoluteRoot(true);
         remount();
-
+        
         try {
             Path userdir = Paths.get(D.USER_DIR);
             if (!Files.isDirectory(userdir)) {
@@ -319,7 +345,7 @@ public class FileManagerLB {
         } catch (IOException e) {
             ErrorReport.report(e);
         }
-
+        
         ArtificialRoot.propertyName.set(D.ROOT_NAME);
         MainController.favoriteLinks.add(new FavouriteLink(D.ROOT_NAME, ArtificialRoot));
         try {
@@ -329,11 +355,11 @@ public class FileManagerLB {
         }
         ViewManager.newWindow(ArtificialRoot);
         Logger.info("After new window");
-
+        
         init = false;
-
+        
     }
-
+    
     public static void restart() {
         try {
             Logger.info("Restart request");
@@ -346,5 +372,5 @@ public class FileManagerLB {
         }
         System.exit(707);
     }
-
+    
 }
