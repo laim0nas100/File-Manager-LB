@@ -192,7 +192,7 @@ public class CommandWindowController extends MyBaseController {
         command.addCommand(commandHelp, (String... params) -> {
 
             listParameters();
-            addToTextArea("Read:" + D.HOME_DIR.Parameters.absolutePath + " file for info\n");
+            addToTextArea("Read:" + D.HOME_DIR.parameters.absolutePath + " file for info\n");
         });
         command.addCommand(commandListParams, (String... params) -> {
             listParameters();

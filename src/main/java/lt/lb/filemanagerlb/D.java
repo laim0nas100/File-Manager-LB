@@ -80,7 +80,6 @@ public class D {
     public static String USER_DIR = HOME_DIR.getAbsolutePathWithSeparator();
     public static String ROOT_NAME = "ROOT";
     public static int MAX_THREADS_FOR_TASK = 10;
-    public static int DEPTH = 1;
     public static SimpleBooleanProperty DEBUG = new SimpleBooleanProperty(false);
     public static int LogBackupCount = 1;
     public static SimpleBooleanProperty useBufferedFileStreams = new SimpleBooleanProperty(false);

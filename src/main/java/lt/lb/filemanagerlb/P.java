@@ -15,11 +15,18 @@ import java.util.function.Supplier;
 import com.github.laim0nas100.commonslb.Java;
 import com.github.laim0nas100.commonslb.containers.collections.ImmutableCollections;
 import com.github.laim0nas100.commonslb.reflect.unified.ReflFields;
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import lt.lb.filemanagerlb.gui.MediaPlayerController;
 import lt.lb.filemanagerlb.gui.dialog.CommandWindowController;
 import lt.lb.filemanagerlb.logic.filestructure.VirtualFolder;
 import lt.lb.filemanagerlb.utility.ErrorReport;
 import lt.lb.filemanagerlb.utility.PathStringCommands;
+import org.apache.commons.io.IOUtils;
 import org.tinylog.Logger;
 
 /**
@@ -48,7 +55,6 @@ public class P {
 
     public static final KeyDefaultProperty<Boolean> debug = prop("debug", false);
     public static final KeyDefaultProperty<Boolean> showAbout = prop("showAbout", false);
-    public static final KeyDefaultProperty<Integer> lookDepth = prop("lookDepth", 2);
     public static final KeyDefaultProperty<String> ROOT_NAME = prop("ROOT_NAME", "ROOT");
     public static final KeyDefaultProperty<Integer> maxThreadsForTask = prop("maxThreadsForTask", Java.getAvailableProcessors());
     public static final KeyDefaultProperty<String> userDir = prop("userDir", D.HOME_DIR.absolutePath);
@@ -95,14 +101,23 @@ public class P {
     public static void reload() throws IOException {
 
         Properties properties = new Properties();
-        properties.load(Files.newBufferedReader(D.HOME_DIR.Parameters.getPath()));
+
+        Path parametersPath = D.HOME_DIR.parameters.getPath();
+        if (!Files.exists(parametersPath)) {
+            try (BufferedWriter newBufferedWriter = Files.newBufferedWriter(parametersPath, StandardOpenOption.CREATE_NEW)) {
+                InputStream resourceAsStream = P.class.getClassLoader().getResourceAsStream("default-parameters.properties");
+                try (InputStreamReader inputStreamReader = new InputStreamReader(resourceAsStream, StandardCharsets.UTF_8)) {
+                    IOUtils.copy(inputStreamReader, newBufferedWriter);
+                }
+            }
+           
+        }
+        properties.load(Files.newBufferedReader(D.HOME_DIR.parameters.getPath()));
 
         TolerantConfig param = TolerantConfig.of(properties);
 
-
         P.parameters = param;
         D.DEBUG.set(P.debug.resolve(param));
-        D.DEPTH = P.lookDepth.resolve(param);
         D.ROOT_NAME = P.ROOT_NAME.resolve(param);
         D.MAX_THREADS_FOR_TASK = P.maxThreadsForTask.resolve(param);
         D.USER_DIR = new PathStringCommands(userDir.resolve(param)).getPath() + File.separator;

@@ -27,7 +27,7 @@ public class HomeDir extends Dir {
     public Fil session_info;
     
     @FileInfo(extension ="properties")
-    public Fil Parameters;
+    public Fil parameters;
 
     public static class PlaylistDir extends Dir {
 

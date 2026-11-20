@@ -48,7 +48,6 @@ import java.util.Map;
 import com.github.laim0nas100.commonslb.F;
 import com.github.laim0nas100.commonslb.io.serialization.VersionedChanges;
 import com.github.laim0nas100.commonslb.io.serialization.VersionedSerialization;
-import com.github.laim0nas100.commonslb.io.serialization.VersionedSerialization.MapVSU;
 import lt.lb.filemanagerlb.logic.filestructure.PathState;
 import lt.lb.filemanagerlb.vlc.VLCException;
 import org.slf4j.bridge.SLF4JBridgeHandler;
